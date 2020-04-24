@@ -12,6 +12,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -22,6 +23,8 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
 import com.google.gson.internal.Pair;;
 
 import androidx.annotation.NonNull;
@@ -32,12 +35,11 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.io.FileNotFoundException;
 import java.util.Collections;
+import java.util.List;
 
 
 // Useful links:
@@ -89,9 +91,16 @@ public class MainActivity extends AppCompatActivity {
         // Set the onClick listeners for the button bar.
         findViewById(R.id.sign_in_button).setOnClickListener(btn1Listener);
         findViewById(R.id.open_btn).setOnClickListener(openFilePicker);
+        findViewById(R.id.query_btn).setOnClickListener(query);
+        findViewById(R.id.signout_btn).setOnClickListener(signout);
+        findViewById(R.id.create_btn).setOnClickListener(createFile);
+        findViewById(R.id.save_btn).setOnClickListener(saveFile);
 
         // Check for existing Google Sign In account, if the user is already signed in
         // the GoogleSignInAccount will be non-null.
+        // Note: If you need to detect changes to a user's auth state that happen outside your app,
+        // such as access token or ID token revocation, or to perform cross-device sign-in,
+        // you might also call GoogleSignInClient.silentSignIn when your app starts.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if(account != null){
             signInButton.setEnabled(false);
@@ -132,6 +141,144 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    /**
+     * Queries the Drive REST API for files visible to this app and lists them in the content view.
+     */
+    private View.OnClickListener query = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mDriveServiceHelper != null) {
+                Log.d(TAG, "Querying for files.");
+
+                mDriveServiceHelper.queryFiles()
+                            .addOnSuccessListener(new OnSuccessListener<FileList>() {
+                                @Override
+                                public void onSuccess(FileList fileList) {
+                                    List<File> f = fileList.getFiles();
+                                    Log.d(TAG, "Size of filelist: " + fileList.size());
+                                    Log.d(TAG, "Size of list: " + f.size());
+
+                                    StringBuilder builder = new StringBuilder();
+                                    for (File file : fileList.getFiles()) {
+                                        builder.append(file.getName()).append("\n");
+                                        //Log.d(TAG, "files name: " + file.getName());
+                                    }
+                                    String fileNames = builder.toString();
+
+                                    mFileTitleEditText.setText("File List");
+                                    mDocContentEditText.setText(fileNames);
+
+                                    if(f.size() == 0)
+                                        mDocContentEditText.setText("No files found");
+
+                                    setReadOnlyMode();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception exception) {
+                                    Log.e(TAG, "Unable to query files.", exception);
+                                    //TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
+                                    //https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
+                                }
+                            });
+            }
+        }
+    };
+
+    // example code for handling sign-out: https://developers.google.com/identity/sign-in/android/disconnect?hl=zh-TW
+    private View.OnClickListener signout = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Task<Void> pendingResult = mGoogleSignInClient.signOut();
+            pendingResult.addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    updateUI("Sign out OK!");
+                    Log.d(TAG, "Sign out OK!");
+                }
+            });
+        }
+    };
+
+    /**
+     * Creates a new file via the Drive REST API.
+     */
+    private View.OnClickListener createFile = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mDriveServiceHelper != null) {
+                Log.d(TAG, "Creating a file.");
+
+                mDriveServiceHelper.createFile()
+                        //.addOnSuccessListener(fileId -> readFile(fileId))
+                        .addOnSuccessListener(new OnSuccessListener<String>() {
+                            @Override
+                            public void onSuccess(String fileId) {
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception exception) {
+                                Log.e(TAG, "Couldn't create file.", exception);
+                            }
+                        });
+            }
+        }
+    };
+
+    /**
+     * Saves the currently opened file created via {@link #createFile()} if one exists.
+     */
+    private View.OnClickListener saveFile = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mDriveServiceHelper != null && mOpenFileId != null) {
+                Log.d(TAG, "Saving " + mOpenFileId);
+
+                String fileName = mFileTitleEditText.getText().toString();
+                String fileContent = mDocContentEditText.getText().toString();
+
+                mDriveServiceHelper.saveFile(mOpenFileId, fileName, fileContent)
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception exception) {
+                                Log.e(TAG, "Unable to save file via REST.", exception);
+                            }
+                        });
+            }
+        }
+    };
+
+    /**
+     * Retrieves the title and content of a file identified by {@code fileId} and populates the UI.
+     */
+    private void readFile(final String fileId) {
+        if (mDriveServiceHelper != null) {
+            Log.d(TAG, "Reading file " + fileId);
+
+            mDriveServiceHelper.readFile(fileId)
+                    .addOnSuccessListener(new OnSuccessListener<Pair<String, String>>() {
+                        @Override
+                        public void onSuccess(Pair<String, String> nameAndContent) {
+                            String name = nameAndContent.first;
+                            String content = nameAndContent.second;
+
+                            mFileTitleEditText.setText(name);
+                            mDocContentEditText.setText(content);
+
+                            MainActivity.this.setReadWriteMode(fileId);
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            Log.e(TAG, "Couldn't read file.", exception);
+                        }
+                    });
+        }
+    }
 
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -242,7 +389,9 @@ public class MainActivity extends AppCompatActivity {
     private void openFileFromFilePicker(Uri uri) {
         if (mDriveServiceHelper != null) {
             Log.d(TAG, "Opening " + uri.getPath());
-
+            //some UI test
+            //updateUI("Opening " + uri.getPath()); -> works
+            mFileTitleEditText.setText(uri.getPath()); // -> doenst work
             mDriveServiceHelper.openFileUsingStorageAccessFramework(getContentResolver(), uri)
                     .addOnSuccessListener(new OnSuccessListener<Pair<String, String>>() {
                         @Override
@@ -283,6 +432,14 @@ public class MainActivity extends AppCompatActivity {
         mOpenFileId = null;
     }
 
+    /**
+     * Updates the UI to read/write mode on the document identified by {@code fileId}.
+     */
+    private void setReadWriteMode(String fileId) {
+        mFileTitleEditText.setEnabled(true);
+        mDocContentEditText.setEnabled(true);
+        mOpenFileId = fileId;
+    }
     private void updateUI(GoogleSignInAccount account)
     {
         Log.w(TAG, "UpdateUI");
