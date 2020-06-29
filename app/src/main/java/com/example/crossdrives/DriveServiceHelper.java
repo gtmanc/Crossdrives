@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -24,13 +25,29 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-//Reference available in official site for SAF
-//https://developer.android.com/guide/topics/providers/document-provider
-//https://developer.android.com/guide/topics/providers/document-provider
+/**
+ * Some good reference available in official site for SAF:
+ * //https://developer.android.com/guide/topics/providers/document-provider
+ * For google drive API:
+ * //https://www.programcreek.com/java-api-examples/index.php?api=com.google.api.services.drive.model.FileList
+ */
+
 class DriveServiceHelper {
+    static private String TAG = "CD.DriveServiceHelper";
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
     private final Drive mDriveService;
+    private static DriveServiceHelper mInstance;
+    String mPageToken = null;
 
+    synchronized public static DriveServiceHelper getInstance(Drive driveService){
+        if(mInstance == null) {
+            mInstance = new DriveServiceHelper(driveService);
+            //Log.d(TAG, "New:" + mInstance);
+        }
+
+        //Log.d(TAG, "return:" + mInstance);
+        return mInstance;
+    }
     public DriveServiceHelper(Drive driveService) {
         mDriveService = driveService;
     }
@@ -121,6 +138,16 @@ class DriveServiceHelper {
         });
     }
 
+    public Task<Void> deleteFile(final String fileId) {
+        return Tasks.call(mExecutor, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                mDriveService.files().delete(fileId).execute();
+                return null;
+            }
+        });
+    }
+
     /**
      * Returns a {@link FileList} containing all the visible files in the user's My Drive.
      *
@@ -128,12 +155,25 @@ class DriveServiceHelper {
      * created by this app. To perform operations on files not created by the app, the project must
      * request Drive Full Scope in the <a href="https://play.google.com/apps/publish">Google
      * Developer's Console</a> and be submitted to Google for verification.</p>
+     *
+     * Google reference for query: https://developers.google.com/drive/api/v3/search-files
+     *
      */
     public Task<FileList> queryFiles() {
         return Tasks.call(mExecutor, new Callable<FileList>() {
             @Override
             public FileList call() throws Exception {
-                return mDriveService.files().list().setSpaces("drive").execute();
+                //return mDriveService.files().list().setSpaces("drive").execute();
+                //There could be more result. Use page token to get.
+                FileList files = mDriveService.files().list()
+                        .setSpaces("drive")
+                        .setFields("nextPageToken, files(id, name)")
+                        .setPageToken(mPageToken)
+                        .setPageSize(1)
+                        .execute();
+                mPageToken = files.getNextPageToken();
+                Log.d(TAG, "mPageToken: " + mPageToken);
+                return files;
             }
         });
     }

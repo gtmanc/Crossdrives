@@ -31,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -38,6 +39,7 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,14 +48,19 @@ import java.util.List;
 // Google sign-in: https://developers.google.com/identity/sign-in/android/sign-in
 // sample code in github: https://github.com/gsuitedevs/android-samples/tree/master/drive/deprecation
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     GoogleSignInClient mGoogleSignInClient;
+    //Request code used for OnActivityResult
     private static final int RC_SIGN_IN = 0;
     private static final int REQUEST_CODE_OPEN_DOCUMENT = 2;
+    private static final int RC_QUERY = 3;
+    private static final int RC_DELETE_FILE = 4;
     private DriveServiceHelper mDriveServiceHelper;
     private String TAG = "CD.MainActivity";
 
     private String mOpenFileId;
+    private ArrayList<String> mQueryFileId, mQueryFileName;
+    private FileList mQueriedFileList;
 
     private EditText mFileTitleEditText;
     private EditText mDocContentEditText;
@@ -95,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.signout_btn).setOnClickListener(signout);
         findViewById(R.id.create_btn).setOnClickListener(createFile);
         findViewById(R.id.save_btn).setOnClickListener(saveFile);
+        findViewById(R.id.delete_btn).setOnClickListener(deleteFiles);
 
         // Check for existing Google Sign In account, if the user is already signed in
         // the GoogleSignInAccount will be non-null.
@@ -112,6 +120,14 @@ public class MainActivity extends AppCompatActivity {
         mFileTitleEditText = findViewById(R.id.file_title_edittext);
         mDocContentEditText = findViewById(R.id.doc_content_edittext);
 
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        Log.d(TAG, "density = " + dm.density);
+        Log.d(TAG, "xdpi = " + dm.xdpi);
+        Log.d(TAG, "ydpi = " + dm.ydpi);
+        Log.d(TAG, "densityDpi = " + dm.densityDpi);
+        Log.d(TAG, "heightPixels = " + dm.heightPixels);
+        Log.d(TAG, "widthPixels = " + dm.widthPixels);
 
     }
     private View.OnClickListener btn1Listener = new View.OnClickListener() {
@@ -148,42 +164,19 @@ public class MainActivity extends AppCompatActivity {
     private View.OnClickListener query = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mDriveServiceHelper != null) {
-                Log.d(TAG, "Querying for files.");
+            //mQueryFileName, mQueryFileId and fileList will be updated
+            //queryFile();
 
-                mDriveServiceHelper.queryFiles()
-                            .addOnSuccessListener(new OnSuccessListener<FileList>() {
-                                @Override
-                                public void onSuccess(FileList fileList) {
-                                    List<File> f = fileList.getFiles();
-                                    Log.d(TAG, "Size of filelist: " + fileList.size());
-                                    Log.d(TAG, "Size of list: " + f.size());
+            Intent intent = new Intent();
+            Bundle bundle = new Bundle();
 
-                                    StringBuilder builder = new StringBuilder();
-                                    for (File file : fileList.getFiles()) {
-                                        builder.append(file.getName()).append("\n");
-                                        //Log.d(TAG, "files name: " + file.getName());
-                                    }
-                                    String fileNames = builder.toString();
+            //Ready to go to the result list
+            intent.setClass(MainActivity.this, QueryResultActivity.class);
+            bundle.putStringArrayList("ResultList", mQueryFileName);
+            intent.putExtras(bundle);
+            startActivityForResult(intent, RC_QUERY);
 
-                                    mFileTitleEditText.setText("File List");
-                                    mDocContentEditText.setText(fileNames);
 
-                                    if(f.size() == 0)
-                                        mDocContentEditText.setText("No files found");
-
-                                    setReadOnlyMode();
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception exception) {
-                                    Log.e(TAG, "Unable to query files.", exception);
-                                    //TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-                                    //https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-                                }
-                            });
-            }
         }
     };
 
@@ -216,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
                         .addOnSuccessListener(new OnSuccessListener<String>() {
                             @Override
                             public void onSuccess(String fileId) {
+                                readFile(fileId);
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
@@ -251,6 +245,71 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+
+
+    private View.OnClickListener deleteFiles = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent();
+            Bundle bundle = new Bundle();
+            //Ready go to the result list
+            intent.setClass(MainActivity.this, DeleteFileActivity.class);
+            bundle.putStringArrayList("ResultList", mQueryFileId);
+            intent.putExtras(bundle);
+            startActivityForResult(intent, RC_DELETE_FILE);
+        }
+    };
+
+    private void queryFile(){
+        if (mDriveServiceHelper != null) {
+            Log.d(TAG, "Querying for files.");
+
+            mDriveServiceHelper.queryFiles()
+                    .addOnSuccessListener(new OnSuccessListener<FileList>() {
+                        @Override
+                        public void onSuccess(FileList fileList) {
+                            List<File> f = fileList.getFiles();
+                            mQueryFileId = new ArrayList<String>();
+                            mQueryFileName = new ArrayList<String>();
+                            mQueriedFileList = fileList;
+
+                            //new一個Bundle物件，並將要傳遞的資料傳入
+                            Log.d(TAG, "Size of filelist: " + fileList.size());
+                            Log.d(TAG, "Size of list: " + f.size());
+
+                            StringBuilder builder = new StringBuilder();
+                            int i = 0;
+                            for (File file : fileList.getFiles()) {
+                                builder.append(file.getName()).append("\n");
+                                //Log.d(TAG, "files name: " + file.getName());
+                                mQueryFileId.add(file.getId());
+                                mQueryFileName.add(file.getName());
+                                Log.d(TAG, "id: " + mQueryFileId.get(i++));
+                            }
+                            String fileNames = builder.toString();
+
+                            mFileTitleEditText.setText("File List");
+                            mDocContentEditText.setText(fileNames);
+
+                            if(f.size() == 0)
+                                mDocContentEditText.setText("No files found");
+
+                            setReadOnlyMode();
+
+
+
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            Log.e(TAG, "Unable to query files.", exception);
+                            //TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
+                            //https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
+                        }
+                    });
+        }
+    }
     /**
      * Retrieves the title and content of a file identified by {@code fileId} and populates the UI.
      */
@@ -275,6 +334,25 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
                             Log.e(TAG, "Couldn't read file.", exception);
+                        }
+                    });
+        }
+    }
+
+   void delete(String Id){
+        if (mDriveServiceHelper != null) {
+            Log.d(TAG, "delete " + Id);
+
+            mDriveServiceHelper.deleteFile(Id)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            Log.e(TAG, "Unable to delete file via REST.", exception);
                         }
                     });
         }
@@ -312,6 +390,15 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "URL is null!");
             }
         }
+        else if(requestCode == RC_QUERY)
+        {
+            //Do nothing for showing list of queried file
+            Log.d(TAG, "Request code is RC_QUERY");
+        }
+        else if (requestCode == RC_DELETE_FILE)
+        {
+            delete(data.getStringExtra("SelectedFiles"));
+        }
     }
 
     private void handleSignInResult(Intent result) {
@@ -338,7 +425,8 @@ public class MainActivity extends AppCompatActivity {
                         updateUI("Ready to use Google drive!");
                     // The DriveServiceHelper encapsulates all REST API and SAF functionality.
                     // Its instantiation is required before handling any onClick actions.
-                    mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
+                    //mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
+                        mDriveServiceHelper =  DriveServiceHelper.getInstance(googleDriveService);
 
                     }
                 })
@@ -366,7 +454,8 @@ public class MainActivity extends AppCompatActivity {
         updateUI("Signed in already. Ready to use Google drive!");
         // The DriveServiceHelper encapsulates all REST API and SAF functionality.
         // Its instantiation is required before handling any onClick actions.
-        mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
+        //mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
+        mDriveServiceHelper = DriveServiceHelper.getInstance(googleDriveService);
     }
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
