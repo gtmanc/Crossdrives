@@ -20,7 +20,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -38,6 +40,7 @@ class DriveServiceHelper {
     private final Drive mDriveService;
     private static DriveServiceHelper mInstance;
     String mPageToken = null;
+    Boolean mIsEnd = false; //A flag indicates if we reach to the end of file in a query
 
     synchronized public static DriveServiceHelper getInstance(Drive driveService){
         if(mInstance == null) {
@@ -158,24 +161,54 @@ class DriveServiceHelper {
      *
      * Google reference for query: https://developers.google.com/drive/api/v3/search-files
      *
+     * A null is returned if there is no more result for a query
+     * To initiate a new query, call method newQuery()
      */
     public Task<FileList> queryFiles() {
         return Tasks.call(mExecutor, new Callable<FileList>() {
             @Override
             public FileList call() throws Exception {
+                FileList files = null;
                 //return mDriveService.files().list().setSpaces("drive").execute();
                 //There could be more result. Use page token to get.
-                FileList files = mDriveService.files().list()
-                        .setSpaces("drive")
-                        .setFields("nextPageToken, files(id, name)")
-                        .setPageToken(mPageToken)
-                        .setPageSize(1)
-                        .execute();
-                mPageToken = files.getNextPageToken();
-                Log.d(TAG, "mPageToken: " + mPageToken);
+                if(mIsEnd != true) {
+                    Log.d(TAG, "mPageToken:" + mPageToken);
+                    files = mDriveService.files().list()
+                            .setSpaces("drive")
+                            .setFields("nextPageToken, files(id, name)")
+                            .setPageToken(mPageToken)
+                            //.setPageSize(12)
+                            .execute();
+
+                    mPageToken = files.getNextPageToken();
+                    if(mPageToken == null){
+                        Log.d(TAG, "There will be no more result for this query");
+                        mIsEnd = true;
+                    }
+                }
+                else
+                {
+                    /*
+                    We are at the end of list. Here simply set an empty List<File> to FileList so that
+                    the caller will get a List with size zero
+                     */
+                    List<File> ffiles = new ArrayList<>();
+                    files = new FileList();
+                    files.setFiles(ffiles);
+                    Log.d(TAG, "We are at the end of list");
+                }
                 return files;
             }
         });
+    }
+
+    /*
+    Reset a query
+     */
+    public void resetQuery()
+    {
+        mIsEnd = false;
+        mPageToken = null;
     }
 
     /**

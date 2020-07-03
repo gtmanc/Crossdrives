@@ -56,7 +56,9 @@ public class QueryResultActivity extends AppCompatActivity {
         //listview.setOnItemClickListener(onClickListView);
         listview.setOnScrollListener(onScrollListener);
     }
-
+    /*
+    * Initial file query
+    */
     private void queryFile(){
 
         if (mDriveServiceHelper != null) {
@@ -64,6 +66,7 @@ public class QueryResultActivity extends AppCompatActivity {
 
             mProgressBar.setVisibility(View.VISIBLE);
 
+            mDriveServiceHelper.resetQuery();
             mDriveServiceHelper.queryFiles()
                     .addOnSuccessListener(new OnSuccessListener<FileList>() {
                         @Override
@@ -150,6 +153,9 @@ public class QueryResultActivity extends AppCompatActivity {
             //Log.d(TAG, "onScrollStateChanged");
         }
 
+        /*
+
+         */
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
             Log.d(TAG, "firstVisibleItem:" +firstVisibleItem);
@@ -167,10 +173,10 @@ public class QueryResultActivity extends AppCompatActivity {
                     final int lastItem = firstVisibleItem + visibleItemCount;
                     //Log.d("Last", "Reaches to the end");
                     if (lastItem == totalItemCount) {
-                        Log.d(TAG, "Reaches to the end");
+                        //Log.d(TAG, "Reaches to the end");
                         if (mPreLast != lastItem) {
                             //to avoid multiple calls for last item
-                            Log.d(TAG, "Last");
+                            //Log.d(TAG, "Last");
                             mPreLast = lastItem;
                             queryFileContinue();
                         }
