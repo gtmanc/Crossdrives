@@ -15,7 +15,8 @@ public class QueryFileAdapter extends BaseAdapter {
     private String TAG = "CD.QueryFileAdapter";
     List<ItemModelBase> mItems;
     LayoutInflater mInflater;
-    ;
+    boolean mCheckBoxVisible = false;
+
     public QueryFileAdapter(Activity activity, List<ItemModelBase> Items) {
         mItems = Items;
         mInflater = activity.getLayoutInflater();
@@ -42,8 +43,8 @@ public class QueryFileAdapter extends BaseAdapter {
 
         Log.d(TAG, "[getView]:position=" + position +"convertView=" + convertView);
 
-        if(position == (getCount()-1))
-            Log.d(TAG, "Reach end of list");
+//        if(position == (getCount()-1))
+//            Log.d(TAG, "Reach end of list");
 
         if (convertView == null){
 
@@ -54,8 +55,6 @@ public class QueryFileAdapter extends BaseAdapter {
             holder.tvItemName = (TextView)convertView.findViewById(R.id.tv_item_name);
             holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
 
-            holder.ivCheckBox.setVisibility(View.GONE);
-
             convertView.setTag(holder);
         }
         else{
@@ -63,6 +62,22 @@ public class QueryFileAdapter extends BaseAdapter {
         }
 
         ItemModelBase model = mItems.get(position);
+        /*
+         Show the check box?
+         */
+        holder.ivCheckBox.setVisibility(View.GONE);
+        if(mCheckBoxVisible == true){
+            holder.ivCheckBox.setVisibility(View.VISIBLE);
+        }
+
+        /*
+         Checked?
+         */
+        if (model.isSelected())
+            holder.ivCheckBox.setBackgroundResource(R.drawable.checked);
+
+        else
+            holder.ivCheckBox.setBackgroundResource(R.drawable.check);
 
         holder.tvItemName.setText(model.getName());
 
@@ -80,5 +95,14 @@ public class QueryFileAdapter extends BaseAdapter {
         this.mItems = users;
 
         notifyDataSetChanged();
+    }
+
+    public void setCheckBoxVisible(boolean visible){
+
+
+        if(visible == true)
+            mCheckBoxVisible = true;
+        else
+            mCheckBoxVisible = false;
     }
 }

@@ -161,8 +161,8 @@ class DriveServiceHelper {
      *
      * Google reference for query: https://developers.google.com/drive/api/v3/search-files
      *
-     * A null is returned if there is no more result for a query
-     * To initiate a new query, call method newQuery()
+     * A empty List<File> is set to FileList and returned if there is no more result for a query
+     * To reset query, call method resetQuery()
      */
     public Task<FileList> queryFiles() {
         return Tasks.call(mExecutor, new Callable<FileList>() {
