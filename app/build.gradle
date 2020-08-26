@@ -17,6 +17,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    //Jenson added for avoid problem from lint: Duplicate Platform Classes
+    //https://github.com/grpc/grpc-java/issues/6782
+    configurations {
+        all {
+            exclude group: 'commons-logging', module: 'commons-logging'
+            exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+        }
+    }
 
     //Jenson added for avoiding error message "More than one file was found ..."
     packagingOptions {
@@ -26,14 +34,15 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 
-    implementation 'com.google.android.gms:play-services-auth:16.0.1'
+    implementation 'com.google.android.gms:play-services-auth:18.1.0'
     implementation 'com.google.http-client:google-http-client-gson:1.26.0'
     implementation 'com.google.api-client:google-api-client-android:1.26.0'
     implementation 'com.google.apis:google-api-services-drive:v3-rev136-1.25.0'

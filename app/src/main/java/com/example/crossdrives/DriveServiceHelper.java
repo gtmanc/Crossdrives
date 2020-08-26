@@ -177,7 +177,8 @@ class DriveServiceHelper {
                             .setSpaces("drive")
                             .setFields("nextPageToken, files(id, name)")
                             .setPageToken(mPageToken)
-                            //.setPageSize(12)
+                            //set to a small number can be used for test of loading more data in UI handling
+                            //.setPageSize(10)
                             .execute();
 
                     mPageToken = files.getNextPageToken();

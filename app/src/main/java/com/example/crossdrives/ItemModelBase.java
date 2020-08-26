@@ -5,6 +5,7 @@ public class ItemModelBase {
     boolean isSelected;
     String mName;
     String mId;
+    int mIdCheckbox;
 
     public ItemModelBase(boolean isSelected, String Name, String id) {
         this.isSelected = isSelected;
@@ -31,4 +32,5 @@ public class ItemModelBase {
     public void setName(String Name) {
         this.mName = Name;
     }
+
 }

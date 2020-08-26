@@ -7,4 +7,16 @@
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/miDelete"
+        android:icon="@drawable/ic_action_delete"
+        app:showAsAction="ifRoom"
+        android:title="Delete">
+    </item>
+    <item
+        android:id="@+id/miAdd"
+        android:icon="@drawable/ic_action_add"
+        app:showAsAction="ifRoom"
+        android:title="Delete">
+    </item>
 </menu>

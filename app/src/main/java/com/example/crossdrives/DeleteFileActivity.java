@@ -24,7 +24,7 @@ public class DeleteFileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_query_result);
         Bundle bundle = this.getIntent().getExtras();
-        ListView listview = (ListView) findViewById(R.id.listview_query);
+        //ListView listview = (ListView) findViewById(R.id.listview_query);
 
         Log.d(TAG, "onCreated");
         //        ArrayAdapter adapter = new ArrayAdapter(this,
@@ -34,8 +34,8 @@ public class DeleteFileActivity extends AppCompatActivity {
         mItems.add(new ItemModelBase(false, "File A", null));
         mItems.add(new ItemModelBase(false, "File B", null));
         mAdapter = new DeleteFileAdapter(this, mItems);
-        listview.setAdapter(mAdapter);
-        listview.setOnItemClickListener(onClickListView);
+//        listview.setAdapter(mAdapter);
+//        listview.setOnItemClickListener(onClickListView);
         setResult(RESULT_OK, mIntent);
     }
 

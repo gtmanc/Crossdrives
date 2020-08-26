@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".query_result"></activity>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -22,8 +22,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".QueryResultActivity"> </activity>
-        <activity android:name=".DeleteFileActivity"> </activity>
+        <activity
+            android:name=".QueryResultActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
+        <activity android:name=".DeleteFileActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
     </application>
 
 </manifest>
