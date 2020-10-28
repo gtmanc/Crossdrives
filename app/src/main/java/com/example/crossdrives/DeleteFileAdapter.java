@@ -47,7 +47,7 @@ public class DeleteFileAdapter extends BaseAdapter {
 
         if (convertView == null){
 
-            convertView = mInflater.inflate(R.layout.delete_list_view_item, parent, false);
+            convertView = mInflater.inflate(R.layout.list_view_item, parent, false);
 
             holder = new ViewHolder();
 

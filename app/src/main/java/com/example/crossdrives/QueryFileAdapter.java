@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,7 +38,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         Log.d(TAG, "[onCreateViewHolder] enter..");
         View view;
         mViewItem = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.delete_list_view_item, parent, false);
+                .inflate(R.layout.list_view_item, parent, false);
         mViewLoading = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.query_item_loading, parent, false);
         final ViewHolder holder;
@@ -227,7 +226,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
 //
 //        if (convertView == null){
 //
-//            convertView = mInflater.inflate(R.layout.delete_list_view_item, parent, false);
+//            convertView = mInflater.inflate(R.layout.list_view_item, parent, false);
 //
 //            holder = new ViewHolder();
 //
