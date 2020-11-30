@@ -46,20 +46,24 @@ public class QueryResultActivity extends AppCompatActivity {
     private String mState = STATE_NORMAL;
     private int mSelectedItemCount = 0;
     private RecyclerView.LayoutManager layoutManager;
+    Toolbar mToolbar_normal;
+    Toolbar mToolbar_contextual;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_query_result_new);
+        setContentView(R.layout.activity_query_result);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar_normal = findViewById(R.id.toolbar);
+        mToolbar_contextual = findViewById(R.id.contextual_toolbar);
+        setSupportActionBar(mToolbar_normal);
 
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 //        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 //        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        toolbar.setNavigationOnClickListener(onNavigationClick);
+        mToolbar_normal.setNavigationOnClickListener(onNavigationClick_NormalBar);
+        mToolbar_contextual.setNavigationOnClickListener(onNavigationClick_ContextuallBar);
         //toolbar.getBackground().setAlpha(0);
         Bundle bundle = this.getIntent().getExtras();
         //ListView listview = (ListView) findViewById(R.id.listview_query);
@@ -222,6 +226,10 @@ public class QueryResultActivity extends AppCompatActivity {
             Log.d(TAG, "Count of selected:" + mSelectedItemCount);
             ItemModelBase item = mItems.get(position);
 
+            if(view == findViewById(R.id.iv_more_vert)){
+                Log.d(TAG, "More_vert pressed!");
+            }
+
             if(mState == STATE_NORMAL) {
                 //TODO: open detail of file
             }else {
@@ -233,6 +241,8 @@ public class QueryResultActivity extends AppCompatActivity {
                     if(mSelectedItemCount == 0) {
                         mAdapter.setCheckBoxVisible(false);
                         mState = STATE_NORMAL;
+
+                        switchNormalActionBar();
                     }
                 }else {
                     /*
@@ -244,11 +254,13 @@ public class QueryResultActivity extends AppCompatActivity {
 
             //now update adapter
             mItems.set(position, item);
-            mAdapter.notifyItemChanged(position);
+            //mAdapter.notifyItemChanged(position);
+            mAdapter.notifyDataSetChanged();
         }
 
         @Override
         public void onItemLongClick(View view, int position) {
+
             Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Long Pressed!", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Long press item:" + position);
             Log.d(TAG, "Count of selected:" + mSelectedItemCount);
@@ -262,6 +274,8 @@ public class QueryResultActivity extends AppCompatActivity {
                 setItemChecked(item, position, true);
                 mAdapter.setCheckBoxVisible(true);
                 mState = STATE_ITEM_SELECTION;
+
+                switchContextualActionBar();
             }else {
                 if(item.isSelected()) {
                     /*
@@ -271,6 +285,8 @@ public class QueryResultActivity extends AppCompatActivity {
                     if(mSelectedItemCount == 0) {
                         mAdapter.setCheckBoxVisible(false);
                         mState = STATE_NORMAL;
+
+                        switchNormalActionBar();
                     }
                 }else {
                     /*
@@ -287,7 +303,7 @@ public class QueryResultActivity extends AppCompatActivity {
 
         @Override
         public void onImageItemClick(View view, int position) {
-
+            Log.d(TAG, "onImageItemClick:" + position);
         }
     };
 
@@ -439,6 +455,23 @@ public class QueryResultActivity extends AppCompatActivity {
             mSelectedItemCount--;
     }
 
+    private void switchContextualActionBar(){
+
+        //Switch to contextual tool bar
+        mToolbar_normal.setVisibility(View.GONE);
+        mToolbar_contextual.setVisibility(View.VISIBLE);
+        setSupportActionBar(mToolbar_contextual);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+    }
+
+    private void switchNormalActionBar(){
+
+        mToolbar_contextual.setVisibility(View.GONE);
+        mToolbar_normal.setVisibility(View.VISIBLE);
+        setSupportActionBar(mToolbar_normal);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+    }
+
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.d(TAG, "onCreateOptionsMenu");
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -468,12 +501,20 @@ public class QueryResultActivity extends AppCompatActivity {
         }
     };
 
-    private View.OnClickListener onNavigationClick = new View.OnClickListener() {
+    private View.OnClickListener onNavigationClick_NormalBar = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Log.d(TAG, "Navigation icon pressed!!");
+            Log.d(TAG, "Normal action bar Navigation icon pressed!!");
         }
     };
+
+    private View.OnClickListener onNavigationClick_ContextuallBar = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Log.d(TAG, "Contextual action bar Navigation icon pressed!!");
+        }
+    };
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

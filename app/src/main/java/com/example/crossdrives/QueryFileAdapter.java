@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
-public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener{
+public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.ViewHolder> implements View.OnLongClickListener{
     private String TAG = "CD.QueryFileAdapter";
     List<ItemModelBase> mItems;
     private final int VIEW_TYPE_ITEM = 0;
@@ -53,7 +53,8 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         holder = new ViewHolder(view);
 
         if(view != mViewLoading) {
-            holder.ItemView.setOnClickListener(this);
+            holder.ItemView.setOnClickListener(this.itemOnClickListener);
+            holder.ivMore.setOnClickListener(this.ImageMoreClickListener);
             holder.ItemView.setOnLongClickListener(this);
 //            holder.ItemView.setOnClickListener(new View.OnClickListener() {
 //                @Override
@@ -86,10 +87,24 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         return holder;
     }
 
-    @Override
-    public void onClick(View v) {
-        mClickListener.onItemClick(v, (int)v.getTag());
-    }
+
+    private View.OnClickListener itemOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+           if (v.getTag() == null)
+                Log.d(TAG, "itemOnClickListener: v.tag is null");
+           mClickListener.onItemClick(v, (int) v.getTag());
+        }
+    };
+
+    private View.OnClickListener ImageMoreClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (v.getTag() == null)
+                Log.d(TAG, "ImageMoreClickListener: v.tag is null");
+            mClickListener.onImageItemClick(v, (int) v.getTag());
+        }
+    };
 
     @Override
     public boolean onLongClick(View v) {
@@ -112,7 +127,9 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
 
         if (holder.ivCheckBox != null) {
             ItemModelBase item = mItems.get(position);
+            //set position to tag in view so that we know the position when click listener is called
             holder.ItemView.setTag(position);
+            holder.ivMore.setTag(position);
             //holder.ivCheckBox.setImageResource(item.getImageId());
             //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
             holder.tvName.setText(item.getName());
@@ -131,11 +148,11 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
             if (item.isSelected()) {
                 Log.d(TAG, "set item [" + Integer.toString(position) + "]" + "checked");
                 //holder.ivCheckBox.setBackgroundResource(R.drawable.checked);
-                holder.ivCheckBox.setImageResource(R.drawable.checked);
+                holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_check_box_24);
             }
             else
                 //holder.ivCheckBox.setBackgroundResource(R.drawable.check);
-                holder.ivCheckBox.setImageResource(R.drawable.check);
+                holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_check_box_outline_blank_24);
         }else{
             Log.d(TAG, "holder is progress bar");
         }
@@ -149,16 +166,18 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
     static class ViewHolder extends RecyclerView.ViewHolder {
         private String TAG = "CD.ViewHolder";
         View ItemView = null;
-        ImageView ivCheckBox;
+        ImageView ivCheckBox, ivMore;
         TextView tvName;
         ProgressBar progressBar = null;
 
         public ViewHolder(View view) {
             super(view);
             Log.d(this.TAG, "[ViewHolder]: enter ");
+
             if(view == mViewItem) {
                 ItemView = view;
                 ivCheckBox = view.findViewById(R.id.iv_check_box);
+                ivMore = view.findViewById(R.id.iv_more_vert);
                 tvName = view.findViewById(R.id.tv_item_name);
             }else {
                 Log.d(this.TAG, " set progress bar");

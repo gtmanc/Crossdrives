@@ -62,10 +62,10 @@ public class DeleteFileAdapter extends BaseAdapter {
         holder.tvItemName.setText(model.getName());
 
         if (model.isSelected())
-            holder.ivCheckBox.setBackgroundResource(R.drawable.checked);
+            holder.ivCheckBox.setBackgroundResource(R.drawable.ic_baseline_check_box_24);
 
         else
-            holder.ivCheckBox.setBackgroundResource(R.drawable.check);
+            holder.ivCheckBox.setBackgroundResource(R.drawable.ic_baseline_check_box_outline_blank_24);
 
         return convertView;
     }

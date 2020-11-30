@@ -7,4 +7,5 @@
 
     <color name="colorBackground">#222222</color>
     <color name="colorToolbarBackground">#363640</color>
+    <color name="colorTextSecondary">#939393</color>
 </resources>
