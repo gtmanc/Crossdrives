@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/drawer_layout"
+    android:fitsSystemWindows="true">
+
+    <!--<com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/dfa_appbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        android:theme="@style/AppTheme.AppBarOverlayMaterial">
+        <com.google.android.material.appbar.MaterialToolbar
+            android:theme="@style/AppTheme.ToolBarOverlayMaterial"
+            android:id="@+id/dfa_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:title="CDS"
+            app:menu="@menu/menu_main"
+            app:popupTheme="@style/AppTheme.PopupOverlay">
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>-->
+    <TextView
+        android:id="@+id/test_text"
+        style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="128dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginBottom="32dp"
+        android:background="@android:color/transparent"
+        android:text="Text_host_activity"
+        android:textColor="@android:color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <fragment
+        android:id="@+id/main_content"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph_del_file" />
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/drawer_header"
+        app:menu="@menu/menu_main_drawer"
+        android:fitsSystemWindows="true" />
+    <!--<fragment
+            android:id="@+id/main_content"
+            android:name="com.example.crossdrives.DeleteFileFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />-->
+    </androidx.drawerlayout.widget.DrawerLayout>

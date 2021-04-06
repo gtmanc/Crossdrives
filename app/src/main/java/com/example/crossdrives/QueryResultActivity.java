@@ -55,6 +55,7 @@ public class QueryResultActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_query_result);
 
+        /*
         mToolbar_normal = findViewById(R.id.toolbar);
         mToolbar_contextual = findViewById(R.id.contextual_toolbar);
         setSupportActionBar(mToolbar_normal);
@@ -88,6 +89,8 @@ public class QueryResultActivity extends AppCompatActivity {
 //        listview.setOnItemClickListener(onClickListView);
 //        listview.setOnItemLongClickListener(onOnItemLongListener);
         recyclerview.addOnScrollListener(onScrollListener);
+
+         */
     }
     /*
     * Initial file query
@@ -515,7 +518,10 @@ public class QueryResultActivity extends AppCompatActivity {
         }
     };
 
-
+    /*
+        We could use navigation UI to go to destinations (fragments).
+        See https://developer.android.com/guide/navigation/navigation-ui
+    */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will

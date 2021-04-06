@@ -1,17 +1,30 @@
 package com.example.crossdrives;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+
+import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteFileActivity extends AppCompatActivity {
+public class DeleteFileActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     private String TAG = "CD.DeleteFileActivity";
     Intent mIntent = new Intent();
         List<ItemModelBase> mItems;
@@ -20,23 +33,41 @@ public class DeleteFileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_query_result);
-        Bundle bundle = this.getIntent().getExtras();
-        //ListView listview = (ListView) findViewById(R.id.listview_query);
+        //setContentView(R.layout.activity_query_result);
+        setContentView(R.layout.activity_delete_file);
 
-        Log.d(TAG, "onCreated");
-        //        ArrayAdapter adapter = new ArrayAdapter(this,
-//                android.R.layout.simple_list_item_1,
-//                mList);
-        mItems = new ArrayList<>();
-        mItems.add(new ItemModelBase(false, "File A", null));
-        mItems.add(new ItemModelBase(false, "File B", null));
-        mAdapter = new DeleteFileAdapter(this, mItems);
-//        listview.setAdapter(mAdapter);
-//        listview.setOnItemClickListener(onClickListView);
-        setResult(RESULT_OK, mIntent);
+//        NavController navController = Navigation.findNavController(this, R.id.main_content);
+//        DrawerLayout drawerLayout= findViewById(R.id.drawer_layout);
+//        Log.d(TAG, "Set appBarConfiguration...");
+//        AppBarConfiguration appBarConfiguration =
+//                new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
+//
+//        Toolbar toolbar = findViewById(R.id.dfa_toolbar);
+//        Log.d(TAG, "Set setupWithNavController...");
+//        NavigationUI.setupWithNavController(
+//                toolbar, navController, appBarConfiguration);
+//
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.main_content);
+        NavController navController = navHostFragment.getNavController();
+        NavigationView navView = findViewById(R.id.nav_view);
+        NavigationUI.setupWithNavController(navView, navController);
+//        Log.d(TAG, "Done...");
+//        if (savedInstanceState == null) {
+//            DeleteFileFragment fragment = new  DeleteFileFragment();
+//            getSupportFragmentManager()
+//                    .beginTransaction()
+//                    .add(R.id.main_content, fragment)
+//                    .commit();
+//        }
     }
+    public boolean onCreateOptionsMenu(Menu menu) {
 
+        getMenuInflater().inflate(R.menu.menu_main_drawer, menu);
+        return true;
+    }
     private AdapterView.OnItemClickListener onClickListView = new AdapterView.OnItemClickListener(){
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -59,4 +90,21 @@ public class DeleteFileActivity extends AppCompatActivity {
             setResult(RESULT_OK, mIntent);
         }
     };
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item){
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.home) {
+            Log.d(TAG, "Home selected!");
+            NavController navController = Navigation.findNavController(this, R.id.main_content);
+            NavigationUI.onNavDestinationSelected(item, navController);
+        }else if(id == R.id.nav_item_two){
+            Log.d(TAG, "nav_item_two selected!");
+        }else{
+            Log.d(TAG, "Unknown selected!");
+        }
+        return true;
+    }
 }
