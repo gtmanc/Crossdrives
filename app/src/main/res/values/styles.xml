@@ -15,6 +15,11 @@
         <item name="android:textColorSecondary">@android:color/white</item>
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorPrimary">@android:color/white</item>
+
+        <item name="colorNavigationItem">@color/drawer_menu_item_color_state</item>
+        <item name="colorNavigationItemSelected">@android:color/holo_blue_light</item>
+        <item name="drawableNavigationItemBackground">@drawable/drawer_menu_item_bg_state</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
@@ -38,5 +43,19 @@
     <!--<item name="android:actionBarStyle">"showHome|useLogo"</item>
     <item name="actionBarStyle">"showHome|useLogo"</item> -->
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="Widget.Custom.NavigationView" parent="Widget.Design.NavigationView">
+        <item name="itemIconTint">?attr/colorNavigationItem</item>
+        <item name="itemTextColor">?attr/colorNavigationItem</item>
+        <item name="itemBackground">?attr/drawableNavigationItemBackground</item>
+        <item name="android:background">@color/colorDrawerBackground</item>
+
+        <!-- Positioning -->
+        <item name="itemIconPadding">48dp</item>-->
+        <!--<item name="itemHorizontalPadding">100dp</item>-->
+
+
+        <item name="itemTextAppearance">@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large</item>
+    </style>
 
 </resources>

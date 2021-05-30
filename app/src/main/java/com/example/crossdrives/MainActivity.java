@@ -2,9 +2,13 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.google.android.gms.auth.api.identity.GetSignInIntentRequest;
+import com.google.android.gms.auth.api.identity.Identity;
+import com.google.android.gms.auth.api.identity.SignInCredential;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -38,6 +42,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +57,7 @@ public class MainActivity extends AppCompatActivity{
     GoogleSignInClient mGoogleSignInClient;
     //Request code used for OnActivityResult
     private static final int RC_SIGN_IN = 0;
+    private static final int REQUEST_CODE_GOOGLE_SIGN_IN = 1; /* unique request id */
     private static final int REQUEST_CODE_OPEN_DOCUMENT = 2;
     private static final int RC_QUERY = 3;
     private static final int RC_DELETE_FILE = 4;
@@ -111,6 +117,7 @@ public class MainActivity extends AppCompatActivity{
         // you might also call GoogleSignInClient.silentSignIn when your app starts.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if(account != null){
+            Toast.makeText(getApplicationContext(), "Alreday signed in" + account.getEmail(), Toast.LENGTH_SHORT).show();
             signInButton.setEnabled(false);
             //updateUI("already signed in");
             requestDriveService(account);
@@ -223,7 +230,7 @@ public class MainActivity extends AppCompatActivity{
     };
 
     /**
-     * Saves the currently opened file created via {@link #createFile()} if one exists.
+     * Saves the currently opened file created via  if one exists.
      */
     private View.OnClickListener saveFile = new View.OnClickListener() {
         @Override
@@ -361,16 +368,65 @@ public class MainActivity extends AppCompatActivity{
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
+//        GetSignInIntentRequest request = GetSignInIntentRequest.builder()
+//                                        .setServerClientId(getString(R.string.server_client_id))
+//                                        .build();
+//
+//        Identity.getSignInClient(getApplicationContext())
+//                .getSignInIntent(request)
+//                .addOnSuccessListener(
+//                        result -> {
+//                            try {
+//                                startIntentSenderForResult(
+//                                        result.getIntentSender(),
+//                                        REQUEST_CODE_GOOGLE_SIGN_IN,
+//                                        /* fillInIntent= */ null,
+//                                        /* flagsMask= */ 0,
+//                                        /* flagsValue= */ 0,
+//                                        /* extraFlags= */ 0,
+//                                        /* options= */ null);
+//                            } catch (IntentSender.SendIntentException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                )
+//                .addOnFailureListener(
+//                        e ->    {
+//                             Log.e(TAG, "unable to start sign in dialog", e);
+//                                });
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(resultCode != Activity.RESULT_OK || data == null) {
-            Log.d(TAG, "resultCode is not OK or intent data is null");
+        if(resultCode != Activity.RESULT_OK) {
+            Log.d(TAG, "resultCode is not OK: [" + resultCode + "]");
+        }
+
+        if(data == null) {
+            Log.d(TAG, "Intent data is null");
             return; //intent data will be null id the uer simply press BACK Button without selecting any file.
         }
+
+        if(data.getExtras() == null) {
+            Log.d(TAG, "Intent.getExtras is null");
+            return; //intent data will be null id the uer simply press BACK Button without selecting any file.
+        }
+
+//        if (requestCode == REQUEST_CODE_GOOGLE_SIGN_IN) {
+//            try {
+//                SignInCredential credential = Identity.getSignInClient(getApplicationContext()).getSignInCredentialFromIntent(data);
+//                // Signed in successfully - show authenticated UI
+//                //updateUI(credential)
+//            } catch (ApiException e) {
+//                // The ApiException status code indicates the detailed failure reason.
+//                // Check following if an exception is captured:
+//                // SHA-1 certificate fingerprint:
+//                // Usually the fingerprint only needs to be entered in google API console once. But needs to be updated for example the android studio is reinstalled. It also has to generate a new fingerprint with your private production key when you prepare to launch your app
+//                Log.e(TAG, "getSignInCredentialFromIntent failed", e);
+//            }
+//        }
 
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
@@ -409,7 +465,7 @@ public class MainActivity extends AppCompatActivity{
                     public void onSuccess(GoogleSignInAccount googleAccount)
                     {
                         Log.d(TAG, "Signed in as " + googleAccount.getEmail());
-                        //updateUI("Signed in as " + googleAccount.getEmail());
+                        updateUI("Signed in as " + googleAccount.getEmail());
 
                         GoogleAccountCredential credential =
                             GoogleAccountCredential.usingOAuth2(
@@ -422,7 +478,8 @@ public class MainActivity extends AppCompatActivity{
                                    credential)
                                     .setApplicationName("Drive API Migration")
                                     .build();
-                        updateUI("Ready to use Google drive!");
+                        Toast.makeText(getApplicationContext(), "Drive service ready with " + googleAccount.getEmail(), Toast.LENGTH_SHORT).show();
+                        //updateUI("Ready to use Google drive!");
                     // The DriveServiceHelper encapsulates all REST API and SAF functionality.
                     // Its instantiation is required before handling any onClick actions.
                     //mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
@@ -451,7 +508,8 @@ public class MainActivity extends AppCompatActivity{
                         credential)
                         .setApplicationName("Drive API Migration")
                         .build();
-        updateUI("Signed in already. Ready to use Google drive!");
+        Toast.makeText(getApplicationContext(), "driver service ready", Toast.LENGTH_SHORT).show();
+        //updateUI("Signed in already. Ready to use Google drive!");
         // The DriveServiceHelper encapsulates all REST API and SAF functionality.
         // Its instantiation is required before handling any onClick actions.
         //mDriveServiceHelper = new DriveServiceHelper(googleDriveService);

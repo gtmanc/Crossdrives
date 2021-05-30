@@ -1,5 +1,9 @@
 <resources>
+    <string name="server_client_id">616064729242-6chc2u905rp15lao2i26c448tdg979e4.apps.googleusercontent.com</string>
+
     <string name="app_name">Crossdrives</string>
     <string name="action_settings">Settings</string>
     <string name="search_hint">search drives</string>
+
+
 </resources>
