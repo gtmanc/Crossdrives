@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -33,8 +32,8 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
 
-        View v = inflater.inflate(R.layout.fragment_test, container, false);
-        v.findViewById(R.id.hit_me_button).setOnClickListener(this);
+        View v = inflater.inflate(R.layout.delete_file_fragment, container, false);
+        //v.findViewById(R.id.hit_me_button).setOnClickListener(this);
 
 //        NavigationView navigationView = (NavigationView) v.findViewById(R.id.nav_view);
 //        navigationView.setNavigationItemSelectedListener(this);
@@ -47,26 +46,26 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
         Log.d(TAG, "onViewCreated");
         super.onViewCreated(view, savedInstanceState);
 
-        NavController navController = Navigation.findNavController(view);
-        DrawerLayout drawerLayout= view.findViewById(R.id.layout_fragment_test);
-        mDrawer = drawerLayout;
-        drawerLayout.addDrawerListener(this);
+//        NavController navController = Navigation.findNavController(view);
+//        DrawerLayout drawerLayout= view.findViewById(R.id.layout_fragment_test);
+//        mDrawer = drawerLayout;
+//        drawerLayout.addDrawerListener(this);
 
-        AppBarConfiguration appBarConfiguration =
-                new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
-        Toolbar toolbar = view.findViewById(R.id.ft_toolbar);
-
-        NavigationUI.setupWithNavController(
-                toolbar, navController, appBarConfiguration);
-
-        NavigationView navigationView = view.findViewById(R.id.ft_nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+//        AppBarConfiguration appBarConfiguration =
+//                new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
+//        Toolbar toolbar = view.findViewById(R.id.ft_toolbar);
+//
+//        NavigationUI.setupWithNavController(
+//                toolbar, navController, appBarConfiguration);
+//
+//        NavigationView navigationView = view.findViewById(R.id.ft_nav_view);
+//        navigationView.setNavigationItemSelectedListener(this);
 
     }
 
     @Override
     public void onClick(View v) {
-        NavDirections a = DeleteFileFragmentDirections.navigateToHome();
+        NavDirections a = DeleteFileFragmentDirections.navigateToMasterAccount();
         NavHostFragment.findNavController(this).navigate(a);
     }
     @Override
@@ -83,7 +82,7 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
             Log.d(TAG, "Home selected!");
 //            NavDirections a = DeleteFileFragmentDirections.navigateToHome();
 //            NavHostFragment.findNavController(this).navigate(a);
-        }else if(id == R.id.nav_item_two){
+        }else if(id == R.id.drawer_menu_item_two){
             Log.d(TAG, "nav_item_two selected!");
         }else{
             Log.d(TAG, "Unknown selected!");
@@ -104,13 +103,6 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onDrawerClosed(@NonNull View drawerView) {
-
-        if(mMenuIDSelected == R.id.home){
-            Log.d(TAG, "Transit to HOME...");
-            NavDirections a = DeleteFileFragmentDirections.navigateToHome();
-            NavHostFragment.findNavController(this).navigate(a);
-            mMenuIDSelected = 0;
-        }
 
     }
 

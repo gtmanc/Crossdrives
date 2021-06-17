@@ -13,10 +13,10 @@ import java.util.List;
 
 public class DeleteFileAdapter extends BaseAdapter {
     private String TAG = "CD.DeleteFileAdapter";
-    List<ItemModelBase> mItems;
+    List<SerachResultItemModel> mItems;
     LayoutInflater mInflater;
     ;
-    public DeleteFileAdapter(Activity activity, List<ItemModelBase> Items) {
+    public DeleteFileAdapter(Activity activity, List<SerachResultItemModel> Items) {
         mItems = Items;
         mInflater = activity.getLayoutInflater();
     }
@@ -57,7 +57,7 @@ public class DeleteFileAdapter extends BaseAdapter {
             holder = (DeleteFileAdapter.ViewHolder)convertView.getTag();
         }
 
-        ItemModelBase model = mItems.get(position);
+        SerachResultItemModel model = mItems.get(position);
 
         holder.tvItemName.setText(model.getName());
 
@@ -78,7 +78,7 @@ public class DeleteFileAdapter extends BaseAdapter {
 
     }
 
-    public void updateRecords(List<ItemModelBase> users){
+    public void updateRecords(List<SerachResultItemModel> users){
         this.mItems = users;
 
         notifyDataSetChanged();

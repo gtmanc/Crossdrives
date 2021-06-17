@@ -1,14 +1,9 @@
 package com.example.crossdrives;
 
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import android.content.Intent;
@@ -21,13 +16,12 @@ import android.widget.AdapterView;
 
 import com.google.android.material.navigation.NavigationView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DeleteFileActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     private String TAG = "CD.DeleteFileActivity";
     Intent mIntent = new Intent();
-        List<ItemModelBase> mItems;
+        List<SerachResultItemModel> mItems;
     DeleteFileAdapter mAdapter;
 
     @Override
@@ -75,7 +69,7 @@ public class DeleteFileActivity extends AppCompatActivity implements NavigationV
             // Toast 快顯功能 第三個參數 Toast.LENGTH_SHORT 2秒  LENGTH_LONG 5秒
             //Toast.makeText(QueryResultActivity.this,"點選第 "+(position +1) +" 個 \n內容：" + mList.get(position), Toast.LENGTH_SHORT).show();
 
-            ItemModelBase model = mItems.get(position);
+            SerachResultItemModel model = mItems.get(position);
 
             if (model.isSelected())
                 model.setSelected(false);
@@ -100,7 +94,7 @@ public class DeleteFileActivity extends AppCompatActivity implements NavigationV
             Log.d(TAG, "Home selected!");
             NavController navController = Navigation.findNavController(this, R.id.main_content);
             NavigationUI.onNavDestinationSelected(item, navController);
-        }else if(id == R.id.nav_item_two){
+        }else if(id == R.id.drawer_menu_item_two){
             Log.d(TAG, "nav_item_two selected!");
         }else{
             Log.d(TAG, "Unknown selected!");

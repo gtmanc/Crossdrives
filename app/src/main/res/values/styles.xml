@@ -58,4 +58,12 @@
         <item name="itemTextAppearance">@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large</item>
     </style>
 
+    <style name="Widget.Custom.Button" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/drawer_add_account_button_background</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle</item>
+        <item name="android:textColor">@color/colorTextAddAccountButton</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+    </style>
+
 </resources>

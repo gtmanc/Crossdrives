@@ -1,10 +1,8 @@
 package com.example.crossdrives;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +11,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -42,7 +39,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
     private DriveServiceHelper mDriveServiceHelper;
     private RecyclerView.LayoutManager mLayoutManager;
-    private ArrayList<ItemModelBase> mItems;
+    private ArrayList<SerachResultItemModel> mItems;
     private RecyclerView mRecyclerView = null;
     private QueryFileAdapter mAdapter;
 
@@ -131,7 +128,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             Log.i(TAG, "Number of files: " + f.size());
                             for (File file : fileList.getFiles()) {
                                 //Log.d(TAG, "files name: " + file.getName());
-                                mItems.add(new ItemModelBase(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
                             }
 
                             mAdapter = new QueryFileAdapter(mItems);
@@ -143,7 +140,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             //The files are ready to be shown. Dismiss the progress cycle
                             //mProgressBar.setVisibility(View.GONE);
 
-                            //setResult(RESULT_OK, mIntent);
+                            //setResult(RESULT_OK, mIntent);itemClickListener
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -187,7 +184,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             for (File file : fileList.getFiles()) {
                                 //Log.d(TAG, "files name: " + file.getName());
                                 //ItemModelBase item = mItems.get(i);
-                                mItems.add(new ItemModelBase(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
                                 //item.setName(file.getName());
                                 i++;
                             }
@@ -241,7 +238,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
             Log.i(TAG, "Short press item:" + position);
             Log.i(TAG, "Count of selected:" + mSelectedItemCount);
-            ItemModelBase item = mItems.get(position);
+            SerachResultItemModel item = mItems.get(position);
 
             if (view == view.findViewById(R.id.iv_more_vert)) {
                 Log.i(TAG, "More_vert pressed!");
@@ -282,7 +279,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             Log.i(TAG, "Long press item:" + position);
             Log.i(TAG, "Count of selected:" + mSelectedItemCount);
 
-            ItemModelBase item = mItems.get(position);
+            SerachResultItemModel item = mItems.get(position);
 
             if(mState == STATE_NORMAL) {
                 /*
@@ -323,7 +320,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             Log.i(TAG, "onImageItemClick:" + position);
         }
     };
-    private void setItemChecked(ItemModelBase item, int position, boolean checked){
+    private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
 
         if(checked == false && mSelectedItemCount <= 0) {
             Log.i(TAG, "No item should be unchecked!!");
@@ -361,11 +358,20 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
     @Override
     public void onDrawerClosed(@NonNull View drawerView) {
         MenuItem item = mNavigationView.getCheckedItem();
+        Log.d(TAG, "navigate to: ");
         if(item != null){
-            Log.d(TAG, "checked item: "+ item.getItemId());
-            if(item.getItemId() == R.id.home) {
-                NavDirections a = DeleteFileFragmentDirections.navigateToHome();
+            if(item.getItemId() == R.id.drawer_menu_item_master_account) {
+                Log.d(TAG, "Master account fragment");
+                NavDirections a = QueryResultFragmentDirections.navigateToMasterAccount();
                 NavHostFragment.findNavController(this).navigate(a);
+            }
+            else if(item.getItemId() == R.id.drawer_menu_item_two){
+                Log.d(TAG, "delete file fragment");
+                NavDirections a = QueryResultFragmentDirections.navigateToDeleteFile();
+                NavHostFragment.findNavController(this).navigate(a);
+            }
+            else{
+                Log.d(TAG, "Oops, unknown ID");
             }
         }
         //It's unclear how to clear(reset) a checked item once it is checked.
@@ -391,9 +397,9 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
         //The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
         //drawer is closed exactly before screen proceed to next one
-        if (id == R.id.home) {
-            Log.d(TAG, "Home selected!");
-        }else if(id == R.id.nav_item_two){
+        if (id == R.id.drawer_menu_item_master_account) {
+            Log.d(TAG, "Master account selected!");
+        }else if(id == R.id.drawer_menu_item_two){
             Log.d(TAG, "nav_item_two selected!");
         }else if(id == R.id.nav_item_hidden){
             Log.d(TAG, "nav_item_three selected!");

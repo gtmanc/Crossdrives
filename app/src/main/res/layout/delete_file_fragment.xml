@@ -7,6 +7,38 @@
     android:layout_marginLeft="0dp"
     app:layout_constraintStart_toStartOf="parent">
 
+    <TextView
+        android:id="@+id/MaterialComponents.Headline1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="48dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:text="MaterialComponents.Headline1"
+        android:textColor="@android:color/white"
+        android:textAppearance=
+            "@style/TextAppearance.MaterialComponents.Headline1" />
+    <TextView
+        android:id="@+id/MaterialComponents.Headline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/MaterialComponents.Headline1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:text="MaterialComponents.Headline2"
+        android:textColor="@android:color/white"
+        android:textAppearance=
+            "@style/TextAppearance.MaterialComponents.Headline2" />
+    <TextView
+        android:id="@+id/MaterialComponents.Body1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/MaterialComponents.Headline2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:text="MaterialComponents.Body1"
+        android:textColor="@android:color/white"
+        android:textAppearance=
+            "@style/TextAppearance.MaterialComponents.Body1" />
+
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/dff_appbar"
         android:layout_width="match_parent"
@@ -31,32 +63,5 @@
             app:title="CDS"></com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <TextView
-        android:id="@+id/text_activity_delete_host"
-        style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:layout_marginBottom="48dp"
-        android:background="@android:color/transparent"
-        android:text="CDS_HELLO"
-        android:textColor="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/hit_me_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="196dp"
-        android:text="Hit me"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.6"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.6" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

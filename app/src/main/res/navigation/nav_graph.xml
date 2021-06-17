@@ -7,14 +7,32 @@
     <fragment
         android:id="@+id/query_result_fragment"
         android:name="com.example.crossdrives.QueryResultFragment"
-        tools:layout="@layout/query_result_fragment"/>
+        tools:layout="@layout/query_result_fragment" >
     <!-- android:label="DFF"-->
-    <action
-        android:id="@+id/navigate_to_home"
-        app:destination="@id/home" />
+        <action
+            android:id="@+id/navigate_to_master_account"
+            app:destination="@id/drawer_menu_item_master_account" />
+        <action
+            android:id="@+id/navigate_to_delete_file"
+            app:destination="@id/delete_file_fragment" />
+    </fragment>
 
     <fragment
-        android:id="@+id/home"
-        android:name="com.example.crossdrives.HomeFragment"
-        tools:layout="@layout/home_fragment"/>
+        android:id="@+id/drawer_menu_item_master_account"
+        android:name="com.example.crossdrives.MasterAccountFragment"
+        tools:layout="@layout/master_account_fragment">
+        <action
+            android:id="@+id/navigate_to_add_account"
+            app:destination="@id/add_account_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/add_account_fragment"
+        android:name="com.example.crossdrives.AddAccountFragment"
+        tools:layout="@layout/add_account_fragment"/>
+
+    <fragment
+        android:id="@+id/delete_file_fragment"
+        android:name="com.example.crossdrives.DeleteFileFragment"
+        tools:layout="@layout/delete_file_fragment"/>
 </navigation>

@@ -11,8 +11,10 @@
     <color name="colorDrawerBackground">#303030</color>
     <color name="colorDrawerHeaderBackground">#4A148C</color>
     <color name="colorDrawerMenuItemBG">#939393</color>
+    <color name="colorAddAccountButtonBackground">#00ACC1</color>
 
 
     <!--text-->
     <color name="colorTextSecondary">#939393</color>
+    <color name="colorTextAddAccountButton">#1B1B1B</color>
 </resources>

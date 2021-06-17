@@ -400,6 +400,8 @@ public class MainActivity extends AppCompatActivity{
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        Log.d(TAG, "onActivityResult");
+
         if(resultCode != Activity.RESULT_OK) {
             Log.d(TAG, "resultCode is not OK: [" + resultCode + "]");
         }

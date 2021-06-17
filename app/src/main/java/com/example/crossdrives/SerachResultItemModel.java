@@ -1,12 +1,12 @@
 package com.example.crossdrives;
 
-public class ItemModelBase {
+public class SerachResultItemModel {
 
     boolean isSelected;
     String mName;
     String mId;
 
-    public ItemModelBase(boolean isSelected, String Name, String id) {
+    public SerachResultItemModel(boolean isSelected, String Name, String id) {
         this.isSelected = isSelected;
         this.mName = Name;
         mId = id;

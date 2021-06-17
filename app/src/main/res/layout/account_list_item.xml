@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="@layout/master_account_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardBackgroundColor="@color/colorDrawerBackground"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="8dp"
+    app:cardMaxElevation="10dp"
+    app:cardPreventCornerOverlap="true"
+    app:cardUseCompatPadding="true">
+    <!--
+        In the above cardview widget
+        cardelevation property will give elevation to your card view
+        card corner radius will provide radius to your card view
+        card background color will give background color to your card view
+        card max elevation will give the cardview maximum elevation
+        card prevent corner overlap will add padding to CardView on v20 and
+        before to prevent intersections between the Card content and rounded corners.
+        card use compact padding will add padding in API v21+ as well to have the same
+        measurements with previous versions.
+    -->
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <de.hdodenhof.circleimageview.CircleImageView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/account_profile_image"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="@id/left_guideline"
+            android:src="@drawable/ic_profile_pic_text"
+            app:civ_border_width="1dp"
+            app:civ_border_color="@color/colorDrawerHeaderBackground"
+            />
+
+        <TextView
+            android:id="@+id/account_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="8dp"
+            app:layout_constraintLeft_toRightOf="@+id/account_profile_image"
+            android:layout_marginLeft="16dp"
+            android:text="Name"
+            android:textColor="?attr/colorPrimary"
+            android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
+            />
+        <TextView
+            android:id="@+id/account_mail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/account_name"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintLeft_toRightOf="@+id/account_profile_image"
+            android:layout_marginLeft="16dp"
+            android:text="noname@gmail.com"
+            android:textColor="?attr/colorPrimary"
+            android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
+            />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/left_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.1" />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/right_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.9" />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/top_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.15" />
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/Bottom_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.85" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

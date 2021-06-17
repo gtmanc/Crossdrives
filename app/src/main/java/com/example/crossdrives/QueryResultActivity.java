@@ -36,7 +36,7 @@ public class QueryResultActivity extends AppCompatActivity {
     final String STATE_ITEM_SELECTION = "state_selection";
 
     private String TAG = "CD.QueryResultActivity";
-    private ArrayList<ItemModelBase> mItems;
+    private ArrayList<SerachResultItemModel> mItems;
     private QueryFileAdapter mAdapter;
     private Intent mIntent;
     private int mPreLast = 0;
@@ -115,7 +115,7 @@ public class QueryResultActivity extends AppCompatActivity {
                             Log.d(TAG, "Number of files: " + f.size());
                             for (File file : fileList.getFiles()) {
                                 //Log.d(TAG, "files name: " + file.getName());
-                                mItems.add(new ItemModelBase(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
                             }
 
                             mAdapter = new QueryFileAdapter(mItems);
@@ -172,7 +172,7 @@ public class QueryResultActivity extends AppCompatActivity {
                             for (File file : fileList.getFiles()) {
                                 //Log.d(TAG, "files name: " + file.getName());
                                 //ItemModelBase item = mItems.get(i);
-                                mItems.add(new ItemModelBase(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
                                 //item.setName(file.getName());
                                 i++;
                             }
@@ -227,7 +227,7 @@ public class QueryResultActivity extends AppCompatActivity {
             Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Short press item:" + position);
             Log.d(TAG, "Count of selected:" + mSelectedItemCount);
-            ItemModelBase item = mItems.get(position);
+            SerachResultItemModel item = mItems.get(position);
 
             if(view == findViewById(R.id.iv_more_vert)){
                 Log.d(TAG, "More_vert pressed!");
@@ -268,7 +268,7 @@ public class QueryResultActivity extends AppCompatActivity {
             Log.d(TAG, "Long press item:" + position);
             Log.d(TAG, "Count of selected:" + mSelectedItemCount);
 
-            ItemModelBase item = mItems.get(position);
+            SerachResultItemModel item = mItems.get(position);
 
             if(mState == STATE_NORMAL) {
                 /*
@@ -444,7 +444,7 @@ public class QueryResultActivity extends AppCompatActivity {
 //        }
 //    };
 //
-    private void setItemChecked(ItemModelBase item, int position, boolean checked){
+    private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
 
         if(checked == false && mSelectedItemCount <= 0) {
             Log.d(TAG, "No item should be unchecked!!");

@@ -14,14 +14,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.ViewHolder> implements View.OnLongClickListener{
     private String TAG = "CD.QueryFileAdapter";
-    List<ItemModelBase> mItems;
+    List<SerachResultItemModel> mItems;
     private final int VIEW_TYPE_ITEM = 0;
     private final int VIEW_TYPE_LOADING = 1;
     static private View mViewItem = null, mViewLoading = null;
     private OnItemClickListener mClickListener;
     boolean mCheckBoxVisible = false;
 
-    public QueryFileAdapter(List<ItemModelBase> Items){mItems = Items;}
+    public QueryFileAdapter(List<SerachResultItemModel> Items){mItems = Items;}
 
     //An interface for the caller activity
     public static interface OnItemClickListener {
@@ -126,7 +126,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         Log.d(TAG, "[onBindViewHolder]:position=" + position);
 
         if (holder.ivCheckBox != null) {
-            ItemModelBase item = mItems.get(position);
+            SerachResultItemModel item = mItems.get(position);
             //set position to tag in view so that we know the position when click listener is called
             holder.ItemView.setTag(position);
             holder.ivMore.setTag(position);
