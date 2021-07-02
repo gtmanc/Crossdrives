@@ -12,9 +12,6 @@
         <action
             android:id="@+id/navigate_to_master_account"
             app:destination="@id/drawer_menu_item_master_account" />
-        <action
-            android:id="@+id/navigate_to_delete_file"
-            app:destination="@id/delete_file_fragment" />
     </fragment>
     <fragment
         android:id="@+id/drawer_menu_item_master_account"

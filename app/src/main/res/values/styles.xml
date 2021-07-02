@@ -12,15 +12,32 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/white</item>
+        <item name="android:textColorSecondary">@android:color/darker_gray</item>
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:colorBackground">@color/colorBackground</item>
         <item name="colorPrimary">@android:color/white</item>
+        <item name="colorSecondary">@android:color/darker_gray</item>
 
         <item name="colorNavigationItem">@color/drawer_menu_item_color_state</item>
         <item name="colorNavigationItemSelected">@android:color/holo_blue_light</item>
         <item name="drawableNavigationItemBackground">@drawable/drawer_menu_item_bg_state</item>
+
+        <item name="button1Background">@drawable/button1_background_state</item>
+        <item name="colorButton1BackgroundPress">@color/colorButton1BackgroundPress</item>
+        <item name="colorButton1BackgroundRelease">@color/colorButton1BackgroundRelease</item>
+        <item name="colorButton1Content">@color/button2_content_color_state</item>
+        <item name="colorButton1ContentPress">@color/colorButton1BackgroundRelease</item>
+        <item name="colorButton1ContentRelease">@android:color/white</item>
+
+        <item name="button2Background">@drawable/button2_background_state</item>
+        <item name="colorButton2BackgroundPress">@color/colorButton1BackgroundPress</item>
+        <item name="colorButton2BackgroundRelease">@color/colorBackground</item>
+        <item name="colorButton2Stroke">@color/colorButton1BackgroundRelease</item>
+        <item name="colorButton2Content">@color/button1_content_color_state</item>
+        <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
+        <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
     </style>
+
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
@@ -51,19 +68,11 @@
         <item name="android:background">@color/colorDrawerBackground</item>
 
         <!-- Positioning -->
-        <item name="itemIconPadding">48dp</item>-->
+        <item name="itemIconPadding">24dp</item>-->
         <!--<item name="itemHorizontalPadding">100dp</item>-->
-
-
-        <item name="itemTextAppearance">@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large</item>
+        <item name="itemTextAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
     </style>
 
-    <style name="Widget.Custom.Button" parent="Widget.AppCompat.Button">
-        <item name="android:background">@drawable/drawer_add_account_button_background</item>
-        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle</item>
-        <item name="android:textColor">@color/colorTextAddAccountButton</item>
-        <item name="android:paddingLeft">16dp</item>
-        <item name="android:paddingRight">16dp</item>
-    </style>
+    <!-- Buttons -->
 
 </resources>

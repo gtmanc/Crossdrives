@@ -125,9 +125,9 @@ public class BranchAccountFragment extends Fragment{
         ArrayList<AccountListModel> account_list = new ArrayList<>();
 
         //For test
-        AccountListModel account = new AccountListModel("My name");
+        //AccountListModel account = new AccountListModel("My Brand");
 
-        account_list.add(account);
+        //account_list.add(account);
 
         return account_list;
     }

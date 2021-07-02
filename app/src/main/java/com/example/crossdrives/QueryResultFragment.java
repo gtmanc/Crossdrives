@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -50,10 +52,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
-
-        mDriveServiceHelper = DriveServiceHelper.getInstance(null);
+        Log.d(TAG, "onCreate");
     }
 
     @Nullable
@@ -62,6 +62,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         Log.i(TAG, "onCreateView");
 
         View v = inflater.inflate(R.layout.query_result_fragment, container, false);
+
+        mDriveServiceHelper = DriveServiceHelper.getInstance();
 
         return v;
     }
@@ -78,10 +80,16 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
         AppBarConfiguration appBarConfiguration =
                 new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
+
         Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
+
+        //Note: drawer doenst work if this line of code is added after setupWithNavController
+        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
 
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
+
+
 
         mNavigationView = view.findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
@@ -362,7 +370,10 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         if(item != null){
             if(item.getItemId() == R.id.drawer_menu_item_master_account) {
                 Log.d(TAG, "Master account fragment");
-                NavDirections a = QueryResultFragmentDirections.navigateToMasterAccount();
+//                QueryResultFragmentDirections.NavigateToMasterAccount action =
+//                        QueryResultFragmentDirections.navigateToMasterAccount();
+//                action.setMyArg(100);
+                NavDirections a = QueryResultFragmentDirections.navigateToMasterAccount(null);
                 NavHostFragment.findNavController(this).navigate(a);
             }
             else if(item.getItemId() == R.id.drawer_menu_item_two){

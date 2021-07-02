@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity{
                     // The DriveServiceHelper encapsulates all REST API and SAF functionality.
                     // Its instantiation is required before handling any onClick actions.
                     //mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
-                        mDriveServiceHelper =  DriveServiceHelper.getInstance(googleDriveService);
+                        mDriveServiceHelper =  DriveServiceHelper.Create(googleDriveService);
 
                     }
                 })
@@ -515,7 +515,7 @@ public class MainActivity extends AppCompatActivity{
         // The DriveServiceHelper encapsulates all REST API and SAF functionality.
         // Its instantiation is required before handling any onClick actions.
         //mDriveServiceHelper = new DriveServiceHelper(googleDriveService);
-        mDriveServiceHelper = DriveServiceHelper.getInstance(googleDriveService);
+        mDriveServiceHelper = DriveServiceHelper.Create(googleDriveService);
     }
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {

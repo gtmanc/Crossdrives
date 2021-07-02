@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button2: Add master account (navigate to add master account fragment)-->
+    <style name="Widget.Custom.Button2" parent="Widget.AppCompat.Button">
+        <item name="android:background">?attr/button2Background</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
+        <item name="android:textColor">?attr/colorButton2Content</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:drawableTint">?attr/colorButton2Content</item>
+    </style>
+    <!-- Button1: Add master account brand-->
+    <style name="Widget.Custom.Button1" parent="Widget.AppCompat.Button">
+        <item name="android:background">?attr/button1Background</item>
+        <item name="android:textAppearance">
+            @style/TextAppearance.AppCompat.Light.SearchResult.Subtitle
+        </item>
+        <item name="android:textColor">?attr/colorButton1Content</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:drawableTint">?attr/colorButton1Content</item>
+    </style>
+</resources>

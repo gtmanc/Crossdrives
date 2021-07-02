@@ -42,15 +42,20 @@ class DriveServiceHelper {
     String mPageToken = null;
     Boolean mIsEnd = false; //A flag indicates if we reach to the end of file in a query
 
-    synchronized public static DriveServiceHelper getInstance(Drive driveService){
+    synchronized public static DriveServiceHelper Create(Drive driveService){
         if(mInstance == null) {
             mInstance = new DriveServiceHelper(driveService);
-            //Log.d(TAG, "New:" + mInstance);
+            Log.d(TAG, "mInstance:" + mInstance);
         }
 
         //Log.d(TAG, "return:" + mInstance);
         return mInstance;
     }
+
+    public static DriveServiceHelper getInstance(){
+        return mInstance;
+    }
+
     public DriveServiceHelper(Drive driveService) {
         mDriveService = driveService;
     }
@@ -171,6 +176,9 @@ class DriveServiceHelper {
                 FileList files = null;
                 //return mDriveService.files().list().setSpaces("drive").execute();
                 //There could be more result. Use page token to get.
+                if(mDriveService == null){
+                    Log.w(TAG, "mDriveService is null!");
+                }
                 if(mIsEnd != true) {
                     Log.d(TAG, "mPageToken:" + mPageToken);
                     files = mDriveService.files().list()

@@ -37,7 +37,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
         />
 
-    <TextView
+    <!--<TextView
         android:id="@+id/tv_account_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -48,24 +48,54 @@
         android:text="Add a master account"
         android:textColor="?attr/colorPrimary"
         android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
-        />
+        />-->
+
 
     <ImageView
-        android:id="@+id/iv_account_add"
+        android:id="@+id/iv_info_no_account"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/master_accounts_appbar"
-        android:layout_marginTop="16dp"
-        app:layout_constraintRight_toLeftOf="@+id/tv_account_add"
-        android:layout_marginRight="8dp"
-        android:background="@drawable/ic_baseline_person_add_24" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:background="@drawable/ic_baseline_error_outline_24"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/tv_info_no_account_available"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/iv_info_no_account"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:text="@string/info_no_master_account_available"
+        android:textColor="?attr/colorPrimary"
+        android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
+        android:visibility="gone"
+        />
 
     <include
+        android:id="@+id/account_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/title_master_account"
         android:layout_marginTop="16dp"
         app:layout_constraintLeft_toLeftOf="parent"
-        layout="@layout/account_list_item"></include>
+        layout="@layout/account_list_item">
+    </include>
+
+    <Button
+        android:id="@+id/add_account_btn"
+        style="@style/Widget.Custom.Button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_add_a_master_account"
+        app:layout_constraintTop_toBottomOf="@+id/account_list"
+        android:layout_marginTop = "16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginLeft="16dp"
+        android:drawableLeft="@drawable/ic_baseline_person_add_24"
+        android:drawablePadding="8dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

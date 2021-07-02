@@ -2,6 +2,21 @@
 <resources>
     <attr name="colorNavigationItem" format="color" />
     <attr name="colorNavigationItemSelected" format="color" />
-
     <attr name="drawableNavigationItemBackground" format="reference" />
+
+    <attr name="button1Background" format="reference" />
+    <attr name="colorButton1BackgroundPress" format="color" />
+    <attr name="colorButton1BackgroundRelease" format="color" />
+    <attr name="colorButton1Content" format="color" />
+    <attr name="colorButton1ContentPress" format="color" />
+    <attr name="colorButton1ContentRelease" format="color" />
+
+    <attr name="button2Background" format="reference" />
+    <attr name="colorButton2BackgroundPress" format="color" />
+    <attr name="colorButton2BackgroundRelease" format="color" />
+    <attr name="colorButton2Content" format="color" />
+    <attr name="colorButton2ContentPress" format="color" />
+    <attr name="colorButton2ContentRelease" format="color" />
+    <attr name="colorButton2Stroke" format="color" />
+
 </resources>
