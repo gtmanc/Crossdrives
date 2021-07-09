@@ -127,10 +127,10 @@ public class QueryResultActivity extends AppCompatActivity {
                             Log.d(TAG, "Number of files: " + f.size());
                             for (File file : fileList.getFiles()) {
                                 //Log.d(TAG, "files name: " + file.getName());
-                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
                             }
 
-                            mAdapter = new QueryFileAdapter(mItems);
+                            mAdapter = new QueryFileAdapter(mItems, getApplicationContext());
                             mAdapter.setOnItemClickListener(itemClickListener);
                             recyclerView.setAdapter(mAdapter);
 
@@ -183,8 +183,8 @@ public class QueryResultActivity extends AppCompatActivity {
 
                             for (File file : fileList.getFiles()) {
                                 //Log.d(TAG, "files name: " + file.getName());
-                                //ItemModelBase item = mItems.get(i);
-                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
+                                //ItemModelBagetCreatedTimese item = mItems.get(i);
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
                                 //item.setName(file.getName());
                                 i++;
                             }
@@ -254,7 +254,7 @@ public class QueryResultActivity extends AppCompatActivity {
                     */
                     setItemChecked(item, position, false);
                     if(mSelectedItemCount == 0) {
-                        mAdapter.setCheckBoxVisible(false);
+                        mAdapter.setOverflowIconVisible(true);
                         mState = STATE_NORMAL;
 
                         switchNormalActionBar();
@@ -287,7 +287,7 @@ public class QueryResultActivity extends AppCompatActivity {
                 Switch to item selection state
                  */
                 setItemChecked(item, position, true);
-                mAdapter.setCheckBoxVisible(true);
+                mAdapter.setOverflowIconVisible(false);
                 mState = STATE_ITEM_SELECTION;
 
                 switchContextualActionBar();
@@ -298,7 +298,7 @@ public class QueryResultActivity extends AppCompatActivity {
                     */
                     setItemChecked(item, position, false);
                     if(mSelectedItemCount == 0) {
-                        mAdapter.setCheckBoxVisible(false);
+                        mAdapter.setOverflowIconVisible(true);
                         mState = STATE_NORMAL;
 
                         switchNormalActionBar();

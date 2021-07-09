@@ -43,6 +43,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
     private RecyclerView.LayoutManager mLayoutManager;
     private ArrayList<SerachResultItemModel> mItems;
     private RecyclerView mRecyclerView = null;
+    private View mProgressBar = null;
     private QueryFileAdapter mAdapter;
 
     final String STATE_NORMAL = "state_normal";
@@ -82,6 +83,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                 new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
 
         Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
+        mProgressBar = view.findViewById(R.id.progressBar);
 
         //Note: drawer doenst work if this line of code is added after setupWithNavController
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
@@ -97,6 +99,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
         initialQuery(view);
 
+        mProgressBar.setVisibility(View.VISIBLE);
         queryFile(view);
     }
     /*
@@ -135,11 +138,15 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             mItems = new ArrayList<>();
                             Log.i(TAG, "Number of files: " + f.size());
                             for (File file : fileList.getFiles()) {
+//                                if(file.getModifiedTime() == null){
+//                                    Log.w(TAG, "Modified dateTime is null");
+//                                }
+
                                 //Log.d(TAG, "files name: " + file.getName());
-                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
                             }
 
-                            mAdapter = new QueryFileAdapter(mItems);
+                            mAdapter = new QueryFileAdapter(mItems, getContext());
                             mAdapter.setOnItemClickListener(itemClickListener);
                             mRecyclerView.setAdapter(mAdapter);
 
@@ -149,7 +156,9 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             //mProgressBar.setVisibility(View.GONE);
 
                             //setResult(RESULT_OK, mIntent);itemClickListener
+                            mProgressBar.setVisibility(View.INVISIBLE);
                         }
+
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
@@ -158,6 +167,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             Log.e(TAG, "Unable to query files.", exception);
                             //TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
                             //https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
+                            mProgressBar.setVisibility(View.INVISIBLE);
                         }
                     });
         }
@@ -190,9 +200,11 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             Log.i(TAG, "Number of files fetched: " + f.size());
 
                             for (File file : fileList.getFiles()) {
-                                //Log.d(TAG, "files name: " + file.getName());
+//                                if(file.getModifiedTime() == null){
+//                                    Log.w(TAG, "Modified dateTime is null");
+//                                }
                                 //ItemModelBase item = mItems.get(i);
-                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId()));
+                                mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
                                 //item.setName(file.getName());
                                 i++;
                             }
@@ -261,7 +273,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                     */
                     setItemChecked(item, position, false);
                     if (mSelectedItemCount == 0) {
-                        mAdapter.setCheckBoxVisible(false);
+                        mAdapter.setOverflowIconVisible(true);
                         mState = STATE_NORMAL;
 
                         //switchNormalActionBar();
@@ -294,9 +306,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                 Switch to item selection state
                  */
                 setItemChecked(item, position, true);
-                mAdapter.setCheckBoxVisible(true);
+                mAdapter.setOverflowIconVisible(false);
                 mState = STATE_ITEM_SELECTION;
-
                 //switchContextualActionBar();
             }else {
                 if(item.isSelected()) {
@@ -305,9 +316,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                     */
                     setItemChecked(item, position, false);
                     if(mSelectedItemCount == 0) {
-                        mAdapter.setCheckBoxVisible(false);
+                        mAdapter.setOverflowIconVisible(true);
                         mState = STATE_NORMAL;
-
                        // switchNormalActionBar();
                     }
                 }else {
@@ -384,6 +394,9 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             else{
                 Log.d(TAG, "Oops, unknown ID");
             }
+        }
+        else{
+            Log.w(TAG, "drawer checked item is null");
         }
         //It's unclear how to clear(reset) a checked item once it is checked.
         //A workaround is used: set to the hidden item so that we can avoid the unexpected transition

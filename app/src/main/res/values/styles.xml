@@ -18,6 +18,12 @@
         <item name="colorPrimary">@android:color/white</item>
         <item name="colorSecondary">@android:color/darker_gray</item>
 
+        <!-- Qurey result list -->
+        <item name="colorQueryListItemBGIdle">@color/colorQueryListItemBGIdle</item>
+        <item name="colorQueryListBackgroundSelected">@color/colorQueryListItemBGSelected</item>
+        <item name="colorQueryListItemPicBGChecked">@color/colorQueryListItemPicBGChecked</item>
+
+
         <item name="colorNavigationItem">@color/drawer_menu_item_color_state</item>
         <item name="colorNavigationItemSelected">@android:color/holo_blue_light</item>
         <item name="drawableNavigationItemBackground">@drawable/drawer_menu_item_bg_state</item>
@@ -73,6 +79,11 @@
         <item name="itemTextAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
     </style>
 
-    <!-- Buttons -->
+    <!-- Buttons go to style (v23)-->
+
+    <!-- Progress bar -->
+    <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
+
+    </style>
 
 </resources>

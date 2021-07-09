@@ -6,13 +6,26 @@
     <color name="colorTransparant">#000000</color>
 
     <!-- background -->
+    <!-- Common used-->
     <color name="colorBackground">#222222</color>
+
+    <!-- Tool bar -->
     <color name="colorToolbarBackground">#363640</color>
+
+    <!-- Query list item -->
+    <color name="colorQueryListItemBGIdle">#222222</color>
+    <color name="colorQueryListItemBGSelected">#41BBDEFB</color>
+    <color name="colorQueryListItemPicBGChecked">#4DB39DDB</color>
+
+    <!-- Drawer -->
+    <color name="drawableNavigationItemBackground">#D1C4E9</color>
     <color name="colorDrawerBackground">#303030</color>
     <color name="colorDrawerHeaderBackground">#039BE5</color>
     <color name="colorDrawerMenuItemBG">#939393</color>
+
+    <!-- Buttons -->
     <color name="colorButton1BackgroundRelease">#00ACC1</color>
-    <color name="colorButton1BackgroundPress">#939393</color>
+    <color name="colorButton1BackgroundPress">#41BBDEFB</color>
 
 
 

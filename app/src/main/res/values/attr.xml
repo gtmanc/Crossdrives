@@ -4,6 +4,12 @@
     <attr name="colorNavigationItemSelected" format="color" />
     <attr name="drawableNavigationItemBackground" format="reference" />
 
+    <!-- Query result items -->
+    <attr name="colorQueryListItemBGIdle" format="color" />
+    <attr name="colorQueryListBackgroundSelected" format="color" />
+    <attr name="colorQueryListItemPicBGChecked" format="color" />
+
+    <!-- buttons -->
     <attr name="button1Background" format="reference" />
     <attr name="colorButton1BackgroundPress" format="color" />
     <attr name="colorButton1BackgroundRelease" format="color" />
