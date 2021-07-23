@@ -42,6 +42,8 @@
         <item name="colorButton2Content">@color/button1_content_color_state</item>
         <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
         <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
+
+
     </style>
 
 
@@ -85,5 +87,45 @@
     <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
 
     </style>
+    
+    <style name="Theme.Custom.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog.MinWidth">
+        <!--Background: Transparent-->
+        <item name="android:windowBackground">@color/colorTransparant</item>
+        <!--Border-->
+        <item name="android:windowFrame">@null</item>
+        <item name="android:background">@drawable/dialog_background</item>
+
+        <!-- Material input text -->
+        <item name="colorOnSurface">@android:color/holo_blue_light</item>
+        <!-- colorPrimary will affect stroke and floating text color -->
+        <item name="colorPrimary">@android:color/holo_blue_light</item>
+
+        <!--Action buttons -->
+        <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
+        <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
+        <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
+        <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
+        <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
+    </style>
+
+    <style name="Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <!-- Dont know why override the default colors in colors.xml doesnt work -->
+        <!--<item name="boxStrokeColor">@android:color/holo_blue_light</item>-->
+        <!--<item name="boxBackgroundMode">filled</item>-->
+        <!--<item name="boxBackgroundColor">@color/colorAccent</item>-->
+        <!--<item name="android:textColorHint">@color/colorAccent</item>-->
+
+
+    </style>
+
+    <!--states for Stroke color -->
+    <!--<item android:color="?attr/colorPrimary" android:state_focused="true"/>
+    <item android:alpha="0.87" android:color="?attr/colorOnSurface" android:state_hovered="true"/>
+    <item android:alpha="0.12" android:color="?attr/colorOnSurface" android:state_enabled="false"/>
+    <item android:alpha="0.38" android:color="?attr/colorOnSurface"/>-->
+
+    <!-- Label color (not Collapsed (floating) color)-->
+    <!--<item android:alpha="0.38" android:color="?attr/colorOnSurface" android:state_enabled="false"/>
+    <item android:alpha="0.6" android:color="?attr/colorOnSurface"/> -->
 
 </resources>

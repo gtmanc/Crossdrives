@@ -25,4 +25,9 @@
     <attr name="colorButton2ContentRelease" format="color" />
     <attr name="colorButton2Stroke" format="color" />
 
+    <!-- Action buttons -->
+    <attr name="colorActionButton1Background" format="reference"/>
+    <attr name="colorActionButton1BackgroundPress" format="color"/>
+    <attr name="colorActionButton1BackgroundRelease" format="color"/>
+    <attr name="colorActionButton1Content" format="color"> </attr>
 </resources>

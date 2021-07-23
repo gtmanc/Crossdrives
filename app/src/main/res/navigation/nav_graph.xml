@@ -16,6 +16,9 @@
         <action
             android:id="@+id/navigate_to_delete_file"
             app:destination="@id/delete_file_fragment" />
+        <action
+            android:id="@+id/navigate_to_system_test"
+            app:destination="@id/system_test_fragment" />
     </fragment>
 
     <fragment
@@ -55,4 +58,10 @@
         android:id="@+id/delete_file_fragment"
         android:name="com.example.crossdrives.DeleteFileFragment"
         tools:layout="@layout/delete_file_fragment"/>
+
+
+    <fragment
+        android:id="@+id/system_test_fragment"
+        android:name="com.example.crossdrives.SystemTestFragment"
+        tools:layout="@layout/system_test_fragment"/>
 </navigation>

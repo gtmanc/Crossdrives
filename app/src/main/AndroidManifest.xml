@@ -46,6 +46,9 @@
             <meta-data android:name="android.app.searchable"
                 android:resource="@xml/searchable"/>
         </activity>
+        <activity android:name=".SysTestEnterFileDialog"
+            android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
+        </activity>
         <provider android:name=".SearchSuggestionProvider"
             android:authorities="com.example.crossdrives.SearchSuggestionProvider" />
     </application>

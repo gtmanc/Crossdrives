@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -51,6 +52,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
     private String mState = STATE_NORMAL;
     private int mSelectedItemCount = 0;
 
+    private int mCountPressDrawerHeader = 0;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,11 +94,12 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
 
-
-
         mNavigationView = view.findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
         mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
+        View hv = mNavigationView.getHeaderView(0);
+        hv.setOnClickListener(this);
+        requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
         initialQuery(view);
 
@@ -351,8 +355,14 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         else
             mSelectedItemCount--;
     }
+
     @Override
     public void onClick(View v) {
+        Log.d(TAG, "header is clicked");
+        mCountPressDrawerHeader++;
+
+        NavDirections a = QueryResultFragmentDirections.navigateToSystemTest();
+        NavHostFragment.findNavController(this).navigate(a);
 
     }
 
@@ -432,4 +442,17 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         }
         return true;
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        callback.remove();
+    }
+
+    OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
+        @Override
+        public void handleOnBackPressed() {
+            //Just do nothing
+        }
+    };
 }

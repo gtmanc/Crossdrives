@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources
+    xmlns:tools="http://schemas.android.com/tools">
     <color name="colorPrimary">#222222</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="colorTransparant">#000000</color>
 
-    <!-- background -->
-    <!-- Common used-->
+    <!--            background          -->
+    <!--Common used-->
     <color name="colorBackground">#222222</color>
 
     <!-- Tool bar -->
@@ -24,13 +25,25 @@
     <color name="colorDrawerMenuItemBG">#939393</color>
 
     <!-- Buttons -->
+    <!-- General buttons -->
     <color name="colorButton1BackgroundRelease">#00ACC1</color>
     <color name="colorButton1BackgroundPress">#41BBDEFB</color>
 
+    <!-- Action buttons -->
+    <color name="colorActionButton1BackgroundPress">#41BBDEFB</color>
 
+    <!-- Dialog-->
+    <color name="colorDialog1background">#222222</color>
 
-    <!--text-->
+    <!--            Text           -->
     <color name="colorTextSecondary">#939393</color>
+    <!-- General buttons -->
     <color name="colorTextButton1">#1B1B1B</color>
     <color name="colorTextButton2">#1B1B1B</color>
+    <!-- Action button -->
+    <color name="colorTextActionButton1">#00ACC1</color>
+
+
+    <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#FFFFFF</color>
+    <color name="mtrl_textinput_default_box_background_color" tools:override="true">#0A0513</color>
 </resources>
