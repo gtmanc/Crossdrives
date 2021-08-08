@@ -375,7 +375,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             PopupMenu popup = new PopupMenu(getContext(), view);
             MenuInflater inflater = popup.getMenuInflater();
             inflater.inflate(R.menu.menu_context, popup.getMenu());
-            //popup.show();
+            popup.show();
         }
     };
     private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
