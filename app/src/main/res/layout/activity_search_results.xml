@@ -19,7 +19,7 @@
             android:background="#363640"
             app:layout_scrollFlags="scroll|enterAlways"
             app:title="CDS"
-            app:menu="@menu/menu_main"
+            app:menu="@menu/menu_option"
             app:navigationIcon="@drawable/ic_navigation_toolbar">
             <TextView
                 android:id="@+id/toolbar_title"

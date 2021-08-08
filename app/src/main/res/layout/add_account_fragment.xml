@@ -16,9 +16,8 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_gravity="center"
-            android:theme="@style/AppTheme.ToolBarOverlayMaterial"
+            android:theme="@style/ToolBarOverlayMaterial"
             app:layout_scrollFlags="scroll|enterAlways"
-            app:menu="@menu/menu_main"
             app:popupTheme="@style/AppTheme.PopupOverlay"
             app:title="Add Account">
         </com.google.android.material.appbar.MaterialToolbar>

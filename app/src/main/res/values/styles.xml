@@ -6,6 +6,11 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!--
+        We could also define action bar and action mode theme/style here
+        <item name="actionModeStyle">@style/Widget.App.ActionMode</item>
+        <item name="actionBarTheme">@style/ThemeOverlay.MaterialComponents.Dark.ActionBar</item>
+        -->
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -18,7 +23,7 @@
         <item name="colorPrimary">@android:color/white</item>
         <item name="colorSecondary">@android:color/darker_gray</item>
 
-        <!-- Qurey result list -->
+        <!-- Query result list -->
         <item name="colorQueryListItemBGIdle">@color/colorQueryListItemBGIdle</item>
         <item name="colorQueryListBackgroundSelected">@color/colorQueryListItemBGSelected</item>
         <item name="colorQueryListItemPicBGChecked">@color/colorQueryListItemPicBGChecked</item>
@@ -42,12 +47,7 @@
         <item name="colorButton2Content">@color/button1_content_color_state</item>
         <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
         <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
-
-
     </style>
-
-
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.AppBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
         <item name="android:textColorPrimary">@android:color/white</item>
@@ -59,15 +59,41 @@
     <item name="android:backgroundDimEnabled">true</item>-->
     </style>
 
-    <style name="AppTheme.ToolBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
+    <style name="ToolBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">@android:color/white</item>
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:background">@color/colorToolbarBackground</item>
+        <item name="actionModeStyle">@style/Widget.Custom.AppCompat.ActionMode</item>
+        <item name="actionOverflowButtonStyle">@style/MyOverflowButtonStyle</item>
+        <item name="actionModeCloseDrawable">@drawable/ic_baseline_close_24</item>
+        <item name="actionModeCloseButtonStyle">@style/MyActionModeCloseButtonStyle</item>
+        <item name="actionBarPopupTheme">@style/ActionModeOverflowMenu</item>
     </style>
+    <style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.AppCompat.ActionMode">
+        <item name="background">@color/colorActionModeBackground</item>
+        <item name="titleTextStyle">@style/ActionModeTitleTextStyle</item>
+    </style>
+    <style name="ActionModeTitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
+        <item name="android:textColor">@color/colorActionModeText</item>
+    </style>
+    <style name="MyOverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/colorActionModeOverflow</item>
+    </style>
+    <style name="ActionModeOverflowMenu" parent="Widget.AppCompat.ListPopupWindow">
+        <item name="android:background">@color/colorActionModeBackground</item>
+        <!--<item name="android:textColor">@color/colorAccent</item>-->
+    </style>
+    <style name="MyActionModeCloseButtonStyle" parent="Widget.AppCompat.ActionButton">
+        <item name="android:tint">@color/colorActionModeOverflow</item>
+    </style>
+    <!--<style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.MaterialComponents.Toolbar">
+        <item name="background">@color/colorToolbarBackground</item>
+    </style>-->
+    <!--        <item name="windowActionModeOverlay">false</item>-->
     <!--<item name="android:actionBarStyle">"showHome|useLogo"</item>
     <item name="actionBarStyle">"showHome|useLogo"</item> -->
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" ></style>
 
     <style name="Widget.Custom.NavigationView" parent="Widget.Design.NavigationView">
         <item name="itemIconTint">?attr/colorNavigationItem</item>
@@ -85,7 +111,6 @@
 
     <!-- Progress bar -->
     <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
-
     </style>
     
     <style name="Theme.Custom.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog.MinWidth">

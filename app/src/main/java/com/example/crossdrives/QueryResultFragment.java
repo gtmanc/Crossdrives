@@ -1,13 +1,18 @@
 package com.example.crossdrives;
 
+import android.app.SearchManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.Toast;
-
+import android.widget.SearchView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,11 +32,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class QueryResultFragment extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener,
@@ -46,18 +53,22 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
     private RecyclerView mRecyclerView = null;
     private View mProgressBar = null;
     private QueryFileAdapter mAdapter;
+    private Toolbar mToolbar = null;
 
     final String STATE_NORMAL = "state_normal";
     final String STATE_ITEM_SELECTION = "state_selection";
     private String mState = STATE_NORMAL;
     private int mSelectedItemCount = 0;
-
     private int mCountPressDrawerHeader = 0;
+
+
+    private ActionMode mActionMode = null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -74,7 +85,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        Log.i(TAG, "onViewCreated");
+        Log.d(TAG, "onViewCreated");
         super.onViewCreated(view, savedInstanceState);
 
         NavController navController = Navigation.findNavController(view);
@@ -85,14 +96,16 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         AppBarConfiguration appBarConfiguration =
                 new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
 
-        Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
+        mToolbar = view.findViewById(R.id.qr_toolbar);
+
         mProgressBar = view.findViewById(R.id.progressBar);
 
         //Note: drawer doenst work if this line of code is added after setupWithNavController
-        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        ((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
+        Log.d(TAG, "Set toolbar done");
 
         NavigationUI.setupWithNavController(
-                toolbar, navController, appBarConfiguration);
+                mToolbar, navController, appBarConfiguration);
 
         mNavigationView = view.findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
@@ -159,7 +172,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                             //The files are ready to be shown. Dismiss the progress cycle
                             //mProgressBar.setVisibility(View.GONE);
 
-                            //setResult(RESULT_OK, mIntent);itemClickListener
+                            //setResult(RESULT_OK, mIntent);
                             mProgressBar.setVisibility(View.INVISIBLE);
                         }
 
@@ -256,6 +269,22 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             }
         }
     };
+    /*
+    Two states :
+    1. Normal
+    2. Item selection
+    Behavior:
+    click
+    1. If we are not in item selection state, go to the detail of the item
+    2. If we are in item selection state (by long press any of the items), then two possibilities
+    2.1 click on the selected item, exit the selection state
+    2.2 click on the others, select the item. (change the checkbox in the item to "checked")
+    long press
+    1. If we are not in item selection state, switch to item selection state
+    2. If we are already in item selection state, then two possibilities:
+    2.1 Long press on the selected item, exit exit the selection state
+    2.2 Long press on the others, select the item. (change the checkbox in the item to "checked")
+     */
     private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
         @Override
         public void onItemClick(View view, int position) {
@@ -279,8 +308,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                     if (mSelectedItemCount == 0) {
                         mAdapter.setOverflowIconVisible(true);
                         mState = STATE_NORMAL;
-
-                        //switchNormalActionBar();
+                        exitActionMode(view);
                     }
                 } else {
                     /*
@@ -288,6 +316,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                     */
                     setItemChecked(item, position, true);
                 }
+                updateActionModeTitle();
             }
 
             //now update adapter
@@ -312,7 +341,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                 setItemChecked(item, position, true);
                 mAdapter.setOverflowIconVisible(false);
                 mState = STATE_ITEM_SELECTION;
-                //switchContextualActionBar();
+                switchActionMode(view);
+                //The action mode title update will be done in the actiom mode callback instead of here because mActioMode may be null at the moment.
             }else {
                 if(item.isSelected()) {
                     /*
@@ -322,14 +352,16 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
                     if(mSelectedItemCount == 0) {
                         mAdapter.setOverflowIconVisible(true);
                         mState = STATE_NORMAL;
-                       // switchNormalActionBar();
+                        exitActionMode(view);
                     }
                 }else {
                     /*
                     Long press on the others, select the item. (change the checkbox in the item to "checked")
                     */
                     setItemChecked(item, position, true);
+
                 }
+                updateActionModeTitle();
             }
 
             //now update adapter
@@ -340,13 +372,17 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         @Override
         public void onImageItemClick(View view, int position) {
             Log.i(TAG, "onImageItemClick:" + position);
+            PopupMenu popup = new PopupMenu(getContext(), view);
+            MenuInflater inflater = popup.getMenuInflater();
+            inflater.inflate(R.menu.menu_context, popup.getMenu());
+            //popup.show();
         }
     };
     private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
 
         if(checked == false && mSelectedItemCount <= 0) {
             Log.i(TAG, "No item should be unchecked!!");
-            return;
+            //return;
         }
 
         item.setSelected(checked);
@@ -356,6 +392,19 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
             mSelectedItemCount--;
     }
 
+    //de-selected all items. This method maintains the selected count (mSelectedItemCount).
+    //The method first check if a item has been selected. If yes, deselected it.
+    private void deselectAllItems(){
+        int i = 0;
+        for(Iterator iter = mItems.iterator();iter.hasNext();) {
+            SerachResultItemModel item = (SerachResultItemModel) iter.next();
+            if(item.isSelected) {
+                item.setSelected(false);
+                mSelectedItemCount--;
+            }
+        }
+
+    }
     @Override
     public void onClick(View v) {
         Log.d(TAG, "header is clicked");
@@ -449,10 +498,108 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
         callback.remove();
     }
 
+    //Back key handling
     OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
         public void handleOnBackPressed() {
             //Just do nothing
+        }
+    };
+
+    private void switchActionMode(View view){
+        Log.d(TAG, "switchActionMode...");
+        if (mActionMode == null) {
+            // Start the CAB using the ActionMode.Callback defined above
+            mActionMode = getActivity().startActionMode(actionModeCallback);
+//            if(mActionMode.isTitleOptional())
+//                Log.d(TAG, "Action mode title is optional!");
+//            mActionMode.setTitleOptionalHint(false);
+            updateActionModeTitle();
+            view.setSelected(true);
+        }
+    }
+
+    private void exitActionMode(View view){
+        if (mActionMode != null) {
+            // Start the CAB using the ActionMode.Callback defined above
+            mActionMode.finish();
+            view.setSelected(false);
+        }
+    }
+
+    private void updateActionModeTitle(){
+        if(mActionMode!=null)
+            mActionMode.setTitle(Integer.toString(mSelectedItemCount)+" Selected");
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        Log.d(TAG, "onCreateOptionsMenu...");
+        super.onCreateOptionsMenu(menu, inflater);
+
+        inflater.inflate(R.menu.menu_option, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager =
+                (SearchManager) getActivity().getSystemService(getContext().SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getActivity().getComponentName()));
+        //searchView.setSubmitButtonEnabled(true);
+    }
+
+    private ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
+
+        // Called when the action mode is created; startActionMode() was called
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            Log.d(TAG, "onCreateActionMode");
+            mToolbar.setVisibility(View.GONE);
+            // Inflate a menu resource providing context menu items
+            MenuInflater inflater = getActivity().getMenuInflater();
+            inflater.inflate(R.menu.menu_context, menu);
+            //This is a workaround: although the property AsAsAction is set to "never" for those
+            // items in menu. But it doesnt work.
+            menu.findItem(R.id.miDetail).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+            menu.findItem(R.id.miCopy).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+            MenuItem copy = menu.findItem(R.id.miDetail).setOnMenuItemClickListener(OnMenuItemClickListener);
+
+            return true;
+        }
+
+        // Called each time the action mode is shown. Always called after onCreateActionMode, but
+        // may be called multiple times if the mode is invalidated.
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false; // Return false if nothing is done
+        }
+
+        // Called when the user selects a contextual menu item
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            return false;
+        }
+
+        // Called when the user exits the action mode
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            Log.d(TAG, "onDestroyActionMode");
+            mActionMode = null;
+            deselectAllItems();
+            mState = STATE_NORMAL;
+            mToolbar.setVisibility(View.VISIBLE);
+            mAdapter.setOverflowIconVisible(true);
+            mAdapter.notifyDataSetChanged();
+        }
+    };
+
+    private MenuItem.OnMenuItemClickListener OnMenuItemClickListener = new MenuItem.OnMenuItemClickListener(){
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            //YourActivity.this.someFunctionInYourActivity();
+            Log.d(TAG, "Menu item action pressed!!");
+            return true;
         }
     };
 }

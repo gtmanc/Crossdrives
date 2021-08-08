@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.crossdrives.MainActivity">
+
+    <item
+        android:id="@+id/miDelete"
+        android:icon="@drawable/ic_baseline_delete_24"
+        app:showAsAction="ifRoom"
+        android:title="@string/actionModeDelete">
+    </item>
+
+    <item
+        android:id="@+id/miSelectAll"
+        android:icon="@drawable/ic_baseline_select_all_24"
+        app:showAsAction="ifRoom"
+        android:title="@string/actionModeSelectAll">
+    </item>
+
+    <item
+        android:id="@+id/miDetail"
+        android:title="@string/actionModeDeatil"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/miCopy"
+        android:title="@string/actionModeCopy"
+        app:showAsAction="never" />
+
+</menu>

@@ -7,6 +7,9 @@ import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -14,6 +17,8 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
@@ -33,6 +38,7 @@ public class AddAccountFragment extends Fragment {
     @org.jetbrains.annotations.Nullable
     @Override
     public View onCreateView(@NonNull @NotNull LayoutInflater inflater, @Nullable @org.jetbrains.annotations.Nullable ViewGroup container, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.add_account_fragment, container, false);
     }
 
@@ -45,6 +51,10 @@ public class AddAccountFragment extends Fragment {
         requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
         mFragment = FragmentManager.findFragment(view);
+
+        Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
+        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
     }
 
     private View.OnClickListener listener_account_add = new View.OnClickListener() {
@@ -86,6 +96,7 @@ public class AddAccountFragment extends Fragment {
             name = p.Name;
         }
 
+        //passing name to master account fragment so that a toast is shown to the user that an account is created
         AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(name);
         //action.setCreateAccountName(p.Name);
         NavHostFragment.findNavController(mFragment).navigate(action);
@@ -102,10 +113,33 @@ public class AddAccountFragment extends Fragment {
         public void handleOnBackPressed() {
             // Handle the back button event
             Log.d(TAG, "Back button pressed!");
+            //passing null to master account fragment to avoid showing the toast
             AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
             //action.setCreateAccountName(p.Name);
             NavHostFragment.findNavController(mFragment).navigate(action);
 
         }
     };
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+
+        inflater.inflate(R.menu.menu_option, menu);
+
+        menu.findItem(R.id.search).setVisible(false);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected");
+
+        //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (master account)
+        AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
+        //action.setCreateAccountName(p.Name);
+        NavHostFragment.findNavController(mFragment).navigate(action);
+
+        return super.onOptionsItemSelected(item);
+    }
 }

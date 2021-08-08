@@ -140,7 +140,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
             SerachResultItemModel item = mItems.get(position);
             //set position to tag in view so that we know the position when click listener is called
             holder.ItemView.setTag(position);
-            //holder.ivMore.setTag(position);
+            holder.ivMore.setTag(position);
             //holder.ivCheckBox.setImageResource(item.getImageId());
             //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
             holder.tvName.setText(item.getName());

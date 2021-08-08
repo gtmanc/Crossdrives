@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/action_button1_background_press.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/action_button1_background_release.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/action_button1_background_state.xml" value="0.14010416666666667" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/button1_background_release.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/button1_background_state.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/button2_background_release.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/button2_background_state.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/dialog_background.xml" value="0.26979166666666665" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/overflow_menu_background_state.xml" value="0.14010416666666667" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/drawable/overflow_menu_press.xml" value="0.14010416666666667" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/account_list_item.xml" value="0.12395833333333334" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/add_account_fragment.xml" value="0.18659420289855072" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/branch_account_fragment.xml" value="0.17291666666666666" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/delete_file_fragment.xml" value="0.17291666666666666" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/list_view_item.xml" value="0.12395833333333334" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/master_account_fragment.xml" value="0.17291666666666666" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/query_result_fragment.xml" value="0.264" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/system_test_fragment.xml" value="0.12335359675785208" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/layout/toolbar_main.xml" value="0.18659420289855072" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/menu/menu_context.xml" value="0.264" />
+        <entry key="..\:/Work/cds/Crossdrives/app/src/main/res/menu/menu_option.xml" value="0.15416666666666667" />
+      </map>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>

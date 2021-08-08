@@ -8,6 +8,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -35,11 +38,13 @@ import java.util.List;
 public class MasterAccountFragment extends Fragment {
     private String TAG = "CD.MasterAccountFragment";
     List<AccountListModel> mAccountList = new ArrayList<>();
+    Fragment mFragment;
 
     @Nullable
     @org.jetbrains.annotations.Nullable
     @Override
     public View onCreateView(@NonNull @NotNull LayoutInflater inflater, @Nullable @org.jetbrains.annotations.Nullable ViewGroup container, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.master_account_fragment, container, false);
     }
 
@@ -56,9 +61,11 @@ public class MasterAccountFragment extends Fragment {
         udpateProfiles(view);
 
         view.findViewById(R.id.add_account_btn).setOnClickListener(listener_account_add);
+        mFragment = FragmentManager.findFragment(view);
 
         Toolbar toolbar = view.findViewById(R.id.master_accounts_toolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
 
     }
 
@@ -169,5 +176,27 @@ public class MasterAccountFragment extends Fragment {
 
     private void updateCardContent(String name, String mail, Uri photourl){
 
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+
+        inflater.inflate(R.menu.menu_option, menu);
+
+        menu.findItem(R.id.search).setVisible(false);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+        Log.d(TAG, "onOptionsItemSelected");
+
+        //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (query result screen)
+        NavDirections a = MasterAccountFragmentDirections.navigateBackToQueryResult();
+        NavHostFragment.findNavController(mFragment).navigate(a);
+
+        return super.onOptionsItemSelected(item);
     }
 }

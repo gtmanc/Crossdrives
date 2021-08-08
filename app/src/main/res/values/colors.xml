@@ -12,22 +12,28 @@
 
     <!-- Tool bar -->
     <color name="colorToolbarBackground">#363640</color>
+    <color name="colorActionModeBackground">#363640</color>
+
 
     <!-- Query list item -->
     <color name="colorQueryListItemBGIdle">#222222</color>
     <color name="colorQueryListItemBGSelected">#41BBDEFB</color>
     <color name="colorQueryListItemPicBGChecked">#4DB39DDB</color>
-
+    <color name="colorQueryListOverflowPress">#4DB39DDB</color>
     <!-- Drawer -->
     <color name="drawableNavigationItemBackground">#D1C4E9</color>
     <color name="colorDrawerBackground">#303030</color>
     <color name="colorDrawerHeaderBackground">#039BE5</color>
     <color name="colorDrawerMenuItemBG">#939393</color>
 
-    <!-- Buttons -->
+    <!--
+    Buttons
+    -->
     <!-- General buttons -->
     <color name="colorButton1BackgroundRelease">#00ACC1</color>
     <color name="colorButton1BackgroundPress">#41BBDEFB</color>
+    <!--Tool bar buttons-->
+    <color name="colorActionModeOverflow">#00ACC1</color>
 
     <!-- Action buttons -->
     <color name="colorActionButton1BackgroundPress">#41BBDEFB</color>
@@ -37,6 +43,9 @@
 
     <!--            Text           -->
     <color name="colorTextSecondary">#939393</color>
+    <!-- Tool bar-->
+    <color name="colorActionModeText">#00ACC1</color>
+
     <!-- General buttons -->
     <color name="colorTextButton1">#1B1B1B</color>
     <color name="colorTextButton2">#1B1B1B</color>
