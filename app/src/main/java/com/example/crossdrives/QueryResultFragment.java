@@ -1,6 +1,7 @@
 package com.example.crossdrives;
 
 import android.app.SearchManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ActionMode;
@@ -495,14 +496,18 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
     @Override
     public void onPause() {
         super.onPause();
-        callback.remove();
+        //callback.remove();
     }
 
     //Back key handling
     OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
         public void handleOnBackPressed() {
-            //Just do nothing
+            //Go back to launcher
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+            homeIntent.addCategory( Intent.CATEGORY_HOME );
+            homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(homeIntent);
         }
     };
 
