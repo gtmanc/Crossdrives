@@ -49,6 +49,18 @@
         <activity android:name=".SysTestEnterFileDialog"
             android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
         </activity>
+        <!--Intent filter to capture System Browser or Authenticator calling back to our app after sign-in-->
+        <activity
+            android:name="com.microsoft.identity.client.BrowserTabActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="msauth"
+                    android:host="com.example.crossdrives"
+                    android:path="/yuA+nLjqHb+lo8n78AI7ZAgEens=" />
+            </intent-filter>
+        </activity>
         <provider android:name=".SearchSuggestionProvider"
             android:authorities="com.example.crossdrives.SearchSuggestionProvider" />
     </application>

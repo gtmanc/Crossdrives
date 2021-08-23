@@ -39,11 +39,23 @@
         style="@style/Widget.Custom.Button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add a google account"
+        android:text="@string/button_signin_google"
         app:layout_constraintTop_toBottomOf="@+id/title_add_account"
         android:layout_marginTop = "16dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:drawableLeft="@drawable/ic_gdrive_logo"
+        android:drawablePadding="16dp"/>
+    <Button
+        android:id="@+id/add_account_btn_ms"
+        style="@style/Widget.Custom.Button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_signin_ms"
+        app:layout_constraintTop_toBottomOf="@+id/add_account_btn_google"
+        android:layout_marginTop = "16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:drawableLeft="@drawable/ic_onedrive_logo"
         android:drawablePadding="16dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

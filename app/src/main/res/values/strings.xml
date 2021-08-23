@@ -6,7 +6,7 @@
     <string name="search_hint">search drives</string>
     <string name="actionModeDelete">Delete</string>
     <string name="actionModeSelectAll">Select All</string>
-    <string name="actionModeDeatil">Copy</string>
+    <string name="actionModeDetail">Copy</string>
     <string name="actionModeCopy">Copy Link</string>
 
     <!--Query Result Fragment-->
@@ -20,4 +20,8 @@
     <string name="master_account_toolbar_title">Master Account</string>
     <string name="button_add_a_master_account">Add master account</string>
     <string name="info_no_master_account_available">NO MASTER ACCOUNT AVAILABLE!</string>
+
+    <!--Add Account fragment-->
+    <string name="button_signin_google" >Add Google Account</string>
+    <string name="button_signin_ms">Add One Drive Account</string>
 </resources>

@@ -46,7 +46,8 @@ public class AddAccountFragment extends Fragment {
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        view.findViewById(R.id.add_account_btn_google).setOnClickListener(listener_account_add);
+        view.findViewById(R.id.add_account_btn_google).setOnClickListener(listener_add_gdrive);
+        view.findViewById(R.id.add_account_btn_ms).setOnClickListener(listener_add_onedrive);
 
         requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
@@ -57,7 +58,7 @@ public class AddAccountFragment extends Fragment {
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
     }
 
-    private View.OnClickListener listener_account_add = new View.OnClickListener() {
+    private View.OnClickListener listener_add_gdrive = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
@@ -65,6 +66,16 @@ public class AddAccountFragment extends Fragment {
             Intent signInIntent = mSignInManager.Prepare();
 
             startActivityForResult(signInIntent, RC_SIGN_IN);
+        }
+    };
+
+    private View.OnClickListener listener_add_onedrive = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Log.d(TAG, "start sign flow");
+            mSignInManager = new SignInMS(getActivity());
+            Intent signInIntent = mSignInManager.Prepare();
+
         }
     };
 
