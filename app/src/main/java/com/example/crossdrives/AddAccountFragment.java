@@ -3,7 +3,6 @@ package com.example.crossdrives;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,7 +11,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -26,7 +24,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.SQLException;
+import java.net.URL;
 
 public class AddAccountFragment extends Fragment {
     private String TAG = "CD.AddAccountFragment";
@@ -63,7 +61,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInGoogle(getContext());
-            Intent signInIntent = mSignInManager.Prepare();
+            Intent signInIntent = mSignInManager.Start();
 
             startActivityForResult(signInIntent, RC_SIGN_IN);
         }
@@ -74,7 +72,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInMS(getActivity());
-            Intent signInIntent = mSignInManager.Prepare();
+            Intent signInIntent = mSignInManager.Start();
 
         }
     };
@@ -82,10 +80,10 @@ public class AddAccountFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         SignInManager.Profile p;
-        SQLiteDatabase db = null;
-        long r_id = -1;
-        Cursor c;
         String name = null;
+        AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
+        boolean result;
+
         Log.d(TAG, "requestCode: " + requestCode);
         Log.d(TAG, "resultCode: " + resultCode);
 
@@ -100,17 +98,26 @@ public class AddAccountFragment extends Fragment {
             Log.d(TAG, "User mail:" + p.Mail);
             Log.d(TAG, "User photo url:" + p.PhotoUri);
 
-            DBHelper dbh = new DBHelper(getContext(), null, null, 0);
-            r_id = dbh.insert("Google", p.Name, p.Mail, p.PhotoUri);
-            if (r_id == -1)
-                Log.w(TAG, "Insert record fails!");
+//            DBHelper dbh = new DBHelper(getContext(), null, null, 0);
+//            r_id = dbh.insert("Google", p.Name, p.Mail, p.PhotoUri, "Activated");
+//            if(r_id == -1){
+//                Log.w(TAG, "Create account failed!");
+//            }
+            AccountManager am = AccountManager.getInstance();
+            ai.brand = AccountManager.BRAND_GOOGLE;
+            ai.name = p.Name;
+            ai.mail = p.Mail;
+            ai.photouri = p.PhotoUri;
+            result = am.createAccount(getContext(), ai);
+            if (result != true)
+                Log.w(TAG, "Create account failed!");
             name = p.Name;
         }
 
         //passing name to master account fragment so that a toast is shown to the user that an account is created
         AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(name);
         //action.setCreateAccountName(p.Name);
-        NavHostFragment.findNavController(mFragment).navigate(action);
+        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
     }
 
     @Override
@@ -127,7 +134,7 @@ public class AddAccountFragment extends Fragment {
             //passing null to master account fragment to avoid showing the toast
             AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
             //action.setCreateAccountName(p.Name);
-            NavHostFragment.findNavController(mFragment).navigate(action);
+            NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
 
         }
     };
@@ -149,7 +156,7 @@ public class AddAccountFragment extends Fragment {
         //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (master account)
         AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
         //action.setCreateAccountName(p.Name);
-        NavHostFragment.findNavController(mFragment).navigate(action);
+        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
 
         return super.onOptionsItemSelected(item);
     }

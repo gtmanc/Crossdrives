@@ -135,43 +135,18 @@ public class MasterAccountFragment extends Fragment {
     Read all accounts from database and save to mAccountList.
      */
     private void readAllAccounts(){
-        Cursor c;
-        String ColNames[];
-        DBHelper dbh = new DBHelper(getContext(), null,null,0);
+        AccountManager.AccountInfo ai;
+        AccountManager am = AccountManager.getInstance();
 
-        c = dbh.query();
-        if(c.getCount() == 0){
-            Log.d(TAG, "Number of queried account is 0");
+        ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
+        if(ai != null){
+            Log.d(TAG, "Activated Google account: " + ai.name);
+            AccountListModel list = new AccountListModel(ai.brand, ai.name, ai.mail, ai.photouri);
+            mAccountList.add(list);
         }
         else{
-            Log.d(TAG, "Count: " + Integer.toString(c.getCount()));
-//            Log.d(TAG, "Column count: " + Integer.toString(c.getColumnCount()));
-//            ColNames = c.getColumnNames();
-//            for(int i = 0; i <ColNames.length; i++){
-//                Log.d(TAG, "Number: " + ColNames[i]);
-//            }
-
-            int ibrand = DBConstants.COL_INDX_BRAND;
-            int iname = DBConstants.COL_INDX_NAME;
-            int imail = DBConstants.COL_INDX_MAIL;
-            int iphoto = DBConstants.COL_INDX_PHOTOURL;
-            c.moveToFirst();
-            do{
-                URL url;
-                try {
-                    url = new URL(c.getString(iphoto));
-                }catch (MalformedURLException e) {
-                    Log.w(TAG, "generating URL fails ");
-                    continue;
-                }
-//                Log.d(TAG, "Brand: " + c.getString(ibrand));
-                AccountListModel list = new AccountListModel(c.getString(ibrand), c.getString(iname), c.getString(imail),url);
-                mAccountList.add(list);
-            }while(c.moveToNext());
+            Log.d(TAG, "No activated!");
         }
-
-        dbh.close();
-        c.close();
     }
 
     private void updateCardContent(String name, String mail, Uri photourl){

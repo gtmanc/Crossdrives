@@ -8,6 +8,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -56,11 +57,14 @@ public class MainActivity extends AppCompatActivity{
         mProgressBar.setVisibility(View.VISIBLE);
 
         SignInGoogle google = new SignInGoogle(getApplicationContext());
-        google.silenceSignIn(onSigninfinished);
+        google.silenceSignIn(onSigninFinishedGdrive);
+
+        SignInMS onedrive = new SignInMS(this);
+        onedrive.silenceSignIn(onSigninFinishedOnedrive);
 
     }
 
-    SignInManager.OnSilenceSignInfinished onSigninfinished = new SignInManager.OnSilenceSignInfinished(){
+    SignInManager.OnSilenceSignInfinished onSigninFinishedGdrive = new SignInManager.OnSilenceSignInfinished(){
 
         @Override
         public void onFinished(boolean result, SignInManager.Profile profile) {
@@ -89,4 +93,20 @@ public class MainActivity extends AppCompatActivity{
             }
         }
     };
+    SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
+        @Override
+        public void onFinished(boolean result, SignInManager.Profile profile) {
+            //Ready to go to the result list
+            if(result == true){
+                //Write user profile to database
+                Log.d(TAG, "Onedrive silence sign in works");
+            }
+            else{
+                Log.w(TAG, "Onedrive silence sign in failed");
+            }
+        }
+    };
 }
+
+
+
