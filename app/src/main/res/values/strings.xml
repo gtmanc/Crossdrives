@@ -24,4 +24,8 @@
     <!--Add Account fragment-->
     <string name="button_signin_google" >Add Google Account</string>
     <string name="button_signin_ms">Add One Drive Account</string>
+
+
+    <!-- Microsoft Graph-->
+    <string name="beta">BETA</string>
 </resources>

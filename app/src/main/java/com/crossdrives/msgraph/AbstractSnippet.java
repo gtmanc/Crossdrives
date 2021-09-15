@@ -1,6 +1,10 @@
 package com.crossdrives.msgraph;
 
-public class AbstractSnippet <Service, Result>{
+import com.example.crossdrives.R;
+
+import retrofit2.Callback;
+
+public abstract class AbstractSnippet <Service, Result>{
     private static final int mNameIndex = 0;
     private static final int mDescIndex = 1;
     private static final int mUrlIndex = 2;
@@ -72,7 +76,7 @@ public class AbstractSnippet <Service, Result>{
     }
 
     public boolean isBeta() {
-        String betaString = SnippetApp.getApp().getString(beta);
+        String betaString = SnippetApp.getApp().getString(R.string.beta);
         return mO365Version.equalsIgnoreCase(betaString);
     }
 
