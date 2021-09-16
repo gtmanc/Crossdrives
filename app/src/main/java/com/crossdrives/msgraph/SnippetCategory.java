@@ -1,5 +1,7 @@
 package com.crossdrives.msgraph;
 
+import static com.example.crossdrives.R.string.section_me;
+
 public class SnippetCategory <T>
 {
     static final SnippetCategory<MSGraphMeService> meSnippetCategory

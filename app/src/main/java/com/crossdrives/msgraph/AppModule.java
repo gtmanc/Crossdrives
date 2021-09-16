@@ -10,7 +10,7 @@ import dagger.Module;
 import dagger.Provides;
 import okhttp3.Interceptor;
 import okhttp3.Request;
-import retrofit2.Response;
+import okhttp3.Response;
 
 public class AppModule {
 //    @Module(library = true,
@@ -28,7 +28,7 @@ public class AppModule {
     @Provides
     @SuppressWarnings("unused") // not actually unused -- used by Dagger
     public Level providesLogLevel() {
-        return Level.BODY;
+        return Level.ALL;
     }
 
     @Provides

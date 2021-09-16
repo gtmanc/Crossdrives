@@ -37,7 +37,7 @@ public class SnippetApp extends Application {
         //We will replace dagger1 ObjectGraph with component
 //        mObjectGraph = ObjectGraph.create(new AppModule());
 //        mObjectGraph.inject(this);
-
+        Daggger_
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
