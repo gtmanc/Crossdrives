@@ -5,6 +5,7 @@ import android.app.Application;
 import com.example.crossdrives.BuildConfig;
 import com.sun.jersey.spi.inject.Inject;
 
+import dagger.internal.DaggerCollections;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -37,7 +38,7 @@ public class SnippetApp extends Application {
         //We will replace dagger1 ObjectGraph with component
 //        mObjectGraph = ObjectGraph.create(new AppModule());
 //        mObjectGraph.inject(this);
-        Daggger_
+
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
