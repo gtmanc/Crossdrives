@@ -3,8 +3,11 @@ package com.crossdrives.msgraph;
 import android.app.Application;
 
 import com.example.crossdrives.BuildConfig;
-import com.sun.jersey.spi.inject.Inject;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.HiltAndroidApp;
 import dagger.internal.DaggerCollections;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -12,7 +15,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
-
+@HiltAndroidApp
 public class SnippetApp extends Application {
     private static SnippetApp sSnippetApp;
 

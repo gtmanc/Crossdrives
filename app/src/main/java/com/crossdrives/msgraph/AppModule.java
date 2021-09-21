@@ -8,10 +8,13 @@ import java.util.logging.Level;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.hilt.InstallIn;
+import dagger.hilt.components.SingletonComponent;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-
+@Module
+@InstallIn(SingletonComponent.class)
 public class AppModule {
 //    @Module(library = true,
 //            injects = {SnippetApp.class}
