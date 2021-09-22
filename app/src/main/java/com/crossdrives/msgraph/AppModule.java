@@ -4,13 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
 import dagger.hilt.components.SingletonComponent;
 import okhttp3.Interceptor;
+import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 @Module
@@ -30,8 +30,8 @@ public class AppModule {
 
     @Provides
     @SuppressWarnings("unused") // not actually unused -- used by Dagger
-    public Level providesLogLevel() {
-        return Level.ALL;
+    public HttpLoggingInterceptor.Level providesLogLevel() {
+        return HttpLoggingInterceptor.Level.BODY;
     }
 
     @Provides
