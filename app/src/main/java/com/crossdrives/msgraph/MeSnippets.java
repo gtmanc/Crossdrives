@@ -3,7 +3,7 @@ package com.crossdrives.msgraph;
 import okhttp3.ResponseBody;
 import retrofit2.Callback;
 
-import static com.crossdrives.msgraph;
+import com.example.crossdrives.R;
 
 public abstract class MeSnippets<Result> extends AbstractSnippet<MSGraphMeService, Result> {
     /**
@@ -18,7 +18,7 @@ public abstract class MeSnippets<Result> extends AbstractSnippet<MSGraphMeServic
     static MeSnippets[] getMeSnippets() {
         return new MeSnippets[]{
                 // Marker element
-                new MeSnippets <ResponseBody> (null) {
+                new MeSnippets<ResponseBody>(null) {
                     @Override
                     public void request(MSGraphMeService service, Callback callback) {
                         // Not implemented
@@ -96,7 +96,7 @@ public abstract class MeSnippets<Result> extends AbstractSnippet<MSGraphMeServic
                  * HTTP GET https://graph.microsoft.com/{version}/me/userPhoto
                  * @see https://graph.microsoft.io/docs/api-reference/v1.0/resources/user
                  */
-                new MeSnippets<ResponseBody>(get_me_photo) {
+                new MeSnippets<ResponseBody>(R.array.get_me_photo) {
                     @Override
                     public void request(MSGraphMeService service, Callback<ResponseBody> callback) {
                         service.getMeEntities(
@@ -106,4 +106,5 @@ public abstract class MeSnippets<Result> extends AbstractSnippet<MSGraphMeServic
                     }
                 }
         };
+    }
 }
