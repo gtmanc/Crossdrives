@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.crossdrives.msgraph.msgraphapi;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
@@ -165,6 +166,8 @@ public class SignInMS extends SignInManager{
     private void callGraphAPI(IAuthenticationResult authenticationResult) {
 
         final String accessToken = authenticationResult.getAccessToken();
+
+        msgraphapi msapi = new msgraphapi();
 
         IGraphServiceClient graphClient =
                 GraphServiceClient
