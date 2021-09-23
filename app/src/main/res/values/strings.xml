@@ -28,4 +28,5 @@
 
     <!-- Microsoft Graph-->
     <string name="beta">BETA</string>
+    <string name="userPhoto" >photo </string>
 </resources>
