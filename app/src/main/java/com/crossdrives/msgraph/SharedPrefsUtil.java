@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.microsoft.identity.client.AuthenticationResult;
+import com.microsoft.identity.client.IAuthenticationResult;
 
 public class SharedPrefsUtil {
     public static final String PREF_AUTH_TOKEN = "PREF_AUTH_TOKEN";
@@ -18,7 +19,7 @@ public class SharedPrefsUtil {
         setPreference(PREF_USER_ID, result.getAccount().getUsername());
     }
 
-    public static void persistAuthToken(AuthenticationResult result) {
+    public static void persistAuthToken(IAuthenticationResult result) {
         setPreference(PREF_AUTH_TOKEN, result.getAccessToken());
     }
 

@@ -1,6 +1,7 @@
 package com.crossdrives.msgraph;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.example.crossdrives.BuildConfig;
 
@@ -17,6 +18,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
 @HiltAndroidApp
 public class SnippetApp extends Application {
+    private static String TAG = "CD.SnippetApp";
     private static SnippetApp sSnippetApp;
 
     //public ObjectGraph mObjectGraph;
@@ -31,12 +33,14 @@ public class SnippetApp extends Application {
     protected Interceptor interceptor;
 
     public static SnippetApp getApp() {
+        //Log.d(TAG, "getApp");
         return sSnippetApp;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        //Log.d(TAG, "onCreate");
         sSnippetApp = this;
         //We will replace dagger1 ObjectGraph with component
 //        mObjectGraph = ObjectGraph.create(new AppModule());
@@ -48,6 +52,7 @@ public class SnippetApp extends Application {
     }
 
     public Retrofit getRetrofit() {
+        Log.d(TAG, "getRetrofit");
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(logLevel);
 

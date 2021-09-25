@@ -1,11 +1,14 @@
 package com.crossdrives.msgraph;
 
+import android.util.Log;
+
 import okhttp3.ResponseBody;
 import retrofit2.Callback;
 
 import com.example.crossdrives.R;
 
 public abstract class MeSnippets<Result> extends AbstractSnippet<MSGraphMeService, Result> {
+    private static final String TAG = "CD.MeSnippets";
     /**
      * Snippet constructor
      *
@@ -99,6 +102,7 @@ public abstract class MeSnippets<Result> extends AbstractSnippet<MSGraphMeServic
                 new MeSnippets<ResponseBody>(R.array.get_me_photo) {
                     @Override
                     public void request(MSGraphMeService service, Callback<ResponseBody> callback) {
+                        Log.d(TAG, "Request: " + SnippetApp.getApp().getString(R.string.userPhoto));
                         service.getMeEntities(
                                 getVersion(),
                                 SnippetApp.getApp().getString(R.string.userPhoto)

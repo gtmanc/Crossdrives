@@ -1,10 +1,13 @@
 package com.crossdrives.msgraph;
 
+import android.util.Log;
+
 import com.example.crossdrives.R;
 
 import retrofit2.Callback;
 
 public abstract class AbstractSnippet <Service, Result>{
+    private String TAG = "CD.AbstractSnippet";
     private static final int mNameIndex = 0;
     private static final int mDescIndex = 1;
     private static final int mUrlIndex = 2;
@@ -26,6 +29,7 @@ public abstract class AbstractSnippet <Service, Result>{
             Integer descriptionArray) {
         //Get snippet configuration information from the
         //XML configuration for the snippet
+        //Log.d(TAG, "AbstractSnippet");
         getSnippetArrayContent(category, descriptionArray);
 
         mService = category.mService;

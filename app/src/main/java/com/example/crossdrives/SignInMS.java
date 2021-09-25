@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.crossdrives.msgraph.msgraphapi;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
@@ -17,6 +18,7 @@ import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
+import com.microsoft.identity.client.AuthenticationResult;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.IPublicClientApplication;
@@ -127,8 +129,14 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "User name : " + authenticationResult.getAccount().getUsername());
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
+                Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
+                // save our auth token to use later
+                SharedPrefsUtil.persistAuthToken(authenticationResult);
+
+                msgraphapi msapi = new msgraphapi();
+
                 /* call graph */
-                callGraphAPI(authenticationResult);
+                //callGraphAPI(authenticationResult);
             }
 
             @Override
@@ -166,8 +174,6 @@ public class SignInMS extends SignInManager{
     private void callGraphAPI(IAuthenticationResult authenticationResult) {
 
         final String accessToken = authenticationResult.getAccessToken();
-
-        msgraphapi msapi = new msgraphapi();
 
         IGraphServiceClient graphClient =
                 GraphServiceClient
