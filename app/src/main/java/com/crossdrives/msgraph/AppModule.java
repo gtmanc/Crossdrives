@@ -51,7 +51,7 @@ public class AppModule {
                         .addHeader("Authorization", "Bearer " + token)
                         // This header has been added to identify this sample in the Microsoft Graph service.
                         // If you're using this code for your project please remove the following line.
-                        .addHeader("SampleID", "android-java-snippets-rest-sample")
+                        //.addHeader("SampleID", "android-java-snippets-rest-sample")
                         .build();
                 Response response = chain.proceed(request);
                 return response;
