@@ -8,8 +8,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.crossdrives.msgraph.MSGraphHelper;
 import com.crossdrives.msgraph.SharedPrefsUtil;
-import com.crossdrives.msgraph.msgraphapi;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
@@ -18,7 +18,6 @@ import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
-import com.microsoft.identity.client.AuthenticationResult;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.IPublicClientApplication;
@@ -133,7 +132,7 @@ public class SignInMS extends SignInManager{
                 // save our auth token to use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
 
-                msgraphapi msapi = new msgraphapi();
+                MSGraphHelper msapi = new MSGraphHelper();
 
                 /* call graph */
                 //callGraphAPI(authenticationResult);

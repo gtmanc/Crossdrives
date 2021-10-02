@@ -37,7 +37,8 @@ import java.util.List;
 
 public class MasterAccountFragment extends Fragment {
     private String TAG = "CD.MasterAccountFragment";
-    List<AccountListModel> mAccountList = new ArrayList<>();
+    List<AccountManager.AccountInfo> mAi = new ArrayList<>();
+    View mView;
     Fragment mFragment;
 
     @Nullable
@@ -51,6 +52,7 @@ public class MasterAccountFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        mView = view;
 
         String MyArg = MasterAccountFragmentArgs.fromBundle(getArguments()).getCreateAccountName();
         if(MyArg != null)
@@ -86,17 +88,15 @@ public class MasterAccountFragment extends Fragment {
         v.findViewById(R.id.iv_info_no_account).setVisibility(View.GONE);
         v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.GONE);
         v.findViewById(R.id.account_list).setVisibility(View.VISIBLE);
-        if(mAccountList.size() > 0){
-            Log.d(TAG, "Start to download image");
-            for(int i = 0; i < mAccountList.size(); i++) {
+        if(mAi.size() > 0){
+            for(int i = 0; i < mAi.size(); i++) {
                 ImageView iv = v.findViewById(R.id.account_brand_profile_image);
                 iv.setImageResource(R.drawable.logo_drive_2020q4_color_2x_web_64dp);
                 TextView t = v.findViewById(R.id.account_name);
-                t.setText(mAccountList.get(i).getName());
+                t.setText(mAi.get(i).name);
                 t = v.findViewById(R.id.account_mail);
-                t.setText(mAccountList.get(i).getMail());
-                new DownloadPhoto(v.findViewById(R.id.account_profile_image))
-                        .execute(mAccountList.get(0).getPhotoUrl().toString());
+                t.setText(mAi.get(i).mail);
+                mAi.get(i).getPhoto(callback);
             }
         }
         else{
@@ -106,31 +106,6 @@ public class MasterAccountFragment extends Fragment {
         }
     }
 
-    private class DownloadPhoto extends AsyncTask<String, Void, Bitmap>{
-        ImageView mImageView;
-        public DownloadPhoto(ImageView iv) {
-            mImageView = iv;
-        }
-
-        @Override
-        protected Bitmap doInBackground(String... urls) {
-            Bitmap bm = null;
-            try{
-                InputStream in = new java.net.URL(urls[0]).openStream();
-                bm = BitmapFactory.decodeStream(in);
-            }catch(Exception e){
-                Log.w(TAG, "Open URL failed");
-            }
-
-            return bm;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
-            mImageView.setImageBitmap(bitmap);
-        }
-    }
     /*
     Read all accounts from database and save to mAccountList.
      */
@@ -139,15 +114,24 @@ public class MasterAccountFragment extends Fragment {
         AccountManager am = AccountManager.getInstance();
 
         ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
+
         if(ai != null){
             Log.d(TAG, "Activated Google account: " + ai.name);
-            AccountListModel list = new AccountListModel(ai.brand, ai.name, ai.mail, ai.photouri);
-            mAccountList.add(list);
+            mAi.add(ai);
         }
         else{
             Log.d(TAG, "No activated!");
         }
     }
+
+    AccountManager.AccountInfo.Callback callback = new AccountManager.AccountInfo.Callback(){
+
+        @Override
+        public void onPhotoDownloaded(Bitmap bmp) {
+            ImageView iv = mView.findViewById(R.id.account_profile_image);
+            iv.setImageBitmap(bmp);
+        }
+    };
 
     private void updateCardContent(String name, String mail, Uri photourl){
 

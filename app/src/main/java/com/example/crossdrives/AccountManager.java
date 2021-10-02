@@ -2,11 +2,13 @@ package com.example.crossdrives;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.InputStream;
 
 public class AccountManager {
     private static String TAG = "CD.AccountManager";
@@ -18,11 +20,52 @@ public class AccountManager {
     private final String STATE_ACTIVATED = "Activated";
     private final String STATE_DEACTIVATED = "Deactivated";
 
+
+
     static class AccountInfo{
         String brand;
         String name;
         String mail;
         Uri photouri;
+        Bitmap mBmp;
+        Callback mCallback;
+
+        public void getPhoto(Callback callback){
+            mCallback = callback;
+            //Google: the user photo can be downloaded using url
+            if(brand.equals(BRAND_GOOGLE)){
+                new DownloadPhoto().execute(photouri.toString());
+            }
+        }
+
+        private class DownloadPhoto extends AsyncTask<String, Void, Bitmap> {
+            public DownloadPhoto() {
+            }
+
+            @Override
+            protected Bitmap doInBackground(String... urls) {
+                Bitmap bm = null;
+                try{
+                    InputStream in = new java.net.URL(urls[0]).openStream();
+                    bm = BitmapFactory.decodeStream(in);
+                }catch(Exception e){
+                    Log.w(TAG, "Open URL failed");
+                }
+
+                return bm;
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                super.onPostExecute(bitmap);
+                mBmp = bitmap;
+                mCallback.onPhotoDownloaded(bitmap);
+            }
+        }
+
+        public interface Callback{
+            void onPhotoDownloaded(Bitmap bmp);
+        }
     };
 
     public AccountManager() {
@@ -100,5 +143,10 @@ public class AccountManager {
         uri = Uri.parse(link);
         return uri;
     }
+
+
+
+
+
 }
 
