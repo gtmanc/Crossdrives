@@ -87,7 +87,9 @@ public class MasterAccountFragment extends Fragment {
     private void udpateProfiles(View v){
         v.findViewById(R.id.iv_info_no_account).setVisibility(View.GONE);
         v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.GONE);
+
         v.findViewById(R.id.account_list).setVisibility(View.VISIBLE);
+
         if(mAi.size() > 0){
             for(int i = 0; i < mAi.size(); i++) {
                 ImageView iv = v.findViewById(R.id.account_brand_profile_image);

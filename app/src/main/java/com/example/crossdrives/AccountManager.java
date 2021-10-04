@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.crossdrives.msgraph.MSGraphHelper;
+
 import java.io.InputStream;
 
 public class AccountManager {
@@ -36,8 +38,22 @@ public class AccountManager {
             if(brand.equals(BRAND_GOOGLE)){
                 new DownloadPhoto().execute(photouri.toString());
             }
+            else if (brand.equals(BRAND_MS)){
+                MSGraphHelper ms = new MSGraphHelper();
+                ms.getMePhoto(callbackGraph);
+            }
         }
+        //Graph helper callback for downloading ms user photo
+        MSGraphHelper.Callback callbackGraph = new MSGraphHelper.Callback(){
 
+            @Override
+            public void onPhotoDownloaded(Bitmap bmp) {
+                //Call back to UI fragment
+                mCallback.onPhotoDownloaded(bmp);
+            }
+        };
+
+        //Callback for downloading google user photo
         private class DownloadPhoto extends AsyncTask<String, Void, Bitmap> {
             public DownloadPhoto() {
             }
@@ -59,6 +75,7 @@ public class AccountManager {
             protected void onPostExecute(Bitmap bitmap) {
                 super.onPostExecute(bitmap);
                 mBmp = bitmap;
+                //Call back to UI fragment
                 mCallback.onPhotoDownloaded(bitmap);
             }
         }
