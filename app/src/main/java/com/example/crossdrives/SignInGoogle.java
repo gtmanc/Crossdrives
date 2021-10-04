@@ -7,6 +7,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -34,6 +37,7 @@ public class SignInGoogle extends SignInManager{
     Context mContext = null;
     Activity mActivity;
     Profile mProfile = new Profile();
+    Fragment mFragment;
 
     SignInGoogle(Context context)
     {
@@ -58,6 +62,9 @@ public class SignInGoogle extends SignInManager{
 
         signInIntent = mGoogleSignInClient.getSignInIntent();
 
+        mFragment = FragmentManager.findFragment(view);
+        NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
+        NavHostFragment.findNavController(mFragment).navigate(a);
         return signInIntent;
     }
 

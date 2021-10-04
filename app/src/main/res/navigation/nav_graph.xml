@@ -61,6 +61,14 @@
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             app:popUpTo="@+id/drawer_menu_item_master_account"
             app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/navigte_to_google_signin_fragment"
+            app:destination="@id/google_signin_fragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"
+            />
     </fragment>
 
     <fragment
@@ -73,4 +81,19 @@
         android:id="@+id/system_test_fragment"
         android:name="com.example.crossdrives.SystemTestFragment"
         tools:layout="@layout/system_test_fragment"/>
+
+    <fragment
+        android:id="@+id/google_signin_fragment"
+        android:name="com.example.crossdrives.GoogleSignInFragment">
+        <action
+            android:id="@+id/back_to_add_account_fragment"
+            app:destination="@id/add_account_fragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"
+            app:popUpTo="@+id/add_account_fragment"
+            app:popUpToInclusive="true"
+            />
+    </fragment>
 </navigation>
