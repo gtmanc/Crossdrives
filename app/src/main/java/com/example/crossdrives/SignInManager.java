@@ -17,7 +17,7 @@ public abstract class SignInManager {
     }
 
     //start sign in flow. Mainly start the sign in activity.
-    abstract Intent Start(View view);
+    abstract Intent Start(View view, OnSilenceSignInfinished callback);
 
     // This method will be called as soon as onActivityResult is called by Android UI framwork.
     // Return Profile object if sign flow is done successfully.
