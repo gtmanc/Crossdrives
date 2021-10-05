@@ -1,8 +1,6 @@
 package com.example.crossdrives;
 
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -61,9 +59,9 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInGoogle(getContext());
-            Intent signInIntent = mSignInManager.Start();
+            Intent signInIntent = mSignInManager.Start(v);
 
-            startActivityForResult(signInIntent, RC_SIGN_IN);
+            //startActivityForResult(signInIntent, RC_SIGN_IN);
         }
     };
 
@@ -72,7 +70,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInMS(getActivity());
-            Intent signInIntent = mSignInManager.Start();
+            Intent signInIntent = mSignInManager.Start(v);
 
         }
     };

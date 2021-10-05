@@ -3,9 +3,8 @@ package com.example.crossdrives;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import android.view.View;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -45,7 +44,7 @@ public class SignInGoogle extends SignInManager{
     }
 
     @Override
-    Intent Start() {
+    Intent Start(View view) {
         Intent signInIntent;
         GoogleSignInAccount account = null;
         Drive googleDriveService = null;
@@ -62,9 +61,11 @@ public class SignInGoogle extends SignInManager{
 
         signInIntent = mGoogleSignInClient.getSignInIntent();
 
+        Log.d(TAG, "navigate to google sign in fragment");
         mFragment = FragmentManager.findFragment(view);
         NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
         NavHostFragment.findNavController(mFragment).navigate(a);
+        Log.d(TAG, "navigated!");
         return signInIntent;
     }
 

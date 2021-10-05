@@ -1,6 +1,7 @@
 package com.example.crossdrives;
 
 import android.content.Intent;
+import android.view.View;
 
 public abstract class SignInManager {
     class Profile{
@@ -16,7 +17,7 @@ public abstract class SignInManager {
     }
 
     //start sign in flow. Mainly start the sign in activity.
-    abstract Intent Start();
+    abstract Intent Start(View view);
 
     // This method will be called as soon as onActivityResult is called by Android UI framwork.
     // Return Profile object if sign flow is done successfully.
