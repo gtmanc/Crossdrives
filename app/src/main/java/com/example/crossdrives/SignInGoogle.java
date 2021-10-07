@@ -37,17 +37,29 @@ public class SignInGoogle extends SignInManager{
     Activity mActivity;
     Profile mProfile = new Profile();
     Fragment mFragment;
+    static OnSilenceSignInfinished mCallback;
 
     SignInGoogle(Context context)
     {
         mContext = context;
     }
 
+    public static class ReceiveReturnedData{
+        public static void setData(Profile profile){
+
+            mCallback.onFinished(true, null);
+        }
+
+        public void getData(){}
+    }
+
     @Override
-    Intent Start(View view) {
+    Intent Start(View view, OnSilenceSignInfinished callback) {
         Intent signInIntent;
         GoogleSignInAccount account = null;
         Drive googleDriveService = null;
+
+        mCallback = callback;
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -63,53 +75,55 @@ public class SignInGoogle extends SignInManager{
 
         Log.d(TAG, "navigate to google sign in fragment");
         mFragment = FragmentManager.findFragment(view);
+
         NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
         NavHostFragment.findNavController(mFragment).navigate(a);
         Log.d(TAG, "navigated!");
         return signInIntent;
     }
 
-    @Override
-    Profile HandleSigninResult(Intent data) {
-        GoogleSignInAccount account = null;
 
-        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-        try {
-            account = task.getResult(ApiException.class);
-
-        }catch (ApiException e) {
-                // The ApiException status code indicates the detailed failure reason.
-                // Please refer to the GoogleSignInStatusCodes class reference for more information.
-                Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-                mProfile = null;
-        }
-
-        if(account != null) {
-            GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
-            credential.setSelectedAccount(account.getAccount());
-            Drive googleDriveService =
-                    new Drive.Builder(
-                            AndroidHttp.newCompatibleTransport(),
-                            new GsonFactory(),
-                            credential)
-                            .setApplicationName("Drive API Migration")
-                            .build();
-
-            if(googleDriveService == null)
-                Log.w(TAG, "googleDriveService is null!");
-            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
-            // Its instantiation is required before handling any onClick actions.
-            // We create DriveServiceHelper here but it will be used later by using getInstance() method
-            //new DriveServiceHelper(googleDriveService);
-            DriveServiceHelper.Create(googleDriveService);
-            mProfile.Name= account.getDisplayName();
-            mProfile.Mail = account.getEmail();
-            mProfile.PhotoUri = account.getPhotoUrl();
-        }
-        return mProfile;
-    }
+//    @Override
+//    Profile HandleSigninResult(Intent data) {
+//        GoogleSignInAccount account = null;
+//
+//        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+//        try {
+//            account = task.getResult(ApiException.class);
+//
+//        }catch (ApiException e) {
+//                // The ApiException status code indicates the detailed failure reason.
+//                // Please refer to the GoogleSignInStatusCodes class reference for more information.
+//                Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+//                mProfile = null;
+//        }
+//
+//        if(account != null) {
+//            GoogleAccountCredential credential =
+//                    GoogleAccountCredential.usingOAuth2(
+//                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
+//            credential.setSelectedAccount(account.getAccount());
+//            Drive googleDriveService =
+//                    new Drive.Builder(
+//                            AndroidHttp.newCompatibleTransport(),
+//                            new GsonFactory(),
+//                            credential)
+//                            .setApplicationName("Drive API Migration")
+//                            .build();
+//
+//            if(googleDriveService == null)
+//                Log.w(TAG, "googleDriveService is null!");
+//            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
+//            // Its instantiation is required before handling any onClick actions.
+//            // We create DriveServiceHelper here but it will be used later by using getInstance() method
+//            //new DriveServiceHelper(googleDriveService);
+//            DriveServiceHelper.Create(googleDriveService);
+//            mProfile.Name= account.getDisplayName();
+//            mProfile.Mail = account.getEmail();
+//            mProfile.PhotoUri = account.getPhotoUrl();
+//        }
+//        return mProfile;
+//    }
 
     //Silence sign in. The account information and result will be provided via callback even if the user is already signed in.
     @Override

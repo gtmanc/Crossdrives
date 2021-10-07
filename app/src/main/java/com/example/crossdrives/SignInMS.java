@@ -41,7 +41,7 @@ public class SignInMS extends SignInManager{
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
     @Override
-    Intent Start(View view) {
+    Intent Start(View view, OnSilenceSignInfinished callback) {
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override

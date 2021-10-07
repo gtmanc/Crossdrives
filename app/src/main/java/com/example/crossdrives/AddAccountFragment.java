@@ -59,7 +59,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInGoogle(getContext());
-            Intent signInIntent = mSignInManager.Start(v);
+            Intent signInIntent = mSignInManager.Start(v, onSigninFinished);
 
             //startActivityForResult(signInIntent, RC_SIGN_IN);
         }
@@ -70,7 +70,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInMS(getActivity());
-            Intent signInIntent = mSignInManager.Start(v);
+            Intent signInIntent = mSignInManager.Start(v, onSigninFinished);
 
         }
     };
@@ -158,4 +158,25 @@ public class AddAccountFragment extends Fragment {
 
         return super.onOptionsItemSelected(item);
     }
+
+    SignInManager.OnSilenceSignInfinished onSigninFinished = new SignInManager.OnSilenceSignInfinished(){
+        @Override
+        public void onFinished(boolean result, SignInManager.Profile profile) {
+
+            AccountManager am = AccountManager.getInstance();
+            ai.brand = AccountManager.BRAND_GOOGLE;
+            ai.name = p.Name;
+            ai.mail = p.Mail;
+            ai.photouri = p.PhotoUri;
+            result = am.createAccount(getContext(), ai);
+            if (result != true)
+                Log.w(TAG, "Create account failed!");
+            name = p.Name;
+
+            //passing name to master account fragment so that a toast is shown to the user that an account is created
+            AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
+            //action.setCreateAccountName(p.Name);
+            NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+        }
+    };
 }

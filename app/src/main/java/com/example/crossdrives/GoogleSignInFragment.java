@@ -80,31 +80,14 @@ public class GoogleSignInFragment extends Fragment {
             Log.d(TAG, "User name:" + p.Name);
             Log.d(TAG, "User mail:" + p.Mail);
             Log.d(TAG, "User photo url:" + p.PhotoUri);
-
-//            DBHelper dbh = new DBHelper(getContext(), null, null, 0);
-//            r_id = dbh.insert("Google", p.Name, p.Mail, p.PhotoUri, "Activated");
-//            if(r_id == -1){
-//                Log.w(TAG, "Create account failed!");
-//            }
-            AccountManager am = AccountManager.getInstance();
-            ai.brand = AccountManager.BRAND_GOOGLE;
-            ai.name = p.Name;
-            ai.mail = p.Mail;
-            ai.photouri = p.PhotoUri;
-            result = am.createAccount(getContext(), ai);
-            if (result != true)
-                Log.w(TAG, "Create account failed!");
-            name = p.Name;
         }
 
-        //passing name to master account fragment so that a toast is shown to the user that an account is created
-        AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(name);
-        //action.setCreateAccountName(p.Name);
-        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+        SignInGoogle.ReceiveReturnedData.setData(p);
     }
 
     SignInManager.Profile HandleSigninResult(Intent data) {
         GoogleSignInAccount account = null;
+        SignInManager.Profile profile;
 
         Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
         try {
@@ -114,7 +97,7 @@ public class GoogleSignInFragment extends Fragment {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            mProfile = null;
+            profile = null;
         }
 
         if(account != null) {
@@ -137,10 +120,10 @@ public class GoogleSignInFragment extends Fragment {
             // We create DriveServiceHelper here but it will be used later by using getInstance() method
             //new DriveServiceHelper(googleDriveService);
             DriveServiceHelper.Create(googleDriveService);
-            mProfile.Name= account.getDisplayName();
-            mProfile.Mail = account.getEmail();
-            mProfile.PhotoUri = account.getPhotoUrl();
+            profile.Name= account.getDisplayName();
+            profile.Mail = account.getEmail();
+            profile.PhotoUri = account.getPhotoUrl();
         }
-        return mProfile;
+        return profile;
     }
 }
