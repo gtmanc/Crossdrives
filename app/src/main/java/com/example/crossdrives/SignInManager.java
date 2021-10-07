@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.view.View;
 
 public abstract class SignInManager {
-    class Profile{
+    static class Profile{
         String Name;
         String Mail;
         android.net.Uri PhotoUri;
@@ -22,7 +22,7 @@ public abstract class SignInManager {
     // This method will be called as soon as onActivityResult is called by Android UI framwork.
     // Return Profile object if sign flow is done successfully.
     // NULL is returned if any of error occurred during sign in flow.
-    abstract Profile HandleSigninResult(Intent data);
+    //abstract Profile HandleSigninResult(Intent data);
 
 
     //Silence Sign in.

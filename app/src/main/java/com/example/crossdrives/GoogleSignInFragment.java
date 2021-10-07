@@ -2,6 +2,7 @@ package com.example.crossdrives;
 
 import androidx.fragment.app.Fragment;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,8 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
-import androidx.navigation.NavDirections;
-import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -32,6 +31,8 @@ public class GoogleSignInFragment extends Fragment {
     GoogleSignInClient mGoogleSignInClient;
     GoogleSignInAccount mGoogleSignInAccount;
     private static final int RC_SIGN_IN = 0;
+    private String mName, mMail;
+    private Uri mPhotoUri;
 
     @Nullable
     @Override
@@ -62,9 +63,8 @@ public class GoogleSignInFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        SignInManager.Profile p;
+        SignInManager.Profile p = null;
         String name = null;
-        AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
         boolean result;
 
         Log.d(TAG, "requestCode: " + requestCode);
@@ -73,7 +73,7 @@ public class GoogleSignInFragment extends Fragment {
         //result code is 0 if user press BACK in the sign in activity. -1 is received if user entered signe in credentials.
         if(resultCode != 0) {
             Log.d(TAG, "handle sign flow");
-            p = HandleSigninResult(data);
+            HandleSigninResult(data);
             if (p == null)
                 Log.w(TAG, "handle result error!");
 
@@ -82,12 +82,11 @@ public class GoogleSignInFragment extends Fragment {
             Log.d(TAG, "User photo url:" + p.PhotoUri);
         }
 
-        SignInGoogle.ReceiveReturnedData.setData(p);
+        SignInGoogle.ReceiveSigninResult.setData(mName, mMail, mPhotoUri);
     }
 
-    SignInManager.Profile HandleSigninResult(Intent data) {
+    void HandleSigninResult(Intent data) {
         GoogleSignInAccount account = null;
-        SignInManager.Profile profile;
 
         Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
         try {
@@ -97,7 +96,9 @@ public class GoogleSignInFragment extends Fragment {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            profile = null;
+            mName = "";
+            mMail = "";
+            mPhotoUri = null;
         }
 
         if(account != null) {
@@ -120,10 +121,9 @@ public class GoogleSignInFragment extends Fragment {
             // We create DriveServiceHelper here but it will be used later by using getInstance() method
             //new DriveServiceHelper(googleDriveService);
             DriveServiceHelper.Create(googleDriveService);
-            profile.Name= account.getDisplayName();
-            profile.Mail = account.getEmail();
-            profile.PhotoUri = account.getPhotoUrl();
+            mName= account.getDisplayName();
+            mMail = account.getEmail();
+            mPhotoUri = account.getPhotoUrl();
         }
-        return profile;
     }
 }

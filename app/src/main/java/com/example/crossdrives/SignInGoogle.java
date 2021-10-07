@@ -3,6 +3,7 @@ package com.example.crossdrives;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 
@@ -27,6 +28,8 @@ import com.google.api.services.drive.DriveScopes;
 
 import java.util.Collections;
 
+import retrofit2.http.Url;
+
 //A concrete object for execution of google sign in flow
 public class SignInGoogle extends SignInManager{
     private String TAG = "CD.SignInGoogle";
@@ -35,7 +38,7 @@ public class SignInGoogle extends SignInManager{
     GoogleSignInAccount mGoogleSignInAccount;
     Context mContext = null;
     Activity mActivity;
-    Profile mProfile = new Profile();
+    static Profile mProfile = new Profile();
     Fragment mFragment;
     static OnSilenceSignInfinished mCallback;
 
@@ -44,10 +47,13 @@ public class SignInGoogle extends SignInManager{
         mContext = context;
     }
 
-    public static class ReceiveReturnedData{
-        public static void setData(Profile profile){
+    public static class ReceiveSigninResult {
+        public static void setData(String name, String mail, Uri photo){
+            mProfile.Name = name;
+            mProfile.Mail = mail;
+            mProfile.PhotoUri = photo;
 
-            mCallback.onFinished(true, null);
+            mCallback.onFinished(true, mProfile);
         }
 
         public void getData(){}

@@ -60,11 +60,6 @@ public class SignInMS extends SignInManager{
     }
 
     @Override
-    Profile HandleSigninResult(Intent data) {
-        return null;
-    }
-
-    @Override
     void silenceSignIn(OnSilenceSignInfinished callback) {
         mOnSilenceSignInfinished = callback;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,

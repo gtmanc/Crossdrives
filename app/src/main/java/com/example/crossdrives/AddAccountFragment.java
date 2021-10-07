@@ -75,48 +75,48 @@ public class AddAccountFragment extends Fragment {
         }
     };
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        SignInManager.Profile p;
-        String name = null;
-        AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
-        boolean result;
-
-        Log.d(TAG, "requestCode: " + requestCode);
-        Log.d(TAG, "resultCode: " + resultCode);
-
-        //result code is 0 if user press BACK in the sign in activity. -1 is received if user entered signe in credentials.
-        if(resultCode != 0) {
-            Log.d(TAG, "handle sign flow");
-            p = mSignInManager.HandleSigninResult(data);
-            if (p == null)
-                Log.w(TAG, "handle result error!");
-
-            Log.d(TAG, "User name:" + p.Name);
-            Log.d(TAG, "User mail:" + p.Mail);
-            Log.d(TAG, "User photo url:" + p.PhotoUri);
-
-//            DBHelper dbh = new DBHelper(getContext(), null, null, 0);
-//            r_id = dbh.insert("Google", p.Name, p.Mail, p.PhotoUri, "Activated");
-//            if(r_id == -1){
+//    @Override
+//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        SignInManager.Profile p;
+//        String name = null;
+//        AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
+//        boolean result;
+//
+//        Log.d(TAG, "requestCode: " + requestCode);
+//        Log.d(TAG, "resultCode: " + resultCode);
+//
+//        //result code is 0 if user press BACK in the sign in activity. -1 is received if user entered signe in credentials.
+//        if(resultCode != 0) {
+//            Log.d(TAG, "handle sign flow");
+//            p = mSignInManager.HandleSigninResult(data);
+//            if (p == null)
+//                Log.w(TAG, "handle result error!");
+//
+//            Log.d(TAG, "User name:" + p.Name);
+//            Log.d(TAG, "User mail:" + p.Mail);
+//            Log.d(TAG, "User photo url:" + p.PhotoUri);
+//
+////            DBHelper dbh = new DBHelper(getContext(), null, null, 0);
+////            r_id = dbh.insert("Google", p.Name, p.Mail, p.PhotoUri, "Activated");
+////            if(r_id == -1){
+////                Log.w(TAG, "Create account failed!");
+////            }
+//            AccountManager am = AccountManager.getInstance();
+//            ai.brand = AccountManager.BRAND_GOOGLE;
+//            ai.name = p.Name;
+//            ai.mail = p.Mail;
+//            ai.photouri = p.PhotoUri;
+//            result = am.createAccount(getContext(), ai);
+//            if (result != true)
 //                Log.w(TAG, "Create account failed!");
-//            }
-            AccountManager am = AccountManager.getInstance();
-            ai.brand = AccountManager.BRAND_GOOGLE;
-            ai.name = p.Name;
-            ai.mail = p.Mail;
-            ai.photouri = p.PhotoUri;
-            result = am.createAccount(getContext(), ai);
-            if (result != true)
-                Log.w(TAG, "Create account failed!");
-            name = p.Name;
-        }
-
-        //passing name to master account fragment so that a toast is shown to the user that an account is created
-        AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(name);
-        //action.setCreateAccountName(p.Name);
-        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
-    }
+//            name = p.Name;
+//        }
+//
+//        //passing name to master account fragment so that a toast is shown to the user that an account is created
+//        AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(name);
+//        //action.setCreateAccountName(p.Name);
+//        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+//    }
 
     @Override
     public void onPause() {
@@ -162,16 +162,16 @@ public class AddAccountFragment extends Fragment {
     SignInManager.OnSilenceSignInfinished onSigninFinished = new SignInManager.OnSilenceSignInfinished(){
         @Override
         public void onFinished(boolean result, SignInManager.Profile profile) {
+            AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
 
             AccountManager am = AccountManager.getInstance();
             ai.brand = AccountManager.BRAND_GOOGLE;
-            ai.name = p.Name;
-            ai.mail = p.Mail;
-            ai.photouri = p.PhotoUri;
+            ai.name = profile.Name;
+            ai.mail = profile.Mail;
+            ai.photouri = profile.PhotoUri;
             result = am.createAccount(getContext(), ai);
             if (result != true)
                 Log.w(TAG, "Create account failed!");
-            name = p.Name;
 
             //passing name to master account fragment so that a toast is shown to the user that an account is created
             AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
