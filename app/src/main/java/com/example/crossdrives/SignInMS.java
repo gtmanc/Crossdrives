@@ -41,7 +41,7 @@ public class SignInMS extends SignInManager{
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
     @Override
-    Intent Start(View view, OnSilenceSignInfinished callback) {
+    boolean Start(View view, OnSilenceSignInfinished callback) {
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -56,7 +56,7 @@ public class SignInMS extends SignInManager{
                     }
                 });
 
-        return null;
+        return true;
     }
 
     @Override
@@ -155,13 +155,13 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "Successfully silence authenticated");
 
                 callGraphAPI(authenticationResult);
-                mOnSilenceSignInfinished.onFinished(true, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.Result_SUCCESS, null);
             }
             @Override
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSilenceSignInfinished.onFinished(false, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.Result_FAILED, null);
             }
         };
     }

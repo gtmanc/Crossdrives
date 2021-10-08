@@ -15,6 +15,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
@@ -29,10 +30,11 @@ import java.util.Collections;
 public class GoogleSignInFragment extends Fragment {
     private String TAG = "CD.GoogleSignInFragment";
     GoogleSignInClient mGoogleSignInClient;
-    GoogleSignInAccount mGoogleSignInAccount;
-    private static final int RC_SIGN_IN = 0;
+    private final int RC_SIGN_IN = 0;
     private String mName, mMail;
     private Uri mPhotoUri;
+
+    private int mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
     @Nullable
     @Override
@@ -63,30 +65,46 @@ public class GoogleSignInFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        SignInManager.Profile p = null;
-        String name = null;
-        boolean result;
+        boolean result = false;
 
         Log.d(TAG, "requestCode: " + requestCode);
         Log.d(TAG, "resultCode: " + resultCode);
 
-        //result code is 0 if user press BACK in the sign in activity. -1 is received if user entered signe in credentials.
+        /*
+        HTC One Android 6:
+        The sign in activity is always shown even if app is already signed in
+        Result code is 0 if the user
+        1. enter sign in credentials (user decides to use a new account has never be signed on the device)
+        2. user selects an account that has signed in on the device
+        3. Press BACK in the sign in activity.
+        Not clear in which case the NOT-zero value is returned. Need to test the samsung Pad.
+        Samsung Gallxy S - Android 6
+        TBD
+        Samsung A70 Android 9
+        TBD
+        */
         if(resultCode != 0) {
             Log.d(TAG, "handle sign flow");
             HandleSigninResult(data);
-            if (p == null)
-                Log.w(TAG, "handle result error!");
 
-            Log.d(TAG, "User name:" + p.Name);
-            Log.d(TAG, "User mail:" + p.Mail);
-            Log.d(TAG, "User photo url:" + p.PhotoUri);
+            Log.d(TAG, "User name:" + mName);
+            Log.d(TAG, "User mail:" + mMail);
+            Log.d(TAG, "User photo url:" + mPhotoUri);
+        }
+        else{
+            //Set the profile data to default
+            mName = "";
+            mMail = "";
+            mPhotoUri = null;
         }
 
-        SignInGoogle.ReceiveSigninResult.setData(mName, mMail, mPhotoUri);
+        SignInGoogle.ReceiveSigninResult.setData(mSigninResult, mName, mMail, mPhotoUri);
     }
 
     void HandleSigninResult(Intent data) {
         GoogleSignInAccount account = null;
+
+        mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
         Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
         try {
@@ -96,9 +114,7 @@ public class GoogleSignInFragment extends Fragment {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            mName = "";
-            mMail = "";
-            mPhotoUri = null;
+            mSigninResult = e.getStatusCode();
         }
 
         if(account != null) {

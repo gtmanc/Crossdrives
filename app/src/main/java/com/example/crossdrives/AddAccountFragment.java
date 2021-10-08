@@ -20,6 +20,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -59,7 +61,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInGoogle(getContext());
-            Intent signInIntent = mSignInManager.Start(v, onSigninFinished);
+            mSignInManager.Start(v, onSigninFinished);
 
             //startActivityForResult(signInIntent, RC_SIGN_IN);
         }
@@ -70,7 +72,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInMS(getActivity());
-            Intent signInIntent = mSignInManager.Start(v, onSigninFinished);
+            mSignInManager.Start(v, onSigninFinished);
 
         }
     };
@@ -161,17 +163,20 @@ public class AddAccountFragment extends Fragment {
 
     SignInManager.OnSilenceSignInfinished onSigninFinished = new SignInManager.OnSilenceSignInfinished(){
         @Override
-        public void onFinished(boolean result, SignInManager.Profile profile) {
+        public void onFinished(int result, SignInManager.Profile profile) {
+            boolean err = false;
             AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
 
-            AccountManager am = AccountManager.getInstance();
-            ai.brand = AccountManager.BRAND_GOOGLE;
-            ai.name = profile.Name;
-            ai.mail = profile.Mail;
-            ai.photouri = profile.PhotoUri;
-            result = am.createAccount(getContext(), ai);
-            if (result != true)
-                Log.w(TAG, "Create account failed!");
+            if(result == SignInManager.Result_SUCCESS) {
+                AccountManager am = AccountManager.getInstance();
+                ai.brand = AccountManager.BRAND_GOOGLE;
+                ai.name = profile.Name;
+                ai.mail = profile.Mail;
+                ai.photouri = profile.PhotoUri;
+                err = am.createAccount(getContext(), ai);
+                if (err != true)
+                    Log.w(TAG, "Create account failed!");
+            }
 
             //passing name to master account fragment so that a toast is shown to the user that an account is created
             AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);

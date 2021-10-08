@@ -16,6 +16,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -38,7 +39,7 @@ public class SignInGoogle extends SignInManager{
     GoogleSignInAccount mGoogleSignInAccount;
     Context mContext = null;
     Activity mActivity;
-    static Profile mProfile = new Profile();
+    Profile mProfile = new Profile();
     Fragment mFragment;
     static OnSilenceSignInfinished mCallback;
 
@@ -48,44 +49,44 @@ public class SignInGoogle extends SignInManager{
     }
 
     public static class ReceiveSigninResult {
-        public static void setData(String name, String mail, Uri photo){
-            mProfile.Name = name;
-            mProfile.Mail = mail;
-            mProfile.PhotoUri = photo;
+        public static void setData(int statuscode, String name, String mail, Uri photo){
+            Profile profile = new Profile();
+            profile.Name = name;
+            profile.Mail = mail;
+            profile.PhotoUri = photo;
 
-            mCallback.onFinished(true, mProfile);
+            mCallback.onFinished(statuscode, profile);
         }
 
         public void getData(){}
     }
 
     @Override
-    Intent Start(View view, OnSilenceSignInfinished callback) {
+    boolean Start(View view, OnSilenceSignInfinished callback) {
         Intent signInIntent;
         GoogleSignInAccount account = null;
         Drive googleDriveService = null;
 
         mCallback = callback;
 
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
-                .build();
-
-        // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);
-
-        signInIntent = mGoogleSignInClient.getSignInIntent();
+//        // Configure sign-in to request the user's ID, email address, and basic
+//        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+//        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+//                .requestEmail()
+//                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+//                .build();
+//
+//        // Build a GoogleSignInClient with the options specified by gso.
+//        mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);
+//
+//        signInIntent = mGoogleSignInClient.getSignInIntent();
 
         Log.d(TAG, "navigate to google sign in fragment");
         mFragment = FragmentManager.findFragment(view);
 
         NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
         NavHostFragment.findNavController(mFragment).navigate(a);
-        Log.d(TAG, "navigated!");
-        return signInIntent;
+        return true;
     }
 
 
@@ -153,7 +154,7 @@ public class SignInGoogle extends SignInManager{
             mProfile.Mail = mGoogleSignInAccount.getEmail();
             mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
             requestDriveService(mGoogleSignInAccount);
-            callback.onFinished(true, mProfile);
+            callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile);
         } else {
             // There's no immediate result ready, displays some progress indicator and waits for the
             // async callback.
@@ -168,7 +169,7 @@ public class SignInGoogle extends SignInManager{
                         mProfile.Mail = mGoogleSignInAccount.getEmail();
                         mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
                         requestDriveService(mGoogleSignInAccount);
-                        callback.onFinished(true, mProfile);
+                        callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile);
                     } catch (ApiException apiException) {
                         Log.w(TAG, "Sign in failed! Error code: " + apiException.getStatusCode());
                         // You can get from apiException.getStatusCode() the detailed error code
@@ -176,7 +177,7 @@ public class SignInGoogle extends SignInManager{
                         // explicit action to finish sign-in;
                         // Please refer to GoogleSignInStatusCodes Javadoc for detail
                         mProfile = null;
-                        callback.onFinished(false, null);
+                        callback.onFinished(apiException.getStatusCode(), null);
                     }
                 }
             });

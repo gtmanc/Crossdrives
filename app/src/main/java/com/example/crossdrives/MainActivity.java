@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 ;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -67,13 +68,13 @@ public class MainActivity extends AppCompatActivity{
     SignInManager.OnSilenceSignInfinished onSigninFinishedGdrive = new SignInManager.OnSilenceSignInfinished(){
 
         @Override
-        public void onFinished(boolean result, SignInManager.Profile profile) {
+        public void onFinished(int result, SignInManager.Profile profile) {
             Intent intent = new Intent();
             Bundle bundle = new Bundle();
 
             mProgressBar.setVisibility(View.GONE);
 
-            if(result == true){
+            if(result == SignInManager.Result_SUCCESS){
                 //Write user profile to database
 
 
@@ -95,9 +96,9 @@ public class MainActivity extends AppCompatActivity{
     };
     SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
         @Override
-        public void onFinished(boolean result, SignInManager.Profile profile) {
+        public void onFinished(int result, SignInManager.Profile profile) {
             //Ready to go to the result list
-            if(result == true){
+            if(result == GoogleSignInStatusCodes.SUCCESS){
                 //Write user profile to database
                 Log.d(TAG, "Onedrive silence sign in works");
             }
