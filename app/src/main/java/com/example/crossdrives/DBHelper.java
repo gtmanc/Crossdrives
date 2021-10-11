@@ -79,7 +79,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /*
-    * If no argument is giving, all columns are read
+    * If no argument is giving, all columns are read out from database.
     * The input arguments are the column name and condition which will be used to filter the queried result further
     * Note: so far, two conditions and AND operator are supported!
     * */
@@ -121,5 +121,42 @@ public class DBHelper extends SQLiteOpenHelper {
         }
 
         return cursor;
+    }
+
+    public int delete(String ... expression){
+        int number_row = 0;
+        ContentValues cv = new ContentValues();
+
+        Log.d(TAG, "delete");
+        /*
+        So far, three conditions and AND operator are supported
+         */
+        if(expression.length > 6)
+        {
+            Log.w(TAG, "Too many conditions are required!");
+            return number_row;
+        }
+
+        try{
+            mdb = getWritableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "db open failed" + e.getMessage());
+        }
+
+        if(mdb != null){
+            number_row = mdb.delete(USERPROFILE_TABLE_NAME,
+                    expression[0] + "=" + expression[1] + "AND" +
+                            expression[2] + "=" + expression[3] + "AND" +
+                            expression[4] + "=" + expression[5],
+                            null);
+            if(number_row == 0){
+                Log.w(TAG, "db delete failed");
+            }
+            mdb.close();
+        }
+
+        return number_row;
     }
 }

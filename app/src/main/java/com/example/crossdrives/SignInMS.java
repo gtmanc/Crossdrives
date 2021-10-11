@@ -35,13 +35,14 @@ public class SignInMS extends SignInManager{
     private final static String[] SCOPES = {"Files.Read"};
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
+    OnInteractiveSignInfinished mOnInteractiveSignInfinished;
     OnSilenceSignInfinished mOnSilenceSignInfinished;
     Profile mProfile;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
     @Override
-    boolean Start(View view, OnSilenceSignInfinished callback) {
+    boolean Start(View view, OnInteractiveSignInfinished callback) {
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -78,6 +79,10 @@ public class SignInMS extends SignInManager{
 
     }
 
+    @Override
+    void SignOut(OnSignOutFinished callback) {
+
+    }
 
     private void loadAccount(){
         if (mSingleAccountApp == null) {

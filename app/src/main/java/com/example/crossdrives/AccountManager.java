@@ -146,6 +146,7 @@ public class AccountManager {
             info = new AccountInfo();
             c.moveToFirst();
             Uri uri = toUri(c.getString(iphoto));
+            info.brand = brand;
             info.name = c.getString(iname);
             info.mail = c.getString(imail);
             info.photouri = uri;
@@ -154,16 +155,31 @@ public class AccountManager {
         return info;
     }
 
+    public boolean deleteAccount(Context context, String brand, String name, String mail){
+        int row_deleted = 0;
+        boolean err = false;
+        String Col_Brand = DBConstants.USERPROFILE_TABLE_COL_BRAND;
+        String Col_Name = DBConstants.USERPROFILE_TABLE_COL_NAME;
+        String Col_Mail = DBConstants.USERPROFILE_TABLE_COL_MAIL;
+
+        DBHelper dbh = new DBHelper(context, null,null,0);
+        row_deleted = dbh.delete(Col_Brand, "\""+brand+"\"",
+                Col_Name, "\""+name+"\"",
+                Col_Mail, "\""+mail+"\"");
+        if(row_deleted != 0){
+            err = true;
+        }
+        else{
+            Log.w(TAG, "Delete account failed");
+        }
+
+        return err;
+    }
 
     private Uri toUri(String link){
         Uri uri = null;
         uri = Uri.parse(link);
         return uri;
     }
-
-
-
-
-
 }
 

@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
@@ -41,7 +42,7 @@ public class SignInGoogle extends SignInManager{
     Activity mActivity;
     Profile mProfile = new Profile();
     Fragment mFragment;
-    static OnSilenceSignInfinished mCallback;
+    static OnInteractiveSignInfinished mCallback;
 
     SignInGoogle(Context context)
     {
@@ -49,11 +50,15 @@ public class SignInGoogle extends SignInManager{
     }
 
     public static class ReceiveSigninResult {
-        public static void setData(int statuscode, String name, String mail, Uri photo){
+        public static void setData(int statuscode, Fragment fragment, String name, String mail, Uri photo){
             Profile profile = new Profile();
+            profile.Brand = SignInManager.BRAND_GOOGLE;
             profile.Name = name;
             profile.Mail = mail;
             profile.PhotoUri = photo;
+
+            NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
+            NavHostFragment.findNavController(fragment).navigate(a);
 
             mCallback.onFinished(statuscode, profile);
         }
@@ -62,7 +67,7 @@ public class SignInGoogle extends SignInManager{
     }
 
     @Override
-    boolean Start(View view, OnSilenceSignInfinished callback) {
+    boolean Start(View view, OnInteractiveSignInfinished callback) {
         Intent signInIntent;
         GoogleSignInAccount account = null;
         Drive googleDriveService = null;
@@ -206,6 +211,38 @@ public class SignInGoogle extends SignInManager{
             //new DriveServiceHelper(googleDriveService);
             DriveServiceHelper.Create(googleDriveService);
         }
+    }
+
+    // example code for handling sign-out: https://developers.google.com/identity/sign-in/android/disconnect?hl=zh-TW
+    // Google offcial: https://developers.google.com/identity/sign-in/android/disconnect
+    @Override
+    void SignOut(OnSignOutFinished callback) {
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+                .build();
+
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);
+        Log.d(TAG, "Sign out");
+        Task<Void> pendingResult = mGoogleSignInClient.signOut();
+        pendingResult.addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "Sign out OK!");
+                revokeAccess();
+            }
+        });
+    }
+
+    private void revokeAccess() {
+        Task<Void> pendingResult = mGoogleSignInClient.revokeAccess();
+        pendingResult.addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "revoke OK!");
+            }
+        });
     }
 }
 

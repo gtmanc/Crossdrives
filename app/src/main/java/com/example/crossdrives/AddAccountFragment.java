@@ -1,5 +1,6 @@
 package com.example.crossdrives;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +12,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,6 +36,7 @@ public class AddAccountFragment extends Fragment {
     SignInManager mSignInManager = null;
     private static final int RC_SIGN_IN = 0;
     Fragment mFragment;
+    View mView;
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -60,10 +66,9 @@ public class AddAccountFragment extends Fragment {
         @Override
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
+            mView = v;
             mSignInManager = new SignInGoogle(getContext());
-            mSignInManager.Start(v, onSigninFinished);
-
-            //startActivityForResult(signInIntent, RC_SIGN_IN);
+            mStartForResult.launch(new Intent(mFragment.getActivity(), SignOutDialog.class));
         }
     };
 
@@ -77,6 +82,33 @@ public class AddAccountFragment extends Fragment {
         }
     };
 
+    ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    Log.d(TAG, "Callback gets called. Result code:" + result.getResultCode());
+                    String action;
+                    //Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent intent = result.getData();
+                        action = intent.getStringExtra(SignOutDialog.KEY_ACTION);
+                        Log.d(TAG, "Action:" + action);
+                        if(action.equals(SignOutDialog.ACTION_SIGNOUT)){
+                            Log.i(TAG, "Decided: sign out!");
+                            mSignInManager.SignOut(onSignOutFinished);
+                        }
+                    }
+                }
+            });
+
+    SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
+        @Override
+        public void onFinished(int result) {
+            Log.i(TAG, "App has signed out!");
+            mSignInManager.Start(mView, onSigninFinished);
+
+        }
+    };
 //    @Override
 //    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 //        SignInManager.Profile p;
@@ -161,21 +193,34 @@ public class AddAccountFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    SignInManager.OnSilenceSignInfinished onSigninFinished = new SignInManager.OnSilenceSignInfinished(){
+    SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
         @Override
         public void onFinished(int result, SignInManager.Profile profile) {
             boolean err = false;
             AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
 
+            if(profile.Brand == SignInManager.BRAND_GOOGLE){
+                ai.brand = AccountManager.BRAND_GOOGLE;
+            }
+            else if(profile.Brand == SignInManager.BRAND_MS)
+            {
+                ai.brand = AccountManager.BRAND_MS;
+            }
+            else{
+                Log.w(TAG, "Unknow brand!");
+            }
+
             if(result == SignInManager.Result_SUCCESS) {
                 AccountManager am = AccountManager.getInstance();
-                ai.brand = AccountManager.BRAND_GOOGLE;
                 ai.name = profile.Name;
                 ai.mail = profile.Mail;
                 ai.photouri = profile.PhotoUri;
                 err = am.createAccount(getContext(), ai);
-                if (err != true)
+                if (err != true) {
                     Log.w(TAG, "Create account failed!");
+                }else{
+                    //TODO: may need a proper handling if something wrong when creating an account.
+                }
             }
 
             //passing name to master account fragment so that a toast is shown to the user that an account is created

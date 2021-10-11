@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentManager;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -33,6 +34,7 @@ public class GoogleSignInFragment extends Fragment {
     private final int RC_SIGN_IN = 0;
     private String mName, mMail;
     private Uri mPhotoUri;
+    private Fragment mFragment;
 
     private int mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
@@ -60,6 +62,8 @@ public class GoogleSignInFragment extends Fragment {
 
         signInIntent = mGoogleSignInClient.getSignInIntent();
 
+        mFragment = FragmentManager.findFragment(view);
+
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
@@ -77,9 +81,12 @@ public class GoogleSignInFragment extends Fragment {
         1. enter sign in credentials (user decides to use a new account has never be signed on the device)
         2. user selects an account that has signed in on the device
         3. Press BACK in the sign in activity.
-        Not clear in which case the NOT-zero value is returned. Need to test the samsung Pad.
-        Samsung Gallxy S - Android 6
-        TBD
+        Not yet clean in which case a NOT zero is returned.
+        Samsung Gallxy S Android 6
+        THe signin activity is not shown if app is signed in.
+        1. resultcode:-1: enter sign in credentials (user decides to use a new account has never be signed on the device)
+        2. resultcode:-1: user selects an account that has signed in on the device
+        3. resultrcode is 0 if user press BACK in the sign in activity.
         Samsung A70 Android 9
         TBD
         */
@@ -98,7 +105,7 @@ public class GoogleSignInFragment extends Fragment {
             mPhotoUri = null;
         }
 
-        SignInGoogle.ReceiveSigninResult.setData(mSigninResult, mName, mMail, mPhotoUri);
+        SignInGoogle.ReceiveSigninResult.setData(mSigninResult, mFragment, mName, mMail, mPhotoUri);
     }
 
     void HandleSigninResult(Intent data) {
@@ -106,40 +113,45 @@ public class GoogleSignInFragment extends Fragment {
 
         mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
-        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-        try {
-            account = task.getResult(ApiException.class);
+        if (data == null) {
+            mSigninResult = GoogleSignInStatusCodes.SIGN_IN_FAILED;
+        } else {
 
-        }catch (ApiException e) {
-            // The ApiException status code indicates the detailed failure reason.
-            // Please refer to the GoogleSignInStatusCodes class reference for more information.
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            mSigninResult = e.getStatusCode();
-        }
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                account = task.getResult(ApiException.class);
 
-        if(account != null) {
-            GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                            getContext(), Collections.singleton(DriveScopes.DRIVE_FILE));
-            credential.setSelectedAccount(account.getAccount());
-            Drive googleDriveService =
-                    new Drive.Builder(
-                            AndroidHttp.newCompatibleTransport(),
-                            new GsonFactory(),
-                            credential)
-                            .setApplicationName("Drive API Migration")
-                            .build();
+            } catch (ApiException e) {
+                // The ApiException status code indicates the detailed failure reason.
+                // Please refer to the GoogleSignInStatusCodes class reference for more information.
+                Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+                mSigninResult = e.getStatusCode();
+            }
 
-            if(googleDriveService == null)
-                Log.w(TAG, "googleDriveService is null!");
-            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
-            // Its instantiation is required before handling any onClick actions.
-            // We create DriveServiceHelper here but it will be used later by using getInstance() method
-            //new DriveServiceHelper(googleDriveService);
-            DriveServiceHelper.Create(googleDriveService);
-            mName= account.getDisplayName();
-            mMail = account.getEmail();
-            mPhotoUri = account.getPhotoUrl();
+            if (account != null) {
+                GoogleAccountCredential credential =
+                        GoogleAccountCredential.usingOAuth2(
+                                getContext(), Collections.singleton(DriveScopes.DRIVE_FILE));
+                credential.setSelectedAccount(account.getAccount());
+                Drive googleDriveService =
+                        new Drive.Builder(
+                                AndroidHttp.newCompatibleTransport(),
+                                new GsonFactory(),
+                                credential)
+                                .setApplicationName("Drive API Migration")
+                                .build();
+
+                if (googleDriveService == null)
+                    Log.w(TAG, "googleDriveService is null!");
+                // The DriveServiceHelper encapsulates all REST API and SAF functionality.
+                // Its instantiation is required before handling any onClick actions.
+                // We create DriveServiceHelper here but it will be used later by using getInstance() method
+                //new DriveServiceHelper(googleDriveService);
+                DriveServiceHelper.Create(googleDriveService);
+                mName = account.getDisplayName();
+                mMail = account.getEmail();
+                mPhotoUri = account.getPhotoUrl();
+            }
         }
     }
 }
