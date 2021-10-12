@@ -124,16 +124,11 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /*
-    Input: ContentValues. Will be used for the SQlite whereClause
+    Input:  values. the values to be written to the columns.
+            where.  Will be used for the SQlite whereClause.
      */
-    public int update(ContentValues cv){
+    public int update(ContentValues values, ContentValues where){
         int rows_affected = 0;
-        String brand, name, mail;
-        ContentValues cv_update = new  ContentValues;
-
-
-        brand = (String)cv.get(USERPROFILE_TABLE_COL_BRAND);
-
 
         Log.d(TAG, "update");
 
@@ -147,7 +142,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if(mdb != null){
             rows_affected = mdb.update(USERPROFILE_TABLE_NAME,
-                    cv.
+                    values,
+                    make_statement(where),
                     null);
             if(rows_affected == 0){
                 Log.w(TAG, "db update failed");
@@ -155,9 +151,37 @@ public class DBHelper extends SQLiteOpenHelper {
             mdb.close();
         }
 
-        return number_row;
+        return rows_affected;
     }
 
+    private String make_statement(ContentValues cv){
+        String statement="";
+        String clause;
+
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_BRAND);
+        if( clause != null){
+            statement.concat(USERPROFILE_TABLE_COL_BRAND + "\"" + clause + "\"" + "AND");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_NAME);
+        if( clause != null){
+            statement.concat(USERPROFILE_TABLE_COL_NAME + "\"" + clause + "\"" + "AND");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_MAIL);
+        if( clause != null){
+            statement.concat(USERPROFILE_TABLE_COL_MAIL + "\"" + clause + "\"" + "AND");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_PHOTOURL);
+        if( clause != null){
+            statement.concat(USERPROFILE_TABLE_COL_PHOTOURL + "\"" + clause + "\"" + "AND");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_STATE);
+        if( clause != null){
+            statement.concat(USERPROFILE_TABLE_COL_STATE + "\"" + clause + "\"");
+        }
+
+        Log.w(TAG, "statement:" + statement);
+        return statement;
+    }
     public int delete(String ... expression){
         int number_row = 0;
         ContentValues cv = new ContentValues();

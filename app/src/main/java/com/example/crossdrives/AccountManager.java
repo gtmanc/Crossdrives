@@ -1,5 +1,6 @@
 package com.example.crossdrives;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -154,17 +155,24 @@ public class AccountManager {
 
         return info;
     }
+
     /*
+        No matter what state the queried row is, set the column state to deactivated.
     */
     public boolean setAccountDeactivated(Context context, String brand, String name, String mail){
         int row_deleted = 0;
         boolean err = false;
-        String Col_Brand = DBConstants.USERPROFILE_TABLE_COL_BRAND;
-        String Col_Name = DBConstants.USERPROFILE_TABLE_COL_NAME;
-        String Col_Mail = DBConstants.USERPROFILE_TABLE_COL_MAIL;
+        ContentValues values = new ContentValues();
+        ContentValues where = new ContentValues();
+
+        if(brand != null){ where.put(DBConstants.USERPROFILE_TABLE_COL_BRAND, brand); }
+        if(name != null){  where.put(DBConstants.USERPROFILE_TABLE_COL_NAME, name); }
+        if(mail != null){ where.put(DBConstants.USERPROFILE_TABLE_COL_MAIL, mail);}
+
+        values.put(DBConstants.USERPROFILE_TABLE_COL_STATE, STATE_DEACTIVATED);
 
         DBHelper dbh = new DBHelper(context, null,null,0);
-        row_deleted = dbh.update();
+        row_deleted = dbh.update(values,where);
         if(row_deleted != 0){
             err = true;
         }
