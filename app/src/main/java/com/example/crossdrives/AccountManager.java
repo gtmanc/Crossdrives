@@ -154,7 +154,29 @@ public class AccountManager {
 
         return info;
     }
+    /*
+    */
+    public boolean setAccountDeactivated(Context context, String brand, String name, String mail){
+        int row_deleted = 0;
+        boolean err = false;
+        String Col_Brand = DBConstants.USERPROFILE_TABLE_COL_BRAND;
+        String Col_Name = DBConstants.USERPROFILE_TABLE_COL_NAME;
+        String Col_Mail = DBConstants.USERPROFILE_TABLE_COL_MAIL;
 
+        DBHelper dbh = new DBHelper(context, null,null,0);
+        row_deleted = dbh.update();
+        if(row_deleted != 0){
+            err = true;
+        }
+        else{
+            Log.w(TAG, "Delete account failed");
+        }
+
+        return err;
+    }
+    /*
+        Not yet test. Currently there is no scenario which needs this function
+    */
     public boolean deleteAccount(Context context, String brand, String name, String mail){
         int row_deleted = 0;
         boolean err = false;

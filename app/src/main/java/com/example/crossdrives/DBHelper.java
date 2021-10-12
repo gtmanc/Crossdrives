@@ -123,6 +123,41 @@ public class DBHelper extends SQLiteOpenHelper {
         return cursor;
     }
 
+    /*
+    Input: ContentValues. Will be used for the SQlite whereClause
+     */
+    public int update(ContentValues cv){
+        int rows_affected = 0;
+        String brand, name, mail;
+        ContentValues cv_update = new  ContentValues;
+
+
+        brand = (String)cv.get(USERPROFILE_TABLE_COL_BRAND);
+
+
+        Log.d(TAG, "update");
+
+        try{
+            mdb = getWritableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "DB update: db open failed!" + e.getMessage());
+        }
+
+        if(mdb != null){
+            rows_affected = mdb.update(USERPROFILE_TABLE_NAME,
+                    cv.
+                    null);
+            if(rows_affected == 0){
+                Log.w(TAG, "db update failed");
+            }
+            mdb.close();
+        }
+
+        return number_row;
+    }
+
     public int delete(String ... expression){
         int number_row = 0;
         ContentValues cv = new ContentValues();
