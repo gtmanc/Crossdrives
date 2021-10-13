@@ -68,7 +68,16 @@ public class AddAccountFragment extends Fragment {
             Log.d(TAG, "start sign flow");
             mView = v;
             mSignInManager = new SignInGoogle(getContext());
-            mStartForResult.launch(new Intent(mFragment.getActivity(), SignOutDialog.class));
+            AccountManager.AccountInfo ai
+                    = getActivatedAccount(AccountManager.BRAND_GOOGLE);
+            if(ai != null){
+                //OK. Now we are sure that there is a activated google account. Ask user next step.
+                mStartForResult.launch(new Intent(mFragment.getActivity(), SignOutDialog.class));
+            }
+            else{
+                mSignInManager.Start(mView, onSigninFinished);
+            }
+
         }
     };
 
@@ -104,11 +113,35 @@ public class AddAccountFragment extends Fragment {
     SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
         @Override
         public void onFinished(int result) {
-            Log.i(TAG, "App has signed out!");
+            if(result == SignInManager.Result_SUCCESS){
+                boolean r_am = false;
+                Log.i(TAG, "App has signed out!");
+
+                AccountManager.AccountInfo ai;
+                AccountManager am = AccountManager.getInstance();
+                ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
+                r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
+                if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
+                //double check if the account is set deactivated
+                //ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
+                //if(ai != null)
+                //
+            }
+
             mSignInManager.Start(mView, onSigninFinished);
 
         }
     };
+    /*
+        A convenience method for get activated account using account manager
+    */
+    private AccountManager.AccountInfo getActivatedAccount(String brand) {
+        AccountManager.AccountInfo ai;
+        AccountManager am = AccountManager.getInstance();
+        return am.getAccountActivated(getContext(), brand);
+    }
+
+
 //    @Override
 //    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 //        SignInManager.Profile p;

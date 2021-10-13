@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
@@ -90,7 +91,10 @@ public class GoogleSignInFragment extends Fragment {
         Samsung A70 Android 9
         TBD
         */
-        if(resultCode != 0) {
+        //According to the observed behavior, it's hard determine the sign in result with resultCode.
+        //Use Intent as an alternative solution
+
+        if(data != null) {
             Log.d(TAG, "handle sign flow");
             HandleSigninResult(data);
 
@@ -126,6 +130,7 @@ public class GoogleSignInFragment extends Fragment {
                 // Please refer to the GoogleSignInStatusCodes class reference for more information.
                 Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
                 mSigninResult = e.getStatusCode();
+                Toast.makeText(getContext(), "Sign in failed! error:" + e.getStatusCode(), Toast.LENGTH_LONG).show();
             }
 
             if (account != null) {
@@ -141,8 +146,11 @@ public class GoogleSignInFragment extends Fragment {
                                 .setApplicationName("Drive API Migration")
                                 .build();
 
-                if (googleDriveService == null)
+                if (googleDriveService == null){
+                    Toast.makeText(getContext(), "Request drive error!", Toast.LENGTH_LONG).show();
                     Log.w(TAG, "googleDriveService is null!");
+                }
+
                 // The DriveServiceHelper encapsulates all REST API and SAF functionality.
                 // Its instantiation is required before handling any onClick actions.
                 // We create DriveServiceHelper here but it will be used later by using getInstance() method
