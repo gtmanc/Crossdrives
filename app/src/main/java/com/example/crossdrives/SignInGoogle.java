@@ -43,6 +43,7 @@ public class SignInGoogle extends SignInManager{
     Profile mProfile = new Profile();
     Fragment mFragment;
     static OnInteractiveSignInfinished mCallback;
+    static OnSignOutFinished mSignoutCallback;
 
     SignInGoogle(Context context)
     {
@@ -222,6 +223,7 @@ public class SignInGoogle extends SignInManager{
                 .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
                 .build();
 
+        mSignoutCallback = callback;
         // Build a GoogleSignInClient with the options specified by gso.
         mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);
         Log.d(TAG, "Sign out");
@@ -241,6 +243,7 @@ public class SignInGoogle extends SignInManager{
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d(TAG, "revoke OK!");
+                mSignoutCallback.onFinished(SignInManager.RESULT_SUCCESS);
             }
         });
     }

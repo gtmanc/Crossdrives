@@ -4,8 +4,8 @@ import android.content.Intent;
 import android.view.View;
 
 public abstract class SignInManager {
-    public static final int Result_SUCCESS = 0;
-    public static final int Result_FAILED = 1;
+    public static final int RESULT_SUCCESS = 0;
+    public static final int RESULT_FAILED = 1;
     public static final String BRAND_GOOGLE = "Google";
     public static final String BRAND_MS = "MicroSoft";
 
@@ -14,6 +14,7 @@ public abstract class SignInManager {
         String Name;
         String Mail;
         android.net.Uri PhotoUri;
+
     }
 
     //Callback gets called when asyn sign in is finished with or without error

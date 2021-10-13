@@ -2,7 +2,6 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 
@@ -160,13 +159,13 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "Successfully silence authenticated");
 
                 callGraphAPI(authenticationResult);
-                mOnSilenceSignInfinished.onFinished(SignInManager.Result_SUCCESS, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null);
             }
             @Override
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSilenceSignInfinished.onFinished(SignInManager.Result_FAILED, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null);
             }
         };
     }

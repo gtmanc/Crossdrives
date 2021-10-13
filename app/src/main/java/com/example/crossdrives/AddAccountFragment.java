@@ -25,11 +25,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
-
 import org.jetbrains.annotations.NotNull;
-
-import java.net.URL;
 
 public class AddAccountFragment extends Fragment {
     private String TAG = "CD.AddAccountFragment";
@@ -113,7 +109,7 @@ public class AddAccountFragment extends Fragment {
     SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
         @Override
         public void onFinished(int result) {
-            if(result == SignInManager.Result_SUCCESS){
+            if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 Log.i(TAG, "App has signed out!");
 
@@ -243,7 +239,7 @@ public class AddAccountFragment extends Fragment {
                 Log.w(TAG, "Unknow brand!");
             }
 
-            if(result == SignInManager.Result_SUCCESS) {
+            if(result == SignInManager.RESULT_SUCCESS) {
                 AccountManager am = AccountManager.getInstance();
                 ai.name = profile.Name;
                 ai.mail = profile.Mail;

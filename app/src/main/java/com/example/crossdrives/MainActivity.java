@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity{
 
             mProgressBar.setVisibility(View.GONE);
 
-            if(result == SignInManager.Result_SUCCESS){
+            if(result == SignInManager.RESULT_SUCCESS){
                 //Write user profile to database
 
 
