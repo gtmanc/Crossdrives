@@ -82,8 +82,15 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mSignInManager = new SignInMS(getActivity());
-            mSignInManager.Start(v, onSigninFinished);
-
+            AccountManager.AccountInfo ai
+                    = getActivatedAccount(AccountManager.BRAND_MS);
+            if(ai != null){
+                //OK. Now we are sure that there is a activated google account. Ask user next step.
+                mStartForResult.launch(new Intent(mFragment.getActivity(), SignOutDialog.class));
+            }
+            else{
+                mSignInManager.Start(mView, onSigninFinished);
+            }
         }
     };
 

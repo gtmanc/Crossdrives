@@ -42,6 +42,7 @@ public class SignInMS extends SignInManager{
 
     @Override
     boolean Start(View view, OnInteractiveSignInfinished callback) {
+        mOnInteractiveSignInfinished = callback;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -80,7 +81,19 @@ public class SignInMS extends SignInManager{
 
     @Override
     void SignOut(OnSignOutFinished callback) {
-
+        if (mSingleAccountApp == null){
+            return;
+        }
+        mSingleAccountApp.signOut(new ISingleAccountPublicClientApplication.SignOutCallback() {
+            @Override
+            public void onSignOut() {
+                callback.onFinished(SignInManager.RESULT_SUCCESS);
+            }
+            @Override
+            public void onError(@NonNull MsalException exception){
+                Log.w(TAG, "Signout Result: failed! " + exception.toString());
+            }
+        });
     }
 
     private void loadAccount(){
@@ -131,11 +144,15 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
                 // save our auth token to use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
+                mProfile.Brand = SignInManager.BRAND_MS;
+                mProfile.Name = authenticationResult.getAccount().getUsername();
+                mProfile.Mail = "";
+                mProfile.PhotoUri = null;
 
                 MSGraphHelper msapi = new MSGraphHelper();
 
                 /* call graph */
-                //callGraphAPI(authenticationResult);
+                callGraphAPI(authenticationResult);
             }
 
             @Override
@@ -194,13 +211,15 @@ public class SignInMS extends SignInManager{
                     public void success(final Drive drive) {
                         Log.d(TAG, "Found Drive " + drive.id);
                         //displayGraphResult(drive.getRawObject());
-                        //Log.d(TAG, "Raw Object: " + drive.getRawObject());
+                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
+                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile);
                     }
 
                     @Override
                     public void failure(ClientException ex) {
                         //displayError(ex);
                         Log.w(TAG, "callGraphAPI failed: " + ex.toString());
+                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile);
                     }
                 });
     }
