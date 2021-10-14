@@ -128,6 +128,7 @@ public class GoogleSignInFragment extends Fragment {
             } catch (ApiException e) {
                 // The ApiException status code indicates the detailed failure reason.
                 // Please refer to the GoogleSignInStatusCodes class reference for more information.
+                // Error code :12501 if user gives up sign in. e.g. press back key in signin screen
                 Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
                 mSigninResult = e.getStatusCode();
                 Toast.makeText(getContext(), "Sign in failed! error:" + e.getStatusCode(), Toast.LENGTH_LONG).show();
