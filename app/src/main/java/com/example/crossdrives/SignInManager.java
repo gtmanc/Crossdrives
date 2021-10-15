@@ -9,11 +9,12 @@ public abstract class SignInManager {
     public static final String BRAND_GOOGLE = "Google";
     public static final String BRAND_MS = "MicroSoft";
 
+    //Basic user profile information could be got as soon as app is signed in and get the API token successfully
     static class Profile{
         String Brand;
         String Name;
-        String Mail;
-        android.net.Uri PhotoUri;
+        String Mail;    //Not available right after microsoft sign in finished
+        android.net.Uri PhotoUri; //Not available right after microsoft sign in finished
 
     }
 

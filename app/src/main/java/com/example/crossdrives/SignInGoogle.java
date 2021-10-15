@@ -57,11 +57,17 @@ public class SignInGoogle extends SignInManager{
             profile.Name = name;
             profile.Mail = mail;
             profile.PhotoUri = photo;
+            int code = SignInManager.RESULT_FAILED;
 
             NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
             NavHostFragment.findNavController(fragment).navigate(a);
 
-            mCallback.onFinished(statuscode, profile);
+            //Translate google code to sign in manager ones.
+            if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
+                code = SignInManager.RESULT_SUCCESS;
+            }
+
+            mCallback.onFinished(code, profile);
         }
 
         public void getData(){}
@@ -183,7 +189,7 @@ public class SignInGoogle extends SignInManager{
                         // explicit action to finish sign-in;
                         // Please refer to GoogleSignInStatusCodes Javadoc for detail
                         mProfile = null;
-                        callback.onFinished(apiException.getStatusCode(), null);
+                        callback.onFinished(SignInManager.RESULT_FAILED, null);
                     }
                 }
             });
