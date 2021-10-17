@@ -25,6 +25,12 @@ import com.microsoft.identity.client.ISingleAccountPublicClientApplication;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
+import com.onedrive.sdk.authentication.ADALAuthenticator;
+import com.onedrive.sdk.authentication.MSAAuthenticator;
+import com.onedrive.sdk.core.DefaultClientConfig;
+import com.onedrive.sdk.core.IClientConfig;
+import com.onedrive.sdk.extensions.IOneDriveClient;
+import com.onedrive.sdk.extensions.OneDriveClient;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
@@ -222,5 +228,49 @@ public class SignInMS extends SignInManager{
                         mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile);
                     }
                 });
+
+        final IOneDriveClient oneDriveClient = new OneDriveClient.Builder()
+                .fromConfig(oneDriveConfig)
+                .loginAndBuildClient(mActivity, OneDriveCallback);
     }
+
+    final DefaultCallback<IOneDriveClient> OneDriveCallback = new DefaultCallback<IOneDriveClient>() {
+        @Override
+        public void success(final IOneDriveClient result) {
+            // OneDrive client created successfully.
+        }
+
+//        @Override
+//        public void failure(final ClientException error) {
+//            // Exception happened during creation.
+//        }
+    };
+
+    final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
+        @Override
+        public String getClientId() {
+            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+        }
+
+        @Override
+        public String[] getScopes() {
+            return new String[] { "onedrive.appfolder" };
+        }
+    };
+
+    final ADALAuthenticator adalAuthenticator = new ADALAuthenticator() {
+        @Override
+        public String getClientId() {
+            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+        }
+
+        @Override
+        protected String getRedirectUrl() {
+            return "msauth://com.example.crossdrives/yuA%2BnLjqHb%2Blo8n78AI7ZAgEens%3D";
+        }
+    };
+
+    final IClientConfig oneDriveConfig = DefaultClientConfig.createWithAuthenticators(
+            msaAuthenticator,
+            adalAuthenticator);
 }
