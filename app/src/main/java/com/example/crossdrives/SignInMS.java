@@ -31,6 +31,9 @@ import com.onedrive.sdk.core.DefaultClientConfig;
 import com.onedrive.sdk.core.IClientConfig;
 import com.onedrive.sdk.extensions.IOneDriveClient;
 import com.onedrive.sdk.extensions.OneDriveClient;
+import com.onedrive.sdk.logger.LoggerLevel;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
@@ -42,7 +45,11 @@ public class SignInMS extends SignInManager{
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
     OnInteractiveSignInfinished mOnInteractiveSignInfinished;
     OnSilenceSignInfinished mOnSilenceSignInfinished;
-    Profile mProfile;
+    Profile mProfile = new Profile();
+    /**
+     * The service instance
+     */
+    private final AtomicReference<IOneDriveClient> mClient = new AtomicReference<>();
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
@@ -229,48 +236,81 @@ public class SignInMS extends SignInManager{
                     }
                 });
 
-        final IOneDriveClient oneDriveClient = new OneDriveClient.Builder()
-                .fromConfig(oneDriveConfig)
-                .loginAndBuildClient(mActivity, OneDriveCallback);
+        createOneDriveClient(mActivity, null);
     }
 
-    final DefaultCallback<IOneDriveClient> OneDriveCallback = new DefaultCallback<IOneDriveClient>() {
-        @Override
-        public void success(final IOneDriveClient result) {
-            // OneDrive client created successfully.
-        }
+    /**
+     * Used to setup the Services
+     * @param activity the current activity
+     * @param serviceCreated the callback
+     */
+    synchronized void createOneDriveClient(final Activity activity, final ICallback<Void> serviceCreated) {
+        final DefaultCallback<IOneDriveClient> callback = new DefaultCallback<IOneDriveClient>(activity) {
+            @Override
+            public void success(final IOneDriveClient result) {
+                if(result != null) {
+                    mClient.set(result);
+                    Log.w(TAG, "Create one drive client OK");
+                }else{
+                    Log.w(TAG, "Create one drive client failed");
+                }
+                //serviceCreated.success(null);
+            }
+//            @Override
+//            public void failure(final ClientException error) {
+//                //serviceCreated.failure(error);
+//                Log.d(TAG, "failure");
+//            }
+        };
+        new OneDriveClient
+                .Builder()
+                .fromConfig(createConfig())
+                .loginAndBuildClient(activity, callback);
+    }
 
+//    final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
 //        @Override
-//        public void failure(final ClientException error) {
-//            // Exception happened during creation.
+//        public String getClientId() {
+//            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
 //        }
-    };
+//
+//        @Override
+//        public String[] getScopes() {
+//            return new String[] { "onedrive.appfolder" };
+//        }
+//    };
+//
+//    final ADALAuthenticator adalAuthenticator = new ADALAuthenticator() {
+//        @Override
+//        public String getClientId() {
+//            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+//        }
+//
+//        @Override
+//        protected String getRedirectUrl() {
+//            return "msauth://com.example.crossdrives/yuA%2BnLjqHb%2Blo8n78AI7ZAgEens%3D";
+//        }
+//    };
 
-    final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
-        @Override
-        public String getClientId() {
-            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
-        }
+    /**
+     * Create the client configuration
+     * @return the newly created configuration
+     */
+    private IClientConfig createConfig() {
+        final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
+            @Override
+            public String getClientId() {
+                return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+            }
 
-        @Override
-        public String[] getScopes() {
-            return new String[] { "onedrive.appfolder" };
-        }
-    };
+            @Override
+            public String[] getScopes() {
+                return new String[] {"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"};
+            }
+        };
 
-    final ADALAuthenticator adalAuthenticator = new ADALAuthenticator() {
-        @Override
-        public String getClientId() {
-            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
-        }
-
-        @Override
-        protected String getRedirectUrl() {
-            return "msauth://com.example.crossdrives/yuA%2BnLjqHb%2Blo8n78AI7ZAgEens%3D";
-        }
-    };
-
-    final IClientConfig oneDriveConfig = DefaultClientConfig.createWithAuthenticators(
-            msaAuthenticator,
-            adalAuthenticator);
+        final IClientConfig config = DefaultClientConfig.createWithAuthenticator(msaAuthenticator);
+        config.getLogger().setLoggingLevel(LoggerLevel.Debug);
+        return config;
+    }
 }
