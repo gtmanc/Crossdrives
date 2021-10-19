@@ -118,6 +118,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if(mdb != null)    {
             cursor = mdb.rawQuery(statement, null);
+            //Do not close database after query.
         }
 
         return cursor;

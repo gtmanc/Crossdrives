@@ -166,6 +166,7 @@ public class SignInMS extends SignInManager{
 
                 /* call graph */
                 callGraphAPI(authenticationResult);
+                createOneDriveClient(mActivity, null);
             }
 
             @Override
@@ -188,7 +189,8 @@ public class SignInMS extends SignInManager{
             public void onSuccess(IAuthenticationResult authenticationResult) {
                 Log.d(TAG, "Successfully silence authenticated");
 
-                callGraphAPI(authenticationResult);
+                //callGraphAPI(authenticationResult);
+                createOneDriveClient(mActivity, null);
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null);
             }
             @Override
@@ -235,11 +237,9 @@ public class SignInMS extends SignInManager{
                         mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile);
                     }
                 });
-
-        createOneDriveClient(mActivity, null);
     }
 
-    /**
+    /**f
      * Used to setup the Services
      * @param activity the current activity
      * @param serviceCreated the callback
