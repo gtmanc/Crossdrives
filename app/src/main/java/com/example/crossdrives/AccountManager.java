@@ -9,7 +9,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.crossdrives.msgraph.MSGraphHelper;
+import com.crossdrives.msgraph.MSGraphRestHelper;
 
 import java.io.InputStream;
 
@@ -40,12 +40,12 @@ public class AccountManager {
                 new DownloadPhoto().execute(photouri.toString());
             }
             else if (brand.equals(BRAND_MS)){
-                MSGraphHelper ms = new MSGraphHelper();
+                MSGraphRestHelper ms = new MSGraphRestHelper();
                 ms.getMePhoto(callbackGraph);
             }
         }
         //Graph helper callback for downloading ms user photo
-        MSGraphHelper.Callback callbackGraph = new MSGraphHelper.Callback(){
+        MSGraphRestHelper.Callback callbackGraph = new MSGraphRestHelper.Callback(){
 
             @Override
             public void onPhotoDownloaded(Bitmap bmp) {

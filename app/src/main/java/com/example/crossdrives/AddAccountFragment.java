@@ -25,6 +25,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.google.api.services.drive.Drive;
+import com.microsoft.graph.models.extensions.IGraphServiceClient;
+
+
 import org.jetbrains.annotations.NotNull;
 
 public class AddAccountFragment extends Fragment {
@@ -231,9 +235,12 @@ public class AddAccountFragment extends Fragment {
 
     SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile) {
+        public void onFinished(int result, SignInManager.Profile profile, Object o) {
             boolean err = false;
             AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
+            IGraphServiceClient msclient = (IGraphServiceClient)o;
+            Drive gdrive = (Drive)o;
+            DriveServiceHelper.Create(gdrive);
 
             if(profile.Brand == SignInManager.BRAND_GOOGLE){
                 ai.brand = AccountManager.BRAND_GOOGLE;

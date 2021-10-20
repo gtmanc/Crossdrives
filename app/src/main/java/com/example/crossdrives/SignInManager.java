@@ -3,7 +3,7 @@ package com.example.crossdrives;
 import android.content.Intent;
 import android.view.View;
 
-public abstract class SignInManager {
+public abstract class SignInManager{
     public static final int RESULT_SUCCESS = 0;
     public static final int RESULT_FAILED = 1;
     public static final String BRAND_GOOGLE = "Google";
@@ -14,14 +14,14 @@ public abstract class SignInManager {
         String Brand;
         String Name;
         String Mail;    //Not available right after microsoft sign in finished
-        android.net.Uri PhotoUri; //Not available right after microsoft sign in finished
+        android.net.Uri PhotoUri; //Not available in microsoft sign in
 
     }
 
     //Callback gets called when asyn sign in is finished with or without error
     interface OnInteractiveSignInfinished {
         //Sign in successfully if true is returned. Otherwise, false is returned.
-        void onFinished(int result, Profile profile);
+        void onFinished(int result, Profile profile, Object client);
     }
 
     interface OnSilenceSignInfinished {

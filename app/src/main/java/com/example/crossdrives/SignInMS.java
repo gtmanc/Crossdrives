@@ -8,7 +8,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.crossdrives.msgraph.MSGraphHelper;
+import com.crossdrives.msgraph.MSGraphRestHelper;
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
@@ -25,15 +25,6 @@ import com.microsoft.identity.client.ISingleAccountPublicClientApplication;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
-import com.onedrive.sdk.authentication.ADALAuthenticator;
-import com.onedrive.sdk.authentication.MSAAuthenticator;
-import com.onedrive.sdk.core.DefaultClientConfig;
-import com.onedrive.sdk.core.IClientConfig;
-import com.onedrive.sdk.extensions.IOneDriveClient;
-import com.onedrive.sdk.extensions.OneDriveClient;
-import com.onedrive.sdk.logger.LoggerLevel;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
@@ -46,10 +37,6 @@ public class SignInMS extends SignInManager{
     OnInteractiveSignInfinished mOnInteractiveSignInfinished;
     OnSilenceSignInfinished mOnSilenceSignInfinished;
     Profile mProfile = new Profile();
-    /**
-     * The service instance
-     */
-    private final AtomicReference<IOneDriveClient> mClient = new AtomicReference<>();
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
@@ -162,11 +149,12 @@ public class SignInMS extends SignInManager{
                 mProfile.Mail = "";
                 mProfile.PhotoUri = null;
 
-                MSGraphHelper msapi = new MSGraphHelper();
+                //MSGraphRestHelper msRest = new MSGraphRestHelper();
 
                 /* call graph */
                 callGraphAPI(authenticationResult);
-                createOneDriveClient(mActivity, null);
+                //Give up on use of onedrive sdk since it seems obsolete. (the last update in github is about 6 year ago)
+                //createOneDriveClient(mActivity, null);
             }
 
             @Override
@@ -189,8 +177,7 @@ public class SignInMS extends SignInManager{
             public void onSuccess(IAuthenticationResult authenticationResult) {
                 Log.d(TAG, "Successfully silence authenticated");
 
-                //callGraphAPI(authenticationResult);
-                createOneDriveClient(mActivity, null);
+                callGraphAPI(authenticationResult);
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null);
             }
             @Override
@@ -227,46 +214,46 @@ public class SignInMS extends SignInManager{
                         Log.d(TAG, "Found Drive " + drive.id);
                         //displayGraphResult(drive.getRawObject());
                         Log.d(TAG, "Raw Object: " + drive.getRawObject());
-                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile);
+                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, null);
                     }
 
                     @Override
                     public void failure(ClientException ex) {
                         //displayError(ex);
                         Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile);
+                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
                     }
                 });
     }
 
-    /**f
-     * Used to setup the Services
-     * @param activity the current activity
-     * @param serviceCreated the callback
-     */
-    synchronized void createOneDriveClient(final Activity activity, final ICallback<Void> serviceCreated) {
-        final DefaultCallback<IOneDriveClient> callback = new DefaultCallback<IOneDriveClient>(activity) {
-            @Override
-            public void success(final IOneDriveClient result) {
-                if(result != null) {
-                    mClient.set(result);
-                    Log.w(TAG, "Create one drive client OK");
-                }else{
-                    Log.w(TAG, "Create one drive client failed");
-                }
-                //serviceCreated.success(null);
-            }
+//    /**
+//     * Used to setup the Services
+//     * @param activity the current activity
+//     * @param serviceCreated the callback
+//     */
+//    synchronized void createOneDriveClient(final Activity activity, final ICallback<Void> serviceCreated) {
+//        final DefaultCallback<IOneDriveClient> callback = new DefaultCallback<IOneDriveClient>(activity) {
 //            @Override
-//            public void failure(final ClientException error) {
-//                //serviceCreated.failure(error);
-//                Log.d(TAG, "failure");
+//            public void success(final IOneDriveClient result) {
+//                if(result != null) {
+//                    mClient.set(result);
+//                    Log.w(TAG, "Create one drive client OK");
+//                }else{
+//                    Log.w(TAG, "Create one drive client failed");
+//                }
+//                //serviceCreated.success(null);
 //            }
-        };
-        new OneDriveClient
-                .Builder()
-                .fromConfig(createConfig())
-                .loginAndBuildClient(activity, callback);
-    }
+////            @Override
+////            public void failure(final ClientException error) {
+////                //serviceCreated.failure(error);
+////                Log.d(TAG, "failure");
+////            }
+//        };
+//        new OneDriveClient
+//                .Builder()
+//                .fromConfig(createConfig())
+//                .loginAndBuildClient(activity, callback);
+//    }
 
 //    final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
 //        @Override
@@ -292,25 +279,25 @@ public class SignInMS extends SignInManager{
 //        }
 //    };
 
-    /**
-     * Create the client configuration
-     * @return the newly created configuration
-     */
-    private IClientConfig createConfig() {
-        final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
-            @Override
-            public String getClientId() {
-                return "afd432e7-01a1-47ab-8c37-5b487970f05c";
-            }
-
-            @Override
-            public String[] getScopes() {
-                return new String[] {"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"};
-            }
-        };
-
-        final IClientConfig config = DefaultClientConfig.createWithAuthenticator(msaAuthenticator);
-        config.getLogger().setLoggingLevel(LoggerLevel.Debug);
-        return config;
-    }
+//    /**
+//     * Create the client configuration
+//     * @return the newly created configuration
+//     */
+//    private IClientConfig createConfig() {
+//        final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
+//            @Override
+//            public String getClientId() {
+//                return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+//            }
+//
+//            @Override
+//            public String[] getScopes() {
+//                return new String[] {"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"};
+//            }
+//        };
+//
+//        final IClientConfig config = DefaultClientConfig.createWithAuthenticator(msaAuthenticator);
+//        config.getLogger().setLoggingLevel(LoggerLevel.Debug);
+//        return config;
+//    }
 }

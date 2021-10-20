@@ -19,13 +19,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MSGraphHelper<T, Result> implements Callback<Result> {
+public class MSGraphRestHelper<T, Result> implements Callback<Result> {
     private String TAG = "CD.MSGraphHelper";
     private AbstractSnippet<T, Result> mItem;
     private final int ITEM_ARG = 1; //0: marker, 1:get me
     private Callback mCallback;
 
-    public MSGraphHelper() {
+    public MSGraphRestHelper() {
     }
 
     public interface Callback{

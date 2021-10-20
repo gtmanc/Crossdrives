@@ -67,7 +67,7 @@ public class SignInGoogle extends SignInManager{
                 code = SignInManager.RESULT_SUCCESS;
             }
 
-            mCallback.onFinished(code, profile);
+            mCallback.onFinished(code, profile, null);
         }
 
         public void getData(){}
