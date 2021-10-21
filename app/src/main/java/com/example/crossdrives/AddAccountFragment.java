@@ -235,15 +235,13 @@ public class AddAccountFragment extends Fragment {
 
     SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object o) {
+        public void onFinished(int result, SignInManager.Profile profile, Object client) {
             boolean err = false;
             AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
-            IGraphServiceClient msclient = (IGraphServiceClient)o;
-            Drive gdrive = (Drive)o;
-            DriveServiceHelper.Create(gdrive);
 
             if(profile.Brand == SignInManager.BRAND_GOOGLE){
                 ai.brand = AccountManager.BRAND_GOOGLE;
+                GoogleDriveClient gdc = new GoogleDriveClient().create(client);
             }
             else if(profile.Brand == SignInManager.BRAND_MS)
             {

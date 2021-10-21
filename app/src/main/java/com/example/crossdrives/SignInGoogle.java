@@ -166,7 +166,7 @@ public class SignInGoogle extends SignInManager{
             mProfile.Mail = mGoogleSignInAccount.getEmail();
             mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
             requestDriveService(mGoogleSignInAccount);
-            callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile);
+            callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mGoogleSignInAccount);
         } else {
             // There's no immediate result ready, displays some progress indicator and waits for the
             // async callback.
@@ -181,7 +181,7 @@ public class SignInGoogle extends SignInManager{
                         mProfile.Mail = mGoogleSignInAccount.getEmail();
                         mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
                         requestDriveService(mGoogleSignInAccount);
-                        callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile);
+                        callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mGoogleSignInAccount);
                     } catch (ApiException apiException) {
                         Log.w(TAG, "Sign in failed! Error code: " + apiException.getStatusCode());
                         // You can get from apiException.getStatusCode() the detailed error code
@@ -189,7 +189,7 @@ public class SignInGoogle extends SignInManager{
                         // explicit action to finish sign-in;
                         // Please refer to GoogleSignInStatusCodes Javadoc for detail
                         mProfile = null;
-                        callback.onFinished(SignInManager.RESULT_FAILED, null);
+                        callback.onFinished(SignInManager.RESULT_FAILED, null, null);
                     }
                 }
             });

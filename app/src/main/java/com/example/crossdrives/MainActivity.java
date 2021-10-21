@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity{
     SignInManager.OnSilenceSignInfinished onSigninFinishedGdrive = new SignInManager.OnSilenceSignInfinished(){
 
         @Override
-        public void onFinished(int result, SignInManager.Profile profile) {
+        public void onFinished(int result, SignInManager.Profile profile, Object client) {
             Intent intent = new Intent();
             Bundle bundle = new Bundle();
 
@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity{
             if(result == SignInManager.RESULT_SUCCESS){
                 //Write user profile to database
 
+                //TODO: create drive client
 
                 //Ready to go to the result list
                 intent.setClass(MainActivity.this, QueryResultActivity.class);
@@ -96,10 +97,12 @@ public class MainActivity extends AppCompatActivity{
     };
     SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile) {
+        public void onFinished(int result, SignInManager.Profile profile, Object client) {
             //Ready to go to the result list
             if(result == GoogleSignInStatusCodes.SUCCESS){
                 //Write user profile to database
+
+                //TODO: create drive client
                 Log.d(TAG, "Onedrive silence sign in works");
             }
             else{

@@ -18,15 +18,18 @@ public abstract class SignInManager{
 
     }
 
-    //Callback gets called when asyn sign in is finished with or without error
+    /*The callback gets called when asyn sign in is finished with or without error
+      Input
+      result: sign in result. See RESULT_XXXXX in this class
+      profile: user basic profile. Note this variants depending on brands.
+      Object: client instance. usuall this object is used to create drive instance
+    */
     interface OnInteractiveSignInfinished {
-        //Sign in successfully if true is returned. Otherwise, false is returned.
         void onFinished(int result, Profile profile, Object client);
     }
 
     interface OnSilenceSignInfinished {
-        //Sign in successfully if true is returned. Otherwise, false is returned.
-        void onFinished(int result, Profile profile);
+        void onFinished(int result, Profile profile, Object client);
     }
 
     interface OnSignOutFinished {

@@ -178,13 +178,13 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "Successfully silence authenticated");
 
                 callGraphAPI(authenticationResult);
-                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, null);
             }
             @Override
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null, null);
             }
         };
     }
