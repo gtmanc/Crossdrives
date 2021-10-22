@@ -10,6 +10,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
@@ -235,33 +236,29 @@ public class AddAccountFragment extends Fragment {
 
     SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object client) {
+        public void onFinished(int result, SignInManager.Profile profile, Object object) {
             boolean err = false;
-            AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
-
-            if(profile.Brand == SignInManager.BRAND_GOOGLE){
-                ai.brand = AccountManager.BRAND_GOOGLE;
-                GoogleDriveClient gdc = new GoogleDriveClient().create(client);
-            }
-            else if(profile.Brand == SignInManager.BRAND_MS)
-            {
-                ai.brand = AccountManager.BRAND_MS;
-            }
-            else{
-                Log.w(TAG, "Unknow brand!");
-            }
 
             if(result == SignInManager.RESULT_SUCCESS) {
-                AccountManager am = AccountManager.getInstance();
-                ai.name = profile.Name;
-                ai.mail = profile.Mail;
-                ai.photouri = profile.PhotoUri;
-                err = am.createAccount(getContext(), ai);
-                if (err != true) {
-                    Log.w(TAG, "Create account failed!");
-                }else{
-                    //TODO: may need a proper handling if something wrong when creating an account.
+                if(profile.Brand == SignInManager.BRAND_GOOGLE){
+
+                    Log.d(TAG, "User sign in OK. Start to create google drive client");
+                    GoogleDriveClient google_drive = new GoogleDriveClient(getContext()).create(object);
                 }
+                else if(profile.Brand == SignInManager.BRAND_MS)
+                {
+                    Log.d(TAG, "User sign in OK. Start to create one drive client");
+                    GraphDriveClient graph_drive = new GraphDriveClient().create(object);
+                }
+                else{
+                    Log.w(TAG, "Unknow brand!");
+                }
+
+                createAccount(profile);
+
+            }
+            else{
+                Toast.makeText(getContext(), "Sign in failed! error:" + result, Toast.LENGTH_LONG).show();
             }
 
             //passing name to master account fragment so that a toast is shown to the user that an account is created
@@ -270,4 +267,28 @@ public class AddAccountFragment extends Fragment {
             NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
         }
     };
+
+    private void createAccount(SignInManager.Profile profile){
+        AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
+        boolean err = false;
+
+        AccountManager am = AccountManager.getInstance();
+        if(profile.Brand == SignInManager.BRAND_GOOGLE){
+            ai.brand = AccountManager.BRAND_GOOGLE;
+        }
+        else if(profile.Brand == SignInManager.BRAND_MS){
+            ai.brand = AccountManager.BRAND_MS;
+        }else{
+            Log.w(TAG, "Unknown brand!");
+        }
+        ai.name = profile.Name;
+        ai.mail = profile.Mail;
+        ai.photouri = profile.PhotoUri;
+        err = am.createAccount(getContext(), ai);
+        if (err != true) {
+            Log.w(TAG, "Create account failed!");
+        }else{
+            //TODO: may need a proper handling if something wrong when creating an account.
+        }
+    }
 }

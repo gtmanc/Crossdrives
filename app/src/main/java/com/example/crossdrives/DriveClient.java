@@ -3,8 +3,9 @@ package com.example.crossdrives;
 public abstract class DriveClient {
 
     /*
-    client: client used to create drive client
+    SignInAccount: account used to create drive client. It contains the necessary information to
+    request user to perform sign in.
      */
-    abstract DriveClient create(Object client);
+    abstract DriveClient create(Object SignInAccount);
 
 }

@@ -149,10 +149,11 @@ public class SignInMS extends SignInManager{
                 mProfile.Mail = "";
                 mProfile.PhotoUri = null;
 
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, authenticationResult.getAccessToken());
                 //MSGraphRestHelper msRest = new MSGraphRestHelper();
 
                 /* call graph */
-                callGraphAPI(authenticationResult);
+//                callGraphAPI(authenticationResult);
                 //Give up on use of onedrive sdk since it seems obsolete. (the last update in github is about 6 year ago)
                 //createOneDriveClient(mActivity, null);
             }
@@ -162,11 +163,13 @@ public class SignInMS extends SignInManager{
                 /* Failed to acquireToken */
                 Log.w(TAG, "Authentication failed: " + exception.toString());
                 //displayError(exception);
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
             }
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
                 Log.w(TAG, "User cancelled login.");
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
             }
         };
     }
@@ -177,8 +180,8 @@ public class SignInMS extends SignInManager{
             public void onSuccess(IAuthenticationResult authenticationResult) {
                 Log.d(TAG, "Successfully silence authenticated");
 
-                callGraphAPI(authenticationResult);
-                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, null);
+                //callGraphAPI(authenticationResult);
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, authenticationResult.getAccessToken());
             }
             @Override
             public void onError(MsalException exception) {
@@ -189,42 +192,42 @@ public class SignInMS extends SignInManager{
         };
     }
 
-    private void callGraphAPI(IAuthenticationResult authenticationResult) {
-
-        final String accessToken = authenticationResult.getAccessToken();
-
-        IGraphServiceClient graphClient =
-                GraphServiceClient
-                        .builder()
-                        .authenticationProvider(new IAuthenticationProvider() {
-                            @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + accessToken);
-                            }
-                        })
-                        .buildClient();
-        graphClient
-                .me()
-                .drive()
-                .buildRequest()
-                .get(new ICallback<Drive>() {
-                    @Override
-                    public void success(final Drive drive) {
-                        Log.d(TAG, "Found Drive " + drive.id);
-                        //displayGraphResult(drive.getRawObject());
-                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
-                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, null);
-                    }
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        //displayError(ex);
-                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-                        mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
-                    }
-                });
-    }
+//    private void callGraphAPI(IAuthenticationResult authenticationResult) {
+//
+//        final String accessToken = authenticationResult.getAccessToken();
+//
+//        IGraphServiceClient graphClient =
+//                GraphServiceClient
+//                        .builder()
+//                        .authenticationProvider(new IAuthenticationProvider() {
+//                            @Override
+//                            public void authenticateRequest(IHttpRequest request) {
+//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+//                                request.addHeader("Authorization", "Bearer " + accessToken);
+//                            }
+//                        })
+//                        .buildClient();
+//        graphClient
+//                .me()
+//                .drive()
+//                .buildRequest()
+//                .get(new ICallback<Drive>() {
+//                    @Override
+//                    public void success(final Drive drive) {
+//                        Log.d(TAG, "Found Drive " + drive.id);
+//                        //displayGraphResult(drive.getRawObject());
+//                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
+//
+//                    }
+//
+//                    @Override
+//                    public void failure(ClientException ex) {
+//                        //displayError(ex);
+//                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
+//
+//                    }
+//                });
+//    }
 
 //    /**
 //     * Used to setup the Services

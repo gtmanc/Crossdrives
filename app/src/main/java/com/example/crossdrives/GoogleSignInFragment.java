@@ -33,9 +33,9 @@ public class GoogleSignInFragment extends Fragment {
     private String TAG = "CD.GoogleSignInFragment";
     GoogleSignInClient mGoogleSignInClient;
     private final int RC_SIGN_IN = 0;
-    private String mName, mMail;
-    private Uri mPhotoUri;
-    private Fragment mFragment;
+//    private String mName, mMail;
+//    private Uri mPhotoUri;
+//    private Fragment mFragment;
 
     private int mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
@@ -63,14 +63,14 @@ public class GoogleSignInFragment extends Fragment {
 
         signInIntent = mGoogleSignInClient.getSignInIntent();
 
-        mFragment = FragmentManager.findFragment(view);
+//        mFragment = FragmentManager.findFragment(view);
 
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        boolean result = false;
+        GoogleSignInAccount account = null;
 
         Log.d(TAG, "requestCode: " + requestCode);
         Log.d(TAG, "resultCode: " + resultCode);
@@ -96,23 +96,23 @@ public class GoogleSignInFragment extends Fragment {
 
         if(data != null) {
             Log.d(TAG, "handle sign flow");
-            HandleSigninResult(data);
+            account = HandleSigninResult(data);
 
-            Log.d(TAG, "User name:" + mName);
-            Log.d(TAG, "User mail:" + mMail);
-            Log.d(TAG, "User photo url:" + mPhotoUri);
+//            Log.d(TAG, "User name:" + mName);
+//            Log.d(TAG, "User mail:" + mMail);
+//            Log.d(TAG, "User photo url:" + mPhotoUri);
         }
         else{
             //Set the profile data to default
-            mName = "";
-            mMail = "";
-            mPhotoUri = null;
+//            mName = "";
+//            mMail = "";
+//            mPhotoUri = null;
         }
 
-        SignInGoogle.ReceiveSigninResult.setData(mSigninResult, mFragment, mName, mMail, mPhotoUri);
+        SignInGoogle.ReceiveSigninResult.onSignedIn(mSigninResult, this, account);
     }
 
-    void HandleSigninResult(Intent data) {
+    GoogleSignInAccount HandleSigninResult(Intent data) {
         GoogleSignInAccount account = null;
 
         mSigninResult = GoogleSignInStatusCodes.SUCCESS;
@@ -131,36 +131,37 @@ public class GoogleSignInFragment extends Fragment {
                 // Error code :12501 if user gives up sign in. e.g. press back key in signin screen
                 Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
                 mSigninResult = e.getStatusCode();
-                Toast.makeText(getContext(), "Sign in failed! error:" + e.getStatusCode(), Toast.LENGTH_LONG).show();
             }
 
-            if (account != null) {
-                GoogleAccountCredential credential =
-                        GoogleAccountCredential.usingOAuth2(
-                                getContext(), Collections.singleton(DriveScopes.DRIVE_FILE));
-                credential.setSelectedAccount(account.getAccount());
-                Drive googleDriveService =
-                        new Drive.Builder(
-                                AndroidHttp.newCompatibleTransport(),
-                                new GsonFactory(),
-                                credential)
-                                .setApplicationName("Drive API Migration")
-                                .build();
-
-                if (googleDriveService == null){
-                    Toast.makeText(getContext(), "Request drive error!", Toast.LENGTH_LONG).show();
-                    Log.w(TAG, "googleDriveService is null!");
-                }
+//            if (account != null) {
+//                GoogleAccountCredential credential =
+//                        GoogleAccountCredential.usingOAuth2(
+//                                getContext(), Collections.singleton(DriveScopes.DRIVE_FILE));
+//                credential.setSelectedAccount(account.getAccount());
+//                Drive googleDriveService =
+//                        new Drive.Builder(
+//                                AndroidHttp.newCompatibleTransport(),
+//                                new GsonFactory(),
+//                                credential)
+//                                .setApplicationName("Drive API Migration")
+//                                .build();
+//
+//                if (googleDriveService == null){
+//                    Toast.makeText(getContext(), "Request drive error!", Toast.LENGTH_LONG).show();
+//                    Log.w(TAG, "googleDriveService is null!");
+//                }
 
                 // The DriveServiceHelper encapsulates all REST API and SAF functionality.
                 // Its instantiation is required before handling any onClick actions.
                 // We create DriveServiceHelper here but it will be used later by using getInstance() method
                 //new DriveServiceHelper(googleDriveService);
-                DriveServiceHelper.Create(googleDriveService);
-                mName = account.getDisplayName();
-                mMail = account.getEmail();
-                mPhotoUri = account.getPhotoUrl();
-            }
+//                DriveServiceHelper.Create(googleDriveService);
+
+//            mName = account.getDisplayName();
+//            mMail = account.getEmail();
+//            mPhotoUri = account.getPhotoUrl();
+//            }
         }
+        return account;
     }
 }

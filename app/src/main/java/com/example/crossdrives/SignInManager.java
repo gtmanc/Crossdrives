@@ -22,14 +22,14 @@ public abstract class SignInManager{
       Input
       result: sign in result. See RESULT_XXXXX in this class
       profile: user basic profile. Note this variants depending on brands.
-      Object: client instance. usuall this object is used to create drive instance
+      Object: instance used to build API client. e.g. drive access
     */
     interface OnInteractiveSignInfinished {
-        void onFinished(int result, Profile profile, Object client);
+        void onFinished(int result, Profile profile, Object object);
     }
 
     interface OnSilenceSignInfinished {
-        void onFinished(int result, Profile profile, Object client);
+        void onFinished(int result, Profile profile, Object object);
     }
 
     interface OnSignOutFinished {
@@ -37,14 +37,11 @@ public abstract class SignInManager{
         void onFinished(int result);
     }
 
-    //start sign in flow. Mainly start the sign in activity.
+    //start interactive sign in flow. Mainly start the sign in activity.
     abstract boolean Start(View view, OnInteractiveSignInfinished callback);
 
     //Silence Sign in.
-    //The sign in finished callback is always gets called
     abstract void silenceSignIn(OnSilenceSignInfinished callback);
 
-    //Sign out.
-    //The sign in finished callback is always gets called
     abstract void SignOut(OnSignOutFinished callback);
 }

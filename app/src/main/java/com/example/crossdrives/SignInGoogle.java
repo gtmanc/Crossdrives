@@ -39,7 +39,7 @@ public class SignInGoogle extends SignInManager{
     GoogleSignInClient mGoogleSignInClient;
     GoogleSignInAccount mGoogleSignInAccount;
     Context mContext = null;
-    Activity mActivity;
+    //Activity mActivity;
     Profile mProfile = new Profile();
     Fragment mFragment;
     static OnInteractiveSignInfinished mCallback;
@@ -50,34 +50,41 @@ public class SignInGoogle extends SignInManager{
         mContext = context;
     }
 
+    //A static class used to exchange data between this class and the interactive sign in fragment
     public static class ReceiveSigninResult {
-        public static void setData(int statuscode, Fragment fragment, String name, String mail, Uri photo){
+        public static void onSignedIn(int statuscode, Fragment fragment, GoogleSignInAccount account){
             Profile profile = new Profile();
-            profile.Brand = SignInManager.BRAND_GOOGLE;
-            profile.Name = name;
-            profile.Mail = mail;
-            profile.PhotoUri = photo;
             int code = SignInManager.RESULT_FAILED;
+
+            if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
+                profile.Brand = SignInManager.BRAND_GOOGLE;
+                profile.Name = account.getDisplayName();
+                profile.Mail = account.getEmail();
+                profile.PhotoUri = account.getPhotoUrl();
+            }
 
             NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
             NavHostFragment.findNavController(fragment).navigate(a);
 
-            //Translate google code to sign in manager ones.
+            //Translate google code to sign to auth interface ones.
             if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
                 code = SignInManager.RESULT_SUCCESS;
             }
 
-            mCallback.onFinished(code, profile, null);
+            mCallback.onFinished(code, profile, account);
         }
-
-        public void getData(){}
     }
 
+    /*
+       A fragment is used to perform the sign in interactive sign in flow. The most of
+       the logic is implemented in the fragment.
+       A static class ReceiveSigninResult which is used to exchange data between this class and the fragment.
+     */
     @Override
     boolean Start(View view, OnInteractiveSignInfinished callback) {
-        Intent signInIntent;
-        GoogleSignInAccount account = null;
-        Drive googleDriveService = null;
+//        Intent signInIntent;
+//        GoogleSignInAccount account = null;
+//        Drive googleDriveService = null;
 
         mCallback = callback;
 
@@ -165,23 +172,26 @@ public class SignInGoogle extends SignInManager{
             mProfile.Name= mGoogleSignInAccount.getDisplayName();
             mProfile.Mail = mGoogleSignInAccount.getEmail();
             mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
-            requestDriveService(mGoogleSignInAccount);
+            //requestDriveService(mGoogleSignInAccount);
             callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mGoogleSignInAccount);
         } else {
             // There's no immediate result ready, displays some progress indicator and waits for the
             // async callback.
             Log.w(TAG, "Silence sign in start...");
             task.addOnCompleteListener(new OnCompleteListener<GoogleSignInAccount>() {
+                GoogleSignInClient signInClient = null;
+                GoogleSignInAccount signInAccount = null;
+
                 @Override
                 public void onComplete(Task<GoogleSignInAccount> task) {
                     try {
                         Log.w(TAG, "Silence sign in done!");
-                        GoogleSignInAccount mGoogleSignInAccount = task.getResult(ApiException.class);
-                        mProfile.Name= mGoogleSignInAccount.getDisplayName();
-                        mProfile.Mail = mGoogleSignInAccount.getEmail();
-                        mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
-                        requestDriveService(mGoogleSignInAccount);
-                        callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mGoogleSignInAccount);
+                        signInAccount = task.getResult(ApiException.class);
+                        mProfile.Name= signInAccount.getDisplayName();
+                        mProfile.Mail = signInAccount.getEmail();
+                        mProfile.PhotoUri = signInAccount.getPhotoUrl();
+                        //requestDriveService(signInAccount);
+                        callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, signInAccount);
                     } catch (ApiException apiException) {
                         Log.w(TAG, "Sign in failed! Error code: " + apiException.getStatusCode());
                         // You can get from apiException.getStatusCode() the detailed error code
@@ -196,29 +206,29 @@ public class SignInGoogle extends SignInManager{
         }
     }
 
-    private void requestDriveService(GoogleSignInAccount account){
-        if(account != null) {
-            GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
-            credential.setSelectedAccount(account.getAccount());
-            Drive googleDriveService =
-                    new Drive.Builder(
-                            AndroidHttp.newCompatibleTransport(),
-                            new GsonFactory(),
-                            credential)
-                            .setApplicationName("Drive API Migration")
-                            .build();
-
-            if (googleDriveService == null)
-                Log.w(TAG, "googleDriveService is null!");
-            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
-            // Its instantiation is required before handling any onClick actions.
-            // We create DriveServiceHelper here but it will be used later by using getInstance() method
-            //new DriveServiceHelper(googleDriveService);
-            DriveServiceHelper.Create(googleDriveService);
-        }
-    }
+//    private void requestDriveService(GoogleSignInAccount account){
+//        if(account != null) {
+//            GoogleAccountCredential credential =
+//                    GoogleAccountCredential.usingOAuth2(
+//                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
+//            credential.setSelectedAccount(account.getAccount());
+//            Drive googleDriveService =
+//                    new Drive.Builder(
+//                            AndroidHttp.newCompatibleTransport(),
+//                            new GsonFactory(),
+//                            credential)
+//                            .setApplicationName("Drive API Migration")
+//                            .build();
+//
+//            if (googleDriveService == null)
+//                Log.w(TAG, "googleDriveService is null!");
+//            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
+//            // Its instantiation is required before handling any onClick actions.
+//            // We create DriveServiceHelper here but it will be used later by using getInstance() method
+//            //new DriveServiceHelper(googleDriveService);
+//            DriveServiceHelper.Create(googleDriveService);
+//        }
+//    }
 
     // example code for handling sign-out: https://developers.google.com/identity/sign-in/android/disconnect?hl=zh-TW
     // Google offcial: https://developers.google.com/identity/sign-in/android/disconnect
@@ -238,13 +248,13 @@ public class SignInGoogle extends SignInManager{
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d(TAG, "Sign out OK!");
-                revokeAccess();
+                revokeAccess(mGoogleSignInClient);
             }
         });
     }
 
-    private void revokeAccess() {
-        Task<Void> pendingResult = mGoogleSignInClient.revokeAccess();
+    private void revokeAccess(GoogleSignInClient signInClient) {
+        Task<Void> pendingResult = signInClient.revokeAccess();
         pendingResult.addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
