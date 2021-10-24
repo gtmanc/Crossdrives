@@ -1,6 +1,7 @@
 package com.example.crossdrives;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.view.View;
 
 public abstract class SignInManager{
@@ -36,6 +37,9 @@ public abstract class SignInManager{
         //Sign out successfully if true is returned. Otherwise, false is returned.
         void onFinished(int result);
     }
+    interface OnPhotoDownloaded{
+        void onDownloaded(Bitmap bmp);
+    }
 
     //start interactive sign in flow. Mainly start the sign in activity.
     abstract boolean Start(View view, OnInteractiveSignInfinished callback);
@@ -44,4 +48,6 @@ public abstract class SignInManager{
     abstract void silenceSignIn(OnSilenceSignInfinished callback);
 
     abstract void SignOut(OnSignOutFinished callback);
+
+    abstract void getPhoto(OnPhotoDownloaded callback);
 }

@@ -3,9 +3,13 @@ package com.example.crossdrives;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -28,6 +32,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.InputStream;
 import java.util.Collections;
 
 import retrofit2.http.Url;
@@ -35,19 +40,28 @@ import retrofit2.http.Url;
 //A concrete object for execution of google sign in flow
 public class SignInGoogle extends SignInManager{
     private String TAG = "CD.SignInGoogle";
-
-    GoogleSignInClient mGoogleSignInClient;
-    GoogleSignInAccount mGoogleSignInAccount;
-    Context mContext = null;
+    private static SignInGoogle mSignInGoogle = null;
+    private GoogleSignInClient mGoogleSignInClient;
+    private GoogleSignInAccount mGoogleSignInAccount;
+    private Context mContext = null;
     //Activity mActivity;
     Profile mProfile = new Profile();
-    Fragment mFragment;
+    private Fragment mFragment;
     static OnInteractiveSignInfinished mCallback;
     static OnSignOutFinished mSignoutCallback;
+    OnPhotoDownloaded mPhotoDownloadCallback;
+    private Bitmap mBmp;
 
     SignInGoogle(Context context)
     {
         mContext = context;
+    }
+
+    public static SignInGoogle getIntance(Context context){
+        if(mSignInGoogle == null){
+            mSignInGoogle = new SignInGoogle(context);
+        }
+        return mSignInGoogle;
     }
 
     //A static class used to exchange data between this class and the interactive sign in fragment
@@ -253,6 +267,13 @@ public class SignInGoogle extends SignInManager{
         });
     }
 
+    @Override
+    void getPhoto(OnPhotoDownloaded callback) {
+        mPhotoDownloadCallback = callback;
+        new DownloadPhoto()
+                .execute(mProfile.PhotoUri.toString());
+    }
+
     private void revokeAccess(GoogleSignInClient signInClient) {
         Task<Void> pendingResult = signInClient.revokeAccess();
         pendingResult.addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -262,6 +283,35 @@ public class SignInGoogle extends SignInManager{
                 mSignoutCallback.onFinished(SignInManager.RESULT_SUCCESS);
             }
         });
+    }
+
+
+
+    private class DownloadPhoto extends AsyncTask<String, Void, Bitmap> {
+//        ImageView mImageView;
+//        public DownloadPhoto(ImageView iv) {
+//            mImageView = iv;
+//        }
+
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            Bitmap bm = null;
+            try{
+                InputStream in = new java.net.URL(urls[0]).openStream();
+                bm = BitmapFactory.decodeStream(in);
+            }catch(Exception e){
+                Log.w(TAG, "Open URL failed");
+            }
+
+            return bm;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+//            super.onPostExecute(bitmap);
+//            mImageView.setImageBitmap(bitmap);
+            mPhotoDownloadCallback.onDownloaded(bitmap);
+        }
     }
 }
 

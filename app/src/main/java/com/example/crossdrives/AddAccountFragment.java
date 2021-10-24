@@ -32,7 +32,7 @@ import com.microsoft.graph.models.extensions.IGraphServiceClient;
 
 import org.jetbrains.annotations.NotNull;
 
-public class AddAccountFragment extends Fragment {
+public class AddAccountFragment extends BaseFragment {
     private String TAG = "CD.AddAccountFragment";
     SignInManager mSignInManager = null;
     private static final int RC_SIGN_IN = 0;
@@ -68,7 +68,7 @@ public class AddAccountFragment extends Fragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mView = v;
-            mSignInManager = new SignInGoogle(getContext());
+            mSignInManager = SignInGoogle.getIntance(getContext());
             AccountManager.AccountInfo ai
                     = getActivatedAccount(AccountManager.BRAND_GOOGLE);
             if(ai != null){
@@ -86,7 +86,7 @@ public class AddAccountFragment extends Fragment {
         @Override
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
-            mSignInManager = new SignInMS(getActivity());
+            mSignInManager = SignInMS.getIntance(getActivity());
             AccountManager.AccountInfo ai
                     = getActivatedAccount(AccountManager.BRAND_MS);
             if(ai != null){

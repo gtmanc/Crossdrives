@@ -75,10 +75,20 @@
         />
 
     <include
-        android:id="@+id/account_list"
+        android:id="@+id/account_list1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/title_master_account"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        layout="@layout/account_list_item">
+    </include>
+
+    <include
+        android:id="@+id/account_list2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/account_list1"
         android:layout_marginTop="16dp"
         app:layout_constraintLeft_toLeftOf="parent"
         layout="@layout/account_list_item">
@@ -90,7 +100,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/button_add_a_master_account"
-        app:layout_constraintTop_toBottomOf="@+id/account_list"
+        app:layout_constraintTop_toBottomOf="@+id/account_list1"
         android:layout_marginTop = "16dp"
         app:layout_constraintLeft_toLeftOf="parent"
         android:layout_marginLeft="16dp"

@@ -69,7 +69,9 @@ public class DBHelper extends SQLiteOpenHelper {
             cv.put(USERPROFILE_TABLE_COL_BRAND, brand);
             cv.put(USERPROFILE_TABLE_COL_NAME, name);
             cv.put(USERPROFILE_TABLE_COL_MAIL, mail);
-            cv.put(USERPROFILE_TABLE_COL_PHOTOURL, photourl.toString());
+            if(photourl != null) {
+                cv.put(USERPROFILE_TABLE_COL_PHOTOURL, photourl.toString());
+            }
             cv.put(USERPROFILE_TABLE_COL_STATE, state);
             r_id = mdb.insert(USERPROFILE_TABLE_NAME, null,cv);
             mdb.close();

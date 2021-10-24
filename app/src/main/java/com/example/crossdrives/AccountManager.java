@@ -125,32 +125,24 @@ public class AccountManager {
         String Col_Brand = DBConstants.USERPROFILE_TABLE_COL_BRAND;
         int iname = DBConstants.COL_INDX_NAME;
         int imail = DBConstants.COL_INDX_MAIL;
-        int iphoto = DBConstants.COL_INDX_PHOTOURL;
+        //int iphoto = DBConstants.COL_INDX_PHOTOURL;
 
         /*
         Read all rows that the state is activated. Normally, there must be only one activated account for each brand.
          */
-        if(brand == BRAND_GOOGLE) {
-            c = dbh.query(Col_Brand, "\""+brand +"\"", Col_State, "\""+STATE_ACTIVATED+"\"");
-            if (c.getCount() > 1) {
-                Log.w(TAG, "*** more than one activated google drive account ***");
-            }
-        }
-        else if(brand == BRAND_MS){
-            c = dbh.query(Col_Brand, "\""+BRAND_MS+"\"", Col_State, "\""+STATE_ACTIVATED+"\"");
-            if(c.getCount() > 1){
-                Log.w(TAG, "*** more than one activated onedrive account ***");
-            }
+        c = dbh.query(Col_Brand, "\""+brand +"\"", Col_State, "\""+STATE_ACTIVATED+"\"");
+        if (c.getCount() > 1) {
+            Log.w(TAG, "more than one activated account found! Brand: " + brand);
         }
 
         if(c != null && c.getCount() > 0) {
             info = new AccountInfo();
             c.moveToFirst();
-            Uri uri = toUri(c.getString(iphoto));
+            //Uri uri = toUri(c.getString(iphoto));
             info.brand = brand;
             info.name = c.getString(iname);
             info.mail = c.getString(imail);
-            info.photouri = uri;
+            //info.photouri = uri;
         }
 
         return info;

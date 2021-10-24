@@ -1,10 +1,7 @@
 package com.example.crossdrives;
 
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,14 +11,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
@@ -29,17 +27,18 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-public class MasterAccountFragment extends Fragment {
+public class MasterAccountFragment extends BaseFragment {
     private String TAG = "CD.MasterAccountFragment";
     List<AccountManager.AccountInfo> mAi = new ArrayList<>();
-    View mView;
-    Fragment mFragment;
+    private View mView;
+    private Fragment mFragment;
+    //private List <List <ImageView>> mImageViews= new ArrayList<>(); //[0]: logo, [1]: photo
+    private List<CardView> mLayoutCards = new ArrayList<>();
+    private HashMap<String, Integer> mLogoResIDs= new HashMap<>();
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -60,7 +59,9 @@ public class MasterAccountFragment extends Fragment {
 
         readAllAccounts();
 
-        udpateProfiles(view);
+        InitializeUI(view);
+
+        udpateCards(view);
 
         view.findViewById(R.id.add_account_btn).setOnClickListener(listener_account_add);
         mFragment = FragmentManager.findFragment(view);
@@ -69,6 +70,18 @@ public class MasterAccountFragment extends Fragment {
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
 
+    }
+
+    private void InitializeUI(View v){
+//        ImageView iv = v.findViewById(R.id.account_list1).findViewById(R.id.brand_logo); mImageViews.get(0).add(iv);
+//        iv = v.findViewById(R.id.account_list1).findViewById(R.id.user_photo); mImageViews.get(1).add(iv);
+//        iv = v.findViewById(R.id.account_list2).findViewById(R.id.brand_logo); mImageViews.get(0).add(iv);
+//        iv = v.findViewById(R.id.account_list2).findViewById(R.id.user_photo); mImageViews.get(1).add(iv);
+        CardView iv = v.findViewById(R.id.account_list1); mLayoutCards.add(iv);
+        iv = v.findViewById(R.id.account_list2); mLayoutCards.add(iv);
+
+        mLogoResIDs.put(BrandList.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
+        mLogoResIDs.put(BrandList.get(1), new Integer(R.drawable.ic_onedrive_logo));
     }
 
     private View.OnClickListener listener_account_add = new View.OnClickListener() {
@@ -81,48 +94,65 @@ public class MasterAccountFragment extends Fragment {
     };
 
     /*
-        Use the information stored in mAccountList to update the user profile content shown in screen.
-        The items in the user profile card view will be updated one by one according to the record(row) queried from database.
+        Use the information stored in mAccountList to update the user profile content shown in the card.
+        The items in the user profile card view will be updated one by one according to the record(row)
+        queried from database.
     */
-    private void udpateProfiles(View v){
+    private void udpateCards(View v){
+        //Show no account message or not
+        showNoAccountMsg(v);
+        setCardInVisible(0);
+        setCardInVisible(1);
+        if(mAi.size() > 0){
+            RemoveNoAccountMsg(v);
+        }
+
+        //Udate all of the cards if the account profile has at least one available
+        for(int i = 0; i < mAi.size(); i++){
+            setCardVisible(i);
+            updateLogo(i);
+            TextView t = v.findViewById(R.id.account_name);
+            t.setText(mAi.get(i).name);
+            t = v.findViewById(R.id.account_mail);
+            t.setText(mAi.get(i).mail);
+            //mAi.get(i).getPhoto(callback);
+        }
+
+    }
+    private void setCardVisible(int index){
+        mLayoutCards.get(index).setVisibility(View.VISIBLE);
+    }
+    private void setCardInVisible(int index){
+        mLayoutCards.get(index).setVisibility(View.GONE);
+    }
+    private void showNoAccountMsg(View v){
+        v.findViewById(R.id.iv_info_no_account).setVisibility(View.VISIBLE);
+        v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.VISIBLE);
+    }
+    private void RemoveNoAccountMsg(View v){
         v.findViewById(R.id.iv_info_no_account).setVisibility(View.GONE);
         v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.GONE);
-
-        v.findViewById(R.id.account_list).setVisibility(View.VISIBLE);
-
-        if(mAi.size() > 0){
-            for(int i = 0; i < mAi.size(); i++) {
-                ImageView iv = v.findViewById(R.id.account_brand_profile_image);
-                iv.setImageResource(R.drawable.logo_drive_2020q4_color_2x_web_64dp);
-                TextView t = v.findViewById(R.id.account_name);
-                t.setText(mAi.get(i).name);
-                t = v.findViewById(R.id.account_mail);
-                t.setText(mAi.get(i).mail);
-                mAi.get(i).getPhoto(callback);
-            }
-        }
-        else{
-            v.findViewById(R.id.iv_info_no_account).setVisibility(View.VISIBLE);
-            v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.VISIBLE);
-            v.findViewById(R.id.account_list).setVisibility(View.GONE);
-        }
+    }
+    private void updateLogo(int index){
+        ImageView iv = mLayoutCards.get(index).findViewById(R.id.brand_logo);
+        iv.setImageResource(mLogoResIDs.get(index));
     }
 
     /*
     Read all accounts from database and save to mAccountList.
      */
-    private void readAllAccounts(){
+    private void readAllAccounts() {
         AccountManager.AccountInfo ai;
         AccountManager am = AccountManager.getInstance();
 
-        ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
-
-        if(ai != null){
-            Log.d(TAG, "Activated Google account: " + ai.name);
-            mAi.add(ai);
-        }
-        else{
-            Log.d(TAG, "No activated!");
+        for (int i = 0; i < BrandList.size(); i++) {
+            ai = am.getAccountActivated(getContext(), BrandList.get(i));
+            if (ai != null) {
+                Log.d(TAG, "Activated Google account: " + ai.name);
+                mAi.add(ai);
+            } else {
+                Log.d(TAG, "No activated account for brand:" + BrandList.get(i));
+            }
         }
     }
 
@@ -130,7 +160,7 @@ public class MasterAccountFragment extends Fragment {
 
         @Override
         public void onPhotoDownloaded(Bitmap bmp) {
-            ImageView iv = mView.findViewById(R.id.account_profile_image);
+            ImageView iv = mView.findViewById(R.id.user_photo);
             iv.setImageBitmap(bmp);
         }
     };

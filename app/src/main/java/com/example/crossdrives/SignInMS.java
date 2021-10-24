@@ -2,6 +2,7 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.View;
 
@@ -28,8 +29,9 @@ import com.microsoft.identity.client.exception.MsalException;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
-    Context mContext;
-    Activity mActivity;
+    private static SignInMS mSignInMS = null;
+    private Context mContext;
+    private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
     private final static String[] SCOPES = {"Files.Read"};
     /* Azure AD v2 Configs */
@@ -39,6 +41,13 @@ public class SignInMS extends SignInManager{
     Profile mProfile = new Profile();
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
+
+    public static SignInMS getIntance(Activity activity){
+        if(mSignInMS == null){
+            mSignInMS = new SignInMS(activity);
+        }
+        return mSignInMS;
+    }
 
     @Override
     boolean Start(View view, OnInteractiveSignInfinished callback) {
@@ -94,6 +103,11 @@ public class SignInMS extends SignInManager{
                 Log.w(TAG, "Signout Result: failed! " + exception.toString());
             }
         });
+    }
+
+    @Override
+    void getPhoto(OnPhotoDownloaded callback) {
+        return;
     }
 
     private void loadAccount(){
