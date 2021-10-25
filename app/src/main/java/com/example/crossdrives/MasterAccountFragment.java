@@ -11,7 +11,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,12 +32,22 @@ import java.util.List;
 
 public class MasterAccountFragment extends BaseFragment {
     private String TAG = "CD.MasterAccountFragment";
-    List<AccountManager.AccountInfo> mAi = new ArrayList<>();
+    private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
     private View mView;
     private Fragment mFragment;
     //private List <List <ImageView>> mImageViews= new ArrayList<>(); //[0]: logo, [1]: photo
     private List<CardView> mLayoutCards = new ArrayList<>();
     private HashMap<String, Integer> mLogoResIDs= new HashMap<>();
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //allocate space for the list so that we can directly add the value with index later
+        for(String s : BrandList) {
+            mLayoutCards.add(null);
+        }
+    }
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -59,7 +68,7 @@ public class MasterAccountFragment extends BaseFragment {
 
         readAllAccounts();
 
-        InitializeUI(view);
+        prepareUI(view);
 
         udpateCards(view);
 
@@ -72,13 +81,13 @@ public class MasterAccountFragment extends BaseFragment {
 
     }
 
-    private void InitializeUI(View v){
+    private void prepareUI(View v){
 //        ImageView iv = v.findViewById(R.id.account_list1).findViewById(R.id.brand_logo); mImageViews.get(0).add(iv);
 //        iv = v.findViewById(R.id.account_list1).findViewById(R.id.user_photo); mImageViews.get(1).add(iv);
 //        iv = v.findViewById(R.id.account_list2).findViewById(R.id.brand_logo); mImageViews.get(0).add(iv);
 //        iv = v.findViewById(R.id.account_list2).findViewById(R.id.user_photo); mImageViews.get(1).add(iv);
-        CardView iv = v.findViewById(R.id.account_list1); mLayoutCards.add(iv);
-        iv = v.findViewById(R.id.account_list2); mLayoutCards.add(iv);
+        CardView iv = v.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);
+        iv = v.findViewById(R.id.account_list2); mLayoutCards.add(1, iv);
 
         mLogoResIDs.put(BrandList.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
         mLogoResIDs.put(BrandList.get(1), new Integer(R.drawable.ic_onedrive_logo));
@@ -110,7 +119,7 @@ public class MasterAccountFragment extends BaseFragment {
         //Udate all of the cards if the account profile has at least one available
         for(int i = 0; i < mAi.size(); i++){
             setCardVisible(i);
-            updateLogo(i);
+            updateLogo(i, mAi.get(i).brand);
             TextView t = v.findViewById(R.id.account_name);
             t.setText(mAi.get(i).name);
             t = v.findViewById(R.id.account_mail);
@@ -133,22 +142,27 @@ public class MasterAccountFragment extends BaseFragment {
         v.findViewById(R.id.iv_info_no_account).setVisibility(View.GONE);
         v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.GONE);
     }
-    private void updateLogo(int index){
+    private void updateLogo(int index, String brand){
         ImageView iv = mLayoutCards.get(index).findViewById(R.id.brand_logo);
-        iv.setImageResource(mLogoResIDs.get(index));
+        iv.setImageResource(mLogoResIDs.get(brand));
     }
 
     /*
-    Read all accounts from database and save to mAccountList.
+    Read activated accounts using account manager and save them or it to mAccountList.
      */
     private void readAllAccounts() {
         AccountManager.AccountInfo ai;
         AccountManager am = AccountManager.getInstance();
 
+        //First of all, clean up the list
+        for(int i = 0; i < mAi.size(); i++){
+            mAi.remove(i);
+        }
+
         for (int i = 0; i < BrandList.size(); i++) {
             ai = am.getAccountActivated(getContext(), BrandList.get(i));
             if (ai != null) {
-                Log.d(TAG, "Activated Google account: " + ai.name);
+                Log.d(TAG, "Activated account: " + ai.name);
                 mAi.add(ai);
             } else {
                 Log.d(TAG, "No activated account for brand:" + BrandList.get(i));
