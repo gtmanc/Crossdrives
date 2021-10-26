@@ -39,10 +39,11 @@ public class SignInMS extends SignInManager{
     OnInteractiveSignInfinished mOnInteractiveSignInfinished;
     OnSilenceSignInfinished mOnSilenceSignInfinished;
     Profile mProfile = new Profile();
+    private String mToken;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
-    public static SignInMS getIntance(Activity activity){
+    public static SignInMS getInstance(Activity activity){
         if(mSignInMS == null){
             mSignInMS = new SignInMS(activity);
         }
@@ -156,15 +157,16 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
                 Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
-                // save our auth token to use later
+                // save our auth token for REST API use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
                 mProfile.Brand = SignInManager.BRAND_MS;
                 mProfile.Name = authenticationResult.getAccount().getUsername();
                 mProfile.Mail = "";
                 mProfile.PhotoUri = null;
 
-                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, authenticationResult.getAccessToken());
-                //MSGraphRestHelper msRest = new MSGraphRestHelper();
+                mToken = authenticationResult.getAccessToken();
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
+                MSGraphRestHelper msRest = new MSGraphRestHelper();
 
                 /* call graph */
 //                callGraphAPI(authenticationResult);
@@ -195,7 +197,8 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "Successfully silence authenticated");
 
                 //callGraphAPI(authenticationResult);
-                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, authenticationResult.getAccessToken());
+                mToken = authenticationResult.getAccessToken();
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, mToken);
             }
             @Override
             public void onError(MsalException exception) {
@@ -206,42 +209,44 @@ public class SignInMS extends SignInManager{
         };
     }
 
-//    private void callGraphAPI(IAuthenticationResult authenticationResult) {
-//
-//        final String accessToken = authenticationResult.getAccessToken();
-//
-//        IGraphServiceClient graphClient =
-//                GraphServiceClient
-//                        .builder()
-//                        .authenticationProvider(new IAuthenticationProvider() {
-//                            @Override
-//                            public void authenticateRequest(IHttpRequest request) {
-//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-//                                request.addHeader("Authorization", "Bearer " + accessToken);
-//                            }
-//                        })
-//                        .buildClient();
-//        graphClient
-//                .me()
-//                .drive()
-//                .buildRequest()
-//                .get(new ICallback<Drive>() {
-//                    @Override
-//                    public void success(final Drive drive) {
-//                        Log.d(TAG, "Found Drive " + drive.id);
-//                        //displayGraphResult(drive.getRawObject());
-//                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
-//
-//                    }
-//
-//                    @Override
-//                    public void failure(ClientException ex) {
-//                        //displayError(ex);
-//                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-//
-//                    }
-//                });
-//    }
+    //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
+    //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
+    private void getMePhoto(IAuthenticationResult authenticationResult) {
+
+        final String accessToken = mToken;
+
+        IGraphServiceClient graphClient =
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(new IAuthenticationProvider() {
+                            @Override
+                            public void authenticateRequest(IHttpRequest request) {
+                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+                                request.addHeader("Authorization", "Bearer " + accessToken);
+                            }
+                        })
+                        .buildClient();
+        graphClient
+                .me()
+                .drive()
+                .buildRequest()
+                .get(new ICallback<Drive>() {
+                    @Override
+                    public void success(final Drive drive) {
+                        Log.d(TAG, "Found Drive " + drive.id);
+                        //displayGraphResult(drive.getRawObject());
+                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
+
+                    }
+
+                    @Override
+                    public void failure(ClientException ex) {
+                        //displayError(ex);
+                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
+
+                    }
+                });
+    }
 
 //    /**
 //     * Used to setup the Services

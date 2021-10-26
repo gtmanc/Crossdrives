@@ -57,10 +57,10 @@ public class MainActivity extends AppCompatActivity{
         mProgressBar = findViewById(R.id.main_activity_progressBar);
         mProgressBar.setVisibility(View.VISIBLE);
 
-        SignInGoogle google = SignInGoogle.getIntance(getApplicationContext());
+        SignInGoogle google = SignInGoogle.getInstance(getApplicationContext());
         google.silenceSignIn(onSigninFinishedGdrive);
 
-        SignInMS onedrive = SignInMS.getIntance(this);
+        SignInMS onedrive = SignInMS.getInstance(this);
         onedrive.silenceSignIn(onSigninFinishedOnedrive);
 
     }

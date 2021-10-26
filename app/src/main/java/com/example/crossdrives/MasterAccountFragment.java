@@ -90,7 +90,7 @@ public class MasterAccountFragment extends BaseFragment {
         iv = v.findViewById(R.id.account_list2); mLayoutCards.add(1, iv);
 
         mLogoResIDs.put(BrandList.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
-        mLogoResIDs.put(BrandList.get(1), new Integer(R.drawable.ic_onedrive_logo));
+        mLogoResIDs.put(BrandList.get(1), new Integer(R.drawable.onedrive_logo_wine));
     }
 
     private View.OnClickListener listener_account_add = new View.OnClickListener() {
@@ -127,6 +127,7 @@ public class MasterAccountFragment extends BaseFragment {
 //            t.setText(mAi.get(i).mail);
             updateMail(i);
             //mAi.get(i).getPhoto(callback);
+            updatePhoto(i, mAi.get(i).brand);
         }
 
     }

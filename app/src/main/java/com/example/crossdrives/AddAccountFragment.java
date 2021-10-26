@@ -26,9 +26,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.google.api.services.drive.Drive;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-
 
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +65,7 @@ public class AddAccountFragment extends BaseFragment {
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
             mView = v;
-            mSignInManager = SignInGoogle.getIntance(getContext());
+            mSignInManager = SignInGoogle.getInstance(getContext());
             AccountManager.AccountInfo ai
                     = getActivatedAccount(AccountManager.BRAND_GOOGLE);
             if(ai != null){
@@ -86,7 +83,7 @@ public class AddAccountFragment extends BaseFragment {
         @Override
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
-            mSignInManager = SignInMS.getIntance(getActivity());
+            mSignInManager = SignInMS.getInstance(getActivity());
             AccountManager.AccountInfo ai
                     = getActivatedAccount(AccountManager.BRAND_MS);
             if(ai != null){
