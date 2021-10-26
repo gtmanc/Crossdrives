@@ -35,9 +35,9 @@ public class MasterAccountFragment extends BaseFragment {
     private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
     private View mView;
     private Fragment mFragment;
-    //private List <List <ImageView>> mImageViews= new ArrayList<>(); //[0]: logo, [1]: photo
     private List<CardView> mLayoutCards = new ArrayList<>();
     private HashMap<String, Integer> mLogoResIDs= new HashMap<>();
+    private int mCardIndex;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -120,10 +120,12 @@ public class MasterAccountFragment extends BaseFragment {
         for(int i = 0; i < mAi.size(); i++){
             setCardVisible(i);
             updateLogo(i, mAi.get(i).brand);
-            TextView t = v.findViewById(R.id.account_name);
-            t.setText(mAi.get(i).name);
-            t = v.findViewById(R.id.account_mail);
-            t.setText(mAi.get(i).mail);
+//            TextView t = v.findViewById(R.id.account_name);
+//            t.setText(mAi.get(i).name);
+            updateName(i);
+//            t = v.findViewById(R.id.account_mail);
+//            t.setText(mAi.get(i).mail);
+            updateMail(i);
             //mAi.get(i).getPhoto(callback);
         }
 
@@ -145,6 +147,28 @@ public class MasterAccountFragment extends BaseFragment {
     private void updateLogo(int index, String brand){
         ImageView iv = mLayoutCards.get(index).findViewById(R.id.brand_logo);
         iv.setImageResource(mLogoResIDs.get(brand));
+    }
+    private void updateName(int index){
+        TextView tv = mLayoutCards.get(index).findViewById(R.id.account_name);
+        tv.setText(mAi.get(index).name);
+    }
+    private void updateMail(int index){
+        TextView tv = mLayoutCards.get(index).findViewById(R.id.account_mail);
+        tv.setText(mAi.get(index).mail);
+    }
+    private void updatePhoto(int index, String brand){
+        mCardIndex = index;
+
+        SignInGoogle google = SignInGoogle.getInstance(getContext());
+        google.getPhoto(new SignInManager.OnPhotoDownloaded(){
+
+            @Override
+            public void onDownloaded(Bitmap bmp) {
+                ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+                iv.setImageBitmap(bmp);
+
+            }
+        });
     }
 
     /*

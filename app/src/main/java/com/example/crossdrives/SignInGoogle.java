@@ -57,7 +57,7 @@ public class SignInGoogle extends SignInManager{
         mContext = context;
     }
 
-    public static SignInGoogle getIntance(Context context){
+    public static SignInGoogle getInstance(Context context){
         if(mSignInGoogle == null){
             mSignInGoogle = new SignInGoogle(context);
         }
