@@ -37,8 +37,8 @@ public abstract class SignInManager{
         //Sign out successfully if true is returned. Otherwise, false is returned.
         void onFinished(int result);
     }
-    interface OnPhotoDownloaded{
-        void onDownloaded(Bitmap bmp);
+    interface OnPhotoDownloaded <T>{
+        void onDownloaded(Bitmap bmp, T object);
     }
 
     //start interactive sign in flow. Mainly start the sign in activity.

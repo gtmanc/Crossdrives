@@ -159,12 +159,13 @@ public class MasterAccountFragment extends BaseFragment {
     }
     private void updatePhoto(int index, String brand){
         mCardIndex = index;
+        Integer i = index;
 
         SignInGoogle google = SignInGoogle.getInstance(getContext());
-        google.getPhoto(new SignInManager.OnPhotoDownloaded(){
+        google.getPhoto(new SignInManager.OnPhotoDownloaded<Integer>(){
 
             @Override
-            public void onDownloaded(Bitmap bmp) {
+            public void onDownloaded(Bitmap bmp, Integer i) {
                 ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
                 iv.setImageBitmap(bmp);
 
