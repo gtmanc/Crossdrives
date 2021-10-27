@@ -45,12 +45,13 @@ public class SignInGoogle extends SignInManager{
     private GoogleSignInAccount mGoogleSignInAccount;
     private Context mContext = null;
     //Activity mActivity;
-    Profile mProfile = new Profile();
+    private static Profile mProfile = new Profile();
     private Fragment mFragment;
     static OnInteractiveSignInfinished mCallback;
     static OnSignOutFinished mSignoutCallback;
     OnPhotoDownloaded mPhotoDownloadCallback;
     private Bitmap mBmp;
+    private Object mObject;
 
     SignInGoogle(Context context)
     {
@@ -67,14 +68,13 @@ public class SignInGoogle extends SignInManager{
     //A static class used to exchange data between this class and the interactive sign in fragment
     public static class ReceiveSigninResult {
         public static void onSignedIn(int statuscode, Fragment fragment, GoogleSignInAccount account){
-            Profile profile = new Profile();
             int code = SignInManager.RESULT_FAILED;
 
             if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
-                profile.Brand = SignInManager.BRAND_GOOGLE;
-                profile.Name = account.getDisplayName();
-                profile.Mail = account.getEmail();
-                profile.PhotoUri = account.getPhotoUrl();
+                mProfile.Brand = SignInManager.BRAND_GOOGLE;
+                mProfile.Name = account.getDisplayName();
+                mProfile.Mail = account.getEmail();
+                mProfile.PhotoUri = account.getPhotoUrl();
             }
 
             NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
@@ -85,7 +85,7 @@ public class SignInGoogle extends SignInManager{
                 code = SignInManager.RESULT_SUCCESS;
             }
 
-            mCallback.onFinished(code, profile, account);
+            mCallback.onFinished(code, mProfile, account);
         }
     }
 
@@ -268,8 +268,9 @@ public class SignInGoogle extends SignInManager{
     }
 
     @Override
-    void getPhoto(OnPhotoDownloaded callback) {
+    void getPhoto(Object object, OnPhotoDownloaded callback) {
         mPhotoDownloadCallback = callback;
+        mObject = object;
         new DownloadPhoto()
                 .execute(mProfile.PhotoUri.toString());
     }
@@ -310,7 +311,7 @@ public class SignInGoogle extends SignInManager{
         protected void onPostExecute(Bitmap bitmap) {
 //            super.onPostExecute(bitmap);
 //            mImageView.setImageBitmap(bitmap);
-            mPhotoDownloadCallback.onDownloaded(bitmap);
+            mPhotoDownloadCallback.onDownloaded(bitmap, mObject);
         }
     }
 }

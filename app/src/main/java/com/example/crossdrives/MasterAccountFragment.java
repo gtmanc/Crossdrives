@@ -158,15 +158,15 @@ public class MasterAccountFragment extends BaseFragment {
         tv.setText(mAi.get(index).mail);
     }
     private void updatePhoto(int index, String brand){
-        mCardIndex = index;
-        Integer i = index;
+        ImageView iv = mLayoutCards.get(index).findViewById(R.id.user_photo);
 
         SignInGoogle google = SignInGoogle.getInstance(getContext());
-        google.getPhoto(new SignInManager.OnPhotoDownloaded<Integer>(){
+        google.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
             @Override
-            public void onDownloaded(Bitmap bmp, Integer i) {
-                ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+            public void onDownloaded(Bitmap bmp, Object object) {
+                //ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+                ImageView iv = (ImageView)object;
                 iv.setImageBitmap(bmp);
 
             }

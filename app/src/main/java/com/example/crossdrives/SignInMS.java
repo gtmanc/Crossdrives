@@ -107,7 +107,7 @@ public class SignInMS extends SignInManager{
     }
 
     @Override
-    void getPhoto(OnPhotoDownloaded callback) {
+    void getPhoto(Object object, OnPhotoDownloaded callback) {
         return;
     }
 
