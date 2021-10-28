@@ -159,9 +159,30 @@ public class MasterAccountFragment extends BaseFragment {
     }
     private void updatePhoto(int index, String brand){
         ImageView iv = mLayoutCards.get(index).findViewById(R.id.user_photo);
+        if(brand.equals(SignInManager.BRAND_GOOGLE)){
+            downloadPhotoGoogle(iv);
+        }
+        else if(brand.equals(SignInManager.BRAND_MS)){
+            downloadPhotoMicrosoft(iv);
+        }
 
+    }
+    private void downloadPhotoGoogle(ImageView iv){
         SignInGoogle google = SignInGoogle.getInstance(getContext());
         google.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
+
+            @Override
+            public void onDownloaded(Bitmap bmp, Object object) {
+                //ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+                ImageView iv = (ImageView)object;
+                iv.setImageBitmap(bmp);
+
+            }
+        });
+    }
+    private void downloadPhotoMicrosoft(ImageView iv){
+        SignInMS ms = SignInMS.getInstance(getActivity());
+        ms.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
             @Override
             public void onDownloaded(Bitmap bmp, Object object) {

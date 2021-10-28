@@ -39,7 +39,7 @@ import retrofit2.http.Url;
 
 //A concrete object for execution of google sign in flow
 public class SignInGoogle extends SignInManager{
-    private String TAG = "CD.SignInGoogle";
+    private static String TAG = "CD.SignInGoogle";
     private static SignInGoogle mSignInGoogle = null;
     private GoogleSignInClient mGoogleSignInClient;
     private GoogleSignInAccount mGoogleSignInAccount;
@@ -60,8 +60,11 @@ public class SignInGoogle extends SignInManager{
 
     public static SignInGoogle getInstance(Context context){
         if(mSignInGoogle == null){
+            //Log.d(TAG, "Create instance");
             mSignInGoogle = new SignInGoogle(context);
         }
+//        Log.d(TAG, "instance is " + mSignInGoogle);
+//        Log.d(TAG, "mProfile is " + mProfile);
         return mSignInGoogle;
     }
 
@@ -70,8 +73,17 @@ public class SignInGoogle extends SignInManager{
         public static void onSignedIn(int statuscode, Fragment fragment, GoogleSignInAccount account){
             int code = SignInManager.RESULT_FAILED;
 
+            //Reset profile content first of all
+            mProfile.Brand= SignInManager.BRAND_GOOGLE;
+            mProfile.Name= "NoName";
+            mProfile.Mail = "";
+            mProfile.PhotoUri = null;
+
             if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
-                mProfile.Brand = SignInManager.BRAND_GOOGLE;
+
+                if(mProfile == null){
+                    Log.w(TAG, "mProfile is null!");
+                }
                 mProfile.Name = account.getDisplayName();
                 mProfile.Mail = account.getEmail();
                 mProfile.PhotoUri = account.getPhotoUrl();
@@ -178,6 +190,12 @@ public class SignInGoogle extends SignInManager{
         // Build a GoogleSignInClient with the options specified by gso.
         mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);
 
+        //Reset profile content first of all
+        mProfile.Brand= SignInManager.BRAND_GOOGLE;
+        mProfile.Name= "NoName";
+        mProfile.Mail = "";
+        mProfile.PhotoUri = null;
+
         Task<GoogleSignInAccount> task = mGoogleSignInClient.silentSignIn();
         if (task.isSuccessful()) {
             Log.d(TAG, "User's credentials still cached");
@@ -212,7 +230,6 @@ public class SignInGoogle extends SignInManager{
                         // e.g. GoogleSignInStatusCodes.SIGN_IN_REQUIRED means user needs to take
                         // explicit action to finish sign-in;
                         // Please refer to GoogleSignInStatusCodes Javadoc for detail
-                        mProfile = null;
                         callback.onFinished(SignInManager.RESULT_FAILED, null, null);
                     }
                 }

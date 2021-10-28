@@ -145,6 +145,10 @@ public class SignInMS extends SignInManager{
         });
     }
     private AuthenticationCallback getAuthInteractiveCallback() {
+        mProfile.Brand = SignInManager.BRAND_MS;
+        mProfile.Name = "NoName";
+        mProfile.Mail = "";
+        mProfile.PhotoUri = null;
         return new AuthenticationCallback() {
             @Override
             public void onSuccess(IAuthenticationResult authenticationResult) {
@@ -159,7 +163,6 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
                 // save our auth token for REST API use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
-                mProfile.Brand = SignInManager.BRAND_MS;
                 mProfile.Name = authenticationResult.getAccount().getUsername();
                 mProfile.Mail = "";
                 mProfile.PhotoUri = null;
