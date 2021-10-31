@@ -133,7 +133,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public int update(ContentValues values, ContentValues where){
         int rows_affected = 0;
 
-        Log.d(TAG, "update");
+        Log.d(TAG, "update row");
 
         try{
             mdb = getWritableDatabase();
@@ -160,29 +160,33 @@ public class DBHelper extends SQLiteOpenHelper {
     private String make_statement(ContentValues cv){
         String statement="";
         String clause;
+        Log.d(TAG, "make statement:");
 
         clause = (String)cv.get(USERPROFILE_TABLE_COL_BRAND);
         if( clause != null){
-            statement.concat(USERPROFILE_TABLE_COL_BRAND + "\"" + clause + "\"" + "AND");
+            Log.d(TAG, "USERPROFILE_TABLE_COL_BRAND:" + clause);
+            statement = statement.concat(USERPROFILE_TABLE_COL_BRAND + " = " + "\"" + clause + "\"");
         }
         clause = (String)cv.get(USERPROFILE_TABLE_COL_NAME);
         if( clause != null){
-            statement.concat(USERPROFILE_TABLE_COL_NAME + "\"" + clause + "\"" + "AND");
+            Log.d(TAG, "USERPROFILE_TABLE_COL_NAME:" + clause);
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_NAME + " = " + "\"" + clause + "\"");
         }
         clause = (String)cv.get(USERPROFILE_TABLE_COL_MAIL);
         if( clause != null){
-            statement.concat(USERPROFILE_TABLE_COL_MAIL + "\"" + clause + "\"" + "AND");
+            Log.d(TAG, "USERPROFILE_TABLE_COL_MAIL:" + clause);
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_MAIL + " = " + "\"" + clause + "\"");
         }
         clause = (String)cv.get(USERPROFILE_TABLE_COL_PHOTOURL);
         if( clause != null){
-            statement.concat(USERPROFILE_TABLE_COL_PHOTOURL + "\"" + clause + "\"" + "AND");
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_PHOTOURL + " = " + "\"" + clause + "\"");
         }
         clause = (String)cv.get(USERPROFILE_TABLE_COL_STATE);
         if( clause != null){
-            statement.concat(USERPROFILE_TABLE_COL_STATE + "\"" + clause + "\"");
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_STATE + " = " + "\"" + clause + "\"");
         }
 
-        Log.w(TAG, "statement:" + statement);
+        Log.d(TAG, "statement: " + statement);
         return statement;
     }
     public int delete(String ... expression){

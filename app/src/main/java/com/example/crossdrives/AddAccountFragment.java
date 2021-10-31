@@ -56,7 +56,7 @@ public class AddAccountFragment extends BaseFragment {
         mFragment = FragmentManager.findFragment(view);
 
         Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
-        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
     }
 
@@ -67,12 +67,13 @@ public class AddAccountFragment extends BaseFragment {
             mView = v;
             mSignInManager = SignInGoogle.getInstance(getContext());
             AccountManager.AccountInfo ai
-                    = getActivatedAccount(AccountManager.BRAND_GOOGLE);
-            if(ai != null){
-                //OK. Now we are sure that there is a activated google account. Ask user next step.
-                mStartForResult.launch(new Intent(mFragment.getActivity(), SignOutDialog.class));
-            }
-            else{
+                    = getActivatedAccount(GlobalConstants.BRAND_GOOGLE);
+            if (ai != null) {
+                //OK. Now we are sure that there is a activated google account. Ask user for next step.
+                Intent intent = new Intent(mFragment.getActivity(), SignOutDialog.class);
+                //intent.putExtra("Brand", SignInManager.BRAND_GOOGLE);
+                mStartForResult.launch(intent);
+            } else {
                 mSignInManager.Start(mView, onSigninFinished);
             }
 
@@ -85,12 +86,13 @@ public class AddAccountFragment extends BaseFragment {
             Log.d(TAG, "start sign flow");
             mSignInManager = SignInMS.getInstance(getActivity());
             AccountManager.AccountInfo ai
-                    = getActivatedAccount(AccountManager.BRAND_MS);
-            if(ai != null){
-                //OK. Now we are sure that there is a activated google account. Ask user next step.
-                mStartForResult.launch(new Intent(mFragment.getActivity(), SignOutDialog.class));
-            }
-            else{
+                    = getActivatedAccount(GlobalConstants.BRAND_MS);
+            if (ai != null) {
+                //OK. Now we are sure that there is a activated Microsoft account. Ask user for next step.
+                Intent intent = new Intent(mFragment.getActivity(), SignOutDialog.class);
+                //intent.putExtra("Brand", SignInManager.BRAND_MS);
+                mStartForResult.launch(intent);
+            } else {
                 mSignInManager.Start(mView, onSigninFinished);
             }
         }
@@ -101,13 +103,14 @@ public class AddAccountFragment extends BaseFragment {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     Log.d(TAG, "Callback gets called. Result code:" + result.getResultCode());
-                    String action;
+                    String action, brand;
                     //Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Intent intent = result.getData();
                         action = intent.getStringExtra(SignOutDialog.KEY_ACTION);
+                        //brand = intent.getStringExtra("Brand");
                         Log.d(TAG, "Action:" + action);
-                        if(action.equals(SignOutDialog.ACTION_SIGNOUT)){
+                        if (action.equals(SignOutDialog.ACTION_SIGNOUT)) {
                             Log.i(TAG, "Decided: sign out!");
                             mSignInManager.SignOut(onSignOutFinished);
                         }
@@ -117,14 +120,18 @@ public class AddAccountFragment extends BaseFragment {
 
     SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
         @Override
-        public void onFinished(int result) {
+        public void onFinished(int result, String brand) {
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
+                String brand_am = GlobalConstants.BRAND_GOOGLE;
                 Log.i(TAG, "App has signed out!");
 
                 AccountManager.AccountInfo ai;
                 AccountManager am = AccountManager.getInstance();
-                ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
+                if(brand == GlobalConstants.BRAND_MS) {
+                    brand_am = GlobalConstants.BRAND_MS;
+                }
+                ai = am.getAccountActivated(getContext(), brand_am);
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
                 //double check if the account is set deactivated
@@ -271,10 +278,10 @@ public class AddAccountFragment extends BaseFragment {
 
         AccountManager am = AccountManager.getInstance();
         if(profile.Brand == SignInManager.BRAND_GOOGLE){
-            ai.brand = AccountManager.BRAND_GOOGLE;
+            ai.brand = GlobalConstants.BRAND_GOOGLE;
         }
         else if(profile.Brand == SignInManager.BRAND_MS){
-            ai.brand = AccountManager.BRAND_MS;
+            ai.brand = GlobalConstants.BRAND_MS;
         }else{
             Log.w(TAG, "Unknown brand!");
         }

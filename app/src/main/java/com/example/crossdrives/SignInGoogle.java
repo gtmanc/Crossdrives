@@ -288,6 +288,7 @@ public class SignInGoogle extends SignInManager{
     void getPhoto(Object object, OnPhotoDownloaded callback) {
         mPhotoDownloadCallback = callback;
         mObject = object;
+        Log.d(TAG, "Download photo with url: " + mProfile.PhotoUri.toString());
         new DownloadPhoto()
                 .execute(mProfile.PhotoUri.toString());
     }
@@ -298,7 +299,7 @@ public class SignInGoogle extends SignInManager{
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d(TAG, "revoke OK!");
-                mSignoutCallback.onFinished(SignInManager.RESULT_SUCCESS);
+                mSignoutCallback.onFinished(SignInManager.RESULT_SUCCESS, SignInManager.BRAND_GOOGLE);
             }
         });
     }

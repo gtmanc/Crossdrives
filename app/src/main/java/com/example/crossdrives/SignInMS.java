@@ -3,6 +3,7 @@ package com.example.crossdrives;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.View;
 
@@ -17,6 +18,7 @@ import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.models.extensions.ProfilePhoto;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
@@ -26,6 +28,8 @@ import com.microsoft.identity.client.ISingleAccountPublicClientApplication;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
+
+import java.io.InputStream;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
@@ -38,8 +42,10 @@ public class SignInMS extends SignInManager{
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
     OnInteractiveSignInfinished mOnInteractiveSignInfinished;
     OnSilenceSignInfinished mOnSilenceSignInfinished;
+    OnPhotoDownloaded mPhotoDownloadCallback;
     Profile mProfile = new Profile();
     private String mToken;
+    private Object mObject;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
@@ -97,7 +103,7 @@ public class SignInMS extends SignInManager{
         mSingleAccountApp.signOut(new ISingleAccountPublicClientApplication.SignOutCallback() {
             @Override
             public void onSignOut() {
-                callback.onFinished(SignInManager.RESULT_SUCCESS);
+                callback.onFinished(SignInManager.RESULT_SUCCESS, SignInManager.BRAND_MS);
             }
             @Override
             public void onError(@NonNull MsalException exception){
@@ -108,7 +114,40 @@ public class SignInMS extends SignInManager{
 
     @Override
     void getPhoto(Object object, OnPhotoDownloaded callback) {
-        return;
+        mPhotoDownloadCallback = callback;
+        mObject = object;
+
+        //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
+        //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
+        final String accessToken = mToken;
+
+        IGraphServiceClient graphClient =
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(new IAuthenticationProvider() {
+                            @Override
+                            public void authenticateRequest(IHttpRequest request) {
+                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+                                request.addHeader("Authorization", "Bearer " + accessToken);
+                            }
+                        })
+                        .buildClient();
+        graphClient
+                .me()
+                .photo()
+                .content()
+                .buildRequest()
+                .get(new ICallback<InputStream>() {
+                    @Override
+                    public void success(InputStream inputStream) {
+                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+                    }
+
+                    @Override
+                    public void failure(ClientException ex) {
+                        Log.d(TAG, "get photo failed, " + ex.toString());
+                    }
+                });
     }
 
     private void loadAccount(){
@@ -210,45 +249,6 @@ public class SignInMS extends SignInManager{
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null, null);
             }
         };
-    }
-
-    //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
-    //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
-    private void getMePhoto(IAuthenticationResult authenticationResult) {
-
-        final String accessToken = mToken;
-
-        IGraphServiceClient graphClient =
-                GraphServiceClient
-                        .builder()
-                        .authenticationProvider(new IAuthenticationProvider() {
-                            @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + accessToken);
-                            }
-                        })
-                        .buildClient();
-        graphClient
-                .me()
-                .drive()
-                .buildRequest()
-                .get(new ICallback<Drive>() {
-                    @Override
-                    public void success(final Drive drive) {
-                        Log.d(TAG, "Found Drive " + drive.id);
-                        //displayGraphResult(drive.getRawObject());
-                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
-
-                    }
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        //displayError(ex);
-                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-
-                    }
-                });
     }
 
 //    /**

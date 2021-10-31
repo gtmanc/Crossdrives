@@ -2,6 +2,7 @@ package com.example.crossdrives;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,11 +34,13 @@ import java.util.List;
 public class MasterAccountFragment extends BaseFragment {
     private String TAG = "CD.MasterAccountFragment";
     private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
-    private View mView;
+    //private View mView;
     private Fragment mFragment;
     private List<CardView> mLayoutCards = new ArrayList<>();
     private HashMap<String, Integer> mLogoResIDs= new HashMap<>();
     private int mCardIndex;
+    private ImageView mIvUserPhoto;
+    private Bitmap mBmpUserPhoto;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,10 +63,10 @@ public class MasterAccountFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mView = view;
+        //mView = view;
 
         String MyArg = MasterAccountFragmentArgs.fromBundle(getArguments()).getCreateAccountName();
-        if(MyArg != null)
+        if(MyArg != null && MyArg != "NoName")
             Toast.makeText(getContext(), "Master Account Added: " + MyArg, Toast.LENGTH_LONG).show();
 
         readAllAccounts();
@@ -158,6 +161,7 @@ public class MasterAccountFragment extends BaseFragment {
         tv.setText(mAi.get(index).mail);
     }
     private void updatePhoto(int index, String brand){
+        Log.d(TAG, "Update photo. Brand: " + brand);
         ImageView iv = mLayoutCards.get(index).findViewById(R.id.user_photo);
         if(brand.equals(SignInManager.BRAND_GOOGLE)){
             downloadPhotoGoogle(iv);
@@ -168,12 +172,14 @@ public class MasterAccountFragment extends BaseFragment {
 
     }
     private void downloadPhotoGoogle(ImageView iv){
+
         SignInGoogle google = SignInGoogle.getInstance(getContext());
         google.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
             @Override
             public void onDownloaded(Bitmap bmp, Object object) {
                 //ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+                Log.d(TAG, "Google download photo done");
                 ImageView iv = (ImageView)object;
                 iv.setImageBitmap(bmp);
 
@@ -181,19 +187,41 @@ public class MasterAccountFragment extends BaseFragment {
         });
     }
     private void downloadPhotoMicrosoft(ImageView iv){
+        mBmpUserPhoto = null;
+        mIvUserPhoto = iv;
+        //new UpdatePhoto().execute();
         SignInMS ms = SignInMS.getInstance(getActivity());
         ms.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
             @Override
             public void onDownloaded(Bitmap bmp, Object object) {
                 //ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
-                ImageView iv = (ImageView)object;
-                iv.setImageBitmap(bmp);
+                Log.d(TAG, "Microsoft download photo done");
+                getActivity().runOnUiThread(new Runnable() {
 
+                    @Override
+                    public void run() {
+                        ImageView iv = (ImageView)object;
+                        iv.setImageBitmap(bmp);
+                    }
+                });
+
+                //mBmpUserPhoto = bmp;
             }
         });
     }
 
+//    private class UpdatePhoto extends AsyncTask<String, Void, Bitmap> {
+//
+//        @Override
+//        protected Bitmap doInBackground(String... s) {
+//            while(mBmpUserPhoto == null){
+//                Log.d(TAG, "Wait for photo");
+//            }
+//            mIvUserPhoto.setImageBitmap(mBmpUserPhoto);
+//            return null;
+//        }
+//    }
     /*
     Read activated accounts using account manager and save them or it to mAccountList.
      */
@@ -217,14 +245,14 @@ public class MasterAccountFragment extends BaseFragment {
         }
     }
 
-    AccountManager.AccountInfo.Callback callback = new AccountManager.AccountInfo.Callback(){
-
-        @Override
-        public void onPhotoDownloaded(Bitmap bmp) {
-            ImageView iv = mView.findViewById(R.id.user_photo);
-            iv.setImageBitmap(bmp);
-        }
-    };
+//    AccountManager.AccountInfo.Callback callback = new AccountManager.AccountInfo.Callback(){
+//
+//        @Override
+//        public void onPhotoDownloaded(Bitmap bmp) {
+//            ImageView iv = mView.findViewById(R.id.user_photo);
+//            iv.setImageBitmap(bmp);
+//        }
+//    };
 
     private void updateCardContent(String name, String mail, Uri photourl){
 

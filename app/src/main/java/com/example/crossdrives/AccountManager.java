@@ -17,8 +17,8 @@ public class AccountManager {
     private static String TAG = "CD.AccountManager";
     static AccountManager mAM;
     public final static int MAX_BRAND_SUPPORT = 2;
-    public final static String BRAND_GOOGLE = "GDrive";
-    public final static String BRAND_MS = "OneDrive";
+//    public final static String BRAND_GOOGLE = "GDrive";
+//    public final static String BRAND_MS = "OneDrive";
 
     private final String STATE_ACTIVATED = "Activated";
     private final String STATE_DEACTIVATED = "Deactivated";
@@ -36,13 +36,13 @@ public class AccountManager {
         public void getPhoto(Callback callback){
             mCallback = callback;
             //Google: the user photo can be downloaded using url
-            if(brand.equals(BRAND_GOOGLE)){
-                new DownloadPhoto().execute(photouri.toString());
-            }
-            else if (brand.equals(BRAND_MS)){
-                MSGraphRestHelper ms = new MSGraphRestHelper();
-                ms.getMePhoto(callbackGraph);
-            }
+//            if(brand.equals(BRAND_GOOGLE)){
+//                new DownloadPhoto().execute(photouri.toString());
+//            }
+//            else if (brand.equals(BRAND_MS)){
+//                MSGraphRestHelper ms = new MSGraphRestHelper();
+//                ms.getMePhoto(callbackGraph);
+//            }
         }
         //Graph helper callback for downloading ms user photo
         MSGraphRestHelper.Callback callbackGraph = new MSGraphRestHelper.Callback(){
@@ -157,6 +157,7 @@ public class AccountManager {
         ContentValues values = new ContentValues();
         ContentValues where = new ContentValues();
 
+        Log.w(TAG, "Set account deactivated: " + brand);
         if(brand != null){ where.put(DBConstants.USERPROFILE_TABLE_COL_BRAND, brand); }
         if(name != null){  where.put(DBConstants.USERPROFILE_TABLE_COL_NAME, name); }
         if(mail != null){ where.put(DBConstants.USERPROFILE_TABLE_COL_MAIL, mail);}

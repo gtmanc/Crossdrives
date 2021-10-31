@@ -13,6 +13,8 @@ public class SignOutDialog extends Activity {
     public static String ACTION_SIGNOUT = "Signout";
     public static String ACTION_CANCEL = "Cancel";
 
+    //String mBrand;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,6 +26,8 @@ public class SignOutDialog extends Activity {
         findViewById(R.id.signout_dialog_button_signout).setOnClickListener(mOnClickerSignOut);
         findViewById(R.id.signout_dialog_button_cancel).setOnClickListener(mOnClickerCancel);
 
+//        Intent intent = getIntent();
+//        mBrand = intent.getStringExtra("Brand");
     }
 
     View.OnClickListener mOnClickerSignOut = new View.OnClickListener(){
@@ -33,6 +37,7 @@ public class SignOutDialog extends Activity {
 
             Intent intent = new Intent();
             intent.putExtra(KEY_ACTION, ACTION_SIGNOUT);
+            //intent.putExtra("Brand", mBrand);
             mActivity.setResult(RESULT_OK, intent);
             mActivity.finish();
         }
@@ -44,6 +49,7 @@ public class SignOutDialog extends Activity {
 
             Intent intent = new Intent();
             intent.putExtra(KEY_ACTION, ACTION_CANCEL);
+            //intent.putExtra("Brand", mBrand);
             mActivity.setResult(RESULT_OK, intent);
             mActivity.finish();
         }

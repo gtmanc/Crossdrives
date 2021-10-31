@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity{
         mProgressBar.setVisibility(View.VISIBLE);
 
         SignInGoogle google = SignInGoogle.getInstance(getApplicationContext());
+        Log.d(TAG, "Google silence signin callback: " + onSigninFinishedGdrive);
         google.silenceSignIn(onSigninFinishedGdrive);
 
         SignInMS onedrive = SignInMS.getInstance(this);
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity{
     SignInManager.OnSilenceSignInfinished onSigninFinishedGdrive = new SignInManager.OnSilenceSignInfinished(){
 
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object client) {
+        public void onFinished(int result, SignInManager.Profile profile, Object object) {
             Intent intent = new Intent();
             Bundle bundle = new Bundle();
 
@@ -77,7 +78,8 @@ public class MainActivity extends AppCompatActivity{
             if(result == SignInManager.RESULT_SUCCESS){
                 //Write user profile to database
 
-                //TODO: create drive client
+                Log.d(TAG, "Google slience sign in OK. Ccreate google drive client");
+                GoogleDriveClient google_drive = new GoogleDriveClient(getApplicationContext()).create(object);
 
                 //Ready to go to the result list
                 intent.setClass(MainActivity.this, QueryResultActivity.class);
@@ -102,7 +104,7 @@ public class MainActivity extends AppCompatActivity{
             if(result == GoogleSignInStatusCodes.SUCCESS){
                 //Write user profile to database
 
-                //TODO: create drive client
+                GraphDriveClient onedrive = new GraphDriveClient();
                 Log.d(TAG, "Onedrive silence sign in works");
             }
             else{

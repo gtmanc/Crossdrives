@@ -35,7 +35,7 @@ public abstract class SignInManager{
 
     interface OnSignOutFinished {
         //Sign out successfully if true is returned. Otherwise, false is returned.
-        void onFinished(int result);
+        void onFinished(int result, String brand);
     }
     interface OnPhotoDownloaded {
         void onDownloaded(Bitmap bmp, Object object);
