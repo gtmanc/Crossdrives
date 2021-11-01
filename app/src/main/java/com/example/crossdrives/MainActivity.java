@@ -72,10 +72,7 @@ public class MainActivity extends AppCompatActivity{
 
         @Override
         public void onFinished(int result, SignInManager.Profile profile, Object object) {
-            Intent intent = new Intent();
-            Bundle bundle = new Bundle();
 
-            mProgressBar.setVisibility(View.GONE);
             mSignInState.put(BRAND_GOOGLE, true);
 
             if(result == SignInManager.RESULT_SUCCESS){
@@ -85,21 +82,14 @@ public class MainActivity extends AppCompatActivity{
                 Log.d(TAG, "Google silence sign in OK. Create google drive client...");
                 GoogleDriveClient google_drive = new GoogleDriveClient(getApplicationContext()).create(object);
 
-                //Ready to go to the result list
-                intent.setClass(MainActivity.this, QueryResultActivity.class);
-//                bundle.putStringArrayList("ResultList", mQueryFileName);
-//                intent.putExtras(bundle);
-                startActivity(intent);
+
             }
             else{
                 //A short term workaround is used here. Show a toast message to prompt user that he has to be signed in.
                 Log.w(TAG, "Google silence sign in failed!");
                 Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
-                intent.setClass(MainActivity.this, QueryResultActivity.class);
-//                bundle.putStringArrayList("ResultList", mQueryFileName);
-//                intent.putExtras(bundle);
-                startActivity(intent);
             }
+            ProceedNextScreen();
         }
     };
     SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
@@ -116,15 +106,24 @@ public class MainActivity extends AppCompatActivity{
             else{
                 Log.w(TAG, "Onedrive silence sign in failed");
             }
+            ProceedNextScreen();
         }
     };
 
     private void ProceedNextScreen(){
         boolean state_google, state_ms;
+        Intent intent = new Intent();
+
         state_google = mSignInState.get(BRAND_GOOGLE);
-        state_ms = mSignInState.get(BRAND_GOOGLE);
+        state_ms = mSignInState.get(BRAND_MS);
         if(state_google == true && state_ms == true){
             Log.d(TAG, "Sign in results all got. Process to QueryResultScreen...");
+            mProgressBar.setVisibility(View.GONE);
+            //Ready to go to the result list
+            intent.setClass(MainActivity.this, QueryResultActivity.class);
+//                bundle.putStringArrayList("ResultList", mQueryFileName);
+//                intent.putExtras(bundle);
+            startActivity(intent);
         }
     }
 }
