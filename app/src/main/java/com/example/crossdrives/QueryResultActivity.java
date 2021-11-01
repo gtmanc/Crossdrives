@@ -112,13 +112,13 @@ public class QueryResultActivity extends AppCompatActivity {
 
     /*public boolean onCreateOptionsMenu(Menu menu) {
         Log.d(TAG, "onCreateOptionsMenu");*/
-        // Inflate the menu; this adds items to the action bar if it is present.
-        /* getMenuInflater().inflate(R.menu.menu_option, menu); */
+    // Inflate the menu; this adds items to the action bar if it is present.
+    /* getMenuInflater().inflate(R.menu.menu_option, menu); */
 
 //        MenuItem settings = menu.findItem(R.id.action_settings);
 //        settings.setOnMenuItemClickListener(OnMenuItemClickListener);
 
-        // Associate searchable configuration with the SearchView
+    // Associate searchable configuration with the SearchView
         /*SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView =
@@ -126,7 +126,7 @@ public class QueryResultActivity extends AppCompatActivity {
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));*/
 
-        //searchView.setSubmitButtonEnabled(true);
+    //searchView.setSubmitButtonEnabled(true);
         /*return true;
     }*/
 

@@ -7,9 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class BaseFragment extends Fragment {
+
+    final int MAX_BRAND_SUPPORT = GlobalConstants.MAX_BRAND_SUPPORT; //Google, Microsoft
     final String BRAND_GOOGLE = GlobalConstants.BRAND_GOOGLE;
     final String BRAND_MS = GlobalConstants.BRAND_MS;
-    final int MAX_BRAND_SUPPORT = 2; //Google, Microsoft
 
     List<String> BrandList= new ArrayList<>();
 
