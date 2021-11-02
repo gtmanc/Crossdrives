@@ -41,15 +41,16 @@ public class MasterAccountFragment extends BaseFragment {
     private int mCardIndex;
     private ImageView mIvUserPhoto;
     private Bitmap mBmpUserPhoto;
+    List<String> mBrands = GlobalConstants.BrandList;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         //allocate space for the list so that we can directly add the value with index later
-        for(String s : BrandList) {
-            mLayoutCards.add(null);
-        }
+//        for(String s : BrandList) {
+//            mLayoutCards.add(null);
+//        }
     }
 
     @Nullable
@@ -63,7 +64,6 @@ public class MasterAccountFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //mView = view;
 
         String MyArg = MasterAccountFragmentArgs.fromBundle(getArguments()).getCreateAccountName();
         if(MyArg != null && MyArg != "NoName")
@@ -85,15 +85,11 @@ public class MasterAccountFragment extends BaseFragment {
     }
 
     private void prepareUI(View v){
-//        ImageView iv = v.findViewById(R.id.account_list1).findViewById(R.id.brand_logo); mImageViews.get(0).add(iv);
-//        iv = v.findViewById(R.id.account_list1).findViewById(R.id.user_photo); mImageViews.get(1).add(iv);
-//        iv = v.findViewById(R.id.account_list2).findViewById(R.id.brand_logo); mImageViews.get(0).add(iv);
-//        iv = v.findViewById(R.id.account_list2).findViewById(R.id.user_photo); mImageViews.get(1).add(iv);
         CardView iv = v.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);
         iv = v.findViewById(R.id.account_list2); mLayoutCards.add(1, iv);
 
-        mLogoResIDs.put(BrandList.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
-        mLogoResIDs.put(BrandList.get(1), new Integer(R.drawable.onedrive_logo_wine));
+        mLogoResIDs.put(mBrands.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
+        mLogoResIDs.put(mBrands.get(1), new Integer(R.drawable.onedrive_logo_wine));
     }
 
     private View.OnClickListener listener_account_add = new View.OnClickListener() {
@@ -119,17 +115,15 @@ public class MasterAccountFragment extends BaseFragment {
             RemoveNoAccountMsg(v);
         }
 
-        //Udate all of the cards if the account profile has at least one available
+        //if there is activated account, start to update the card content.
         for(int i = 0; i < mAi.size(); i++){
             setCardVisible(i);
             updateLogo(i, mAi.get(i).brand);
-//            TextView t = v.findViewById(R.id.account_name);
-//            t.setText(mAi.get(i).name);
+
             updateName(i);
-//            t = v.findViewById(R.id.account_mail);
-//            t.setText(mAi.get(i).mail);
+
             updateMail(i);
-            //mAi.get(i).getPhoto(callback);
+
             updatePhoto(i, mAi.get(i).brand);
         }
 
@@ -187,9 +181,8 @@ public class MasterAccountFragment extends BaseFragment {
         });
     }
     private void downloadPhotoMicrosoft(ImageView iv){
-        mBmpUserPhoto = null;
         mIvUserPhoto = iv;
-        //new UpdatePhoto().execute();
+
         SignInMS ms = SignInMS.getInstance(getActivity());
         ms.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
@@ -205,8 +198,6 @@ public class MasterAccountFragment extends BaseFragment {
                         iv.setImageBitmap(bmp);
                     }
                 });
-
-                //mBmpUserPhoto = bmp;
             }
         });
     }
@@ -234,28 +225,15 @@ public class MasterAccountFragment extends BaseFragment {
             mAi.remove(i);
         }
 
-        for (int i = 0; i < BrandList.size(); i++) {
-            ai = am.getAccountActivated(getContext(), BrandList.get(i));
+        for (int i = 0; i < mBrands.size(); i++) {
+            ai = am.getAccountActivated(getContext(), mBrands.get(i));
             if (ai != null) {
                 Log.d(TAG, "Activated account: " + ai.name);
                 mAi.add(ai);
             } else {
-                Log.d(TAG, "No activated account for brand:" + BrandList.get(i));
+                Log.d(TAG, "No activated account for brand:" + mBrands.get(i));
             }
         }
-    }
-
-//    AccountManager.AccountInfo.Callback callback = new AccountManager.AccountInfo.Callback(){
-//
-//        @Override
-//        public void onPhotoDownloaded(Bitmap bmp) {
-//            ImageView iv = mView.findViewById(R.id.user_photo);
-//            iv.setImageBitmap(bmp);
-//        }
-//    };
-
-    private void updateCardContent(String name, String mail, Uri photourl){
-
     }
 
     @Override

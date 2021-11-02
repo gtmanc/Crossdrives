@@ -19,7 +19,7 @@ public abstract class SignInManager{
 
     }
 
-    /*The callback gets called when asyn sign in is finished with or without error
+    /*The callback gets called when the requested operation is finished with or without error
       Input
       result: sign in result. See RESULT_XXXXX in this class
       profile: user basic profile. Note this variants depending on brands.
@@ -41,13 +41,16 @@ public abstract class SignInManager{
         void onDownloaded(Bitmap bmp, Object object);
     }
 
+    //Operations provided
     //start interactive sign in flow. Mainly start the sign in activity.
     abstract boolean Start(View view, OnInteractiveSignInfinished callback);
 
     //Silence Sign in.
     abstract void silenceSignIn(OnSilenceSignInfinished callback);
 
+    //Sign out user
     abstract void SignOut(OnSignOutFinished callback);
 
+    //gt user phtot
     abstract void getPhoto(Object object, OnPhotoDownloaded callback);
 }

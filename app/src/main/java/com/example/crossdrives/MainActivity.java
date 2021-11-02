@@ -18,6 +18,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity{
@@ -27,7 +28,7 @@ public class MainActivity extends AppCompatActivity{
     private final String BRAND_GOOGLE = GlobalConstants.BRAND_GOOGLE;
     private final String BRAND_MS = GlobalConstants.BRAND_MS;
 
-    //private boolean[] mSignInState = new boolean[MAX_BRAND];
+    private List<String> mBrands = GlobalConstants.BrandList;
     private HashMap<String, Boolean> mSignInState = new HashMap<>(); //0: Google, 1: Microsoft
 
     @Override
@@ -54,8 +55,7 @@ public class MainActivity extends AppCompatActivity{
         SignInManager.Profile p = null;
 
         //Clean the sign in state
-        mSignInState.put(BRAND_GOOGLE, false);
-        mSignInState.put(BRAND_MS, false);
+        for(String b: mBrands){ mSignInState.put(b, false);}
 
         mProgressBar = findViewById(R.id.main_activity_progressBar);
         mProgressBar.setVisibility(View.VISIBLE);
@@ -113,10 +113,18 @@ public class MainActivity extends AppCompatActivity{
     private void ProceedNextScreen(){
         boolean state_google, state_ms;
         Intent intent = new Intent();
+        boolean AllResultGot = true;
 
         state_google = mSignInState.get(BRAND_GOOGLE);
         state_ms = mSignInState.get(BRAND_MS);
-        if(state_google == true && state_ms == true){
+        for(Map.Entry state : mSignInState.entrySet()){
+            Log.d(TAG, "state: " + state.getKey() + " " + (boolean)state.getValue());
+            if((boolean)state.getValue() == false){
+                AllResultGot = false;
+            }
+        }
+
+        if(AllResultGot == true){
             Log.d(TAG, "Sign in results all got. Process to QueryResultScreen...");
             mProgressBar.setVisibility(View.GONE);
             //Ready to go to the result list
