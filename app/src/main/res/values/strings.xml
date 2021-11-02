@@ -24,4 +24,15 @@
     <!--Add Account fragment-->
     <string name="button_signin_google" >Add Google Account</string>
     <string name="button_signin_ms">Add One Drive Account</string>
+
+    <!-- Microsoft Graph-->
+    <string name="beta">BETA</string>
+    <!--<string name="userPhoto" >photo </string>-->
+    <string name="userPhoto" >photo/$value </string>
+
+    <!-- Sign out dialog -->
+    <string name="signout_dialog_title">Sign out</string>
+    <string name="signout_dialog_message">The App will be signed out</string>
+    <string name="signout_dialog_action_signout">Sign out</string>
+    <string name="signout_dialog_action_cancel">Cancel</string>
 </resources>

@@ -2,18 +2,23 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.crossdrives.msgraph.MSGraphRestHelper;
+import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.models.extensions.ProfilePhoto;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
@@ -24,21 +29,36 @@ import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
 
+import java.io.InputStream;
+
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
-    Context mContext;
-    Activity mActivity;
+    private static SignInMS mSignInMS = null;
+    private Context mContext;
+    private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
     private final static String[] SCOPES = {"Files.Read"};
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
+    OnInteractiveSignInfinished mOnInteractiveSignInfinished;
     OnSilenceSignInfinished mOnSilenceSignInfinished;
-    Profile mProfile;
+    OnPhotoDownloaded mPhotoDownloadCallback;
+    Profile mProfile = new Profile();
+    private String mToken;
+    private Object mObject;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
+    public static SignInMS getInstance(Activity activity){
+        if(mSignInMS == null){
+            mSignInMS = new SignInMS(activity);
+        }
+        return mSignInMS;
+    }
+
     @Override
-    Intent Start() {
+    boolean Start(View view, OnInteractiveSignInfinished callback) {
+        mOnInteractiveSignInfinished = callback;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -53,12 +73,7 @@ public class SignInMS extends SignInManager{
                     }
                 });
 
-        return null;
-    }
-
-    @Override
-    Profile HandleSigninResult(Intent data) {
-        return null;
+        return true;
     }
 
     @Override
@@ -80,6 +95,60 @@ public class SignInMS extends SignInManager{
 
     }
 
+    @Override
+    void SignOut(OnSignOutFinished callback) {
+        if (mSingleAccountApp == null){
+            return;
+        }
+        mSingleAccountApp.signOut(new ISingleAccountPublicClientApplication.SignOutCallback() {
+            @Override
+            public void onSignOut() {
+                callback.onFinished(SignInManager.RESULT_SUCCESS, SignInManager.BRAND_MS);
+            }
+            @Override
+            public void onError(@NonNull MsalException exception){
+                Log.w(TAG, "Signout Result: failed! " + exception.toString());
+            }
+        });
+    }
+
+    @Override
+    void getPhoto(Object object, OnPhotoDownloaded callback) {
+        mPhotoDownloadCallback = callback;
+        mObject = object;
+
+        //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
+        //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
+        final String accessToken = mToken;
+
+        IGraphServiceClient graphClient =
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(new IAuthenticationProvider() {
+                            @Override
+                            public void authenticateRequest(IHttpRequest request) {
+                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+                                request.addHeader("Authorization", "Bearer " + accessToken);
+                            }
+                        })
+                        .buildClient();
+        graphClient
+                .me()
+                .photo()
+                .content()
+                .buildRequest()
+                .get(new ICallback<InputStream>() {
+                    @Override
+                    public void success(InputStream inputStream) {
+                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+                    }
+
+                    @Override
+                    public void failure(ClientException ex) {
+                        Log.d(TAG, "get photo failed, " + ex.toString());
+                    }
+                });
+    }
 
     private void loadAccount(){
         if (mSingleAccountApp == null) {
@@ -115,6 +184,10 @@ public class SignInMS extends SignInManager{
         });
     }
     private AuthenticationCallback getAuthInteractiveCallback() {
+        mProfile.Brand = SignInManager.BRAND_MS;
+        mProfile.Name = "NoName";
+        mProfile.Mail = "";
+        mProfile.PhotoUri = null;
         return new AuthenticationCallback() {
             @Override
             public void onSuccess(IAuthenticationResult authenticationResult) {
@@ -126,8 +199,21 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "User name : " + authenticationResult.getAccount().getUsername());
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
+                Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
+                // save our auth token for REST API use later
+                SharedPrefsUtil.persistAuthToken(authenticationResult);
+                mProfile.Name = authenticationResult.getAccount().getUsername();
+                mProfile.Mail = "";
+                mProfile.PhotoUri = null;
+
+                mToken = authenticationResult.getAccessToken();
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
+                MSGraphRestHelper msRest = new MSGraphRestHelper();
+
                 /* call graph */
-                callGraphAPI(authenticationResult);
+//                callGraphAPI(authenticationResult);
+                //Give up on use of onedrive sdk since it seems obsolete. (the last update in github is about 6 year ago)
+                //createOneDriveClient(mActivity, null);
             }
 
             @Override
@@ -135,11 +221,13 @@ public class SignInMS extends SignInManager{
                 /* Failed to acquireToken */
                 Log.w(TAG, "Authentication failed: " + exception.toString());
                 //displayError(exception);
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
             }
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
                 Log.w(TAG, "User cancelled login.");
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
             }
         };
     }
@@ -150,50 +238,91 @@ public class SignInMS extends SignInManager{
             public void onSuccess(IAuthenticationResult authenticationResult) {
                 Log.d(TAG, "Successfully silence authenticated");
 
-                callGraphAPI(authenticationResult);
-                mOnSilenceSignInfinished.onFinished(true, null);
+                //callGraphAPI(authenticationResult);
+                mToken = authenticationResult.getAccessToken();
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, mToken);
             }
             @Override
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSilenceSignInfinished.onFinished(false, null);
+                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null, null);
             }
         };
     }
 
-    private void callGraphAPI(IAuthenticationResult authenticationResult) {
+//    /**
+//     * Used to setup the Services
+//     * @param activity the current activity
+//     * @param serviceCreated the callback
+//     */
+//    synchronized void createOneDriveClient(final Activity activity, final ICallback<Void> serviceCreated) {
+//        final DefaultCallback<IOneDriveClient> callback = new DefaultCallback<IOneDriveClient>(activity) {
+//            @Override
+//            public void success(final IOneDriveClient result) {
+//                if(result != null) {
+//                    mClient.set(result);
+//                    Log.w(TAG, "Create one drive client OK");
+//                }else{
+//                    Log.w(TAG, "Create one drive client failed");
+//                }
+//                //serviceCreated.success(null);
+//            }
+////            @Override
+////            public void failure(final ClientException error) {
+////                //serviceCreated.failure(error);
+////                Log.d(TAG, "failure");
+////            }
+//        };
+//        new OneDriveClient
+//                .Builder()
+//                .fromConfig(createConfig())
+//                .loginAndBuildClient(activity, callback);
+//    }
 
-        final String accessToken = authenticationResult.getAccessToken();
+//    final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
+//        @Override
+//        public String getClientId() {
+//            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+//        }
+//
+//        @Override
+//        public String[] getScopes() {
+//            return new String[] { "onedrive.appfolder" };
+//        }
+//    };
+//
+//    final ADALAuthenticator adalAuthenticator = new ADALAuthenticator() {
+//        @Override
+//        public String getClientId() {
+//            return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+//        }
+//
+//        @Override
+//        protected String getRedirectUrl() {
+//            return "msauth://com.example.crossdrives/yuA%2BnLjqHb%2Blo8n78AI7ZAgEens%3D";
+//        }
+//    };
 
-        IGraphServiceClient graphClient =
-                GraphServiceClient
-                        .builder()
-                        .authenticationProvider(new IAuthenticationProvider() {
-                            @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + accessToken);
-                            }
-                        })
-                        .buildClient();
-        graphClient
-                .me()
-                .drive()
-                .buildRequest()
-                .get(new ICallback<Drive>() {
-                    @Override
-                    public void success(final Drive drive) {
-                        Log.d(TAG, "Found Drive " + drive.id);
-                        //displayGraphResult(drive.getRawObject());
-                        //Log.d(TAG, "Raw Object: " + drive.getRawObject());
-                    }
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        //displayError(ex);
-                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-                    }
-                });
-    }
+//    /**
+//     * Create the client configuration
+//     * @return the newly created configuration
+//     */
+//    private IClientConfig createConfig() {
+//        final MSAAuthenticator msaAuthenticator = new MSAAuthenticator() {
+//            @Override
+//            public String getClientId() {
+//                return "afd432e7-01a1-47ab-8c37-5b487970f05c";
+//            }
+//
+//            @Override
+//            public String[] getScopes() {
+//                return new String[] {"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"};
+//            }
+//        };
+//
+//        final IClientConfig config = DefaultClientConfig.createWithAuthenticator(msaAuthenticator);
+//        config.getLogger().setLoggingLevel(LoggerLevel.Debug);
+//        return config;
+//    }
 }

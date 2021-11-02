@@ -1,8 +1,6 @@
 package com.example.crossdrives;
 
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,9 +17,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
@@ -29,16 +27,31 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-public class MasterAccountFragment extends Fragment {
+public class MasterAccountFragment extends BaseFragment {
     private String TAG = "CD.MasterAccountFragment";
-    List<AccountListModel> mAccountList = new ArrayList<>();
-    Fragment mFragment;
+    private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
+    //private View mView;
+    private Fragment mFragment;
+    private List<CardView> mLayoutCards = new ArrayList<>();
+    private HashMap<String, Integer> mLogoResIDs= new HashMap<>();
+    private int mCardIndex;
+    private ImageView mIvUserPhoto;
+    private Bitmap mBmpUserPhoto;
+    List<String> mBrands = GlobalConstants.BrandList;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //allocate space for the list so that we can directly add the value with index later
+//        for(String s : BrandList) {
+//            mLayoutCards.add(null);
+//        }
+    }
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -53,12 +66,14 @@ public class MasterAccountFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         String MyArg = MasterAccountFragmentArgs.fromBundle(getArguments()).getCreateAccountName();
-        if(MyArg != null)
+        if(MyArg != null && MyArg != "NoName")
             Toast.makeText(getContext(), "Master Account Added: " + MyArg, Toast.LENGTH_LONG).show();
 
         readAllAccounts();
 
-        udpateProfiles(view);
+        prepareUI(view);
+
+        udpateCards(view);
 
         view.findViewById(R.id.add_account_btn).setOnClickListener(listener_account_add);
         mFragment = FragmentManager.findFragment(view);
@@ -67,6 +82,14 @@ public class MasterAccountFragment extends Fragment {
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
 
+    }
+
+    private void prepareUI(View v){
+        CardView iv = v.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);
+        iv = v.findViewById(R.id.account_list2); mLayoutCards.add(1, iv);
+
+        mLogoResIDs.put(mBrands.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
+        mLogoResIDs.put(mBrands.get(1), new Integer(R.drawable.onedrive_logo_wine));
     }
 
     private View.OnClickListener listener_account_add = new View.OnClickListener() {
@@ -79,78 +102,138 @@ public class MasterAccountFragment extends Fragment {
     };
 
     /*
-        Use the information stored in mAccountList to update the user profile content shown in screen.
-        The items in the user profile card view will be updated one by one according to the record(row) queried from database.
+        Use the information stored in mAccountList to update the user profile content shown in the card.
+        The items in the user profile card view will be updated one by one according to the record(row)
+        queried from database.
     */
-    private void udpateProfiles(View v){
+    private void udpateCards(View v){
+        //Show no account message or not
+        showNoAccountMsg(v);
+        setCardInVisible(0);
+        setCardInVisible(1);
+        if(mAi.size() > 0){
+            RemoveNoAccountMsg(v);
+        }
+
+        //if there is activated account, start to update the card content.
+        for(int i = 0; i < mAi.size(); i++){
+            setCardVisible(i);
+            updateLogo(i, mAi.get(i).brand);
+
+            updateName(i);
+
+            updateMail(i);
+
+            updatePhoto(i, mAi.get(i).brand);
+        }
+
+    }
+    private void setCardVisible(int index){
+        mLayoutCards.get(index).setVisibility(View.VISIBLE);
+    }
+    private void setCardInVisible(int index){
+        mLayoutCards.get(index).setVisibility(View.GONE);
+    }
+    private void showNoAccountMsg(View v){
+        v.findViewById(R.id.iv_info_no_account).setVisibility(View.VISIBLE);
+        v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.VISIBLE);
+    }
+    private void RemoveNoAccountMsg(View v){
         v.findViewById(R.id.iv_info_no_account).setVisibility(View.GONE);
         v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.GONE);
-        v.findViewById(R.id.account_list).setVisibility(View.VISIBLE);
-        if(mAccountList.size() > 0){
-            Log.d(TAG, "Start to download image");
-            for(int i = 0; i < mAccountList.size(); i++) {
-                ImageView iv = v.findViewById(R.id.account_brand_profile_image);
-                iv.setImageResource(R.drawable.logo_drive_2020q4_color_2x_web_64dp);
-                TextView t = v.findViewById(R.id.account_name);
-                t.setText(mAccountList.get(i).getName());
-                t = v.findViewById(R.id.account_mail);
-                t.setText(mAccountList.get(i).getMail());
-                new DownloadPhoto(v.findViewById(R.id.account_profile_image))
-                        .execute(mAccountList.get(0).getPhotoUrl().toString());
+    }
+    private void updateLogo(int index, String brand){
+        ImageView iv = mLayoutCards.get(index).findViewById(R.id.brand_logo);
+        iv.setImageResource(mLogoResIDs.get(brand));
+    }
+    private void updateName(int index){
+        TextView tv = mLayoutCards.get(index).findViewById(R.id.account_name);
+        tv.setText(mAi.get(index).name);
+    }
+    private void updateMail(int index){
+        TextView tv = mLayoutCards.get(index).findViewById(R.id.account_mail);
+        tv.setText(mAi.get(index).mail);
+    }
+    private void updatePhoto(int index, String brand){
+        Log.d(TAG, "Update photo. Brand: " + brand);
+        ImageView iv = mLayoutCards.get(index).findViewById(R.id.user_photo);
+        if(brand.equals(SignInManager.BRAND_GOOGLE)){
+            downloadPhotoGoogle(iv);
+        }
+        else if(brand.equals(SignInManager.BRAND_MS)){
+            downloadPhotoMicrosoft(iv);
+        }
+
+    }
+    private void downloadPhotoGoogle(ImageView iv){
+
+        SignInGoogle google = SignInGoogle.getInstance(getContext());
+        google.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
+
+            @Override
+            public void onDownloaded(Bitmap bmp, Object object) {
+                //ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+                Log.d(TAG, "Google download photo done");
+                ImageView iv = (ImageView)object;
+                iv.setImageBitmap(bmp);
+
             }
-        }
-        else{
-            v.findViewById(R.id.iv_info_no_account).setVisibility(View.VISIBLE);
-            v.findViewById(R.id.tv_info_no_account_available).setVisibility(View.VISIBLE);
-            v.findViewById(R.id.account_list).setVisibility(View.GONE);
-        }
+        });
+    }
+    private void downloadPhotoMicrosoft(ImageView iv){
+        mIvUserPhoto = iv;
+
+        SignInMS ms = SignInMS.getInstance(getActivity());
+        ms.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
+
+            @Override
+            public void onDownloaded(Bitmap bmp, Object object) {
+                //ImageView iv = mLayoutCards.get(mCardIndex).findViewById(R.id.user_photo);
+                Log.d(TAG, "Microsoft download photo done");
+                getActivity().runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        ImageView iv = (ImageView)object;
+                        iv.setImageBitmap(bmp);
+                    }
+                });
+            }
+        });
     }
 
-    private class DownloadPhoto extends AsyncTask<String, Void, Bitmap>{
-        ImageView mImageView;
-        public DownloadPhoto(ImageView iv) {
-            mImageView = iv;
-        }
-
-        @Override
-        protected Bitmap doInBackground(String... urls) {
-            Bitmap bm = null;
-            try{
-                InputStream in = new java.net.URL(urls[0]).openStream();
-                bm = BitmapFactory.decodeStream(in);
-            }catch(Exception e){
-                Log.w(TAG, "Open URL failed");
-            }
-
-            return bm;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
-            mImageView.setImageBitmap(bitmap);
-        }
-    }
+//    private class UpdatePhoto extends AsyncTask<String, Void, Bitmap> {
+//
+//        @Override
+//        protected Bitmap doInBackground(String... s) {
+//            while(mBmpUserPhoto == null){
+//                Log.d(TAG, "Wait for photo");
+//            }
+//            mIvUserPhoto.setImageBitmap(mBmpUserPhoto);
+//            return null;
+//        }
+//    }
     /*
-    Read all accounts from database and save to mAccountList.
+    Read activated accounts using account manager and save them or it to mAccountList.
      */
-    private void readAllAccounts(){
+    private void readAllAccounts() {
         AccountManager.AccountInfo ai;
         AccountManager am = AccountManager.getInstance();
 
-        ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
-        if(ai != null){
-            Log.d(TAG, "Activated Google account: " + ai.name);
-            AccountListModel list = new AccountListModel(ai.brand, ai.name, ai.mail, ai.photouri);
-            mAccountList.add(list);
+        //First of all, clean up the list
+        for(int i = 0; i < mAi.size(); i++){
+            mAi.remove(i);
         }
-        else{
-            Log.d(TAG, "No activated!");
+
+        for (int i = 0; i < mBrands.size(); i++) {
+            ai = am.getAccountActivated(getContext(), mBrands.get(i));
+            if (ai != null) {
+                Log.d(TAG, "Activated account: " + ai.name);
+                mAi.add(ai);
+            } else {
+                Log.d(TAG, "No activated account for brand:" + mBrands.get(i));
+            }
         }
-    }
-
-    private void updateCardContent(String name, String mail, Uri photourl){
-
     }
 
     @Override

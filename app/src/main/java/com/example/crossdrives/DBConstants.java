@@ -18,8 +18,4 @@ public interface DBConstants {
     final int COL_INDX_MAIL = 3;
     final int COL_INDX_PHOTOURL = 4;
     final int COL_INDX_STATE = 5;
-
-    //Table master account user profile states
-    final int PROFILE_STATE_DEACIVATED = 0;
-    final int PROFILE_STATE_ACIVATED = 1;
 }

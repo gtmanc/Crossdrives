@@ -69,7 +69,9 @@ public class DBHelper extends SQLiteOpenHelper {
             cv.put(USERPROFILE_TABLE_COL_BRAND, brand);
             cv.put(USERPROFILE_TABLE_COL_NAME, name);
             cv.put(USERPROFILE_TABLE_COL_MAIL, mail);
-            cv.put(USERPROFILE_TABLE_COL_PHOTOURL, photourl.toString());
+            if(photourl != null) {
+                cv.put(USERPROFILE_TABLE_COL_PHOTOURL, photourl.toString());
+            }
             cv.put(USERPROFILE_TABLE_COL_STATE, state);
             r_id = mdb.insert(USERPROFILE_TABLE_NAME, null,cv);
             mdb.close();
@@ -79,7 +81,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /*
-    * If no argument is giving, all columns are read
+    * If no argument is giving, all columns are read out from database.
     * The input arguments are the column name and condition which will be used to filter the queried result further
     * Note: so far, two conditions and AND operator are supported!
     * */
@@ -118,8 +120,109 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if(mdb != null)    {
             cursor = mdb.rawQuery(statement, null);
+            //Do not close database after query.
         }
 
         return cursor;
+    }
+
+    /*
+    Input:  values. the values to be written to the columns.
+            where.  Will be used for the SQlite whereClause.
+     */
+    public int update(ContentValues values, ContentValues where){
+        int rows_affected = 0;
+
+        Log.d(TAG, "update row");
+
+        try{
+            mdb = getWritableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "DB update: db open failed!" + e.getMessage());
+        }
+
+        if(mdb != null){
+            rows_affected = mdb.update(USERPROFILE_TABLE_NAME,
+                    values,
+                    make_statement(where),
+                    null);
+            if(rows_affected == 0){
+                Log.w(TAG, "db update failed");
+            }
+            mdb.close();
+        }
+
+        return rows_affected;
+    }
+
+    private String make_statement(ContentValues cv){
+        String statement="";
+        String clause;
+        Log.d(TAG, "make statement:");
+
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_BRAND);
+        if( clause != null){
+            Log.d(TAG, "USERPROFILE_TABLE_COL_BRAND:" + clause);
+            statement = statement.concat(USERPROFILE_TABLE_COL_BRAND + " = " + "\"" + clause + "\"");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_NAME);
+        if( clause != null){
+            Log.d(TAG, "USERPROFILE_TABLE_COL_NAME:" + clause);
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_NAME + " = " + "\"" + clause + "\"");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_MAIL);
+        if( clause != null){
+            Log.d(TAG, "USERPROFILE_TABLE_COL_MAIL:" + clause);
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_MAIL + " = " + "\"" + clause + "\"");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_PHOTOURL);
+        if( clause != null){
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_PHOTOURL + " = " + "\"" + clause + "\"");
+        }
+        clause = (String)cv.get(USERPROFILE_TABLE_COL_STATE);
+        if( clause != null){
+            statement = statement.concat(" AND " + USERPROFILE_TABLE_COL_STATE + " = " + "\"" + clause + "\"");
+        }
+
+        Log.d(TAG, "statement: " + statement);
+        return statement;
+    }
+    public int delete(String ... expression){
+        int number_row = 0;
+        ContentValues cv = new ContentValues();
+
+        Log.d(TAG, "delete");
+        /*
+        So far, three conditions and AND operator are supported
+         */
+        if(expression.length > 6)
+        {
+            Log.w(TAG, "Too many conditions are required!");
+            return number_row;
+        }
+
+        try{
+            mdb = getWritableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "db open failed" + e.getMessage());
+        }
+
+        if(mdb != null){
+            number_row = mdb.delete(USERPROFILE_TABLE_NAME,
+                    expression[0] + "=" + expression[1] + "AND" +
+                            expression[2] + "=" + expression[3] + "AND" +
+                            expression[4] + "=" + expression[5],
+                            null);
+            if(number_row == 0){
+                Log.w(TAG, "db delete failed");
+            }
+            mdb.close();
+        }
+
+        return number_row;
     }
 }
