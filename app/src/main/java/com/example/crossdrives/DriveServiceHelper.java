@@ -35,7 +35,7 @@ import java.util.concurrent.Executors;
  * //https://www.programcreek.com/java-api-examples/index.php?api=com.google.api.services.drive.model.FileList
  */
 
-class DriveServiceHelper {
+public class DriveServiceHelper {
     static private String TAG = "CD.DriveServiceHelper";
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
     private final Drive mDriveService;
@@ -254,7 +254,7 @@ class DriveServiceHelper {
                 Cursor cursor = contentResolver.query(uri, null, null, null, null);
                 if (cursor != null && cursor.moveToFirst()) {
                     int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                        name = cursor.getString(nameIndex);
+                    name = cursor.getString(nameIndex);
                 } else {
                     throw new IOException("Empty cursor returned for file.");
                 }
@@ -287,5 +287,4 @@ class DriveServiceHelper {
         });
     }
 }
-
 

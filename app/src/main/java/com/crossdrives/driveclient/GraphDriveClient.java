@@ -1,4 +1,4 @@
-package com.example.crossdrives;
+package com.crossdrives.driveclient;
 
 import android.util.Log;
 
@@ -9,13 +9,16 @@ import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import com.microsoft.identity.client.IAuthenticationResult;
 
-public class GraphDriveClient extends DriveClient{
-    private String TAG = "CD.GraphDriveClient";
+public class GraphDriveClient extends DriveClient {
+    static private String TAG = "CD.GraphDriveClient";
+    private static GraphDriveClient mGraphDriveClient = null;
 
-    @Override
-    GraphDriveClient create(Object token) {
+
+    public GraphDriveClient() {
+    }
+
+    static GraphDriveClient create(Object token) {
         //IGraphServiceClient msclient = (IGraphServiceClient)SignInAccount;
 
         callGraphAPI((String)token);
@@ -23,7 +26,7 @@ public class GraphDriveClient extends DriveClient{
     }
 
 
-    private void callGraphAPI(String token) {
+    static private void callGraphAPI(String token) {
 
         //final String accessToken = authenticationResult.getAccessToken();
 

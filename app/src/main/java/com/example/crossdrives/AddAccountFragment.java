@@ -27,6 +27,10 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
 
+import com.crossdrives.driveclient.DriveClient;
+import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.GraphDriveClient;
+
 import org.jetbrains.annotations.NotNull;
 
 public class AddAccountFragment extends BaseFragment {
@@ -247,12 +251,13 @@ public class AddAccountFragment extends BaseFragment {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
                     Log.d(TAG, "User sign in OK. Start to create google drive client");
-                    GoogleDriveClient google_drive = new GoogleDriveClient(getContext()).create(object);
+                    //GoogleDriveClient google_drive = GoogleDriveClient.create(getContext(), object);
+                    //GoogleDriveClient.Builder.
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
                 {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
-                    GraphDriveClient graph_drive = new GraphDriveClient().create(object);
+                    //GraphDriveClient graph_drive = new GraphDriveClient().create(object);
                 }
                 else{
                     Log.w(TAG, "Unknow brand!");
