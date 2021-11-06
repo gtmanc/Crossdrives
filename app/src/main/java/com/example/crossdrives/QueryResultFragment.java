@@ -113,6 +113,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
 		View hv = mNavigationView.getHeaderView(0);
 		hv.setOnClickListener(this);
+		//always register the callback because it is removed in onPause
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
 		initialQuery(view);
@@ -496,7 +497,9 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 	@Override
 	public void onPause() {
 		super.onPause();
-		//callback.remove();
+		//remove the callback otherwise the callback will be called in next fragment. This is fine
+		//because the callback is always registered in onViewCreated.
+		callback.remove();
 	}
 
 	//Back key handling

@@ -2,7 +2,6 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.View;
@@ -10,15 +9,13 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.crossdrives.msgraph.MSGraphRestHelper;
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.ProfilePhoto;
+import com.microsoft.graph.models.extensions.User;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
@@ -46,6 +43,7 @@ public class SignInMS extends SignInManager{
     Profile mProfile = new Profile();
     private String mToken;
     private Object mObject;
+    IGraphServiceClient mGraphClient;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
 
@@ -119,35 +117,24 @@ public class SignInMS extends SignInManager{
 
         //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
         //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
-        final String accessToken = mToken;
+        if (mGraphClient != null) {
+            mGraphClient
+                    .me()
+                    .photo()
+                    .content()
+                    .buildRequest()
+                    .get(new ICallback<InputStream>() {
+                        @Override
+                        public void success(InputStream inputStream) {
+                            mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+                        }
 
-        IGraphServiceClient graphClient =
-                GraphServiceClient
-                        .builder()
-                        .authenticationProvider(new IAuthenticationProvider() {
-                            @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + accessToken);
-                            }
-                        })
-                        .buildClient();
-        graphClient
-                .me()
-                .photo()
-                .content()
-                .buildRequest()
-                .get(new ICallback<InputStream>() {
-                    @Override
-                    public void success(InputStream inputStream) {
-                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
-                    }
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        Log.d(TAG, "get photo failed, " + ex.toString());
-                    }
-                });
+                        @Override
+                        public void failure(ClientException ex) {
+                            Log.d(TAG, "get photo failed, " + ex.toString());
+                        }
+                    });
+        }
     }
 
     private void loadAccount(){
@@ -199,16 +186,20 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "User name : " + authenticationResult.getAccount().getUsername());
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
-                Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
+                //Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
                 // save our auth token for REST API use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
+                //Let's set the profile data using the information got. The missing filed will be set
+                //in the getUser
                 mProfile.Name = authenticationResult.getAccount().getUsername();
                 mProfile.Mail = "";
                 mProfile.PhotoUri = null;
 
                 mToken = authenticationResult.getAccessToken();
-                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
-                MSGraphRestHelper msRest = new MSGraphRestHelper();
+                createClient();
+                getUserAndCallback();
+                //MSGraphRestHelper msRest = new MSGraphRestHelper();
+
 
                 /* call graph */
 //                callGraphAPI(authenticationResult);
@@ -240,6 +231,7 @@ public class SignInMS extends SignInManager{
 
                 //callGraphAPI(authenticationResult);
                 mToken = authenticationResult.getAccessToken();
+                createClient();
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, mToken);
             }
             @Override
@@ -249,6 +241,62 @@ public class SignInMS extends SignInManager{
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null, null);
             }
         };
+    }
+
+    private void createClient(){
+        final String accessToken = mToken;
+
+        mGraphClient =
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(new IAuthenticationProvider() {
+                            @Override
+                            public void authenticateRequest(IHttpRequest request) {
+                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+                                request.addHeader("Authorization", "Bearer " + accessToken);
+                            }
+                        })
+                        .buildClient();
+
+        if(mGraphClient == null){Log.w(TAG, "mGraphClient is null!");}
+    }
+
+    private void getUserAndCallback() {
+        Log.d(TAG, "get User...");
+        if (mGraphClient != null) {
+            mGraphClient
+                    .me()
+                    .buildRequest()
+                    //.select("displayName,givenName,mail")
+                    .get(new ICallback<User>() {
+
+                        @Override
+                        public void success(User user) {
+                            Log.d(TAG, "User display name: " + user.displayName); //Gtman Chin,
+                            //Log.d(TAG, user.givenName);  //Gtman
+                            mProfile.Name = user.displayName;
+                            mProfile.PhotoUri = null;
+                            if(user.mail != null){
+                                Log.d(TAG, "User mail: " + user.mail);
+                                mProfile.Mail = user.mail;
+                            }else{
+                                Log.d(TAG, "User principal name: " + user.userPrincipalName);
+                                mProfile.Mail = user.userPrincipalName;
+                            }
+                            mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
+                        }
+
+                        @Override
+                        public void failure(ClientException ex) {
+                            Log.w(TAG, "get user failed: " + ex.toString());
+                            //Return success with incomplete profile still because the sign in works
+                            mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
+                        }
+                    });
+        }else{
+            Log.w(TAG, "mGraphClient is null!");
+        }
+
     }
 
 //    /**
