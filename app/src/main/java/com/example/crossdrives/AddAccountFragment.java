@@ -10,6 +10,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -265,10 +266,18 @@ public class AddAccountFragment extends BaseFragment {
                 Toast.makeText(getContext(), "Sign in failed! error:" + result, Toast.LENGTH_LONG).show();
             }
 
-            //passing name to master account fragment so that a toast is shown to the user that an account is created
-            AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
-            //action.setCreateAccountName(p.Name);
-            NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+            //The callback may not be called in main thread. e.g. Microsoft sign in
+            getActivity().runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    //passing name to master account fragment so that a toast is shown to the user that an account is created
+                    AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
+                    //action.setCreateAccountName(p.Name);
+                    NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+                }
+            });
+
         }
     };
 

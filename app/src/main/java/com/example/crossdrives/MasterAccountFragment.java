@@ -229,6 +229,8 @@ public class MasterAccountFragment extends BaseFragment {
             ai = am.getAccountActivated(getContext(), mBrands.get(i));
             if (ai != null) {
                 Log.d(TAG, "Activated account: " + ai.name);
+//                if(ai.mail != null){Log.d(TAG, "mail: " + ai.mail);}
+//                else{Log.d(TAG, "mail is empty");}
                 mAi.add(ai);
             } else {
                 Log.d(TAG, "No activated account for brand:" + mBrands.get(i));
