@@ -10,7 +10,7 @@ import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
-public class GraphDriveClient extends DriveClient {
+public class GraphDriveClient implements IDriveClient {
     static private String TAG = "CD.GraphDriveClient";
     private static GraphDriveClient mGraphDriveClient = null;
 
@@ -61,5 +61,10 @@ public class GraphDriveClient extends DriveClient {
 
                     }
                 });
+    }
+
+    @Override
+    public IQueryBuilder query() {
+        return null;
     }
 }

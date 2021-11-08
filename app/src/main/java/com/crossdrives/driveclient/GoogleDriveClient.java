@@ -47,19 +47,6 @@ public class GoogleDriveClient extends DriveClient {
         return null;
     }
 
-    public static class Builder implements DriveClient.Builder{
-
-        @Override
-        public DriveClient.Builder putContext(Context context) {
-            return null;
-        }
-
-        @Override
-        public DriveClient build(Object auth) {
-            return null;
-        }
-    }
-
 //    Builder builder = new Builder() {
 //        private final GoogleDriveClient mGoogleDriveClient = new GoogleDriveClient();
 //
