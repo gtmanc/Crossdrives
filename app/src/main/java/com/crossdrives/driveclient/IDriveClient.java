@@ -19,6 +19,6 @@ public interface IDriveClient {
 //        public abstract void getFiles(IQueryCallback callback);
 //    }
 
-    IQueryBuilder query();
+    IQueryRequestBuilder query();
 
 }

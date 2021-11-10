@@ -3,8 +3,12 @@ package com.example.crossdrives;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.GraphDriveClient;
+import com.crossdrives.driveclient.ICallBack;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+import com.google.api.services.drive.model.FileList;
 ;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -131,6 +135,26 @@ public class MainActivity extends AppCompatActivity{
 //                intent.putExtras(bundle);
             startActivity(intent);
         }
+    }
+
+    void createCdfs(){
+        GraphDriveClient graphDriveClient =
+                (GraphDriveClient) GraphDriveClient.builder().buildClient();
+
+        graphDriveClient.query().buildRequest().select().run(new ICallBack<FileList>() {
+            @Override
+            public void success(FileList fileList) {
+
+            }
+
+            @Override
+            public void failure(String ex) {
+
+            }
+        });
+
+        CDFS cdfs = new CDFS();
+        cdfs.addClient(graphDriveClient);
     }
 }
 

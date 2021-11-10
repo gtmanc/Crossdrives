@@ -63,8 +63,16 @@ public class GraphDriveClient implements IDriveClient {
                 });
     }
 
+    public static Builder builder(){ return new Builder();}
+
+    public static class Builder{
+        public IDriveClient buildClient(){
+            return new GraphDriveClient();
+        }
+    }
+
     @Override
-    public IQueryBuilder query() {
-        return null;
+    public IQueryRequestBuilder query() {
+        return new QueryRequestBuilder();
     }
 }
