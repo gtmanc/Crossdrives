@@ -5,7 +5,7 @@ import android.os.Bundle;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
-import com.crossdrives.driveclient.GraphDriveClient;
+import com.crossdrives.driveclient.OneDriveClient;
 import com.crossdrives.driveclient.ICallBack;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.api.services.drive.model.FileList;
@@ -103,6 +103,8 @@ public class MainActivity extends AppCompatActivity{
                 //Write user profile to database
 
                 //GraphDriveClient onedrive = new GraphDriveClient();
+                OneDriveClient oneDriveClient =
+                        (OneDriveClient) OneDriveClient.builder(null).buildClient();
                 Log.d(TAG, "Onedrive silence sign in works");
             }
             else{
@@ -138,10 +140,14 @@ public class MainActivity extends AppCompatActivity{
     }
 
     void createCdfs(){
-        GraphDriveClient graphDriveClient =
-                (GraphDriveClient) GraphDriveClient.builder().buildClient();
+        OneDriveClient oneDriveClient =
+                (OneDriveClient) OneDriveClient.builder(null).buildClient(null);
 
-        graphDriveClient.query().buildRequest().select().run(new ICallBack<FileList>() {
+        oneDriveClient.
+                query().
+                buildRequest().
+                select().
+                run(new ICallBack<FileList>() {
             @Override
             public void success(FileList fileList) {
 
@@ -154,7 +160,7 @@ public class MainActivity extends AppCompatActivity{
         });
 
         CDFS cdfs = new CDFS();
-        cdfs.addClient(graphDriveClient);
+        cdfs.addClient(oneDriveClient);
     }
 }
 

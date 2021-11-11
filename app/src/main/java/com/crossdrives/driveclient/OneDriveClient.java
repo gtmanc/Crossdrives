@@ -10,15 +10,15 @@ import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
-public class GraphDriveClient implements IDriveClient {
+public class OneDriveClient implements IDriveClient {
     static private String TAG = "CD.GraphDriveClient";
-    private static GraphDriveClient mGraphDriveClient = null;
+    private static OneDriveClient mOneDriveClient = null;
 
 
-    public GraphDriveClient() {
+    public OneDriveClient() {
     }
 
-    static GraphDriveClient create(Object token) {
+    static OneDriveClient create(Object token) {
         //IGraphServiceClient msclient = (IGraphServiceClient)SignInAccount;
 
         callGraphAPI((String)token);
@@ -63,16 +63,19 @@ public class GraphDriveClient implements IDriveClient {
                 });
     }
 
-    public static Builder builder(){ return new Builder();}
+    public static Builder builder(String token){ return new Builder();}
 
     public static class Builder{
         public IDriveClient buildClient(){
-            return new GraphDriveClient();
+            return new OneDriveClient();
         }
     }
 
+    /*
+        Get Query builder
+     */
     @Override
     public IQueryRequestBuilder query() {
-        return new QueryRequestBuilder();
+        return new OneDriveQueryRequestBuilder();
     }
 }
