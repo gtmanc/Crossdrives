@@ -1,8 +1,12 @@
 package com.crossdrives.driveclient;
 
-public abstract class BaseRequestBuilder implements IRequestBuilder {
+import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
-    /*
-    * Not really sure whether we need this class or not. Keep as it is currently*/
+public abstract class BaseRequestBuilder implements IRequestBuilder {
+    OneDriveClient mClient;
+
+   public OneDriveClient getOneDriveClient(){
+       return mClient;
+   }
 
 }

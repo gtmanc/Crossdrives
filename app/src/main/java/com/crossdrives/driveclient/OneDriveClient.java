@@ -13,6 +13,8 @@ import com.microsoft.graph.requests.extensions.GraphServiceClient;
 public class OneDriveClient implements IDriveClient {
     static private String TAG = "CD.GraphDriveClient";
     private static OneDriveClient mOneDriveClient = null;
+    private GraphServiceClient mGraphServiceClient;
+    private static String mToken;
 
 
     public OneDriveClient() {
@@ -63,19 +65,39 @@ public class OneDriveClient implements IDriveClient {
                 });
     }
 
-    public static Builder builder(String token){ return new Builder();}
+    public static Builder builder(String token){
+        mToken = token;
+        return new Builder();
+    }
 
     public static class Builder{
         public IDriveClient buildClient(){
+            IGraphServiceClient mGraphServiceClient =
+                    GraphServiceClient
+                            .builder()
+                            .authenticationProvider(new IAuthenticationProvider() {
+                                @Override
+                                public void authenticateRequest(IHttpRequest request) {
+                                    Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+                                    request.addHeader("Authorization", "Bearer " + mToken);
+                                }
+                            })
+                            .buildClient();
+
             return new OneDriveClient();
         }
     }
 
     /*
-        Get Query builder
+        Get Query Request Builder
      */
     @Override
     public IQueryRequestBuilder query() {
-        return new OneDriveQueryRequestBuilder();
+
+        return new OneDriveQueryRequestBuilder(this);
+    }
+
+    public GraphServiceClient getGraphServiceClient(){
+        return mGraphServiceClient;
     }
 }
