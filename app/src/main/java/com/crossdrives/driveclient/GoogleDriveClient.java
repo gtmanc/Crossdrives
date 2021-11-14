@@ -13,9 +13,12 @@ import com.google.api.services.drive.DriveScopes;
 
 import java.util.Collections;
 
-public class GoogleDriveClient extends DriveClient {
+public class GoogleDriveClient implements IDriveClient {
     private static String TAG = "CD.GoogleDriveClient";
     private static Context mContext;
+    private static GoogleSignInAccount mGoogleSignInAccount;
+    private Drive mGgoogleDriveService;
+    private DriveServiceHelper mHelper;
 
     static public GoogleDriveClient create(Context context, Object SignInAccount) {
         mContext = context;
@@ -45,6 +48,64 @@ public class GoogleDriveClient extends DriveClient {
         }
 
         return null;
+    }
+    static public Builder builder(Context context, GoogleSignInAccount SignInAccount){
+        mContext = context;
+        mGoogleSignInAccount = SignInAccount;
+        return new Builder();
+    }
+
+    public static class Builder{
+        IDriveClient buildClient(){
+            return GoogleDriveClient.fromConfig();
+        }
+    }
+    public static IDriveClient fromConfig(){
+        GoogleDriveClient gClient = new GoogleDriveClient();
+        if(mGoogleSignInAccount != null) {
+            GoogleAccountCredential credential =
+                    GoogleAccountCredential.usingOAuth2(
+                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
+            credential.setSelectedAccount(mGoogleSignInAccount.getAccount());
+            Drive googleDriveService =
+                    new Drive.Builder(
+                            AndroidHttp.newCompatibleTransport(),
+                            new GsonFactory(),
+                            credential)
+                            .setApplicationName("Cross Drive")
+                            .build();
+
+            gClient.setGoogleDriveService(googleDriveService);
+
+            if (googleDriveService == null)
+                Log.w(TAG, "googleDriveService is null!");
+
+        }
+
+        return new GoogleDriveClient();
+    }
+
+    @Override
+    public IQueryRequestBuilder query() {
+
+        return new GoogleDriveRequestBuilder(this);
+    }
+
+
+    private void setGoogleDriveService(Drive service){
+        mGgoogleDriveService = service;
+    }
+
+    private void setGDriveHelper(DriveServiceHelper helper){
+        mHelper = helper;
+    }
+
+    public Drive getGoogleDriveService(){
+        return mGgoogleDriveService;
+    }
+
+    private DriveServiceHelper getGDriveHelper(){
+        return mHelper;
     }
 
 //    Builder builder = new Builder() {

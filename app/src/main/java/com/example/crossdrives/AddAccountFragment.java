@@ -26,9 +26,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
-
-import com.crossdrives.driveclient.DriveClient;
-
 import org.jetbrains.annotations.NotNull;
 
 public class AddAccountFragment extends BaseFragment {

@@ -13,7 +13,7 @@ import com.microsoft.graph.requests.extensions.GraphServiceClient;
 public class OneDriveClient implements IDriveClient {
     static private String TAG = "CD.GraphDriveClient";
     private static OneDriveClient mOneDriveClient = null;
-    private GraphServiceClient mGraphServiceClient;
+    private IGraphServiceClient mGraphServiceClient;
     private static String mToken;
 
 
@@ -72,19 +72,8 @@ public class OneDriveClient implements IDriveClient {
 
     public static class Builder{
         public IDriveClient buildClient(){
-            IGraphServiceClient mGraphServiceClient =
-                    GraphServiceClient
-                            .builder()
-                            .authenticationProvider(new IAuthenticationProvider() {
-                                @Override
-                                public void authenticateRequest(IHttpRequest request) {
-                                    Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                    request.addHeader("Authorization", "Bearer " + mToken);
-                                }
-                            })
-                            .buildClient();
 
-            return new OneDriveClient();
+            return OneDriveClient.fromConfig(mToken);
         }
     }
 
@@ -94,10 +83,36 @@ public class OneDriveClient implements IDriveClient {
     @Override
     public IQueryRequestBuilder query() {
 
+        if(mGraphServiceClient == null){
+            Log.w(TAG, "mGraphServiceClient is null");
+        }
+
         return new OneDriveQueryRequestBuilder(this);
     }
 
-    public GraphServiceClient getGraphServiceClient(){
+    public static OneDriveClient fromConfig(String token){
+        OneDriveClient oClient  = new OneDriveClient();
+        IGraphServiceClient gClient =
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(new IAuthenticationProvider() {
+                            @Override
+                            public void authenticateRequest(IHttpRequest request) {
+                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+                                request.addHeader("Authorization", "Bearer " + mToken);
+                            }
+                        })
+                        .buildClient();
+
+        oClient.setGraphServiceClient(gClient);
+        return oClient;
+    }
+
+    public void setGraphServiceClient(IGraphServiceClient client){
+        mGraphServiceClient = client;
+    }
+
+    public IGraphServiceClient getGraphServiceClient(){
         return mGraphServiceClient;
     }
 }

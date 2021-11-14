@@ -96,15 +96,14 @@ public class MainActivity extends AppCompatActivity{
     };
     SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object client) {
+        public void onFinished(int result, SignInManager.Profile profile, Object token) {
             mSignInState.put(BRAND_MS, true);
             //Ready to go to the result list
             if(result == GoogleSignInStatusCodes.SUCCESS){
                 //Write user profile to database
 
                 //GraphDriveClient onedrive = new GraphDriveClient();
-                OneDriveClient oneDriveClient =
-                        (OneDriveClient) OneDriveClient.builder(null).buildClient();
+                createCdfs((String)token);
                 Log.d(TAG, "Onedrive silence sign in works");
             }
             else{
@@ -139,14 +138,14 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    void createCdfs(){
+    void createCdfs(String token){
         OneDriveClient oneDriveClient =
-                (OneDriveClient) OneDriveClient.builder(null).buildClient(null);
+                (OneDriveClient) OneDriveClient.builder(token).buildClient();
 
         oneDriveClient.
                 query().
                 buildRequest().
-                select().
+                //select().
                 run(new ICallBack<FileList>() {
             @Override
             public void success(FileList fileList) {
@@ -159,8 +158,8 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        CDFS cdfs = new CDFS();
-        cdfs.addClient(oneDriveClient);
+//        CDFS cdfs = new CDFS();
+//        cdfs.addClient(oneDriveClient);
     }
 }
 

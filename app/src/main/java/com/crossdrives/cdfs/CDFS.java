@@ -17,10 +17,6 @@ public class CDFS {
         mClient.add(client);
     }
 
-    private void qruery(){
-        IDriveClient client;
-
-        client = mClient.get(0);
-        client.query().
+    private void query(){
     }
 }
