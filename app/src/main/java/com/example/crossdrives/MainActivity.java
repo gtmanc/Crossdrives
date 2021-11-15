@@ -7,6 +7,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
 import com.crossdrives.driveclient.ICallBack;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.api.services.drive.model.FileList;
 ;
@@ -82,8 +83,8 @@ public class MainActivity extends AppCompatActivity{
 
 
                 Log.d(TAG, "Google silence sign in OK. Create google drive client...");
-                GoogleDriveClient google_drive = GoogleDriveClient.create(getApplicationContext(), object);
-
+                //GoogleDriveClient google_drive = GoogleDriveClient.create(getApplicationContext(), object);
+                addGoogleDriveClient((GoogleSignInAccount) object);
 
             }
             else{
@@ -103,7 +104,7 @@ public class MainActivity extends AppCompatActivity{
                 //Write user profile to database
 
                 //GraphDriveClient onedrive = new GraphDriveClient();
-                createCdfs((String)token);
+                addOneDriveClient((String)token);
                 Log.d(TAG, "Onedrive silence sign in works");
             }
             else{
@@ -134,11 +135,26 @@ public class MainActivity extends AppCompatActivity{
             intent.setClass(MainActivity.this, QueryResultActivity.class);
 //                bundle.putStringArrayList("ResultList", mQueryFileName);
 //                intent.putExtras(bundle);
-            startActivity(intent);
+            //startActivity(intent);
         }
     }
+    void addGoogleDriveClient(GoogleSignInAccount account){
+        GoogleDriveClient gdc =
+                (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
+        gdc.query().buildRequest().run(new ICallBack<FileList>() {
+            @Override
+            public void success(FileList fileList) {
 
-    void createCdfs(String token){
+            }
+
+            @Override
+            public void failure(String ex) {
+
+            }
+        });
+    }
+
+    void addOneDriveClient(String token){
         OneDriveClient oneDriveClient =
                 (OneDriveClient) OneDriveClient.builder(token).buildClient();
 

@@ -56,7 +56,7 @@ public class GoogleDriveClient implements IDriveClient {
     }
 
     public static class Builder{
-        IDriveClient buildClient(){
+        public IDriveClient buildClient(){
             return GoogleDriveClient.fromConfig();
         }
     }
@@ -76,13 +76,14 @@ public class GoogleDriveClient implements IDriveClient {
                             .build();
 
             gClient.setGoogleDriveService(googleDriveService);
+            gClient.setGDriveHelper(new DriveServiceHelper(googleDriveService));
 
             if (googleDriveService == null)
                 Log.w(TAG, "googleDriveService is null!");
 
         }
 
-        return new GoogleDriveClient();
+        return gClient;
     }
 
     @Override
@@ -104,7 +105,7 @@ public class GoogleDriveClient implements IDriveClient {
         return mGgoogleDriveService;
     }
 
-    private DriveServiceHelper getGDriveHelper(){
+    public DriveServiceHelper getGDriveHelper(){
         return mHelper;
     }
 
