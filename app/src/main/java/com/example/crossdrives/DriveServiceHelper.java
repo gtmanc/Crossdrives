@@ -212,6 +212,31 @@ public class DriveServiceHelper {
         });
     }
 
+    public Task<FileList> queryFiles(String token, int pageSize) {
+        return Tasks.call(mExecutor, new Callable<FileList>() {
+            @Override
+            public FileList call() throws Exception {
+                FileList files = null;
+                //return mDriveService.files().list().setSpaces("drive").execute();
+                //There could be more result. Use page token to get.
+                if(mDriveService == null){
+                    Log.w(TAG, "mDriveService is null!");
+                }
+                if(mIsEnd != true) {
+                    Log.d(TAG, "mPageToken:" + mPageToken);
+                    files = mDriveService.files().list()
+                            .setSpaces("drive")
+                            .setFields("nextPageToken, files(id, name)")
+                            .setPageToken(token)
+                            //set to a small number can be used for test of loading more data in UI handling
+                            .setPageSize(pageSize)
+                            .execute();
+                }
+                return files;
+            }
+        });
+    }
+
     /*
     Reset a query
      */

@@ -7,8 +7,8 @@ public class OneDriveQueryRequestBuilder extends BaseRequestBuilder implements I
         mClient = client;
     }
 
-    public IQueryRequest buildRequest(){
-        return new OneDriveQueryRequest(mClient);
+    public IFileListRequest buildRequest(){
+        return new OneDriveFileListRequest(mClient);
     }
 
     public OneDriveClient getOneDriveClient(){

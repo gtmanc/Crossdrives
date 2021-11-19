@@ -1,7 +1,5 @@
 package com.crossdrives.driveclient;
 
-import com.example.crossdrives.DriveServiceHelper;
-
 public class GoogleDriveRequestBuilder extends BaseRequestBuilder implements IQueryRequestBuilder{
     GoogleDriveClient mClient;
 
@@ -9,7 +7,7 @@ public class GoogleDriveRequestBuilder extends BaseRequestBuilder implements IQu
         mClient = Client;
     }
 
-    public IQueryRequest buildRequest(){
-        return new GoogleDriveQueryRequest(mClient);
+    public IFileListRequest buildRequest(){
+        return new GoogleDriveFileListRequest(mClient);
     }
 }

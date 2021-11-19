@@ -141,9 +141,9 @@ public class MainActivity extends AppCompatActivity{
     void addGoogleDriveClient(GoogleSignInAccount account){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
-        gdc.query().buildRequest().run(new ICallBack<FileList>() {
+        gdc.query().buildRequest().run(new ICallBack<FileList, Object>() {
             @Override
-            public void success(FileList fileList) {
+            public void success(FileList fileList, Object page) {
 
             }
 
@@ -162,9 +162,9 @@ public class MainActivity extends AppCompatActivity{
                 query().
                 buildRequest().
                 //select().
-                run(new ICallBack<FileList>() {
+                run(new ICallBack<FileList, Object>() {
             @Override
-            public void success(FileList fileList) {
+            public void success(FileList fileList, Object page) {
 
             }
 
