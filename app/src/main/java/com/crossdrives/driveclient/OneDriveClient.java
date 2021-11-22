@@ -81,7 +81,7 @@ public class OneDriveClient implements IDriveClient {
         Get Query Request Builder
      */
     @Override
-    public IQueryRequestBuilder query() {
+    public IQueryRequestBuilder list() {
 
         if(mGraphServiceClient == null){
             Log.w(TAG, "mGraphServiceClient is null");

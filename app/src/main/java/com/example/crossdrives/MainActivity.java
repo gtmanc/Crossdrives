@@ -135,47 +135,45 @@ public class MainActivity extends AppCompatActivity{
             intent.setClass(MainActivity.this, QueryResultActivity.class);
 //                bundle.putStringArrayList("ResultList", mQueryFileName);
 //                intent.putExtras(bundle);
-            //startActivity(intent);
+            startActivity(intent);
         }
     }
     void addGoogleDriveClient(GoogleSignInAccount account){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
-        gdc.query().buildRequest().run(new ICallBack<FileList, Object>() {
-            @Override
-            public void success(FileList fileList, Object page) {
-
-            }
-
-            @Override
-            public void failure(String ex) {
-
-            }
-        });
+        CDFS.addClient(gdc);
+//        gdc.list().buildRequest().run(new ICallBack<FileList, Object>() {
+//            @Override
+//            public void success(FileList fileList, Object page) {
+//
+//            }
+//
+//            @Override
+//            public void failure(String ex) {
+//
+//            }
+//        });
     }
 
     void addOneDriveClient(String token){
-        OneDriveClient oneDriveClient =
+        OneDriveClient odc =
                 (OneDriveClient) OneDriveClient.builder(token).buildClient();
-
-        oneDriveClient.
-                query().
-                buildRequest().
-                //select().
-                run(new ICallBack<FileList, Object>() {
-            @Override
-            public void success(FileList fileList, Object page) {
-
-            }
-
-            @Override
-            public void failure(String ex) {
-
-            }
-        });
-
-//        CDFS cdfs = new CDFS();
-//        cdfs.addClient(oneDriveClient);
+        CDFS.addClient(odc);
+//        oneDriveClient.
+//                list().
+//                buildRequest().
+//                //select().
+//                run(new ICallBack<FileList, Object>() {
+//            @Override
+//            public void success(FileList fileList, Object page) {
+//
+//            }
+//
+//            @Override
+//            public void failure(String ex) {
+//
+//            }
+//        });
     }
 }
 

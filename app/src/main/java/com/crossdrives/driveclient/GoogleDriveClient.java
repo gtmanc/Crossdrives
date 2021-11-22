@@ -87,7 +87,7 @@ public class GoogleDriveClient implements IDriveClient {
     }
 
     @Override
-    public IQueryRequestBuilder query() {
+    public IQueryRequestBuilder list() {
 
         return new GoogleDriveRequestBuilder(this);
     }

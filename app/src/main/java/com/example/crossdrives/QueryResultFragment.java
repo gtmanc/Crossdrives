@@ -31,6 +31,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.cdfs.CDFS;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.appbar.AppBarLayout;
@@ -118,7 +119,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		initialQuery(view);
 
 		mProgressBar.setVisibility(View.VISIBLE);
-		queryFile(view);
+		//queryFile(view);
+		queryFile_cdfstest(view);
 	}
 	/*
         Initialization of query
@@ -137,7 +139,10 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 	/*
 	 *  First time query
 	 */
-	private void queryFile(final View v){
+	private void queryFile_cdfstest(final View v){
+		CDFS.list();
+	}
+	private void _queryFile(final View v){
 
 		if (mDriveServiceHelper != null) {
 			Log.i(TAG, "Querying for files.");

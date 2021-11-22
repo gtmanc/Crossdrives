@@ -35,6 +35,14 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
         return this;
     }
 
+    /*
+    Not yet clear whether we need this method or how graph achieve this.
+     */
+    @Override
+    public IFileListRequest setPageSize(int size) {
+        return this;
+    }
+
     @Override
     public void run(ICallBack<FileList, Object> callback) {
         IDriveItemCollectionRequest request;

@@ -21,6 +21,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
     100 is a feeling value. May need a fine tuning in the future.
      */
     final int PAGE_SIZE = 100;
+    int mPageSize = PAGE_SIZE;
 
     public GoogleDriveFileListRequest(GoogleDriveClient client) {
         mClient = client;
@@ -39,11 +40,17 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
     }
 
     @Override
+    public IFileListRequest setPageSize(int size) {
+        mPageSize = size;
+        return this;
+    }
+
+    @Override
     public void run(ICallBack<FileList, Object> callback) {
 
 
         mClient.getGDriveHelper().
-                queryFiles(mToken, PAGE_SIZE).
+                queryFiles(mToken, mPageSize).
                 addOnSuccessListener(new OnSuccessListener<FileList>() {
                     @Override
                     public void onSuccess(FileList fileList) {

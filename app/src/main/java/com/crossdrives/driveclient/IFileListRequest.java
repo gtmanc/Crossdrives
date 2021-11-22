@@ -20,6 +20,13 @@ public interface IFileListRequest {
      */
     public IFileListRequest setNextPage(final Object page);
 
+    /**
+     * Sets page size
+     *
+     * @param size the page size for the request.
+     * @return the updated request
+     */
+    public IFileListRequest setPageSize(final int size);
 
     /*
         Execute the request
