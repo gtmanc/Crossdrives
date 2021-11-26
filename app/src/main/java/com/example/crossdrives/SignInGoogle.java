@@ -305,7 +305,9 @@ public class SignInGoogle extends SignInManager{
     }
 
 
-
+    /*
+    Async Task is deprecated. The reason could be found in https://www.techyourchance.com/asynctask-deprecated/
+    */
     private class DownloadPhoto extends AsyncTask<String, Void, Bitmap> {
 //        ImageView mImageView;
 //        public DownloadPhoto(ImageView iv) {

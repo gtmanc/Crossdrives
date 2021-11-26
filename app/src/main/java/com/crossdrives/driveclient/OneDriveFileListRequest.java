@@ -18,6 +18,11 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     private String TAG = "ODC.OneDriveQueryRequest";
     OneDriveClient mClient;
     IDriveItemCollectionRequestBuilder mNextPageBuilder;
+    /*
+    100 is a feeling value. May need a fine tuning in the future.
+     */
+    final int PAGE_SIZE = 100;
+    int mPageSize = PAGE_SIZE;
 
     public OneDriveFileListRequest(OneDriveClient client) {
         super();
@@ -36,10 +41,10 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     }
 
     /*
-    Not yet clear whether we need this method or how graph achieve this.
      */
     @Override
     public IFileListRequest setPageSize(int size) {
+        mPageSize = size;
         return this;
     }
 
@@ -55,7 +60,8 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .drive()
                     .root()
                     .children()
-                    .buildRequest();
+                    .buildRequest()
+                    .top(mPageSize);
         }
 
         request

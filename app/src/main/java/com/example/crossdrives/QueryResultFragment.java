@@ -17,7 +17,6 @@ import android.widget.SearchView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -34,7 +33,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.cdfs.CDFS;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -63,8 +61,13 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 	private int mSelectedItemCount = 0;
 	private int mCountPressDrawerHeader = 0;
 
-
 	private ActionMode mActionMode = null;
+	/*
+	Next page handler. Use this handler to get file list of next page. It is available in response of
+	previous file list request
+	here we keep it as abstract because it depends on the drives
+	 */
+	private Object mNextPage;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -80,7 +83,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 		View v = inflater.inflate(R.layout.query_result_fragment, container, false);
 
-		mDriveServiceHelper = DriveServiceHelper.getInstance();
+		//mDriveServiceHelper = DriveServiceHelper.getInstance();
 
 		return v;
 	}
@@ -119,8 +122,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		initialQuery(view);
 
 		mProgressBar.setVisibility(View.VISIBLE);
-		//queryFile(view);
-		queryFile_cdfstest(view);
+		queryFile(view);
 	}
 	/*
         Initialization of query
@@ -135,22 +137,22 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
+
+		mNextPage = null;	//null to get first page of file list
 	}
 	/*
 	 *  First time query
 	 */
-	private void queryFile_cdfstest(final View v){
-		CDFS.list();
-	}
-	private void _queryFile(final View v){
+	private void queryFile(final View v){
 
-		if (mDriveServiceHelper != null) {
-			Log.i(TAG, "Querying for files.");
+		//if (mDriveServiceHelper != null) {
+			Log.d(TAG, "Querying for files.");
 
 			//mProgressBar.setVisibility(View.VISIBLE);
 
-			mDriveServiceHelper.resetQuery();
-			mDriveServiceHelper.queryFiles()
+//			mDriveServiceHelper.resetQuery();
+			CDFS.list(mNextPage)
+			//mDriveServiceHelper.queryFiles()
 					.addOnSuccessListener(new OnSuccessListener<FileList>() {
 						@Override
 						public void onSuccess(FileList fileList) {
@@ -179,6 +181,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							//mProgressBar.setVisibility(View.GONE);
 
 							//setResult(RESULT_OK, mIntent);
+
+							mNextPage = fileList.getNextPageToken();
 							mProgressBar.setVisibility(View.INVISIBLE);
 						}
 
@@ -193,13 +197,13 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							mProgressBar.setVisibility(View.INVISIBLE);
 						}
 					});
-		}
+		//}
 	}
 
 	private void queryFileContinue(){
 		int lastitemindex = mItems.size() - 1;
 
-		if (mDriveServiceHelper != null) {
+		//if (mDriveServiceHelper != null) {
 			Log.i(TAG, "Querying for files continue.");
 
 			//mProgressBar.setVisibility(View.VISIBLE);
@@ -209,7 +213,8 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 			Log.i(TAG, "Notify inserted");
 			mAdapter.notifyItemInserted(mItems.size() - 1);
 
-			mDriveServiceHelper.queryFiles()
+			//mDriveServiceHelper.queryFiles()
+			CDFS.list(mNextPage)
 					.addOnSuccessListener(new OnSuccessListener<FileList>() {
 						@Override
 						public void onSuccess(FileList fileList) {
@@ -253,7 +258,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
 						}
 					});
-		}
+		//}
 	}
 
 	private RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {

@@ -212,7 +212,7 @@ public class DriveServiceHelper {
         });
     }
 
-    public Task<FileList> queryFiles(String token, int pageSize) {
+    public Task<FileList> queryFiles(String nextPageToken, int pageSize) {
         return Tasks.call(mExecutor, new Callable<FileList>() {
             @Override
             public FileList call() throws Exception {
@@ -227,7 +227,7 @@ public class DriveServiceHelper {
                     files = mDriveService.files().list()
                             .setSpaces("drive")
                             .setFields("nextPageToken, files(id, name)")
-                            .setPageToken(token)
+                            .setPageToken(nextPageToken)
                             //set to a small number can be used for test of loading more data in UI handling
                             .setPageSize(pageSize)
                             .execute();

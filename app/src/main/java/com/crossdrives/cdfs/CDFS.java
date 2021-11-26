@@ -18,6 +18,7 @@ public class CDFS {
     private static String TAG = "CDFS.CDFS";
     static List<IDriveClient> sClient = new ArrayList<>();
     private static final Executor sExecutor = Executors.newSingleThreadExecutor();
+    private static FileList mFileList;
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
@@ -35,32 +36,40 @@ public class CDFS {
     /*
     Operation: get file list
      */
-    static public void list(){
+    static public Task<FileList> list(Object nextPage){
         Task task;
         Log.d(TAG, "Operation: list files");
         task = Tasks.call(sExecutor, new Callable<Object>() {
             @Override
-            public Object call() throws Exception {
+            public FileList call() throws Exception {
                 msTaskfinished = false;
-                sClient.get(0).list().buildRequest().run(new ICallBack<FileList, Object>() {
+                sClient.get(0).list().buildRequest()
+                        .setNextPage(nextPage)
+                        .setPageSize(10)
+                        .run(new ICallBack<FileList, Object>() {
                     @Override
                     public void success(FileList fileList, Object o) {
-                        msTaskfinished = true;
+                        setToWait();
+                        mFileList = fileList;
                         Log.d(TAG, "list finished");
                     }
 
                     @Override
                     public void failure(String ex) {
-                        msTaskfinished = true;
+                        setToWait();
                         Log.w(TAG, "list finished with failure!");
                     }
                 });
                 waitUntilFinished();
-                return null;
+                return mFileList;
             }
         });
 
+        return task;
+    }
 
+    private static void setToWait(){
+        msTaskfinished = true;
     }
 
     private static void waitUntilFinished() throws Exception{
