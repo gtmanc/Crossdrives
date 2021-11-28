@@ -225,6 +225,8 @@ public class DriveServiceHelper {
                 if(mIsEnd != true) {
                     Log.d(TAG, "mPageToken:" + mPageToken);
                     files = mDriveService.files().list()
+                            .setQ("name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'")
+                            //.setQ("mimeType ='application/vnd.google-apps.folder'")
                             .setSpaces("drive")
                             .setFields("nextPageToken, files(id, name)")
                             .setPageToken(nextPageToken)

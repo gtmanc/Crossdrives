@@ -12,6 +12,8 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
 import java.util.Collections;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class GoogleDriveClient implements IDriveClient {
     private static String TAG = "CD.GoogleDriveClient";
@@ -19,6 +21,7 @@ public class GoogleDriveClient implements IDriveClient {
     private static GoogleSignInAccount mGoogleSignInAccount;
     private Drive mGgoogleDriveService;
     private DriveServiceHelper mHelper;
+    private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
     static public GoogleDriveClient create(Context context, Object SignInAccount) {
         mContext = context;
@@ -107,6 +110,10 @@ public class GoogleDriveClient implements IDriveClient {
 
     public DriveServiceHelper getGDriveHelper(){
         return mHelper;
+    }
+
+    public Executor getExecutor(){
+        return mExecutor;
     }
 
 //    Builder builder = new Builder() {

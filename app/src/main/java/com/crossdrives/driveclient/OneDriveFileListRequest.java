@@ -35,6 +35,11 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     }
 
     @Override
+    public IFileListRequest filter(String value) {
+        return null;
+    }
+
+    @Override
     public IFileListRequest setNextPage(Object page) {
         mNextPageBuilder = (IDriveItemCollectionRequestBuilder)page;
         return this;
@@ -61,26 +66,27 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .root()
                     .children()
                     .buildRequest()
-                    .top(mPageSize);
+                    .top(mPageSize).select(null);
         }
 
         request
                 .get(new ICallback<IDriveItemCollectionPage>() {
                     @Override
                     public void success(IDriveItemCollectionPage iDriveItemCollectionPage) {
-                        FileList files = new FileList();
+                        FileList fileList = new FileList();
                         List<DriveItem> items =
                         iDriveItemCollectionPage.getCurrentPage();
-
+                        List<File> files = new ArrayList<>();
                         //IDriveItemCollectionRequestBuilder b = iDriveItemCollectionPage.getNextPage();
-
                         Log.d(TAG, "Size of root children: " + items.size());
                         for(int i = 0; i < items.size();i++) {
+                            File f = new File();
                             Log.d(TAG, "Item name: " + items.get(i).name);
-                            files.set(items.get(i).name, null);
+                            f.setName(items.get(i).name);
+                            files.add(f);
                         }
-
-                        callback.success(files, iDriveItemCollectionPage.getNextPage());
+                        fileList.setFiles(files);
+                        callback.success(fileList, iDriveItemCollectionPage.getNextPage());
                     }
 
 

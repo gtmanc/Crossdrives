@@ -13,6 +13,14 @@ public interface IFileListRequest {
     public IFileListRequest select(final String value);
 
     /**
+     * Sets the filter for the request. Use this to narrow the result
+     *
+     * @param value the select clause
+     * @return the updated request
+     */
+    public IFileListRequest filter(final String value);
+
+    /**
      * Sets next page for the request
      *
      * @param page the page for the request. Set to null to get 1st page.

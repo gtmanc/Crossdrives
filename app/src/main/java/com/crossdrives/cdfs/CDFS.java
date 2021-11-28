@@ -22,6 +22,7 @@ public class CDFS {
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
+    May use the thread synchronize object (e.g. condition variable) instead of the flag
      */
     private static boolean msTaskfinished = false;
 
