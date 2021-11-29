@@ -2,13 +2,19 @@ package com.crossdrives.driveclient;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.Drive;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
+
+import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 
 public class OneDriveClient implements IDriveClient {
     static private String TAG = "CD.GraphDriveClient";
@@ -27,20 +33,34 @@ public class OneDriveClient implements IDriveClient {
         return null;
     }
 
+    final ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
+            .clientId(CLIENT_ID)
+            .clientSecret(CLIENT_SECRET)
+            .tenantId(TENANT_GUID)
+            .build();
+
+    final TokenCredentialAuthProvider tokenCredAuthProvider =
+            new TokenCredentialAuthProvider(SCOPES, clientSecretCredential);
 
     static private void callGraphAPI(String token) {
 
         //final String accessToken = authenticationResult.getAccessToken();
 
-        IGraphServiceClient graphClient =
+        GraphServiceClient graphClient =
                 GraphServiceClient
                         .builder()
                         .authenticationProvider(new IAuthenticationProvider() {
+                            @NonNull
                             @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + token);
+                            public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
+                                return null;
                             }
+
+//                            @Override
+//                            public void authenticateRequest(IHttpRequest request) {
+//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+//                                request.addHeader("Authorization", "Bearer " + token);
+//                            }
                         })
                         .buildClient();
         graphClient
@@ -92,15 +112,21 @@ public class OneDriveClient implements IDriveClient {
 
     public static OneDriveClient fromConfig(String token){
         OneDriveClient oClient  = new OneDriveClient();
-        IGraphServiceClient gClient =
+        GraphServiceClient gClient =
                 GraphServiceClient
                         .builder()
                         .authenticationProvider(new IAuthenticationProvider() {
+                            @NonNull
                             @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + mToken);
+                            public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
+                                return null;
                             }
+
+//                            @Override
+//                            public void authenticateRequest(IHttpRequest request) {
+//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+//                                request.addHeader("Authorization", "Bearer " + mToken);
+//                            }
                         })
                         .buildClient();
 
