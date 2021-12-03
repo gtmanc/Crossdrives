@@ -13,13 +13,12 @@ import androidx.annotation.Nullable;
 import com.crossdrives.msgraph.MSGraphRestHelper;
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.concurrency.ICallback;
+
+import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.models.extensions.Drive;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.ProfilePhoto;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
+
+import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
@@ -30,6 +29,10 @@ import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
 
 import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
@@ -38,6 +41,7 @@ public class SignInMS extends SignInManager{
     private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
     private final static String[] SCOPES = {"Files.Read"};
+    private final static List<String> scopes = new ArrayList<>();
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
     OnInteractiveSignInfinished mOnInteractiveSignInfinished;
@@ -47,7 +51,7 @@ public class SignInMS extends SignInManager{
     private String mToken;
     private Object mObject;
 
-    public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
+    public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext(); scopes.add("Files.Read");}
 
     public static SignInMS getInstance(Activity activity){
         if(mSignInMS == null){
@@ -112,6 +116,10 @@ public class SignInMS extends SignInManager{
         });
     }
 
+    /*
+        Migrate to graph sdk 3.x. See https://docs.microsoft.com/en-us/graph/tutorials/android?tutorial-step=3
+        for good code snippet.
+    */
     @Override
     void getPhoto(Object object, OnPhotoDownloaded callback) {
         mPhotoDownloadCallback = callback;
@@ -121,15 +129,27 @@ public class SignInMS extends SignInManager{
         //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
         final String accessToken = mToken;
 
-        IGraphServiceClient graphClient =
+        GraphServiceClient graphClient =
                 GraphServiceClient
                         .builder()
                         .authenticationProvider(new IAuthenticationProvider() {
+                            @NonNull
                             @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + accessToken);
+                            public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
+                                CompletableFuture<IAuthenticationResult> future = null;
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                    future = new CompletableFuture<>();
+                                }
+                                future.complete(mToken);
+
+                                return future;
                             }
+
+//                            @Override
+//                            public void authenticateRequest(IHttpRequest request) {
+//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+//                                request.addHeader("Authorization", "Bearer " + accessToken);
+//                            }
                         })
                         .buildClient();
         graphClient
@@ -251,6 +271,25 @@ public class SignInMS extends SignInManager{
         };
     }
 
+    private AuthenticationCallback getAuthenticationCallback(
+            CompletableFuture<IAuthenticationResult> future) {
+        return new AuthenticationCallback() {
+            @Override
+            public void onCancel() {
+                future.cancel(true);
+            }
+
+            @Override
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                future.complete(authenticationResult);
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                future.completeExceptionally(exception);
+            }
+        };
+    }
 //    /**
 //     * Used to setup the Services
 //     * @param activity the current activity
