@@ -1,12 +1,5 @@
 package com.crossdrives.driveclient;
 
-import android.util.Log;
-
-import com.microsoft.graph.concurrency.ICallback;
-import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.models.extensions.Drive;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
-
 public abstract class BaseRequest implements IBaseRequest{
     static private String TAG = "ODC.BaseRequest";
 

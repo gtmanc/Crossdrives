@@ -2,19 +2,24 @@ package com.crossdrives.driveclient;
 
 import android.util.Log;
 
+
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-import com.microsoft.graph.core.ClientException;
+import com.microsoft.graph.models.DriveItem;
+import com.microsoft.graph.options.Option;
+import com.microsoft.graph.requests.DriveItemCollectionRequest;
+import com.microsoft.graph.requests.DriveItemCollectionRequestBuilder;
 
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class OneDriveFileListRequest extends BaseRequest implements IFileListRequest {
     private String TAG = "ODC.OneDriveQueryRequest";
     OneDriveClient mClient;
-    IDriveItemCollectionRequestBuilder mNextPageBuilder;
+    DriveItemCollectionRequestBuilder mNextPageBuilder;
     /*
     100 is a feeling value. May need a fine tuning in the future.
      */
@@ -38,7 +43,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
 
     @Override
     public IFileListRequest setNextPage(Object page) {
-        mNextPageBuilder = (IDriveItemCollectionRequestBuilder)page;
+        mNextPageBuilder = (DriveItemCollectionRequestBuilder)page;
         return this;
     }
 
@@ -52,27 +57,31 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
 
     @Override
     public void run(ICallBack<FileList, Object> callback) {
-        IDriveItemCollectionRequest request;
+        final List<Option> options = new LinkedList<Option>();
+        DriveItemCollectionRequest request;
 
         if(mNextPageBuilder != null){
             request = mNextPageBuilder.buildRequest();
         }else{
+//            request = mClient.getGraphServiceClient()
+//                    .me()
+//                    .drive()
+//                    .root()
+//                    .children()
+//                    .buildRequest()
+//                    .top(mPageSize).select(null);
             request = mClient.getGraphServiceClient()
                     .me()
                     .drive()
                     .root()
                     .children()
-                    .buildRequest()
+                    .buildRequest(options)
                     .top(mPageSize).select(null);
         }
-
-        request
-                .get(new ICallback<IDriveItemCollectionPage>() {
-                    @Override
-                    public void success(IDriveItemCollectionPage iDriveItemCollectionPage) {
+        request.getAsync().thenAccept(DriveItemCollectionPage ->{
                         FileList fileList = new FileList();
                         List<DriveItem> items =
-                        iDriveItemCollectionPage.getCurrentPage();
+                        DriveItemCollectionPage.getCurrentPage();
                         List<File> files = new ArrayList<>();
                         //IDriveItemCollectionRequestBuilder b = iDriveItemCollectionPage.getNextPage();
                         Log.d(TAG, "Size of root children: " + items.size());
@@ -83,16 +92,37 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                             files.add(f);
                         }
                         fileList.setFiles(files);
-                        callback.success(fileList, iDriveItemCollectionPage.getNextPage());
-                    }
+                        callback.success(fileList, DriveItemCollectionPage.getNextPage());
+                })
+                .exceptionally(ex -> {return null;});
 
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        Log.d(TAG, "Get root failed: " + ex.toString());
-
-                        callback.failure(ex.toString());
-                    }
-                });
+//        request
+//                .get(new ICallback<IDriveItemCollectionPage>() {
+//                    @Override
+//                    public void success(IDriveItemCollectionPage iDriveItemCollectionPage) {
+//                        FileList fileList = new FileList();
+//                        List<DriveItem> items =
+//                        iDriveItemCollectionPage.getCurrentPage();
+//                        List<File> files = new ArrayList<>();
+//                        //IDriveItemCollectionRequestBuilder b = iDriveItemCollectionPage.getNextPage();
+//                        Log.d(TAG, "Size of root children: " + items.size());
+//                        for(int i = 0; i < items.size();i++) {
+//                            File f = new File();
+//                            Log.d(TAG, "Item name: " + items.get(i).name);
+//                            f.setName(items.get(i).name);
+//                            files.add(f);
+//                        }
+//                        fileList.setFiles(files);
+//                        callback.success(fileList, iDriveItemCollectionPage.getNextPage());
+//                    }
+//
+//
+//                    @Override
+//                    public void failure(ClientException ex) {
+//                        Log.d(TAG, "Get root failed: " + ex.toString());
+//
+//                        callback.failure(ex.toString());
+//                    }
+//                });
     }
 }

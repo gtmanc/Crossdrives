@@ -136,12 +136,9 @@ public class SignInMS extends SignInManager{
                             @NonNull
                             @Override
                             public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
-                                CompletableFuture<IAuthenticationResult> future = null;
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                                    future = new CompletableFuture<>();
-                                }
+                                CompletableFuture<String> future = null;
+                                future = new CompletableFuture<>();
                                 future.complete(mToken);
-
                                 return future;
                             }
 
@@ -157,17 +154,20 @@ public class SignInMS extends SignInManager{
                 .photo()
                 .content()
                 .buildRequest()
-                .get(new ICallback<InputStream>() {
-                    @Override
-                    public void success(InputStream inputStream) {
-                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
-                    }
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        Log.d(TAG, "get photo failed, " + ex.toString());
-                    }
-                });
+                //.get(new ICallback<InputStream>() {
+                .getAsync()
+                .thenAccept(inputStream -> {mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);})
+                .exceptionally(excepion -> {Log.d(TAG, "get photo failed: " + excepion.toString()); return null;});
+//                    @Override
+//                    public void success(InputStream inputStream) {
+//                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+//                    }
+//
+//                    @Override
+//                    public void failure(ClientException ex) {
+//                        Log.d(TAG, "get photo failed, " + ex.toString());
+//                    }
+//                });
     }
 
     private void loadAccount(){

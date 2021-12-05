@@ -4,14 +4,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.concurrency.ICallback;
-import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.models.extensions.Drive;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.authentication.IAuthenticationProvider;;
 import com.microsoft.graph.requests.GraphServiceClient;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
+
 
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public class OneDriveClient implements IDriveClient {
     static private String TAG = "CD.GraphDriveClient";
     private static OneDriveClient mOneDriveClient = null;
-    private IGraphServiceClient mGraphServiceClient;
+    private GraphServiceClient mGraphServiceClient;
     private static String mToken;
 
 
@@ -33,15 +28,6 @@ public class OneDriveClient implements IDriveClient {
         return null;
     }
 
-    final ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
-            .clientId(CLIENT_ID)
-            .clientSecret(CLIENT_SECRET)
-            .tenantId(TENANT_GUID)
-            .build();
-
-    final TokenCredentialAuthProvider tokenCredAuthProvider =
-            new TokenCredentialAuthProvider(SCOPES, clientSecretCredential);
-
     static private void callGraphAPI(String token) {
 
         //final String accessToken = authenticationResult.getAccessToken();
@@ -53,7 +39,10 @@ public class OneDriveClient implements IDriveClient {
                             @NonNull
                             @Override
                             public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
-                                return null;
+                                CompletableFuture<String> future = null;
+                                future = new CompletableFuture<>();
+                                future.complete(mToken);
+                                return future;
                             }
 
 //                            @Override
@@ -67,22 +56,24 @@ public class OneDriveClient implements IDriveClient {
                 .me()
                 .drive()
                 .buildRequest()
-                .get(new ICallback<Drive>() {
-                    @Override
-                    public void success(final Drive drive) {
-                        Log.d(TAG, "Found Drive " + drive.id);
-                        //displayGraphResult(drive.getRawObject());
-                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
-
-                    }
-
-                    @Override
-                    public void failure(ClientException ex) {
-                        //displayError(ex);
-                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-
-                    }
-                });
+                .getAsync()
+                .thenAccept(drive -> {Log.d(TAG, "Found Drive " + drive.id);})
+                .exceptionally(ex -> {Log.w(TAG, "callGraphAPI failed: " + ex.toString()); return null;});
+//                    @Override
+//                    public void success(final Drive drive) {
+//                        Log.d(TAG, "Found Drive " + drive.id);
+//                        //displayGraphResult(drive.getRawObject());
+//                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
+//
+//                    }
+//
+//                    @Override
+//                    public void failure(ClientException ex) {
+//                        //displayError(ex);
+//                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
+//
+//                    }
+//                });
     }
 
     public static Builder builder(String token){
@@ -134,11 +125,11 @@ public class OneDriveClient implements IDriveClient {
         return oClient;
     }
 
-    public void setGraphServiceClient(IGraphServiceClient client){
+    public void setGraphServiceClient(GraphServiceClient client){
         mGraphServiceClient = client;
     }
 
-    public IGraphServiceClient getGraphServiceClient(){
+    public GraphServiceClient getGraphServiceClient(){
         return mGraphServiceClient;
     }
 }
