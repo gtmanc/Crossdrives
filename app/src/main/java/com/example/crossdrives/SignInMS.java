@@ -28,6 +28,7 @@ import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -116,10 +117,7 @@ public class SignInMS extends SignInManager{
         });
     }
 
-    /*
-        Migrate to graph sdk 3.x. See https://docs.microsoft.com/en-us/graph/tutorials/android?tutorial-step=3
-        for good code snippet.
-    */
+
     @Override
     void getPhoto(Object object, OnPhotoDownloaded callback) {
         mPhotoDownloadCallback = callback;
@@ -133,6 +131,11 @@ public class SignInMS extends SignInManager{
                 GraphServiceClient
                         .builder()
                         .authenticationProvider(new IAuthenticationProvider() {
+                            /*
+                                TODO: We cant guarantee the token is valid each time the client is created.
+                                e.g. App is pushed to the background for longer than 5 minutes and
+                                pulled to foreground afterwards.
+                            */
                             @NonNull
                             @Override
                             public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
@@ -156,8 +159,15 @@ public class SignInMS extends SignInManager{
                 .buildRequest()
                 //.get(new ICallback<InputStream>() {
                 .getAsync()
-                .thenAccept(inputStream -> {mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);})
-                .exceptionally(excepion -> {Log.d(TAG, "get photo failed: " + excepion.toString()); return null;});
+                .thenAccept(inputStream -> {
+                    mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                })
+                .exceptionally(ex -> {Log.d(TAG, "get photo failed: " + ex.toString()); return null;});
 //                    @Override
 //                    public void success(InputStream inputStream) {
 //                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);

@@ -36,6 +36,11 @@ public class OneDriveClient implements IDriveClient {
                 GraphServiceClient
                         .builder()
                         .authenticationProvider(new IAuthenticationProvider() {
+                            /*
+                                TODO: We cant guarantee the token is valid each time the client is created.
+                                e.g. App is pushed to the background for longer than 5 minutes and
+                                pulled to foreground afterwards.
+                            */
                             @NonNull
                             @Override
                             public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {

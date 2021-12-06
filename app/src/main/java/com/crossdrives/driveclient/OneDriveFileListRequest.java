@@ -75,8 +75,9 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .drive()
                     .root()
                     .children()
-                    .buildRequest(options)
-                    .top(mPageSize).select(null);
+                    .buildRequest()
+                    .top(mPageSize);
+                    //.select(null);
         }
         request.getAsync().thenAccept(DriveItemCollectionPage ->{
                         FileList fileList = new FileList();

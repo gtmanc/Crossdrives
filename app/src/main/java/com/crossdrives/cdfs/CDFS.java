@@ -44,6 +44,9 @@ public class CDFS {
             @Override
             public FileList call() throws Exception {
                 msTaskfinished = false;
+                /*
+                    Drive client test only. Always use index 0 (i.e first one added)
+                 */
                 sClient.get(0).list().buildRequest()
                         .setNextPage(nextPage)
                         .setPageSize(10)

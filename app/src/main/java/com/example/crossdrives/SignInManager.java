@@ -51,6 +51,6 @@ public abstract class SignInManager{
     //Sign out user
     abstract void SignOut(OnSignOutFinished callback);
 
-    //gt user phtot
+    //gt user photo
     abstract void getPhoto(Object object, OnPhotoDownloaded callback);
 }
