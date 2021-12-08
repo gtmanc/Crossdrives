@@ -21,65 +21,44 @@ public class OneDriveClient implements IDriveClient {
     public OneDriveClient() {
     }
 
-    static OneDriveClient create(Object token) {
-        //IGraphServiceClient msclient = (IGraphServiceClient)SignInAccount;
+//    static OneDriveClient create(Object token) {
+//        //IGraphServiceClient msclient = (IGraphServiceClient)SignInAccount;
+//
+//        callGraphAPI((String)token);
+//        return null;
+//    }
 
-        callGraphAPI((String)token);
-        return null;
-    }
-
-    static private void callGraphAPI(String token) {
-
-        //final String accessToken = authenticationResult.getAccessToken();
-
-        GraphServiceClient graphClient =
-                GraphServiceClient
-                        .builder()
-                        .authenticationProvider(new IAuthenticationProvider() {
-                            /*
-                                TODO: We cant guarantee the token is valid each time the client is created.
-                                e.g. App is pushed to the background for longer than 5 minutes and
-                                pulled to foreground afterwards.
-                            */
-                            @NonNull
-                            @Override
-                            public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
-                                CompletableFuture<String> future = null;
-                                future = new CompletableFuture<>();
-                                future.complete(mToken);
-                                return future;
-                            }
-
+//    static private void callGraphAPI(String token) {
+//
+//        //final String accessToken = authenticationResult.getAccessToken();
+//
+//        GraphServiceClient graphClient =
+//                GraphServiceClient
+//                        .builder()
+//                        .authenticationProvider(new IAuthenticationProvider() {
+//                            /*
+//                                TODO: We cant guarantee the token is valid each time the client is created.
+//                                e.g. App is pushed to the background for longer than 5 minutes and
+//                                pulled to foreground afterwards.
+//                            */
+//                            @NonNull
 //                            @Override
-//                            public void authenticateRequest(IHttpRequest request) {
-//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-//                                request.addHeader("Authorization", "Bearer " + token);
+//                            public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
+//                                CompletableFuture<String> future = null;
+//                                future = new CompletableFuture<>();
+//                                future.complete(mToken);
+//                                return future;
 //                            }
-                        })
-                        .buildClient();
-        graphClient
-                .me()
-                .drive()
-                .buildRequest()
-                .getAsync()
-                .thenAccept(drive -> {Log.d(TAG, "Found Drive " + drive.id);})
-                .exceptionally(ex -> {Log.w(TAG, "callGraphAPI failed: " + ex.toString()); return null;});
-//                    @Override
-//                    public void success(final Drive drive) {
-//                        Log.d(TAG, "Found Drive " + drive.id);
-//                        //displayGraphResult(drive.getRawObject());
-//                        Log.d(TAG, "Raw Object: " + drive.getRawObject());
-//
-//                    }
-//
-//                    @Override
-//                    public void failure(ClientException ex) {
-//                        //displayError(ex);
-//                        Log.w(TAG, "callGraphAPI failed: " + ex.toString());
-//
-//                    }
-//                });
-    }
+//                        })
+//                        .buildClient();
+//        graphClient
+//                .me()
+//                .drive()
+//                .buildRequest()
+//                .getAsync()
+//                .thenAccept(drive -> {Log.d(TAG, "Found Drive " + drive.id);})
+//                .exceptionally(ex -> {Log.w(TAG, "callGraphAPI failed: " + ex.toString()); return null;});
+//    }
 
     public static Builder builder(String token){
         mToken = token;
@@ -115,7 +94,10 @@ public class OneDriveClient implements IDriveClient {
                             @NonNull
                             @Override
                             public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
-                                return null;
+                                CompletableFuture<String> future = null;
+                                future = new CompletableFuture<>();
+                                future.complete(mToken);
+                                return future;
                             }
 
 //                            @Override

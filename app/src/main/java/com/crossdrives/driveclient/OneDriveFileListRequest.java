@@ -30,12 +30,18 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
         super();
         mClient = client;
     }
+    /*
+        Drive item Properties: https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0
+    */
 
     @Override
     public IFileListRequest select(final String value) {
         return this;
     }
 
+    /*
+       Query parameter: https://docs.microsoft.com/en-us/graph/query-parameters#filter-parameter
+     */
     @Override
     public IFileListRequest filter(String value) {
         return null;
@@ -76,7 +82,11 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .root()
                     .children()
                     .buildRequest()
+                    .filter("startswith(name, 'VIDEO')")
                     .top(mPageSize);
+
+                    //.filter("name in ('VIDEO0025.3gp')")
+                    //.count(true);
                     //.select(null);
         }
         request.getAsync().thenAccept(DriveItemCollectionPage ->{
@@ -93,9 +103,10 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                             files.add(f);
                         }
                         fileList.setFiles(files);
+                        Log.d(TAG, "Next page: " + DriveItemCollectionPage.getNextPage());
                         callback.success(fileList, DriveItemCollectionPage.getNextPage());
                 })
-                .exceptionally(ex -> {return null;});
+                .exceptionally(ex -> {Log.d(TAG, "Get root failed: " + ex.toString()); return null;});
 
 //        request
 //                .get(new ICallback<IDriveItemCollectionPage>() {
