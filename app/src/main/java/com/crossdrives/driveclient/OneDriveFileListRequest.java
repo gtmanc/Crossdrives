@@ -8,6 +8,7 @@ import com.google.api.services.drive.model.FileList;
 
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.options.Option;
+import com.microsoft.graph.options.QueryOption;
 import com.microsoft.graph.requests.DriveItemCollectionRequest;
 import com.microsoft.graph.requests.DriveItemCollectionRequestBuilder;
 
@@ -36,6 +37,8 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
 
     @Override
     public IFileListRequest select(final String value) {
+
+        addQueryOption(new QueryOption("Select", value));
         return this;
     }
 
@@ -44,7 +47,8 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
      */
     @Override
     public IFileListRequest filter(String value) {
-        return null;
+        addQueryOption(new QueryOption("Filter", value));
+        return this;
     }
 
     @Override
@@ -108,33 +112,30 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                 })
                 .exceptionally(ex -> {Log.d(TAG, "Get root failed: " + ex.toString()); return null;});
 
-//        request
-//                .get(new ICallback<IDriveItemCollectionPage>() {
-//                    @Override
-//                    public void success(IDriveItemCollectionPage iDriveItemCollectionPage) {
-//                        FileList fileList = new FileList();
-//                        List<DriveItem> items =
-//                        iDriveItemCollectionPage.getCurrentPage();
-//                        List<File> files = new ArrayList<>();
-//                        //IDriveItemCollectionRequestBuilder b = iDriveItemCollectionPage.getNextPage();
-//                        Log.d(TAG, "Size of root children: " + items.size());
-//                        for(int i = 0; i < items.size();i++) {
-//                            File f = new File();
-//                            Log.d(TAG, "Item name: " + items.get(i).name);
-//                            f.setName(items.get(i).name);
-//                            files.add(f);
-//                        }
-//                        fileList.setFiles(files);
-//                        callback.success(fileList, iDriveItemCollectionPage.getNextPage());
-//                    }
-//
-//
-//                    @Override
-//                    public void failure(ClientException ex) {
-//                        Log.d(TAG, "Get root failed: " + ex.toString());
-//
-//                        callback.failure(ex.toString());
-//                    }
-//                });
+
+    }
+
+    /*
+    "name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'"
+     */
+    private String getFilterClause(String Q){
+        List<QueryOption> options;
+        QueryOption option;
+        String clause="";
+        int i = 0;
+        options = getQueryOptions();
+        for (i = 0; i < options.size();i++){
+            option = options.get(i);
+            if(option.getName().equals("Filter") != true)
+                break;
+            //operator
+            //clause =
+
+                    //query term
+            //value
+        }
+
+
+        return clause;
     }
 }
