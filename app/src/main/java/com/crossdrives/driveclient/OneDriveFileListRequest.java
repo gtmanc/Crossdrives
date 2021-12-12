@@ -3,6 +3,7 @@ package com.crossdrives.driveclient;
 import android.util.Log;
 
 
+import com.crossdrives.transcode.BaseOperator;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -128,7 +129,9 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
             option = options.get(i);
             if(option.getName().equals("Filter") != true)
                 break;
-            //operator
+            //Conditional operators: or and and
+            Q.indexOf();
+            Q.charAt()
             //clause =
 
                     //query term
@@ -138,4 +141,25 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
 
         return clause;
     }
+
+    private int getConditional(String s){
+        int i_or, i_and, index = -1;
+        i_or = s.indexOf("or");
+        i_and = s.indexOf("and");
+
+        if(i_and == -1 && i_or == -1){
+            //single query term
+        }else if(i_and > i_or){
+            //"or" presents prior to "and"
+            index = i_or;
+        }
+        else{
+            //"and" presents prior to "or"
+            index = i_and;
+        }
+
+        return index;
+    }
+
+
 }
