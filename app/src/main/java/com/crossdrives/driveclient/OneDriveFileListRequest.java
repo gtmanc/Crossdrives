@@ -3,7 +3,7 @@ package com.crossdrives.driveclient;
 import android.util.Log;
 
 
-import com.crossdrives.transcode.BaseOperator;
+import com.crossdrives.transcode.BaseTranscoder;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -22,6 +22,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     private String TAG = "ODC.OneDriveQueryRequest";
     OneDriveClient mClient;
     DriveItemCollectionRequestBuilder mNextPageBuilder;
+    private String mfilterClause, mSelectClause;
     /*
     100 is a feeling value. May need a fine tuning in the future.
      */
@@ -48,7 +49,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
      */
     @Override
     public IFileListRequest filter(String value) {
-        addQueryOption(new QueryOption("Filter", value));
+        mfilterClause = getFilterClause(value);
         return this;
     }
 
@@ -120,46 +121,12 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     "name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'"
      */
     private String getFilterClause(String Q){
-        List<QueryOption> options;
-        QueryOption option;
-        String clause="";
-        int i = 0;
-        options = getQueryOptions();
-        for (i = 0; i < options.size();i++){
-            option = options.get(i);
-            if(option.getName().equals("Filter") != true)
-                break;
-            //Conditional operators: or and and
-            Q.indexOf();
-            Q.charAt()
-            //clause =
-
-                    //query term
-            //value
-        }
+        BaseTranscoder transcoder = new BaseTranscoder(Q);
 
 
-        return clause;
+        return transcoder.execute();
     }
 
-    private int getConditional(String s){
-        int i_or, i_and, index = -1;
-        i_or = s.indexOf("or");
-        i_and = s.indexOf("and");
-
-        if(i_and == -1 && i_or == -1){
-            //single query term
-        }else if(i_and > i_or){
-            //"or" presents prior to "and"
-            index = i_or;
-        }
-        else{
-            //"and" presents prior to "or"
-            index = i_and;
-        }
-
-        return index;
-    }
 
 
 }
