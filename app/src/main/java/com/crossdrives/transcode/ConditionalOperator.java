@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class ConditionalOperator extends BaseOperator {
-    int index;
-    String operator;
+
     final List<String> mC_OPs = new ArrayList<>();
 
     public ConditionalOperator() {

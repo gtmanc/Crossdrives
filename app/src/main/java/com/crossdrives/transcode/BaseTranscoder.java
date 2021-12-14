@@ -19,12 +19,14 @@ public class BaseTranscoder {
     ConditionalOperator mConditionalOperator;
     GoogleQueryTerm mGoogleQueryTerms;
     GoogleQueryValues mGoogleQueryValues;
+    GoogleEqualityOperator mGoogleEqualityOperator;
 
     public BaseTranscoder(String qs) {
         mGivenQueryString = qs;
         mConditionalOperator = new ConditionalOperator();
         mGoogleQueryTerms = new GoogleQueryTerm();
         mGoogleQueryValues = new GoogleQueryValues();
+        mGoogleEqualityOperator = new GoogleEqualityOperator();
     }
 
     /*
@@ -36,20 +38,28 @@ public class BaseTranscoder {
         int i = -1;
         String graph_qs = new String(google_qs.toString());
 
+        Log.d(TAG, "Converting mimeType...");
         //Exit if query term 'mineType' doesn't present
-        if(!google_qs.contains(GoogleQueryTerm.MIME_TYPE))
+        if(!google_qs.contains(GoogleQueryTerm.MIME_TYPE)) {
+            Log.d(TAG, "Query term mimetype not found:" + google_qs);
             return null;
+        }
 
         //Folder?
         //replace "query term"
+        //Log.d(TAG, "Query value folder presents?");
         if(mGoogleQueryValues.getValue(google_qs).equals(GoogleQueryValues.FOLDER)){
-            graph_qs.replace(GoogleQueryTerm.MIME_TYPE, "folder");
-            graph_qs.replace(GoogleQueryValues.FOLDER, "null");
+            Log.d(TAG, "Query value 'folder' found!");
+            graph_qs = graph_qs.replace(GoogleQueryTerm.MIME_TYPE, "folder");
+            graph_qs = graph_qs.replace(GoogleQueryValues.FOLDER, "null");
         }
         //replace Equality operators
-        if(mConditionalOperator.getOperator(google_qs).equals(GoogleEqualityOperator.EQUAL)){
-            graph_qs.replace(GoogleEqualityOperator.EQUAL, "ne");
+        if(mGoogleEqualityOperator.getOperator(google_qs).equals(GoogleEqualityOperator.EQUAL)){
+            Log.d(TAG, "Equality operator '=' found!");
+            graph_qs = graph_qs.replace(GoogleEqualityOperator.EQUAL, "ne");
         }
+
+        Log.d(TAG, "mimeType converted string: " + graph_qs);
 
         return graph_qs;
     }
@@ -59,15 +69,13 @@ public class BaseTranscoder {
         Reference example 6 in https://www.geeksforgeeks.org/split-string-java-examples/
     */
     private String[] split(){
-        String clause = new String("[");
+        String regex = "";
 
-        for(String s : mConditionalOperator.getCandidates()){
-            clause.concat(s);
-            //clause += s;
-        }
-        clause.concat("]+");
+        regex = TextUtils.join("|", mConditionalOperator.getCandidates());
 
-        return mGivenQueryString.split(clause);
+        Log.d(TAG, "Regex for split:" + regex);
+
+        return mGivenQueryString.split(regex);
     }
 
     public String execute(){
@@ -79,6 +87,7 @@ public class BaseTranscoder {
 
         separated = split();
 
+        Log.d(TAG, "Length of split strings:" + separated.length);
         for(int i = 0 ; i < separated.length; i++){
             transcoded[i] = mimetype(separated[i]);
         }
@@ -88,7 +97,7 @@ public class BaseTranscoder {
             https://stackoverflow.com/questions/5283444/convert-array-of-strings-into-a-string-in-java/5283753
         */
         s = TextUtils.join(" ", transcoded);
-        Log.d(TAG, "Coverted query string:" + s);
+        Log.d(TAG, "Converted Odataquery string:" + s);
         return s;
     }
 }
