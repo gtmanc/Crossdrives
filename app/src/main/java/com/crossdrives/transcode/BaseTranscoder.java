@@ -3,6 +3,8 @@ package com.crossdrives.transcode;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.util.HashMap;
+
 /*
     A transcode to decode a Google style query string and then encode it to various of ones. i.e. Microsoft.
     A query string input by user is in term of style: "query term" "operator" "values".
@@ -20,6 +22,18 @@ public class BaseTranscoder {
     GoogleQueryTerm mGoogleQueryTerms;
     GoogleQueryValues mGoogleQueryValues;
     GoogleEqualityOperator mGoogleEqualityOperator;
+    /*
+        The maps are used to convert query term mimeType
+     */
+    static HashMap<String, String > mQueryValueMap = new HashMap<>();
+    static HashMap<String, String > mQueryEqualityMap = new HashMap<>();
+    static{
+        mQueryEqualityMap.put(GoogleEqualityOperator.EQUAL,"ne");
+        mQueryEqualityMap.put(GoogleEqualityOperator.NOT_EQUAL,"eq");
+    }
+    static{
+        mQueryValueMap.put(GoogleQueryValues.FOLDER,"null");
+    }
 
     public BaseTranscoder(String qs) {
         mGivenQueryString = qs;
@@ -37,6 +51,7 @@ public class BaseTranscoder {
     private String mimetype(final String google_qs) {
         int i = -1;
         String graph_qs = new String(google_qs.toString());
+        String equality, value;
 
         Log.d(TAG, "Converting mimeType...");
         //Exit if query term 'mineType' doesn't present
@@ -45,18 +60,22 @@ public class BaseTranscoder {
             return null;
         }
 
-        //Folder?
-        //replace "query term"
+        value = mGoogleQueryValues.getValue(google_qs);
         //Log.d(TAG, "Query value folder presents?");
-        if(mGoogleQueryValues.getValue(google_qs).equals(GoogleQueryValues.FOLDER)){
-            Log.d(TAG, "Query value 'folder' found!");
-            graph_qs = graph_qs.replace(GoogleQueryTerm.MIME_TYPE, "folder");
-            graph_qs = graph_qs.replace(GoogleQueryValues.FOLDER, "null");
+        if(value != null){
+            Log.d(TAG, "Query value found: " + value);
+            //replace "query term"
+            graph_qs = graph_qs.replace(GoogleQueryTerm.MIME_TYPE, mQueryEqualityMap.get(value));
+            //replace "query value"
+            graph_qs = graph_qs.replace(value, "null");
+        }else{
+            Log.w(TAG, "Unrecognized value: " + value);
         }
         //replace Equality operators
-        if(mGoogleEqualityOperator.getOperator(google_qs).equals(GoogleEqualityOperator.EQUAL)){
-            Log.d(TAG, "Equality operator '=' found!");
-            graph_qs = graph_qs.replace(GoogleEqualityOperator.EQUAL, "ne");
+        equality = mGoogleEqualityOperator.getOperator(google_qs);
+        if(equality != null){
+            Log.d(TAG, "Equality operator found: " + equality);
+            graph_qs = graph_qs.replace(equality, mQueryEqualityMap.get(equality));
         }
 
         Log.d(TAG, "mimeType converted string: " + graph_qs);
