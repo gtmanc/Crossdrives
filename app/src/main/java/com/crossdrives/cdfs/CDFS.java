@@ -50,7 +50,7 @@ public class CDFS {
                 sClient.get(0).list().buildRequest()
                         .setNextPage(nextPage)
                         .setPageSize(10)
-                        .filter("mimeType = application/vnd.google-apps.folder")
+                        .filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
                         .run(new ICallBack<FileList, Object>() {
                     @Override
                     public void success(FileList fileList, Object o) {

@@ -32,7 +32,7 @@ public class BaseTranscoder {
         mQueryEqualityMap.put(GoogleEqualityOperator.NOT_EQUAL,"eq");
     }
     static{
-        mQueryValueMap.put(GoogleQueryValues.FOLDER,"null");
+        mQueryValueMap.put(GoogleQueryValues.FOLDER,"folder");
     }
 
     public BaseTranscoder(String qs) {
@@ -65,7 +65,7 @@ public class BaseTranscoder {
         if(value != null){
             Log.d(TAG, "Query value found: " + value);
             //replace "query term"
-            graph_qs = graph_qs.replace(GoogleQueryTerm.MIME_TYPE, mQueryEqualityMap.get(value));
+            graph_qs = graph_qs.replace(GoogleQueryTerm.MIME_TYPE, mQueryValueMap.get(value));
             //replace "query value"
             graph_qs = graph_qs.replace(value, "null");
         }else{
@@ -81,6 +81,13 @@ public class BaseTranscoder {
         Log.d(TAG, "mimeType converted string: " + graph_qs);
 
         return graph_qs;
+    }
+
+    /*
+        Name
+     */
+    private String name(String google_qs){
+
     }
 
     /*
@@ -116,7 +123,7 @@ public class BaseTranscoder {
             https://stackoverflow.com/questions/5283444/convert-array-of-strings-into-a-string-in-java/5283753
         */
         s = TextUtils.join(" ", transcoded);
-        Log.d(TAG, "Converted Odataquery string:" + s);
+        Log.d(TAG, "Converted Odataquery string: " + s);
         return s;
     }
 }
