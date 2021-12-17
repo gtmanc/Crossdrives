@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GoogleQueryTerm extends BaseQueryTerm{
-    public static final String MIME_TYPE = "mimeType";
+    public static final String MIMETYPE = "mimeType";
+    public static final String NAME = "name";
+    public static final String FULLTEXT = "fullText";
+
     int index;
     String operator;
     final List<String> mTerms = new ArrayList<>();
@@ -12,10 +15,9 @@ public class GoogleQueryTerm extends BaseQueryTerm{
     public GoogleQueryTerm() {
         super();
         //terms present in front of operator
-        mTerms.add("mimeType");
-        mTerms.add("name");
-        mTerms.add("fullText");
-        //TODO: may need to implement logoc for terms present prior to operator
+        mTerms.add(MIMETYPE);
+        mTerms.add(NAME);
+        mTerms.add(FULLTEXT);
 
         setQueryTerms(mTerms);
      }

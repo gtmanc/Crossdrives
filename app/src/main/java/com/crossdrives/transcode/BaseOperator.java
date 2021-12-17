@@ -1,11 +1,13 @@
 package com.crossdrives.transcode;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class BaseOperator {
-
+    private final String TAG = "CD.BaseOperator";
     final List<String> mOPs = new ArrayList<>();
 
     public BaseOperator() {
@@ -28,6 +30,7 @@ public class BaseOperator {
         for (String s : mOPs){
             i = q.indexOf(s);
             if(q.indexOf(s) != -1) {
+                Log.d(TAG, "Operator found: " + s);
                 operator = s;
                 break;
             }
