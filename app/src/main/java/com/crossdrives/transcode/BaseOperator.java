@@ -28,9 +28,10 @@ public class BaseOperator {
         String operator = null;
 
         for (String s : mOPs){
+            //Log.d(TAG, "Operator: " + s);
             i = q.indexOf(s);
             if(q.indexOf(s) != -1) {
-                Log.d(TAG, "Operator found: " + s);
+                //Log.d(TAG, "Operator found: " + s);
                 operator = s;
                 break;
             }

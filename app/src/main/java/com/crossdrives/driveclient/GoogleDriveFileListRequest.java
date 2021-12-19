@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
 public class GoogleDriveFileListRequest extends BaseRequest implements IFileListRequest {
     private String TAG = "CD.GDC.GoogleDriveQueryRequest";
     GoogleDriveClient mClient;
-    List<String> mOptions= new ArrayList<>();
+    private String mfilterClause, mSelectClause;
     String mToken;
     /*
     100 is a feeling value. May need a fine tuning in the future.
@@ -30,15 +30,19 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
         mClient = client;
     }
 
+    /*
+        TODO: Not yet implemented
+     */
     @Override
     public IFileListRequest select(final String value) {
-        mOptions.add(value);
+
         return this;
     }
 
     @Override
     public IFileListRequest filter(String value) {
-        return null;
+        mfilterClause = value;
+        return this;
     }
 
     @Override
@@ -80,7 +84,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
             public FileList call() throws Exception {
                 FileList files = null;
                 files = mClient.getGoogleDriveService().files().list()
-                        .setQ("name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'")
+                        .setQ(mfilterClause)
                         //.setQ("mimeType ='application/vnd.google-apps.folder'")
                         .setSpaces("drive")
                         .setFields("nextPageToken, files(id, name)")

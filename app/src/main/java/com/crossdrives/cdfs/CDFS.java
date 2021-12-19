@@ -39,7 +39,7 @@ public class CDFS {
      */
     static public Task<FileList> list(Object nextPage){
         Task task;
-        Log.d(TAG, "Operation: list files");
+        Log.d(TAG, "Operation: list files. nextPage: " + nextPage);
         task = Tasks.call(sExecutor, new Callable<Object>() {
             @Override
             public FileList call() throws Exception {
@@ -50,7 +50,9 @@ public class CDFS {
                 sClient.get(0).list().buildRequest()
                         .setNextPage(nextPage)
                         .setPageSize(10)
-                        .filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
+                        //.filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
+                        //.filter("mimeType = application/vnd.google-apps.folder")
+                        .filter(null)
                         .run(new ICallBack<FileList, Object>() {
                     @Override
                     public void success(FileList fileList, Object o) {

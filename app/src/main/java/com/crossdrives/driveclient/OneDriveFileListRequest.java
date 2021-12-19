@@ -4,6 +4,7 @@ import android.util.Log;
 
 
 import com.crossdrives.transcode.BaseTranscoder;
+import com.crossdrives.transcode.GraphTranscoder;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -36,11 +37,12 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     /*
         Drive item Properties: https://docs.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0
     */
-
+    /*
+        TODO: Not yet implemented
+     */
     @Override
     public IFileListRequest select(final String value) {
 
-        addQueryOption(new QueryOption("Select", value));
         return this;
     }
 
@@ -88,7 +90,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .root()
                     .children()
                     .buildRequest()
-                    .filter("startswith(name, 'VIDEO')")
+                    .filter(mfilterClause)
                     .top(mPageSize);
 
                     //.filter("name in ('VIDEO0025.3gp')")
@@ -121,10 +123,8 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     "name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'"
      */
     private String getFilterClause(String Q){
-        BaseTranscoder transcoder = new BaseTranscoder(Q);
-
-
-        return transcoder.execute();
+        BaseTranscoder transcoder = new GraphTranscoder();
+        return transcoder.execute(Q);
     }
 
 
