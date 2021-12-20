@@ -120,11 +120,11 @@ public class SystemTestFragment extends Fragment {
     private void revokeAccess() {
         Task<Void> pendingResult = mGoogleSignInClient.revokeAccess();
         pendingResult.addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Log.d(TAG, "revoke OK!");
-                    }
-                });
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "revoke OK!");
+            }
+        });
     }
 
     private void updateSigninStatus(){
@@ -175,12 +175,12 @@ public class SystemTestFragment extends Fragment {
 
     ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
-        String mFileName = null;
-        String mFileContent = null;
-        String mOpenFID = null;
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            Log.d(TAG, "onActivityResult is called. Result code:" + result.getResultCode());
+                String mFileName = null;
+                String mFileContent = null;
+                String mOpenFID = null;
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    Log.d(TAG, "onActivityResult is called. Result code:" + result.getResultCode());
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Intent intent = result.getData();
                         mFileName = intent.getStringExtra("Name");

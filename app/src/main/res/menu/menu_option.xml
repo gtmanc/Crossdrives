@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.crossdrives.MainActivity">
 
-    <item android:id="@+id/search"
-        android:title="Search"
-        android:icon="@drawable/ic_search"
-        app:actionViewClass="android.widget.SearchView"
-        app:showAsAction="always|withText" />
+  <item android:id="@+id/search"
+      android:title="Search"
+      android:icon="@drawable/ic_search"
+      app:actionViewClass="android.widget.SearchView"
+      app:showAsAction="always|withText" />
 </menu>

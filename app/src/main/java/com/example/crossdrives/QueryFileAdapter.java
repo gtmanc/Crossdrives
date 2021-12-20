@@ -50,7 +50,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         final ViewHolder holder;
 
 //        if (viewType == VIEW_TYPE_ITEM) {
-            view = mViewItem;
+        view = mViewItem;
 //        }
 //        else {
 //            Log.d(TAG, "----viewType is loading----");
@@ -61,9 +61,9 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         holder = new ViewHolder(view);
 
         //if(view != mViewLoading) {
-            holder.ItemView.setOnClickListener(this.itemOnClickListener);
-            holder.ivMore.setOnClickListener(this.ImageMoreClickListener);
-            holder.ItemView.setOnLongClickListener(this);
+        holder.ItemView.setOnClickListener(this.itemOnClickListener);
+        holder.ivMore.setOnClickListener(this.ImageMoreClickListener);
+        holder.ItemView.setOnLongClickListener(this);
 //            holder.ItemView.setOnClickListener(new View.OnClickListener() {
 //                @Override
 //                public void onClick(View view) {
@@ -99,10 +99,10 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
     private View.OnClickListener itemOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-           if (v.getTag() == null)
+            if (v.getTag() == null)
                 Log.d(TAG, "itemOnClickListener: v.tag is null");
 
-           mClickListener.onItemClick(v, (int) v.getTag());
+            mClickListener.onItemClick(v, (int) v.getTag());
         }
     };
 
@@ -241,7 +241,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         return type;
     }
 
-//public class QueryFileAdapter extends BaseAdapter {
+    //public class QueryFileAdapter extends BaseAdapter {
 //    private String TAG = "CD.QueryFileAdapter";
 //    List<ItemModelBase> mItems;
 //    LayoutInflater mInflater;

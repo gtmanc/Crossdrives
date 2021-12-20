@@ -8,7 +8,7 @@
         android:id="@+id/delete_file_fragment"
         android:name="com.example.crossdrives.DeleteFileFragment"
         tools:layout="@layout/delete_file_fragment">
-    <!-- android:label="DFF"-->
+        <!-- android:label="DFF"-->
         <action
             android:id="@+id/navigate_to_master_account"
             app:destination="@id/drawer_menu_item_master_account" />
