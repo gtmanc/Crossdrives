@@ -45,53 +45,26 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         View view;
         mViewItem = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.list_view_item, parent, false);
-//        mViewLoading = LayoutInflater.from(parent.getContext())
-//                .inflate(R.layout.query_item_loading, parent, false);
+        mViewLoading = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.query_item_loading, parent, false);
         final ViewHolder holder;
 
-//        if (viewType == VIEW_TYPE_ITEM) {
-        view = mViewItem;
-//        }
-//        else {
-//            Log.d(TAG, "----viewType is loading----");
-//            view = mViewLoading;
-//        }
+        if (viewType == VIEW_TYPE_ITEM) {
+            view = mViewItem;
+        }else {
+            Log.d(TAG, "----viewType is loading----");
+            view = mViewLoading;
+        }
 //        Log.d(TAG, "view object:" + view);
 
         holder = new ViewHolder(view);
 
-        //if(view != mViewLoading) {
-        holder.ItemView.setOnClickListener(this.itemOnClickListener);
-        holder.ivMore.setOnClickListener(this.ImageMoreClickListener);
-        holder.ItemView.setOnLongClickListener(this);
-//            holder.ItemView.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    int position = holder.getAdapterPosition();
-//                    Log.d(TAG, "[ItemView.OnClickListener] position: " + position);
-//
-//                    ItemModelBase item = mItems.get(position);
-//                    Toast.makeText(view.getContext(), "你点击了View" + item.getName(), Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//
-//            holder.ItemView.setOnLongClickListener(new View.OnLongClickListener() {
-//                @Override
-//                public boolean onLongClick(View v) {
-//                    return false;
-//                }
-//            });
-//
-//            holder.Image.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    int position = holder.getAdapterPosition();
-//                    Log.d(TAG, "[Image.OnClickListener] position:" + position);
-//                    ItemModelBase item = mItems.get(position);
-//                    Toast.makeText(view.getContext(), "你点击了图片" + item.getName(), Toast.LENGTH_SHORT).show();
-//                }
-//            });
-        //}
+        //Set click listener only for view item
+        if(holder.progressBar == null) {
+            holder.ItemView.setOnClickListener(this.itemOnClickListener);
+            holder.ivMore.setOnClickListener(this.ImageMoreClickListener);
+            holder.ItemView.setOnLongClickListener(this);
+        }
         return holder;
     }
 
@@ -232,11 +205,11 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
     public int getItemViewType(int position) {
         int type = VIEW_TYPE_ITEM;
 //        //Log.d(TAG, "[getItemViewType]:position=" + position);
-//        if(mItems.get(position) == null)
-//        {
-//            type = VIEW_TYPE_LOADING;
+        if(mItems.get(position) == null)
+        {
+            type = VIEW_TYPE_LOADING;
 //            Log.d(TAG, "View is loading");
-//        }
+        }
 //
         return type;
     }

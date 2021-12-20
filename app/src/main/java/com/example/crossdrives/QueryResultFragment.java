@@ -273,6 +273,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
+			Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
 			//fetch next page if last item is already shown to the user
 			if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
 				//bottom of list!
