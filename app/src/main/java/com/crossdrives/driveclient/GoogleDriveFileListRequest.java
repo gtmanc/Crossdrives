@@ -81,19 +81,23 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
             public FileList call() throws Exception {
                 FileList files = null;
 
-                //Drive.Files.List l = mClient.getGoogleDriveService().files().list();
-
-                files = mClient.getGoogleDriveService().files().list()
-                        .setQ(mfilterClause)    //null is ok?
-                        //.setQ("mimeType ='application/vnd.google-apps.folder'")
+                Drive.Files.List list = mClient.getGoogleDriveService().files().list()
                         .setSpaces("drive")
                         .setFields("nextPageToken, files(id, name)")
-                        .setPageToken(mToken)   //this is ok. null means 1st page
-                        //set to a small number can be used for test of loading more data in UI handling
-                        .setPageSize(mPageSize) //0 is ok?
-                        .execute();
+                        .setPageToken(mToken);  //this is ok. null means 1st page;
 
+                //apply filter?
+                if(mfilterClause != null) {
+                    list = list.setQ(mfilterClause);
+                }
 
+                //apply page Size? Google error message says: "Values must be within the range: [1, 1000]"
+                if(mPageSize != 0) {
+                    //set to a small number can be used for test of loading more data in UI handling
+                     list = list.setPageSize(mPageSize);
+                }
+
+                files = list.execute();
 
                 return files;
             }
