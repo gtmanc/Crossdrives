@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -20,11 +21,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
     GoogleDriveClient mClient;
     private String mfilterClause, mSelectClause;
     String mToken;
-    /*
-    100 is a feeling value. May need a fine tuning in the future.
-     */
-    final int PAGE_SIZE = 100;
-    int mPageSize = PAGE_SIZE;
+    int mPageSize = 0;  //0 means 'not yet assigned'
 
     public GoogleDriveFileListRequest(GoogleDriveClient client) {
         mClient = client;
@@ -83,15 +80,21 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
             @Override
             public FileList call() throws Exception {
                 FileList files = null;
+
+                //Drive.Files.List l = mClient.getGoogleDriveService().files().list();
+
                 files = mClient.getGoogleDriveService().files().list()
-                        .setQ(mfilterClause)
+                        .setQ(mfilterClause)    //null is ok?
                         //.setQ("mimeType ='application/vnd.google-apps.folder'")
                         .setSpaces("drive")
                         .setFields("nextPageToken, files(id, name)")
-                        .setPageToken(mToken)
+                        .setPageToken(mToken)   //this is ok. null means 1st page
                         //set to a small number can be used for test of loading more data in UI handling
-                        .setPageSize(mPageSize)
+                        .setPageSize(mPageSize) //0 is ok?
                         .execute();
+
+
+
                 return files;
             }
         });

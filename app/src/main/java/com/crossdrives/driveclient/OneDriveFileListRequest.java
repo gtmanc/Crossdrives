@@ -24,11 +24,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     OneDriveClient mClient;
     DriveItemCollectionRequestBuilder mNextPageBuilder;
     private String mfilterClause, mSelectClause;
-    /*
-    100 is a feeling value. May need a fine tuning in the future.
-     */
-    final int PAGE_SIZE = 100;
-    int mPageSize = PAGE_SIZE;
+    int mPageSize = 0;  //0 means 'not yet assigned'
 
     public OneDriveFileListRequest(OneDriveClient client) {
         super();
@@ -51,7 +47,12 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
      */
     @Override
     public IFileListRequest filter(String value) {
-        mfilterClause = getFilterClause(value);
+        String s = value;
+        if(value != null){
+            BaseTranscoder transcoder = new GraphTranscoder();
+            s = transcoder.execute(value);
+        }
+        mfilterClause = s;
         return this;
     }
 
@@ -65,7 +66,12 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
      */
     @Override
     public IFileListRequest setPageSize(int size) {
-        mPageSize = size;
+        //TODO: behavior of google page size is different from graph as the name is 'top' rather than PageSize
+        //Here we only adapt it with number of size
+        if(size != 0) {
+            mPageSize = size + 1;
+        }
+
         return this;
     }
 
@@ -89,14 +95,17 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .drive()
                     .root()
                     .children()
-                    .buildRequest()
-                    .filter(mfilterClause)
-                    .top(mPageSize);
-
-                    //.filter("name in ('VIDEO0025.3gp')")
-                    //.count(true);
-                    //.select(null);
+                    .buildRequest();
         }
+        //apply filter?
+        if(mfilterClause != null){
+            request.filter(mfilterClause);
+        }
+        //apply top?
+        if(mPageSize != 0){
+            request.top(mPageSize);
+        }
+
         request.getAsync().thenAccept(DriveItemCollectionPage ->{
                         FileList fileList = new FileList();
                         List<DriveItem> items =
@@ -117,14 +126,6 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                 .exceptionally(ex -> {Log.d(TAG, "Get root failed: " + ex.toString()); return null;});
 
 
-    }
-
-    /*
-    "name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'"
-     */
-    private String getFilterClause(String Q){
-        BaseTranscoder transcoder = new GraphTranscoder();
-        return transcoder.execute(Q);
     }
 
 

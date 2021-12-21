@@ -65,9 +65,17 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 	/*
 	Next page handler. Use this handler to get file list of next page. It is available in response of
 	previous file list request
-	here we keep it as abstract because it depends on the drives
+	here we keep it as abstract because it varies depending on the drives
 	 */
 	private Object mNextPage;
+
+	/*
+
+	 */
+	private final String QSTATE_READY = "query ready";	//Query has not yet started
+	private final String QSTATE_INPROGRESS = "query ongoing";	//A query is ongoing
+	private final String QSTATE_EOL = "query EOL"; //Query reach the end of list
+	private String mQSTATE;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,17 +127,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		hv.setOnClickListener(this);
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
-		initialQuery(view);
-
-		mProgressBar.setVisibility(View.VISIBLE);
-		queryFile(view);
-	}
-	/*
-        Initialization of query
-     */
-	private void initialQuery(final View v){
-		Log.i(TAG, "initialQuery...");
-		mRecyclerView = v.findViewById(R.id.recycler_view);
+		mRecyclerView = view.findViewById(R.id.recycler_view);
 		mLayoutManager = new LinearLayoutManager(getContext());
 		//It seems to be ok we create a new layout manager ans set to the recyclarview.
 		//It is observed each time null is got if view.getLayoutManager is called
@@ -138,8 +136,12 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
 
-		mNextPage = null;	//null to get first page of file list
+		mProgressBar.setVisibility(View.VISIBLE);
+
+		initialQuery();
+		queryFile(view);
 	}
+
 	/*
 	 *  First time query
 	 */
@@ -151,6 +153,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 			//mProgressBar.setVisibility(View.VISIBLE);
 
 //			mDriveServiceHelper.resetQuery();
+			setQStateInprogress();
 			CDFS.list(mNextPage)
 			//mDriveServiceHelper.queryFiles()
 					.addOnSuccessListener(new OnSuccessListener<FileList>() {
@@ -175,14 +178,11 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							mAdapter.setOnItemClickListener(itemClickListener);
 							mRecyclerView.setAdapter(mAdapter);
 
-							//listview.setAdapter(mAdapter);
-
-							//The files are ready to be shown. Dismiss the progress cycle
-							//mProgressBar.setVisibility(View.GONE);
-
-							//setResult(RESULT_OK, mIntent);
-
 							mNextPage = fileList.getNextPageToken();
+							if(mNextPage == null){
+								Log.d(TAG, "Next page handler is null!");
+								CloseQuery();
+							}
 							mProgressBar.setVisibility(View.INVISIBLE);
 						}
 
@@ -201,20 +201,26 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 	}
 
 	private void queryFileContinue(){
-		int lastitemindex = mItems.size() - 1;
 
-		//if (mDriveServiceHelper != null) {
-			Log.i(TAG, "Querying for files continue.");
+		//We are reaching the end of list. Stop query.
+		//We are okay because no filter is applied.
+		if (getState() == QSTATE_EOL) {
+			CloseQuery();
+			Log.d(TAG, "End of List. Exit directly");
+			return;
+		}
 
-			//mProgressBar.setVisibility(View.VISIBLE);
+		Log.d(TAG, "Querying for files continue.");
 
-			//Insert a null item so that the adapter knows that progress bar needs to be shown to the user
-			mItems.add(null);
-			Log.i(TAG, "Notify inserted");
-			mAdapter.notifyItemInserted(mItems.size() - 1);
+		//mProgressBar.setVisibility(View.VISIBLE);
 
-			//mDriveServiceHelper.queryFiles()
-			CDFS.list(mNextPage)
+		//Insert a null item so that the adapter knows that progress bar needs to be shown to the user
+		mItems.add(null);
+		Log.d(TAG, "Notify inserted");
+		mAdapter.notifyItemInserted(mItems.size() - 1);
+
+		//mDriveServiceHelper.queryFiles()
+		CDFS.list(mNextPage)
 					.addOnSuccessListener(new OnSuccessListener<FileList>() {
 						@Override
 						public void onSuccess(FileList fileList) {
@@ -243,10 +249,12 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							//TODO: to clarify why the newly loaded items are not updated to screen if we dont do any further scroll.
 							// i.e. enter the recycler view from previous screen and only few items are initially loaded
 							mAdapter.notifyDataSetChanged();
-							//The files are ready to be shown. Dismiss the progress cycle
-							//mProgressBar.setVisibility(View.GONE);
 
-							//setResult(RESULT_OK, mIntent);
+							mNextPage = fileList.getNextPageToken();
+							if(mNextPage == null){
+								Log.d(TAG, "Next page handler is null!");
+								CloseQuery();
+							}
 						}
 					})
 					.addOnFailureListener(new OnFailureListener() {
@@ -273,7 +281,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
-			Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
+			//Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
 			//fetch next page if last item is already shown to the user
 			if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
 				//bottom of list!
@@ -281,6 +289,32 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 			}
 		}
 	};
+
+	/*
+		Query related methods
+	*/
+	/*
+        Initialization of query
+     */
+	private void initialQuery(){
+		Log.i(TAG, "initialQuery...");
+
+		mNextPage = null;	//null to get first page of file list
+		mQSTATE = QSTATE_READY;
+	}
+
+	private void setQStateInprogress(){
+		mQSTATE = QSTATE_INPROGRESS;
+	}
+
+	private String getState(){
+		return mQSTATE;
+	}
+
+	void CloseQuery(){
+		mQSTATE = QSTATE_EOL;
+	}
+
 	/*
     Two states :
     1. Normal
