@@ -26,7 +26,15 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.IDriveClient;
+import com.crossdrives.driveclient.OneDriveClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
 
 public class AddAccountFragment extends BaseFragment {
     private String TAG = "CD.AddAccountFragment";
@@ -34,6 +42,11 @@ public class AddAccountFragment extends BaseFragment {
     private static final int RC_SIGN_IN = 0;
     Fragment mFragment;
     View mView;
+    /*
+        Maintenance of map between drive client and index for add/remove CDFS client.
+     */
+    HashMap<Integer, IDriveClient> mDrives;
+    int mIndex = 0;
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -133,10 +146,8 @@ public class AddAccountFragment extends BaseFragment {
                 ai = am.getAccountActivated(getContext(), brand_am);
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
-                //double check if the account is set deactivated
-                //ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
-                //if(ai != null)
-                //
+
+                CDFS.removeClient();
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -241,18 +252,24 @@ public class AddAccountFragment extends BaseFragment {
         @Override
         public void onFinished(int result, SignInManager.Profile profile, Object object) {
             boolean err = false;
+            int i;
 
             if(result == SignInManager.RESULT_SUCCESS) {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
                     Log.d(TAG, "User sign in OK. Start to create google drive client");
-                    //GoogleDriveClient google_drive = GoogleDriveClient.create(getContext(), object);
-                    //GoogleDriveClient.Builder.
+                    GoogleDriveClient gdc =
+                            (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
+                    i = CDFS.addClient(gdc);
+                    mDrives.put(i, gdc);
+
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
                 {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
-                    //GraphDriveClient graph_drive = new GraphDriveClient().create(object);
+                    OneDriveClient odc =
+                            (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
+                    CDFS.addClient(odc);
                 }
                 else{
                     Log.w(TAG, "Unknow brand!");
@@ -271,6 +288,10 @@ public class AddAccountFragment extends BaseFragment {
             NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
         }
     };
+
+    private void addGoogleDriveClient(GoogleSignInAccount account){
+
+    }
 
     private void createAccount(SignInManager.Profile profile){
         AccountManager.AccountInfo ai= new AccountManager.AccountInfo();

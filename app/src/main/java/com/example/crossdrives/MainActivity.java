@@ -138,21 +138,10 @@ public class MainActivity extends AppCompatActivity{
             startActivity(intent);
         }
     }
-    void addGoogleDriveClient(GoogleSignInAccount account){
+    private void addGoogleDriveClient(GoogleSignInAccount account){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
         CDFS.addClient(gdc);
-//        gdc.list().buildRequest().run(new ICallBack<FileList, Object>() {
-//            @Override
-//            public void success(FileList fileList, Object page) {
-//
-//            }
-//
-//            @Override
-//            public void failure(String ex) {
-//
-//            }
-//        });
     }
 
     void addOneDriveClient(String token){

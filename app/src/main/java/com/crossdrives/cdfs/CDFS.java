@@ -30,8 +30,14 @@ public class CDFS {
 
     }
 
-    static public void addClient(IDriveClient client){
+    static public int addClient(IDriveClient client){
         sClient.add(client);
+    }
+    static public void removeClient(IDriveClient client){
+        sClient.remove(client);
+    }
+    static public IDriveClient getClient(int i){
+        return sClient.get(i);
     }
 
     /*
