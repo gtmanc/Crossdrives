@@ -43,9 +43,9 @@ public class AddAccountFragment extends BaseFragment {
     Fragment mFragment;
     View mView;
     /*
-        Maintenance of map between drive client and index for add/remove CDFS client.
+        Maintenance of map between drive brand and index for add/remove CDFS client.
      */
-    HashMap<Integer, IDriveClient> mDrives;
+    HashMap<String, Integer> mDrives = new HashMap<>();
     int mIndex = 0;
 
     @Nullable
@@ -133,6 +133,7 @@ public class AddAccountFragment extends BaseFragment {
     SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
         @Override
         public void onFinished(int result, String brand) {
+            int i;
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 String brand_am = GlobalConstants.BRAND_GOOGLE;
@@ -147,7 +148,8 @@ public class AddAccountFragment extends BaseFragment {
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
 
-                CDFS.removeClient();
+                i = mDrives.get(brand);
+                CDFS.removeClient(i);
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -261,7 +263,8 @@ public class AddAccountFragment extends BaseFragment {
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
                     i = CDFS.addClient(gdc);
-                    mDrives.put(i, gdc);
+                    Log.d(TAG, "Add CDFS for Google. Client index: " + i);
+                    mDrives.put(SignInManager.BRAND_GOOGLE, i);
 
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
@@ -269,7 +272,9 @@ public class AddAccountFragment extends BaseFragment {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
-                    CDFS.addClient(odc);
+                    i = CDFS.addClient(odc);
+                    Log.d(TAG, "Add CDFS for MS. Client index: " + i);
+                    mDrives.put(SignInManager.BRAND_MS, i);
                 }
                 else{
                     Log.w(TAG, "Unknow brand!");
