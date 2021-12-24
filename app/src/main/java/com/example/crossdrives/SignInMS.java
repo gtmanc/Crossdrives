@@ -2,7 +2,6 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.View;
@@ -10,7 +9,6 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.crossdrives.msgraph.MSGraphRestHelper;
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 
@@ -51,6 +49,7 @@ public class SignInMS extends SignInManager{
     Profile mProfile = new Profile();
     private String mToken;
     private Object mObject;
+    IGraphServiceClient mGraphClient;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext(); scopes.add("Files.Read");}
 
@@ -125,8 +124,6 @@ public class SignInMS extends SignInManager{
 
         //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
         //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
-        final String accessToken = mToken;
-
         GraphServiceClient graphClient =
                 GraphServiceClient
                         .builder()
@@ -229,16 +226,20 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "User name : " + authenticationResult.getAccount().getUsername());
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
-                Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
+                //Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
                 // save our auth token for REST API use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
+                //Let's set the profile data using the information got. The missing filed will be set
+                //in the getUser
                 mProfile.Name = authenticationResult.getAccount().getUsername();
                 mProfile.Mail = "";
                 mProfile.PhotoUri = null;
 
                 mToken = authenticationResult.getAccessToken();
-                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
-                MSGraphRestHelper msRest = new MSGraphRestHelper();
+                createClient();
+                getUserAndCallback();
+                //MSGraphRestHelper msRest = new MSGraphRestHelper();
+
 
                 /* call graph */
 //                callGraphAPI(authenticationResult);
@@ -270,6 +271,7 @@ public class SignInMS extends SignInManager{
 
                 //callGraphAPI(authenticationResult);
                 mToken = authenticationResult.getAccessToken();
+                createClient();
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, mToken);
             }
             @Override
