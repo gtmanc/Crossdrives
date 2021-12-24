@@ -53,7 +53,7 @@ public class AddAccountFragment extends BaseFragment {
         callback is called. It seems that fragment creates a new concrete map object each time the
         callback gets called.
      */
-    static Map<String, Integer> mDrives = new HashMap<>();
+    static Map<String, IDriveClient> mDrives = new HashMap<>();
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -155,10 +155,9 @@ public class AddAccountFragment extends BaseFragment {
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
 
-//                Log.d(TAG, "Brand: " + brand);
-//                Log.d(TAG, "Size: " + mDrives.size());
-                i = mDrives.get(brand);
-                CDFS.removeClient(i);
+                Log.d(TAG, "Brand: " + brand);
+                Log.d(TAG, "mDrives: " + mDrives);
+                CDFS.removeClient(mDrives.get(brand));
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -263,7 +262,6 @@ public class AddAccountFragment extends BaseFragment {
         @Override
         public void onFinished(int result, SignInManager.Profile profile, Object object) {
             boolean err = false;
-            int i;
 
             if(result == SignInManager.RESULT_SUCCESS) {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
@@ -271,19 +269,20 @@ public class AddAccountFragment extends BaseFragment {
                     Log.d(TAG, "User sign in OK. Start to create google drive client");
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
-                    i = CDFS.addClient(gdc);
-                    Log.d(TAG, "Add CDFS for Google. Client index: " + i);
-                    mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
+                    CDFS.addClient(gdc);
+                    Log.d(TAG, "mDrives: " + mDrives);
+                    mDrives.put(GlobalConstants.BRAND_GOOGLE, gdc);
+                    Log.d(TAG, "mDrives: " + mDrives);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
                 {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
-                    i = CDFS.addClient(odc);
-                    Log.d(TAG, "Add CDFS for MS. Client index: " + i);
-                    mDrives.put(GlobalConstants.BRAND_MS, i);
-
+                    CDFS.addClient(odc);
+                    Log.d(TAG, "mDrives: " + mDrives);
+                    mDrives.put(GlobalConstants.BRAND_MS, odc);
+                    Log.d(TAG, "mDrives: " + mDrives);
                 }
                 else{
                     Log.w(TAG, "Unknow brand!");
