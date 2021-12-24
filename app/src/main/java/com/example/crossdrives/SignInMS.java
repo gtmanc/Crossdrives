@@ -49,7 +49,6 @@ public class SignInMS extends SignInManager{
     Profile mProfile = new Profile();
     private String mToken;
     private Object mObject;
-    IGraphServiceClient mGraphClient;
 
     public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext(); scopes.add("Files.Read");}
 
@@ -236,8 +235,7 @@ public class SignInMS extends SignInManager{
                 mProfile.PhotoUri = null;
 
                 mToken = authenticationResult.getAccessToken();
-                createClient();
-                getUserAndCallback();
+                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
                 //MSGraphRestHelper msRest = new MSGraphRestHelper();
 
 
@@ -271,7 +269,6 @@ public class SignInMS extends SignInManager{
 
                 //callGraphAPI(authenticationResult);
                 mToken = authenticationResult.getAccessToken();
-                createClient();
                 mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, mToken);
             }
             @Override
