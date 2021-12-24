@@ -1,156 +1,156 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <!--
-        We could also define action bar and action mode theme/style here
-        <item name="actionModeStyle">@style/Widget.App.ActionMode</item>
-        <item name="actionBarTheme">@style/ThemeOverlay.MaterialComponents.Dark.ActionBar</item>
-        -->
-    </style>
+  <!-- Base application theme. -->
+  <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <!-- Customize your theme here. -->
+    <item name="colorPrimary">@color/colorPrimary</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <item name="colorAccent">@color/colorAccent</item>
+    <!--
+    We could also define action bar and action mode theme/style here
+    <item name="actionModeStyle">@style/Widget.App.ActionMode</item>
+    <item name="actionBarTheme">@style/ThemeOverlay.MaterialComponents.Dark.ActionBar</item>
+    -->
+  </style>
 
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-        <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/darker_gray</item>
-        <item name="actionMenuTextColor">@android:color/white</item>
-        <item name="android:colorBackground">@color/colorBackground</item>
-        <item name="colorPrimary">@android:color/white</item>
-        <item name="colorSecondary">@android:color/darker_gray</item>
+  <style name="AppTheme.NoActionBar">
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
+    <item name="android:textColorPrimary">@android:color/white</item>
+    <item name="android:textColorSecondary">@android:color/darker_gray</item>
+    <item name="actionMenuTextColor">@android:color/white</item>
+    <item name="android:colorBackground">@color/colorBackground</item>
+    <item name="colorPrimary">@android:color/white</item>
+    <item name="colorSecondary">@android:color/darker_gray</item>
 
-        <!-- Query result list -->
-        <item name="colorQueryListItemBGIdle">@color/colorQueryListItemBGIdle</item>
-        <item name="colorQueryListBackgroundSelected">@color/colorQueryListItemBGSelected</item>
-        <item name="colorQueryListItemPicBGChecked">@color/colorQueryListItemPicBGChecked</item>
-
-
-        <item name="colorNavigationItem">@color/drawer_menu_item_color_state</item>
-        <item name="colorNavigationItemSelected">@android:color/holo_blue_light</item>
-        <item name="drawableNavigationItemBackground">@drawable/drawer_menu_item_bg_state</item>
-
-        <item name="button1Background">@drawable/button1_background_state</item>
-        <item name="colorButton1BackgroundPress">@color/colorButton1BackgroundPress</item>
-        <item name="colorButton1BackgroundRelease">@color/colorButton1BackgroundRelease</item>
-        <item name="colorButton1Content">@color/button2_content_color_state</item>
-        <item name="colorButton1ContentPress">@color/colorButton1BackgroundRelease</item>
-        <item name="colorButton1ContentRelease">@android:color/white</item>
-
-        <item name="button2Background">@drawable/button2_background_state</item>
-        <item name="colorButton2BackgroundPress">@color/colorButton1BackgroundPress</item>
-        <item name="colorButton2BackgroundRelease">@color/colorBackground</item>
-        <item name="colorButton2Stroke">@color/colorButton1BackgroundRelease</item>
-        <item name="colorButton2Content">@color/button1_content_color_state</item>
-        <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
-        <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
-    </style>
-
-    <style name="AppTheme.AppBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
-        <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/white</item>
-        <item name="actionMenuTextColor">@android:color/white</item>
-        <item name="android:background">@android:color/transparent</item>
-        <!--
-    <item name="android:backgroundDimAmount">1</item>
-    <item name="android:backgroundDimEnabled">true</item>-->
-    </style>
-
-    <style name="ToolBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
-        <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/white</item>
-        <item name="actionMenuTextColor">@android:color/white</item>
-        <item name="android:background">@color/colorToolbarBackground</item>
-        <item name="actionModeStyle">@style/Widget.Custom.AppCompat.ActionMode</item>
-        <item name="actionOverflowButtonStyle">@style/MyOverflowButtonStyle</item>
-        <item name="actionModeCloseDrawable">@drawable/ic_baseline_close_24</item>
-        <item name="actionModeCloseButtonStyle">@style/MyActionModeCloseButtonStyle</item>
-        <item name="actionBarPopupTheme">@style/ActionModeOverflowMenu</item>
-    </style>
-    <style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.AppCompat.ActionMode">
-        <item name="background">@color/colorActionModeBackground</item>
-        <item name="titleTextStyle">@style/ActionModeTitleTextStyle</item>
-    </style>
-    <style name="ActionModeTitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
-        <item name="android:textColor">@color/colorActionModeText</item>
-    </style>
-    <style name="MyOverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
-        <item name="android:tint">@color/colorActionModeOverflow</item>
-    </style>
-    <style name="ActionModeOverflowMenu" parent="Widget.AppCompat.ListPopupWindow">
-        <item name="android:background">@color/colorActionModeBackground</item>
-        <!--<item name="android:textColor">@color/colorAccent</item>-->
-    </style>
-    <style name="MyActionModeCloseButtonStyle" parent="Widget.AppCompat.ActionButton">
-        <item name="android:tint">@color/colorActionModeOverflow</item>
-    </style>
-    <!--<style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.MaterialComponents.Toolbar">
-        <item name="background">@color/colorToolbarBackground</item>
-    </style>-->
-    <!--        <item name="windowActionModeOverlay">false</item>-->
-    <!--<item name="android:actionBarStyle">"showHome|useLogo"</item>
-    <item name="actionBarStyle">"showHome|useLogo"</item> -->
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" ></style>
-
-    <style name="Widget.Custom.NavigationView" parent="Widget.Design.NavigationView">
-        <item name="itemIconTint">?attr/colorNavigationItem</item>
-        <item name="itemTextColor">?attr/colorNavigationItem</item>
-        <item name="itemBackground">?attr/drawableNavigationItemBackground</item>
-        <item name="android:background">@color/colorDrawerBackground</item>
-
-        <!-- Positioning -->
-        <item name="itemIconPadding">24dp</item>-->
-        <!--<item name="itemHorizontalPadding">100dp</item>-->
-        <item name="itemTextAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
-    </style>
-
-    <!-- Buttons go to style (v23)-->
-
-    <!-- Progress bar -->
-    <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
-    </style>
-    
-    <style name="Theme.Custom.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog.MinWidth">
-        <!--Background: Transparent-->
-        <item name="android:windowBackground">@color/colorTransparant</item>
-        <!--Border-->
-        <item name="android:windowFrame">@null</item>
-        <item name="android:background">@drawable/dialog_background</item>
-
-        <!-- Material input text -->
-        <item name="colorOnSurface">@android:color/holo_blue_light</item>
-        <!-- colorPrimary will affect stroke and floating text color -->
-        <item name="colorPrimary">@android:color/holo_blue_light</item>
-
-        <!--Action buttons -->
-        <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
-        <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
-        <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
-        <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
-        <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
-    </style>
-
-    <style name="Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <!-- Dont know why override the default colors in colors.xml doesnt work -->
-        <!--<item name="boxStrokeColor">@android:color/holo_blue_light</item>-->
-        <!--<item name="boxBackgroundMode">filled</item>-->
-        <!--<item name="boxBackgroundColor">@color/colorAccent</item>-->
-        <!--<item name="android:textColorHint">@color/colorAccent</item>-->
+    <!-- Query result list -->
+    <item name="colorQueryListItemBGIdle">@color/colorQueryListItemBGIdle</item>
+    <item name="colorQueryListBackgroundSelected">@color/colorQueryListItemBGSelected</item>
+    <item name="colorQueryListItemPicBGChecked">@color/colorQueryListItemPicBGChecked</item>
 
 
-    </style>
+    <item name="colorNavigationItem">@color/drawer_menu_item_color_state</item>
+    <item name="colorNavigationItemSelected">@android:color/holo_blue_light</item>
+    <item name="drawableNavigationItemBackground">@drawable/drawer_menu_item_bg_state</item>
 
-    <!--states for Stroke color -->
-    <!--<item android:color="?attr/colorPrimary" android:state_focused="true"/>
-    <item android:alpha="0.87" android:color="?attr/colorOnSurface" android:state_hovered="true"/>
-    <item android:alpha="0.12" android:color="?attr/colorOnSurface" android:state_enabled="false"/>
-    <item android:alpha="0.38" android:color="?attr/colorOnSurface"/>-->
+    <item name="button1Background">@drawable/button1_background_state</item>
+    <item name="colorButton1BackgroundPress">@color/colorButton1BackgroundPress</item>
+    <item name="colorButton1BackgroundRelease">@color/colorButton1BackgroundRelease</item>
+    <item name="colorButton1Content">@color/button2_content_color_state</item>
+    <item name="colorButton1ContentPress">@color/colorButton1BackgroundRelease</item>
+    <item name="colorButton1ContentRelease">@android:color/white</item>
 
-    <!-- Label color (not Collapsed (floating) color)-->
-    <!--<item android:alpha="0.38" android:color="?attr/colorOnSurface" android:state_enabled="false"/>
-    <item android:alpha="0.6" android:color="?attr/colorOnSurface"/> -->
+    <item name="button2Background">@drawable/button2_background_state</item>
+    <item name="colorButton2BackgroundPress">@color/colorButton1BackgroundPress</item>
+    <item name="colorButton2BackgroundRelease">@color/colorBackground</item>
+    <item name="colorButton2Stroke">@color/colorButton1BackgroundRelease</item>
+    <item name="colorButton2Content">@color/button1_content_color_state</item>
+    <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
+    <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
+  </style>
+
+  <style name="AppTheme.AppBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
+    <item name="android:textColorPrimary">@android:color/white</item>
+    <item name="android:textColorSecondary">@android:color/white</item>
+    <item name="actionMenuTextColor">@android:color/white</item>
+    <item name="android:background">@android:color/transparent</item>
+    <!--
+<item name="android:backgroundDimAmount">1</item>
+<item name="android:backgroundDimEnabled">true</item>-->
+  </style>
+
+  <style name="ToolBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
+    <item name="android:textColorPrimary">@android:color/white</item>
+    <item name="android:textColorSecondary">@android:color/white</item>
+    <item name="actionMenuTextColor">@android:color/white</item>
+    <item name="android:background">@color/colorToolbarBackground</item>
+    <item name="actionModeStyle">@style/Widget.Custom.AppCompat.ActionMode</item>
+    <item name="actionOverflowButtonStyle">@style/MyOverflowButtonStyle</item>
+    <item name="actionModeCloseDrawable">@drawable/ic_baseline_close_24</item>
+    <item name="actionModeCloseButtonStyle">@style/MyActionModeCloseButtonStyle</item>
+    <item name="actionBarPopupTheme">@style/ActionModeOverflowMenu</item>
+  </style>
+  <style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.AppCompat.ActionMode">
+    <item name="background">@color/colorActionModeBackground</item>
+    <item name="titleTextStyle">@style/ActionModeTitleTextStyle</item>
+  </style>
+  <style name="ActionModeTitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
+    <item name="android:textColor">@color/colorActionModeText</item>
+  </style>
+  <style name="MyOverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
+    <item name="android:tint">@color/colorActionModeOverflow</item>
+  </style>
+  <style name="ActionModeOverflowMenu" parent="Widget.AppCompat.ListPopupWindow">
+    <item name="android:background">@color/colorActionModeBackground</item>
+    <!--<item name="android:textColor">@color/colorAccent</item>-->
+  </style>
+  <style name="MyActionModeCloseButtonStyle" parent="Widget.AppCompat.ActionButton">
+    <item name="android:tint">@color/colorActionModeOverflow</item>
+  </style>
+  <!--<style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.MaterialComponents.Toolbar">
+      <item name="background">@color/colorToolbarBackground</item>
+  </style>-->
+  <!--        <item name="windowActionModeOverlay">false</item>-->
+  <!--<item name="android:actionBarStyle">"showHome|useLogo"</item>
+  <item name="actionBarStyle">"showHome|useLogo"</item> -->
+  <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" ></style>
+
+  <style name="Widget.Custom.NavigationView" parent="Widget.Design.NavigationView">
+    <item name="itemIconTint">?attr/colorNavigationItem</item>
+    <item name="itemTextColor">?attr/colorNavigationItem</item>
+    <item name="itemBackground">?attr/drawableNavigationItemBackground</item>
+    <item name="android:background">@color/colorDrawerBackground</item>
+
+    <!-- Positioning -->
+    <item name="itemIconPadding">24dp</item>-->
+    <!--<item name="itemHorizontalPadding">100dp</item>-->
+    <item name="itemTextAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
+  </style>
+
+  <!-- Buttons go to style (v23)-->
+
+  <!-- Progress bar -->
+  <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
+  </style>
+
+  <style name="Theme.Custom.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog.MinWidth">
+    <!--Background: Transparent-->
+    <item name="android:windowBackground">@color/colorTransparant</item>
+    <!--Border-->
+    <item name="android:windowFrame">@null</item>
+    <item name="android:background">@drawable/dialog_background</item>
+
+    <!-- Material input text -->
+    <item name="colorOnSurface">@android:color/holo_blue_light</item>
+    <!-- colorPrimary will affect stroke and floating text color -->
+    <item name="colorPrimary">@android:color/holo_blue_light</item>
+
+    <!--Action buttons -->
+    <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
+    <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
+    <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
+    <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
+    <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
+  </style>
+
+  <style name="Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+    <!-- Dont know why override the default colors in colors.xml doesnt work -->
+    <!--<item name="boxStrokeColor">@android:color/holo_blue_light</item>-->
+    <!--<item name="boxBackgroundMode">filled</item>-->
+    <!--<item name="boxBackgroundColor">@color/colorAccent</item>-->
+    <!--<item name="android:textColorHint">@color/colorAccent</item>-->
+
+
+  </style>
+
+  <!--states for Stroke color -->
+  <!--<item android:color="?attr/colorPrimary" android:state_focused="true"/>
+  <item android:alpha="0.87" android:color="?attr/colorOnSurface" android:state_hovered="true"/>
+  <item android:alpha="0.12" android:color="?attr/colorOnSurface" android:state_enabled="false"/>
+  <item android:alpha="0.38" android:color="?attr/colorOnSurface"/>-->
+
+  <!-- Label color (not Collapsed (floating) color)-->
+  <!--<item android:alpha="0.38" android:color="?attr/colorOnSurface" android:state_enabled="false"/>
+  <item android:alpha="0.6" android:color="?attr/colorOnSurface"/> -->
 
 </resources>

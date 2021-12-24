@@ -35,7 +35,7 @@ import java.util.concurrent.Executors;
  * //https://www.programcreek.com/java-api-examples/index.php?api=com.google.api.services.drive.model.FileList
  */
 
-class DriveServiceHelper {
+public class DriveServiceHelper {
     static private String TAG = "CD.DriveServiceHelper";
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
     private final Drive mDriveService;
@@ -212,6 +212,33 @@ class DriveServiceHelper {
         });
     }
 
+    public Task<FileList> queryFiles(String nextPageToken, int pageSize) {
+        return Tasks.call(mExecutor, new Callable<FileList>() {
+            @Override
+            public FileList call() throws Exception {
+                FileList files = null;
+                //return mDriveService.files().list().setSpaces("drive").execute();
+                //There could be more result. Use page token to get.
+                if(mDriveService == null){
+                    Log.w(TAG, "mDriveService is null!");
+                }
+                if(mIsEnd != true) {
+                    Log.d(TAG, "mPageToken:" + mPageToken);
+                    files = mDriveService.files().list()
+                            .setQ("name contains 'cdfs'" + " and " + "mimeType ='application/vnd.google-apps.folder'")
+                            //.setQ("mimeType ='application/vnd.google-apps.folder'")
+                            .setSpaces("drive")
+                            .setFields("nextPageToken, files(id, name)")
+                            .setPageToken(nextPageToken)
+                            //set to a small number can be used for test of loading more data in UI handling
+                            .setPageSize(pageSize)
+                            .execute();
+                }
+                return files;
+            }
+        });
+    }
+
     /*
     Reset a query
      */
@@ -254,7 +281,7 @@ class DriveServiceHelper {
                 Cursor cursor = contentResolver.query(uri, null, null, null, null);
                 if (cursor != null && cursor.moveToFirst()) {
                     int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                        name = cursor.getString(nameIndex);
+                    name = cursor.getString(nameIndex);
                 } else {
                     throw new IOException("Empty cursor returned for file.");
                 }
@@ -287,5 +314,4 @@ class DriveServiceHelper {
         });
     }
 }
-
 

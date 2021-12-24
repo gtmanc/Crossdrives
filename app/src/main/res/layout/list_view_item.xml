@@ -50,7 +50,7 @@
         android:text="@string/file_default_date"
         android:textColor="@color/colorTextSecondary"
         android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-         />
+        />
 
     <ImageView
         android:id="@+id/iv_check_box"
@@ -82,7 +82,7 @@
         app:layout_constraintLeft_toRightOf="@id/right_guideline"
         android:src="@drawable/ic_baseline_more_vert_24"
         android:background="@drawable/overflow_menu_press"
-    />
+        />
 
 
 

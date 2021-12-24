@@ -30,8 +30,8 @@ public class SearchResultsActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         Log.d(TAG, "onNewIntent");
 
-      super.onNewIntent(intent);
-      handleIntent(intent);
+        super.onNewIntent(intent);
+        handleIntent(intent);
     }
 
     private void handleIntent(Intent intent) {

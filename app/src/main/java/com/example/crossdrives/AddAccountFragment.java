@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,8 +28,18 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.IDriveClient;
+import com.crossdrives.driveclient.OneDriveClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AddAccountFragment extends BaseFragment {
     private String TAG = "CD.AddAccountFragment";
@@ -36,6 +47,13 @@ public class AddAccountFragment extends BaseFragment {
     private static final int RC_SIGN_IN = 0;
     Fragment mFragment;
     View mView;
+    /*
+        Maintenance of map between drive brand and index for add/remove CDFS client.
+        It's observed 'static' must be used. Otherwise, the data in the map is lost each time the
+        callback is called. It seems that fragment creates a new concrete map object each time the
+        callback gets called.
+     */
+    static Map<String, Integer> mDrives = new HashMap<>();
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -122,10 +140,11 @@ public class AddAccountFragment extends BaseFragment {
     SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
         @Override
         public void onFinished(int result, String brand) {
+            int i;
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 String brand_am = GlobalConstants.BRAND_GOOGLE;
-                Log.i(TAG, "App has signed out!");
+                Log.d(TAG, "App has signed out!");
 
                 AccountManager.AccountInfo ai;
                 AccountManager am = AccountManager.getInstance();
@@ -135,10 +154,11 @@ public class AddAccountFragment extends BaseFragment {
                 ai = am.getAccountActivated(getContext(), brand_am);
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
-                //double check if the account is set deactivated
-                //ai = am.getAccountActivated(getContext(), AccountManager.BRAND_GOOGLE);
-                //if(ai != null)
-                //
+
+//                Log.d(TAG, "Brand: " + brand);
+//                Log.d(TAG, "Size: " + mDrives.size());
+                i = mDrives.get(brand);
+                CDFS.removeClient(i);
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -243,17 +263,27 @@ public class AddAccountFragment extends BaseFragment {
         @Override
         public void onFinished(int result, SignInManager.Profile profile, Object object) {
             boolean err = false;
+            int i;
 
             if(result == SignInManager.RESULT_SUCCESS) {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
                     Log.d(TAG, "User sign in OK. Start to create google drive client");
-                    GoogleDriveClient google_drive = new GoogleDriveClient(getContext()).create(object);
+                    GoogleDriveClient gdc =
+                            (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
+                    i = CDFS.addClient(gdc);
+                    Log.d(TAG, "Add CDFS for Google. Client index: " + i);
+                    mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
                 {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
-                    GraphDriveClient graph_drive = new GraphDriveClient().create(object);
+                    OneDriveClient odc =
+                            (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
+                    i = CDFS.addClient(odc);
+                    Log.d(TAG, "Add CDFS for MS. Client index: " + i);
+                    mDrives.put(GlobalConstants.BRAND_MS, i);
+
                 }
                 else{
                     Log.w(TAG, "Unknow brand!");
@@ -280,6 +310,10 @@ public class AddAccountFragment extends BaseFragment {
 
         }
     };
+
+    private void addGoogleDriveClient(GoogleSignInAccount account){
+
+    }
 
     private void createAccount(SignInManager.Profile profile){
         AccountManager.AccountInfo ai= new AccountManager.AccountInfo();

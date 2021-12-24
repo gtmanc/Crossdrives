@@ -11,12 +11,12 @@ import androidx.annotation.Nullable;
 
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.concurrency.ICallback;
+
+import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.User;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
+
+import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
@@ -26,7 +26,12 @@ import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class SignInMS extends SignInManager{
     private String TAG = "CD.SignInMS";
@@ -35,6 +40,7 @@ public class SignInMS extends SignInManager{
     private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
     private final static String[] SCOPES = {"Files.Read"};
+    private final static List<String> scopes = new ArrayList<>();
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
     OnInteractiveSignInfinished mOnInteractiveSignInfinished;
@@ -45,7 +51,7 @@ public class SignInMS extends SignInManager{
     private Object mObject;
     IGraphServiceClient mGraphClient;
 
-    public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext();}
+    public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext(); scopes.add("Files.Read");}
 
     public static SignInMS getInstance(Activity activity){
         if(mSignInMS == null){
@@ -110,6 +116,7 @@ public class SignInMS extends SignInManager{
         });
     }
 
+
     @Override
     void getPhoto(Object object, OnPhotoDownloaded callback) {
         mPhotoDownloadCallback = callback;
@@ -117,24 +124,57 @@ public class SignInMS extends SignInManager{
 
         //REST API reference for profile photo: https://docs.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0
         //Build request: https://docs.microsoft.com/en-us/graph/sdks/create-requests?tabs=java
-        if (mGraphClient != null) {
-            mGraphClient
-                    .me()
-                    .photo()
-                    .content()
-                    .buildRequest()
-                    .get(new ICallback<InputStream>() {
-                        @Override
-                        public void success(InputStream inputStream) {
-                            mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
-                        }
+        GraphServiceClient graphClient =
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(new IAuthenticationProvider() {
+                            /*
+                                TODO: We cant guarantee the token is valid each time the client is created.
+                                e.g. App is pushed to the background for longer than 5 minutes and
+                                pulled to foreground afterwards.
+                            */
+                            @NonNull
+                            @Override
+                            public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
+                                CompletableFuture<String> future = null;
+                                future = new CompletableFuture<>();
+                                future.complete(mToken);
+                                return future;
+                            }
 
-                        @Override
-                        public void failure(ClientException ex) {
-                            Log.d(TAG, "get photo failed, " + ex.toString());
-                        }
-                    });
-        }
+//                            @Override
+//                            public void authenticateRequest(IHttpRequest request) {
+//                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
+//                                request.addHeader("Authorization", "Bearer " + accessToken);
+//                            }
+                        })
+                        .buildClient();
+        graphClient
+                .me()
+                .photo()
+                .content()
+                .buildRequest()
+                //.get(new ICallback<InputStream>() {
+                .getAsync()
+                .thenAccept(inputStream -> {
+                    mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                })
+                .exceptionally(ex -> {Log.d(TAG, "get photo failed: " + ex.toString()); return null;});
+//                    @Override
+//                    public void success(InputStream inputStream) {
+//                        mPhotoDownloadCallback.onDownloaded(BitmapFactory.decodeStream(inputStream), mObject);
+//                    }
+//
+//                    @Override
+//                    public void failure(ClientException ex) {
+//                        Log.d(TAG, "get photo failed, " + ex.toString());
+//                    }
+//                });
     }
 
     private void loadAccount(){
@@ -243,62 +283,25 @@ public class SignInMS extends SignInManager{
         };
     }
 
-    private void createClient(){
-        final String accessToken = mToken;
+    private AuthenticationCallback getAuthenticationCallback(
+            CompletableFuture<IAuthenticationResult> future) {
+        return new AuthenticationCallback() {
+            @Override
+            public void onCancel() {
+                future.cancel(true);
+            }
 
-        mGraphClient =
-                GraphServiceClient
-                        .builder()
-                        .authenticationProvider(new IAuthenticationProvider() {
-                            @Override
-                            public void authenticateRequest(IHttpRequest request) {
-                                Log.d(TAG, "Authenticating request," + request.getRequestUrl());
-                                request.addHeader("Authorization", "Bearer " + accessToken);
-                            }
-                        })
-                        .buildClient();
+            @Override
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                future.complete(authenticationResult);
+            }
 
-        if(mGraphClient == null){Log.w(TAG, "mGraphClient is null!");}
+            @Override
+            public void onError(MsalException exception) {
+                future.completeExceptionally(exception);
+            }
+        };
     }
-
-    private void getUserAndCallback() {
-        Log.d(TAG, "get User...");
-        if (mGraphClient != null) {
-            mGraphClient
-                    .me()
-                    .buildRequest()
-                    //.select("displayName,givenName,mail")
-                    .get(new ICallback<User>() {
-
-                        @Override
-                        public void success(User user) {
-                            Log.d(TAG, "User display name: " + user.displayName); //Gtman Chin,
-                            //Log.d(TAG, user.givenName);  //Gtman
-                            mProfile.Name = user.displayName;
-                            mProfile.PhotoUri = null;
-                            if(user.mail != null){
-                                Log.d(TAG, "User mail: " + user.mail);
-                                mProfile.Mail = user.mail;
-                            }else{
-                                Log.d(TAG, "User principal name: " + user.userPrincipalName);
-                                mProfile.Mail = user.userPrincipalName;
-                            }
-                            mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
-                        }
-
-                        @Override
-                        public void failure(ClientException ex) {
-                            Log.w(TAG, "get user failed: " + ex.toString());
-                            //Return success with incomplete profile still because the sign in works
-                            mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
-                        }
-                    });
-        }else{
-            Log.w(TAG, "mGraphClient is null!");
-        }
-
-    }
-
 //    /**
 //     * Used to setup the Services
 //     * @param activity the current activity

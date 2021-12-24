@@ -3,8 +3,13 @@ package com.example.crossdrives;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.OneDriveClient;
+import com.crossdrives.driveclient.ICallBack;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+import com.google.api.services.drive.model.FileList;
 ;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,8 +19,6 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,8 +83,8 @@ public class MainActivity extends AppCompatActivity{
 
 
                 Log.d(TAG, "Google silence sign in OK. Create google drive client...");
-                GoogleDriveClient google_drive = new GoogleDriveClient(getApplicationContext()).create(object);
-
+                //GoogleDriveClient google_drive = GoogleDriveClient.create(getApplicationContext(), object);
+                addGoogleDriveClient((GoogleSignInAccount) object);
 
             }
             else{
@@ -94,13 +97,14 @@ public class MainActivity extends AppCompatActivity{
     };
     SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object client) {
+        public void onFinished(int result, SignInManager.Profile profile, Object token) {
             mSignInState.put(BRAND_MS, true);
             //Ready to go to the result list
             if(result == GoogleSignInStatusCodes.SUCCESS){
                 //Write user profile to database
 
-                GraphDriveClient onedrive = new GraphDriveClient();
+                //GraphDriveClient onedrive = new GraphDriveClient();
+                addOneDriveClient((String)token);
                 Log.d(TAG, "Onedrive silence sign in works");
             }
             else{
@@ -133,6 +137,32 @@ public class MainActivity extends AppCompatActivity{
 //                intent.putExtras(bundle);
             startActivity(intent);
         }
+    }
+    private void addGoogleDriveClient(GoogleSignInAccount account){
+        GoogleDriveClient gdc =
+                (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
+        CDFS.addClient(gdc);
+    }
+
+    void addOneDriveClient(String token){
+        OneDriveClient odc =
+                (OneDriveClient) OneDriveClient.builder(token).buildClient();
+        CDFS.addClient(odc);
+//        oneDriveClient.
+//                list().
+//                buildRequest().
+//                //select().
+//                run(new ICallBack<FileList, Object>() {
+//            @Override
+//            public void success(FileList fileList, Object page) {
+//
+//            }
+//
+//            @Override
+//            public void failure(String ex) {
+//
+//            }
+//        });
     }
 }
 
