@@ -263,7 +263,6 @@ public class AddAccountFragment extends BaseFragment{
                     i = CDFS.addClient(odc);
                     Log.d(TAG, "Add CDFS for MS. Client index: " + i + " Drives map: " + mDrives);
                     mDrives.put(GlobalConstants.BRAND_MS, i);
-
                 }
                 else{
                     Log.w(TAG, "Unknown brand!");
