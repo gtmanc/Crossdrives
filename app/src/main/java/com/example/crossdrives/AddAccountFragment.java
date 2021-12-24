@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,7 +35,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AddAccountFragment extends BaseFragment {
     private String TAG = "CD.AddAccountFragment";
@@ -44,9 +48,11 @@ public class AddAccountFragment extends BaseFragment {
     View mView;
     /*
         Maintenance of map between drive brand and index for add/remove CDFS client.
+        It's observed 'static' must be used. Otherwise, the data in the map is lost each time the
+        callback is called. It seems that fragment creates a new concrete map object each time the
+        callback gets called.
      */
-    HashMap<String, Integer> mDrives = new HashMap<>();
-    int mIndex = 0;
+    static Map<String, Integer> mDrives = new HashMap<>();
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -137,7 +143,7 @@ public class AddAccountFragment extends BaseFragment {
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 String brand_am = GlobalConstants.BRAND_GOOGLE;
-                Log.i(TAG, "App has signed out!");
+                Log.d(TAG, "App has signed out!");
 
                 AccountManager.AccountInfo ai;
                 AccountManager am = AccountManager.getInstance();
@@ -148,6 +154,8 @@ public class AddAccountFragment extends BaseFragment {
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
 
+//                Log.d(TAG, "Brand: " + brand);
+//                Log.d(TAG, "Size: " + mDrives.size());
                 i = mDrives.get(brand);
                 CDFS.removeClient(i);
             }
@@ -264,8 +272,7 @@ public class AddAccountFragment extends BaseFragment {
                             (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
                     i = CDFS.addClient(gdc);
                     Log.d(TAG, "Add CDFS for Google. Client index: " + i);
-                    mDrives.put(SignInManager.BRAND_GOOGLE, i);
-
+                    mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
                 {
@@ -274,7 +281,8 @@ public class AddAccountFragment extends BaseFragment {
                             (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
                     i = CDFS.addClient(odc);
                     Log.d(TAG, "Add CDFS for MS. Client index: " + i);
-                    mDrives.put(SignInManager.BRAND_MS, i);
+                    mDrives.put(GlobalConstants.BRAND_MS, i);
+
                 }
                 else{
                     Log.w(TAG, "Unknow brand!");
