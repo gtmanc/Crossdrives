@@ -5,7 +5,7 @@ package com.crossdrives.driveclient;
  *
  * @param <Result> the result type of the successful action
  */
-public interface ICallBack<Result, NextPage> {
+public interface IFileListCallBack<Result, NextPage> {
     /**
      * How successful results are handled
      *

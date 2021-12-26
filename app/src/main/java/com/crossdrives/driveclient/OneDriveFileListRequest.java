@@ -10,7 +10,6 @@ import com.google.api.services.drive.model.FileList;
 
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.options.Option;
-import com.microsoft.graph.options.QueryOption;
 import com.microsoft.graph.requests.DriveItemCollectionRequest;
 import com.microsoft.graph.requests.DriveItemCollectionRequestBuilder;
 
@@ -76,7 +75,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
     }
 
     @Override
-    public void run(ICallBack<FileList, Object> callback) {
+    public void run(IFileListCallBack<FileList, Object> callback) {
         final List<Option> options = new LinkedList<Option>();
         DriveItemCollectionRequest request;
 
@@ -116,14 +115,18 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                         for(int i = 0; i < items.size();i++) {
                             File f = new File();
                             Log.d(TAG, "Item name: " + items.get(i).name);
+                            Log.d(TAG, "Item id: " + items.get(i).id);
                             f.setName(items.get(i).name);
+                            f.setId(items.get(i).id);
                             files.add(f);
                         }
                         fileList.setFiles(files);
                         Log.d(TAG, "Next page: " + DriveItemCollectionPage.getNextPage());
                         callback.success(fileList, DriveItemCollectionPage.getNextPage());
                 })
-                .exceptionally(ex -> {Log.d(TAG, "Get root failed: " + ex.toString()); return null;});
+                .exceptionally(ex -> {Log.w(TAG, "Get root failed: " + ex.toString());
+                        callback.failure(ex.toString());return null;
+                });
 
 
     }

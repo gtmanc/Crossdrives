@@ -2,12 +2,15 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
-import com.crossdrives.driveclient.ICallBack;
+import com.crossdrives.driveclient.IDownloadCallBack;
+import com.crossdrives.driveclient.IFileListCallBack;
 import com.crossdrives.driveclient.IDriveClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -19,6 +22,7 @@ public class CDFS {
     static List<IDriveClient> sClient = new ArrayList<>();
     private static final Executor sExecutor = Executors.newSingleThreadExecutor();
     private static FileList mFileList;
+    private static InputStream mStream;
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
@@ -61,17 +65,17 @@ public class CDFS {
                         //.filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
                         //.filter("mimeType = application/vnd.google-apps.folder")
                         .filter(null)   //null means no filter will be applied
-                        .run(new ICallBack<FileList, Object>() {
+                        .run(new IFileListCallBack<FileList, Object>() {
                     @Override
                     public void success(FileList fileList, Object o) {
-                        setToWait();
+                        exitWait();
                         mFileList = fileList;
                         Log.d(TAG, "list finished");
                     }
 
                     @Override
                     public void failure(String ex) {
-                        setToWait();
+                        exitWait();
                         Log.w(TAG, "list finished with failure!");
                     }
                 });
@@ -83,7 +87,47 @@ public class CDFS {
         return task;
     }
 
-    private static void setToWait(){
+    /*
+        Operation download content of a file
+     */
+    static public Task<InputStream> download(String id) {
+        Task task;
+        Log.d(TAG, "Operation: download " + id);
+        task = Tasks.call(sExecutor, new Callable<Object>() {
+            @Override
+            public InputStream call() throws Exception {
+                msTaskfinished = false;
+                sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<InputStream>() {
+                    @Override
+                    public void success(InputStream inputStream){
+                        int l;
+                        exitWait();
+                        mStream = inputStream;
+                        try {
+                            l = inputStream.available();
+                        } catch (IOException e) {
+                            Log.d(TAG, "" + e.toString());
+                            l=0;
+                        }
+
+                        Log.d(TAG, "download finished. Length: " + l);
+                    }
+
+                    @Override
+                    public void failure(String ex) {
+                        Log.w(TAG, "download failed" + ex.toString());
+                    }
+                });
+                waitUntilFinished();
+                if(mStream == null){ Log.w(TAG, "stream is null" );}
+                return mStream;
+            }
+        });
+
+        return task;
+    }
+
+    private static void exitWait(){
         msTaskfinished = true;
     }
 
