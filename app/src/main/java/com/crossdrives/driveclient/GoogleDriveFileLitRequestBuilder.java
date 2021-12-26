@@ -1,9 +1,9 @@
 package com.crossdrives.driveclient;
 
-public class GoogleDriveRequestBuilder extends BaseRequestBuilder implements IQueryRequestBuilder{
+public class GoogleDriveFileLitRequestBuilder extends BaseRequestBuilder implements IQueryRequestBuilder{
     GoogleDriveClient mClient;
 
-    public GoogleDriveRequestBuilder(GoogleDriveClient Client) {
+    public GoogleDriveFileLitRequestBuilder(GoogleDriveClient Client) {
         mClient = Client;
     }
 

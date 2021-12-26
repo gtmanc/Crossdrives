@@ -37,6 +37,8 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -334,18 +336,39 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
      */
 	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
-		public void onItemClick(View view, int position) {
+		public void onItemClick(View view, int position){
+			InputStream stream;
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
-			Log.i(TAG, "Short press item:" + position);
-			Log.i(TAG, "Count of selected:" + mSelectedItemCount);
+			Log.d(TAG, "Short press item:" + position);
+			Log.d(TAG, "Count of selected:" + mSelectedItemCount);
 			SerachResultItemModel item = mItems.get(position);
 
 			if (view == view.findViewById(R.id.iv_more_vert)) {
-				Log.i(TAG, "More_vert pressed!");
+				Log.d(TAG, "More_vert pressed!");
 			}
 
 			if (mState == STATE_NORMAL) {
+				Log.d(TAG, "Start to download file: " + item.mName);
+				Log.d(TAG, "File ID: " + item.mId);
 				//TODO: open detail of file
+				try {
+					CDFS.download(item.getID()).addOnSuccessListener(new OnSuccessListener<InputStream>() {
+						@Override
+						public void onSuccess(InputStream stream) {
+							byte[] bytes = new byte[0];
+							try {
+								bytes = new byte[stream.available()];
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							String str = new String(bytes);
+							Log.d(TAG, "Content: " + str);
+						}
+					});
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
 			} else {
 				if (item.isSelected()) {
                     /*
