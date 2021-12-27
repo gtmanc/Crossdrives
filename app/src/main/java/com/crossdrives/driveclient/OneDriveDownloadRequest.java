@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public class OneDriveDownloadRequest extends BaseRequest implements IDownloadRequest{
     final String TAG = "ODC.OneDriveDownloadRequest";
@@ -13,14 +14,16 @@ public class OneDriveDownloadRequest extends BaseRequest implements IDownloadReq
     public OneDriveDownloadRequest(OneDriveClient client, String id) { mClient = client; mID = id;   }
 
     @Override
-    public void run(IDownloadCallBack<InputStream> callback) {
+    //public void run(IDownloadCallBack<InputStream> callback) {
+    public void run(IDownloadCallBack<OutputStream> callback) {
         mUrl = mUrl.replace("{item-id}", mID);
         Log.d(TAG, "Request Url: " + mUrl);
-        mClient.getGraphServiceClient().customRequest(mUrl, InputStream.class)
+        //mClient.getGraphServiceClient().customRequest(mUrl, InputStream.class)
+        mClient.getGraphServiceClient().customRequest(mUrl, OutputStream.class)
                 .buildRequest()
                 .getAsync().thenAccept(stream -> {
                     if(stream == null){ Log.w(TAG, "stream is null" );}
-                        callback.success((InputStream) stream);
+                        callback.success((OutputStream) stream);
 
         })
                 .exceptionally(ex->{
