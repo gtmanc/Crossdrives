@@ -11,6 +11,7 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -23,6 +24,7 @@ public class CDFS {
     private static final Executor sExecutor = Executors.newSingleThreadExecutor();
     private static FileList mFileList;
     private static InputStream mStream;
+
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
@@ -97,20 +99,22 @@ public class CDFS {
             @Override
             public InputStream call() throws Exception {
                 msTaskfinished = false;
-                sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<InputStream>() {
+                //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<InputStream>() {
+                sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
                     @Override
-                    public void success(InputStream inputStream){
+                    //public void success(InputStream inputStream){
+                    public void success(OutputStream OutputStream){
                         int l;
                         exitWait();
-                        mStream = inputStream;
-                        try {
-                            l = inputStream.available();
-                        } catch (IOException e) {
-                            Log.d(TAG, "" + e.toString());
-                            l=0;
-                        }
-
-                        Log.d(TAG, "download finished. Length: " + l);
+//                        mStream = inputStream;
+//                        try {
+//                            l = inputStream.available();
+//                        } catch (IOException e) {
+//                            Log.d(TAG, "" + e.toString());
+//                            l=0;
+//                        }
+//
+//                        Log.d(TAG, "download finished. Length: " + l);
                     }
 
                     @Override
