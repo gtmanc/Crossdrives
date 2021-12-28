@@ -39,7 +39,8 @@ public class SignInMS extends SignInManager{
     private Context mContext;
     private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
-    private final static String[] SCOPES = {"Files.Read"};
+    //https://docs.microsoft.com/en-us/graph/permissions-reference?context=graph%2Fapi%2F1.0&view=graph-rest-1.0
+    private final static String[] SCOPES = {"Files.ReadWrite.All"};
     private final static List<String> scopes = new ArrayList<>();
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";

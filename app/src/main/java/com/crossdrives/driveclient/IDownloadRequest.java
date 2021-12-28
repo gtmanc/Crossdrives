@@ -2,8 +2,9 @@ package com.crossdrives.driveclient;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.stream.Stream;
 
-public interface IDownloadRequest {
+public interface IDownloadRequest{
 
     /*
         Execute the request
