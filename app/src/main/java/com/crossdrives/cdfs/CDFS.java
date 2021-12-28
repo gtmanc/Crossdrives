@@ -104,8 +104,8 @@ public class CDFS {
                     @Override
                     //public void success(InputStream inputStream){
                     public void success(OutputStream OutputStream){
-                        int l;
-                        exitWait();
+//                        int l;
+//                        exitWait();
 //                        mStream = inputStream;
 //                        try {
 //                            l = inputStream.available();
