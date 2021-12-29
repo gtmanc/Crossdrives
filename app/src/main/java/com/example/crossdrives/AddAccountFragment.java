@@ -55,6 +55,13 @@ public class AddAccountFragment extends BaseFragment {
      */
     static Map<String, Integer> mDrives = new HashMap<>();
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, "OnCreate");
+        Log.d(TAG, "Drives map: " + mDrives);
+    }
+
     @Nullable
     @org.jetbrains.annotations.Nullable
     @Override
@@ -77,6 +84,7 @@ public class AddAccountFragment extends BaseFragment {
         Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
+        Log.d(TAG, "Drives map: " + mDrives);
     }
 
     private View.OnClickListener listener_add_gdrive = new View.OnClickListener() {
@@ -155,9 +163,10 @@ public class AddAccountFragment extends BaseFragment {
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
 
-//                Log.d(TAG, "Brand: " + brand);
-//                Log.d(TAG, "Size: " + mDrives.size());
+                Log.d(TAG, "Brand: " + brand);
+                //Log.d(TAG, "Drives map: " + mDrives);
                 i = mDrives.get(brand);
+                Log.d(TAG, "Remove CDFS client. Index: " + i);
                 CDFS.removeClient(i);
             }
 
@@ -272,7 +281,7 @@ public class AddAccountFragment extends BaseFragment {
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
                     i = CDFS.addClient(gdc);
-                    Log.d(TAG, "Add CDFS for Google. Client index: " + i);
+                    Log.d(TAG, "Add CDFS for Google. Client index: " + i + " Drives map: " + mDrives);
                     mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
@@ -281,12 +290,12 @@ public class AddAccountFragment extends BaseFragment {
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
                     i = CDFS.addClient(odc);
-                    Log.d(TAG, "Add CDFS for MS. Client index: " + i);
+                    Log.d(TAG, "Add CDFS for MS. Client index: " + i + " Drives map: " + mDrives);
                     mDrives.put(GlobalConstants.BRAND_MS, i);
 
                 }
                 else{
-                    Log.w(TAG, "Unknow brand!");
+                    Log.w(TAG, "Unknown brand!");
                 }
 
                 createAccount(profile);

@@ -9,13 +9,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.stream.Stream;
 
 public class OneDriveDownloadRequest extends BaseRequest implements IDownloadRequest{
     final String TAG = "ODC.OneDriveDownloadRequest";
     OneDriveClient mClient;
     String mID;
-    //String mUrl = "/me/drive/items/{item-id}/content";
-    String mUrl = "/me/drive/root/children/Allocation.txt/content";
+    String mUrl = "/me/drive/items/{item-id}/content";
+    //String mUrl = "/me/drive/root/children/Allocation.txt/content";
     public OneDriveDownloadRequest(OneDriveClient client, String id) { mClient = client; mID = id;   }
 
     @Override
@@ -33,20 +34,44 @@ public class OneDriveDownloadRequest extends BaseRequest implements IDownloadReq
         //mClient.getGraphServiceClient().customRequest(mUrl, OutputStream.class)
                 .buildRequest()
                 .getAsync().thenAccept(in -> {
-                    OutputStream out = new ByteArrayOutputStream();
-                    if(in == null){ Log.w(TAG, "In stream is null" );}
-                        //callback.success((OutputStream) stream);
-                    try {
-                        IOUtils.copy((InputStream) in, out);
-                    } catch (IOException e) {
-                        Log.w(TAG, "transfer input to output stream not work!" );
+                    OutputStream out = null;
+                    if(in != null) {
+                        out = toOutputStream((InputStream) in);
+                        CloseInStream((InputStream) in);
                     }
-                    callback.success(out);
+                    if(out != null){
+                        //Log.d(TAG, "Content:" + out.toString());
+                        callback.success(out);
+                    }else{
+                        Log.w(TAG, "In stream is null" );
+                        callback.failure("Content is not available.");
+                    }
         })
                 .exceptionally(ex->{
                     Log.w(TAG, "download failed: " + ex.toString());
-                    callback.failure((String)ex);
                     return null;
                 });
+    }
+
+
+    private OutputStream toOutputStream(InputStream in){
+        OutputStream os = new ByteArrayOutputStream();
+        try {
+            IOUtils.copy((InputStream) in, os);
+        } catch (IOException e) {
+            os = null;
+            Log.w(TAG, "transfer input to output stream not work!" );
+        }
+        return os;
+    }
+
+    private void CloseInStream(InputStream s){
+        try {
+            s.close();
+        } catch (IOException e) {
+            //TODO: how to handle the case?
+            Log.w(TAG, "Close stream failed during download!");
+        }
+
     }
 }
