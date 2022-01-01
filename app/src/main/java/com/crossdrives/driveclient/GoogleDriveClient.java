@@ -92,7 +92,13 @@ public class GoogleDriveClient implements IDriveClient {
     @Override
     public IQueryRequestBuilder list() {
 
-        return new GoogleDriveRequestBuilder(this);
+        return new GoogleDriveFileListRequestBuilder(this);
+    }
+
+    @Override
+    public IDownloadRequestBuilder download() {
+
+        return new GoogleDriveDownloadRequestBuilder(this);
     }
 
 

@@ -12,7 +12,6 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -55,7 +54,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
     }
 
     @Override
-    public void run(ICallBack<FileList, Object> callback) {
+    public void run(IFileListCallBack<FileList, Object> callback) {
         Task<FileList> task;
 //        mClient.getGDriveHelper().
 //                queryFiles(mToken, mPageSize).

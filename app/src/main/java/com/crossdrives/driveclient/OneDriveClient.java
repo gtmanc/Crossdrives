@@ -78,11 +78,24 @@ public class OneDriveClient implements IDriveClient {
     @Override
     public IQueryRequestBuilder list() {
 
+        IQueryRequestBuilder r = null;
         if(mGraphServiceClient == null){
             Log.w(TAG, "mGraphServiceClient is null");
+        }else{
+            r = new OneDriveQueryRequestBuilder(this);
         }
+        return r;
+    }
 
-        return new OneDriveQueryRequestBuilder(this);
+    @Override
+    public IDownloadRequestBuilder download() {
+        IDownloadRequestBuilder r = null;
+        if(mGraphServiceClient == null){
+            Log.w(TAG, "mGraphServiceClient is null");
+        }else{
+            r = new OneDriveDownloadRequestBuilder(this);
+        }
+        return r;
     }
 
     public static OneDriveClient fromConfig(String token){

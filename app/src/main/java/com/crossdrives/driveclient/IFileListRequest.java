@@ -41,5 +41,5 @@ public interface IFileListRequest {
 
      * @param callback gets called when response got from remote
      */
-    public void run(ICallBack<FileList, Object> callback);
+    public void run(IFileListCallBack<FileList, Object> callback);
 }
