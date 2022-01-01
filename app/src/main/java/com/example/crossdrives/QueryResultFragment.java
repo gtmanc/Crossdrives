@@ -356,16 +356,19 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 					@Override
 					public void onSuccess(OutputStream stream) {
 						Log.d(TAG, "Content of file downloaded: " + stream.toString());
+						Toast.makeText(getContext(), "stream.toString()", Toast.LENGTH_LONG).show();
 						try {
 							stream.close();
 						} catch (IOException e) {
 							Log.w(TAG, "Cant close output stream!");
+							Toast.makeText(getContext(), "Cant close output stream!", Toast.LENGTH_LONG).show();
 						}
 					}
 				}).addOnFailureListener(new OnFailureListener() {
 					@Override
 					public void onFailure(@NonNull Exception e) {
 						Log.w(TAG, "file download failed: " + e.toString());
+						Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
 					}
 				});
 			} else {
