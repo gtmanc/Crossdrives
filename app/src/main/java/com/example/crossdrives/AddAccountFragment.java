@@ -41,11 +41,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AddAccountFragment extends BaseFragment {
+public class AddAccountFragment extends BaseFragment{
     private String TAG = "CD.AddAccountFragment";
     SignInManager mSignInManager = null;
     private static final int RC_SIGN_IN = 0;
-    Fragment mFragment;
     View mView;
     /*
         Maintenance of map between drive brand and index for add/remove CDFS client.
@@ -53,13 +52,17 @@ public class AddAccountFragment extends BaseFragment {
         callback is called. It seems that fragment creates a new concrete map object each time the
         callback gets called.
      */
-    static Map<String, Integer> mDrives = new HashMap<>();
+    static HashMap<String, Integer> mDrives = new HashMap<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        Log.d(TAG, "OnCreated");
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "OnCreate");
-        Log.d(TAG, "Drives map: " + mDrives);
+        if(savedInstanceState != null){
+            Log.d(TAG, "Restore mDrives...");
+            mDrives = (HashMap)savedInstanceState.getSerializable("Drives");
+            Log.d(TAG, "done. mDrives: " + mDrives);
+        }
     }
 
     @Nullable
@@ -76,32 +79,30 @@ public class AddAccountFragment extends BaseFragment {
 
         view.findViewById(R.id.add_account_btn_google).setOnClickListener(listener_add_gdrive);
         view.findViewById(R.id.add_account_btn_ms).setOnClickListener(listener_add_onedrive);
+        mView = view;
 
         requireActivity().getOnBackPressedDispatcher().addCallback(callback);
-
-        mFragment = FragmentManager.findFragment(view);
 
         Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
-        Log.d(TAG, "Drives map: " + mDrives);
+        Log.d(TAG, "onViewCreated. Drives map: " + mDrives);
     }
 
     private View.OnClickListener listener_add_gdrive = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Log.d(TAG, "start sign flow");
-            mView = v;
             mSignInManager = SignInGoogle.getInstance(getContext());
             AccountManager.AccountInfo ai
                     = getActivatedAccount(GlobalConstants.BRAND_GOOGLE);
             if (ai != null) {
                 //OK. Now we are sure that there is a activated google account. Ask user for next step.
-                Intent intent = new Intent(mFragment.getActivity(), SignOutDialog.class);
+                Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), SignOutDialog.class);
                 //intent.putExtra("Brand", SignInManager.BRAND_GOOGLE);
                 mStartForResult.launch(intent);
             } else {
-                mSignInManager.Start(mView, onSigninFinished);
+                mSignInManager.Start(v, onSigninFinished);
             }
 
         }
@@ -116,11 +117,11 @@ public class AddAccountFragment extends BaseFragment {
                     = getActivatedAccount(GlobalConstants.BRAND_MS);
             if (ai != null) {
                 //OK. Now we are sure that there is a activated Microsoft account. Ask user for next step.
-                Intent intent = new Intent(mFragment.getActivity(), SignOutDialog.class);
+                Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), SignOutDialog.class);
                 //intent.putExtra("Brand", SignInManager.BRAND_MS);
                 mStartForResult.launch(intent);
             } else {
-                mSignInManager.Start(mView, onSigninFinished);
+                mSignInManager.Start(v, onSigninFinished);
             }
         }
     };
@@ -165,6 +166,10 @@ public class AddAccountFragment extends BaseFragment {
 
                 Log.d(TAG, "Brand: " + brand);
                 //Log.d(TAG, "Drives map: " + mDrives);
+                /*
+                    Known issue is once app has signed out due to any of reasons (e.g. app data deletion
+                    in setting), null is got instead of a index. Tracked in #8, #15, #16.
+                 */
                 i = mDrives.get(brand);
                 Log.d(TAG, "Remove CDFS client. Index: " + i);
                 CDFS.removeClient(i);
@@ -183,49 +188,12 @@ public class AddAccountFragment extends BaseFragment {
         return am.getAccountActivated(getContext(), brand);
     }
 
-
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        SignInManager.Profile p;
-//        String name = null;
-//        AccountManager.AccountInfo ai= new AccountManager.AccountInfo();
-//        boolean result;
-//
-//        Log.d(TAG, "requestCode: " + requestCode);
-//        Log.d(TAG, "resultCode: " + resultCode);
-//
-//        //result code is 0 if user press BACK in the sign in activity. -1 is received if user entered signe in credentials.
-//        if(resultCode != 0) {
-//            Log.d(TAG, "handle sign flow");
-//            p = mSignInManager.HandleSigninResult(data);
-//            if (p == null)
-//                Log.w(TAG, "handle result error!");
-//
-//            Log.d(TAG, "User name:" + p.Name);
-//            Log.d(TAG, "User mail:" + p.Mail);
-//            Log.d(TAG, "User photo url:" + p.PhotoUri);
-//
-////            DBHelper dbh = new DBHelper(getContext(), null, null, 0);
-////            r_id = dbh.insert("Google", p.Name, p.Mail, p.PhotoUri, "Activated");
-////            if(r_id == -1){
-////                Log.w(TAG, "Create account failed!");
-////            }
-//            AccountManager am = AccountManager.getInstance();
-//            ai.brand = AccountManager.BRAND_GOOGLE;
-//            ai.name = p.Name;
-//            ai.mail = p.Mail;
-//            ai.photouri = p.PhotoUri;
-//            result = am.createAccount(getContext(), ai);
-//            if (result != true)
-//                Log.w(TAG, "Create account failed!");
-//            name = p.Name;
-//        }
-//
-//        //passing name to master account fragment so that a toast is shown to the user that an account is created
-//        AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(name);
-//        //action.setCreateAccountName(p.Name);
-//        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
-//    }
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState. mDrives: " + mDrives);
+        outState.putSerializable("Drives", mDrives);
+    }
 
     @Override
     public void onPause() {
@@ -236,12 +204,14 @@ public class AddAccountFragment extends BaseFragment {
     OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
         public void handleOnBackPressed() {
+            Fragment f = FragmentManager.findFragment(mView);
+
             // Handle the back button event
             Log.d(TAG, "Back button pressed!");
             //passing null to master account fragment to avoid showing the toast
             AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
             //action.setCreateAccountName(p.Name);
-            NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+            NavHostFragment.findNavController(f).navigate((NavDirections) action);
 
         }
     };
@@ -263,7 +233,8 @@ public class AddAccountFragment extends BaseFragment {
         //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (master account)
         AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
         //action.setCreateAccountName(p.Name);
-        NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+        Fragment f = FragmentManager.findFragment(mView);
+        NavHostFragment.findNavController(f).navigate((NavDirections) action);
 
         return super.onOptionsItemSelected(item);
     }
@@ -310,10 +281,11 @@ public class AddAccountFragment extends BaseFragment {
 
                 @Override
                 public void run() {
+                    Fragment f = FragmentManager.findFragment(mView);
                     //passing name to master account fragment so that a toast is shown to the user that an account is created
                     AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
                     //action.setCreateAccountName(p.Name);
-                    NavHostFragment.findNavController(mFragment).navigate((NavDirections) action);
+                    NavHostFragment.findNavController(f).navigate((NavDirections) action);
                 }
             });
 
