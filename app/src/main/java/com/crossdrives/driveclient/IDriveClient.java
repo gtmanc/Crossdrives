@@ -9,7 +9,12 @@ public interface IDriveClient {
     IQueryRequestBuilder list();
 
     /*
-        Download file(items) content
+        Download file(item) content
      */
     IDownloadRequestBuilder download();
+
+    /*
+        Upload file(item)
+     */
+    IUploadRequestBuilder upload();
 }

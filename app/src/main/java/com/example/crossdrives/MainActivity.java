@@ -1,5 +1,6 @@
 package com.example.crossdrives;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity{
     private final int MAX_BRAND = GlobalConstants.MAX_BRAND_SUPPORT;
     private final String BRAND_GOOGLE = GlobalConstants.BRAND_GOOGLE;
     private final String BRAND_MS = GlobalConstants.BRAND_MS;
+    private Activity mActivity;
 
     private List<String> mBrands = GlobalConstants.BrandList;
     private HashMap<String, Boolean> mSignInState = new HashMap<>(); //0: Google, 1: Microsoft
@@ -47,7 +49,7 @@ public class MainActivity extends AppCompatActivity{
 //                        .setAction("Action", null).show();
 //            }
 //        });
-
+        mActivity = this;
 
         silenceSignin();
     }
@@ -139,13 +141,13 @@ public class MainActivity extends AppCompatActivity{
     private void addGoogleDriveClient(GoogleSignInAccount account){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
-        CDFS.addClient(gdc);
+        CDFS.getCDFSService(mActivity).addClient(gdc);
     }
 
     void addOneDriveClient(String token){
         OneDriveClient odc =
                 (OneDriveClient) OneDriveClient.builder(token).buildClient();
-        CDFS.addClient(odc);
+        CDFS.getCDFSService(mActivity).addClient(odc);
 //        oneDriveClient.
 //                list().
 //                buildRequest().

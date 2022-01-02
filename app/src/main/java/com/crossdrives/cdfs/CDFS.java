@@ -1,5 +1,6 @@
 package com.crossdrives.cdfs;
 
+import android.app.Activity;
 import android.util.Log;
 
 import com.crossdrives.driveclient.IDownloadCallBack;
@@ -9,9 +10,15 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -20,42 +27,58 @@ import java.util.concurrent.Executors;
 
 public class CDFS {
     private static String TAG = "CDFS.CDFS";
-    static List<IDriveClient> sClient = new ArrayList<>();
-    private static final Executor sExecutor = Executors.newSingleThreadExecutor();
-    private static FileList mFileList;
-    private static OutputStream mStream;
+    List<IDriveClient> sClient = new ArrayList<>();
+    private final Executor sExecutor = Executors.newSingleThreadExecutor();
+    private FileList mFileList;
+    private OutputStream mStream;
+    private Activity mActivity;
+    static CDFS mCDFS = null;
 
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
     May use the thread synchronize object (e.g. condition variable) instead of the flag
      */
-    private static boolean msTaskfinished = false;
+    private boolean msTaskfinished = false;
 
-    public CDFS() {
+    CDFS(Activity activity) {
+        mActivity = activity;
+        String content;
 
+        Log.d(TAG, "create allocation file");
+        createTextFile("Allocation.cdfs", "Header of CDFS allocation");
+        content = readFile("Allocation.cdfs");
+        Log.d(TAG, content);
     }
 
-    static public int addClient(IDriveClient client){
+    static public CDFS getCDFSService(Activity activity){
+        if(mCDFS == null){
+            Log.d(TAG, "Create instance CDFS");
+            mCDFS = new CDFS(activity);
+        }
+        return mCDFS;
+    }
+
+    public int addClient(IDriveClient client){
         Log.d(TAG, "Add client!");
         sClient.add(client);
         return getClient(client);
     }
 
-    static public void removeClient(int i){
+    public void removeClient(int i){
         sClient.remove(i);
     }
-    static public IDriveClient getClient(int i){
+    public IDriveClient getClient(int i){
         return sClient.get(i);
     }
-    static public int getClient(IDriveClient client){
+    public int getClient(IDriveClient client){
         return sClient.indexOf(client);
     }
 
     /*
     Operation: get file list
      */
-    static public Task<FileList> list(Object nextPage){
+    public Task<FileList> list(Object nextPage){
         Task task;
         Log.d(TAG, "Operation: list files. nextPage: " + nextPage);
         task = Tasks.call(sExecutor, new Callable<Object>() {
@@ -96,7 +119,7 @@ public class CDFS {
     /*
         Operation download content of a file
      */
-    static public Task<OutputStream> download(String id) {
+    public Task<OutputStream> download(String id) {
         Task task;
         Log.d(TAG, "Operation: download " + id);
         task = Tasks.call(sExecutor, new Callable<Object>() {
@@ -134,14 +157,84 @@ public class CDFS {
         return task;
     }
 
-    private static void exitWait(){
+    private void exitWait(){
         msTaskfinished = true;
     }
 
-    private static void waitUntilFinished() throws Exception{
+    private void waitUntilFinished() throws Exception{
         while(msTaskfinished == false) {
             Thread.sleep(100);
         }
     }
 
+
+    /*
+    * Files with Activity Output/input: https://stackoverflow.com/questions/1239026/how-to-create-a-file-in-android
+    * */
+    private void createTextFile(String path, String content){
+        // catches IOException below
+        //final String TESTSTRING = new String("Hello Android");
+
+        /* We have to use the openFileOutput()-method
+         * the ActivityContext provides, to
+         * protect your file from others and
+         * This is done for security-reasons.
+         * We chose MODE_WORLD_READABLE, because
+         *  we have nothing to hide in our file */
+        FileOutputStream fOut = null;
+        try {
+            fOut = mActivity.openFileOutput(path, Activity.MODE_PRIVATE);
+            OutputStreamWriter osw = new OutputStreamWriter(fOut);
+            // Write the string to the file
+            osw.write(content);
+            /* ensure that everything is
+             * really written out and close */
+            osw.flush();
+            osw.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }catch (IOException e){
+
+        }
+    }
+    private String readFile(String path) {
+        /* We have to use the openFileInput()-method
+         * the ActivityContext provides.
+         * Again for security reasons with
+         * openFileInput(...) */
+
+        FileInputStream fIn = null;
+        String readString="";
+        String s;
+
+        try {
+            fIn = mActivity.openFileInput(path);
+            InputStreamReader isr = new InputStreamReader(fIn);
+            BufferedReader inputReader = new BufferedReader(isr);
+            /* Prepare a char-Array that will
+             * hold the chars we read back in. */
+            //char[] inputBuffer = new char[TESTSTRING.length()];
+
+            // Fill the Buffer with data from the file
+            //isr.read(inputBuffer);
+            while((s = inputReader.readLine()) != null){
+                readString = readString.concat(s);
+            }
+
+            // Transform the chars to a String
+            //String readString = new String(inputBuffer);
+
+            // Check if we read back the same chars that we had written out
+            //boolean isTheSame = TESTSTRING.equals(readString);
+
+            //Log.i("File Reading stuff", "success = " + isTheSame);
+
+        } catch (FileNotFoundException e) {
+            readString = null;
+        } catch (IOException ioe){
+            readString = null;
+        }
+        return readString;
+    }
 }

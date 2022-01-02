@@ -172,7 +172,7 @@ public class AddAccountFragment extends BaseFragment{
                  */
                 i = mDrives.get(brand);
                 Log.d(TAG, "Remove CDFS client. Index: " + i);
-                CDFS.removeClient(i);
+                CDFS.getCDFSService(getActivity()).removeClient(i);
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -251,7 +251,7 @@ public class AddAccountFragment extends BaseFragment{
                     Log.d(TAG, "User sign in OK. Start to create google drive client");
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
-                    i = CDFS.addClient(gdc);
+                    i = CDFS.getCDFSService(getActivity()).addClient(gdc);
                     Log.d(TAG, "Add CDFS for Google. Client index: " + i + " Drives map: " + mDrives);
                     mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
@@ -260,7 +260,7 @@ public class AddAccountFragment extends BaseFragment{
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
-                    i = CDFS.addClient(odc);
+                    i = CDFS.getCDFSService(getActivity()).addClient(odc);
                     Log.d(TAG, "Add CDFS for MS. Client index: " + i + " Drives map: " + mDrives);
                     mDrives.put(GlobalConstants.BRAND_MS, i);
                 }
