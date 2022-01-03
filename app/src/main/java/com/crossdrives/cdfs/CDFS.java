@@ -6,8 +6,10 @@ import android.util.Log;
 import com.crossdrives.driveclient.IDownloadCallBack;
 import com.crossdrives.driveclient.IFileListCallBack;
 import com.crossdrives.driveclient.IDriveClient;
+import com.crossdrives.driveclient.IUploadCallBack;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.BufferedReader;
@@ -35,6 +37,7 @@ public class CDFS {
     private OutputStream mStream;
     private Activity mActivity;
     static CDFS mCDFS = null;
+    private final String NAME_ALLOCATION_FILE = "allocation.cdfs";
 
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
@@ -48,8 +51,8 @@ public class CDFS {
         String content;
 
         Log.d(TAG, "create allocation file");
-        createTextFile("Allocation.cdfs", "Header of CDFS allocation");
-        content = readFile("Allocation.cdfs");
+        createTextFile(NAME_ALLOCATION_FILE, "Header of CDFS allocation");
+        content = readFile(NAME_ALLOCATION_FILE);
         Log.d(TAG, content);
     }
 
@@ -66,6 +69,21 @@ public class CDFS {
         //sClient.add(client);
         mDrives.put(brand, client);
         //return getClient(client);
+
+        File metadata = new File();
+        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" +"NAME_ALLOCATION_FILE");
+        metadata.setName(NAME_ALLOCATION_FILE);
+        client.upload().buildRequest(metadata, filePath).run(new IUploadCallBack() {
+            @Override
+            public void success(File file) {
+                Log.d(TAG, "Upload file OK. ID: " + file.getId());
+            }
+
+            @Override
+            public void failure(String ex) {
+                Log.w(TAG, "Failed to upload file: " + ex.toString());
+            }
+        });
     }
 
     //public void removeClient(int i){
