@@ -141,13 +141,13 @@ public class MainActivity extends AppCompatActivity{
     private void addGoogleDriveClient(GoogleSignInAccount account){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
-        CDFS.getCDFSService(mActivity).addClient(gdc);
+        CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
     }
 
     void addOneDriveClient(String token){
         OneDriveClient odc =
                 (OneDriveClient) OneDriveClient.builder(token).buildClient();
-        CDFS.getCDFSService(mActivity).addClient(odc);
+        CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_MS, odc);
 //        oneDriveClient.
 //                list().
 //                buildRequest().

@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -27,7 +28,8 @@ import java.util.concurrent.Executors;
 
 public class CDFS {
     private static String TAG = "CDFS.CDFS";
-    List<IDriveClient> sClient = new ArrayList<>();
+    //List<IDriveClient> sClient = new ArrayList<>();
+    HashMap<String, IDriveClient> mDrives = new HashMap<>();
     private final Executor sExecutor = Executors.newSingleThreadExecutor();
     private FileList mFileList;
     private OutputStream mStream;
@@ -59,20 +61,24 @@ public class CDFS {
         return mCDFS;
     }
 
-    public int addClient(IDriveClient client){
+    public void addClient(String brand, IDriveClient client){
         Log.d(TAG, "Add client!");
-        sClient.add(client);
-        return getClient(client);
+        //sClient.add(client);
+        mDrives.put(brand, client);
+        //return getClient(client);
     }
 
-    public void removeClient(int i){
-        sClient.remove(i);
+    //public void removeClient(int i){
+    public boolean removeClient(String brand, IDriveClient client){
+        //sClient.remove(i);
+        return mDrives.remove(brand, client);
     }
-    public IDriveClient getClient(int i){
-        return sClient.get(i);
-    }
-    public int getClient(IDriveClient client){
-        return sClient.indexOf(client);
+//    public IDriveClient getClient(int i){
+//        return sClient.get(i);
+//    }
+    public IDriveClient getClient(String brand){
+        //return sClient.indexOf(client);
+        return mDrives.get(brand);
     }
 
     /*
@@ -88,7 +94,8 @@ public class CDFS {
                 /*
                     Drive client test only. Always use index 0 (i.e first one added)
                  */
-                sClient.get(0).list().buildRequest()
+                mDrives.values().iterator().next().list().buildRequest()
+                //sClient.get(0).list().buildRequest()
                         .setNextPage(nextPage)
                         .setPageSize(0) //0 means no page size is applied
                         //.filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
@@ -126,8 +133,8 @@ public class CDFS {
             @Override
             public OutputStream call() throws Exception {
                 msTaskfinished = false;
-                //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<InputStream>() {
-                sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
+                mDrives.values().iterator().next().download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
+                //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
                     @Override
                     //public void success(InputStream inputStream){
                     public void success(OutputStream os){
