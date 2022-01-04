@@ -45,12 +45,13 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             public File call() throws Exception {
                 File file;
                 FileContent mediaContent = new FileContent(mType, mPath);
+                //Log.d(TAG, "Path: " + mPath);
                 try {
                     file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
                             .setFields("id")
                             .execute();
                 } catch (IOException e) {
-                    Log.w(TAG, "IO exception");
+                    Log.w(TAG, "IO exception: " + e.toString());
                     file = null;
                 }
 
@@ -67,7 +68,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
                     callback.success(file);
                 }
                 else{
-                    callback.failure("Unknown failure.");
+                    callback.failure("Unknown failure. Could be IO exception in drive client request");
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
