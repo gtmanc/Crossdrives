@@ -10,7 +10,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -20,7 +19,8 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     GoogleDriveClient mClient;
     File mMetadata;
     java.io.File mPath;
-    String mType = "text/plain";
+    String mMediaType = "text/plain";
+    String mUploadType = "uploadType=resumable";
 
     public GoogleDriveUploadRequest(GoogleDriveClient client, File metadata, java.io.File path) {
         mClient = client;
@@ -29,9 +29,14 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     }
 
     @Override
-    public void type(String type) {
+    public void meidaType(String type) {
         //check valid? "image/jpeg"
-        mType = type;
+        mMediaType = type;
+    }
+
+    @Override
+    public void uploadType(String type) {
+
     }
 
     @Override
@@ -44,7 +49,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             @Override
             public File call() throws Exception {
                 File file;
-                FileContent mediaContent = new FileContent(mType, mPath);
+                FileContent mediaContent = new FileContent(mMediaType, mPath);
                 //Log.d(TAG, "Path: " + mPath);
                 try {
                     file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
