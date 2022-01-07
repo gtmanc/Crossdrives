@@ -5,10 +5,16 @@ import android.util.Log;
 
 import com.example.crossdrives.DriveServiceHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -21,7 +27,7 @@ public class GoogleDriveClient implements IDriveClient {
     private DriveServiceHelper mHelper;
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
-    static public GoogleDriveClient create(Context context, Object SignInAccount) {
+    static public GoogleDriveClient create(Context context, Object SignInAccount) throws GeneralSecurityException, IOException {
         mContext = context;
 
         GoogleSignInAccount account = (GoogleSignInAccount)SignInAccount;
@@ -31,12 +37,15 @@ public class GoogleDriveClient implements IDriveClient {
                     GoogleAccountCredential.usingOAuth2(
                             context, Collections.singleton(DriveScopes.DRIVE_FILE));
             credential.setSelectedAccount(account.getAccount());
+
+            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            HTTP_TRANSPORT.
             Drive googleDriveService =
                     new Drive.Builder(
-                            AndroidHttp.newCompatibleTransport(),
+                            HTTP_TRANSPORT,
                             new GsonFactory(),
-                            credential)
-                            .setApplicationName("Cross Drive")
+                            getCredentials())
+                            .setApplicationName("Cross Drives")
                             .build();
 
             if (googleDriveService == null)
@@ -50,6 +59,7 @@ public class GoogleDriveClient implements IDriveClient {
 
         return null;
     }
+
     static public Builder builder(Context context, GoogleSignInAccount SignInAccount){
         mContext = context;
         mGoogleSignInAccount = SignInAccount;

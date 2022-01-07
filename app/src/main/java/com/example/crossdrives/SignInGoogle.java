@@ -26,12 +26,15 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 
@@ -52,6 +55,7 @@ public class SignInGoogle extends SignInManager{
     OnPhotoDownloaded mPhotoDownloadCallback;
     private Bitmap mBmp;
     private Object mObject;
+    private final String CLIENT_SECRET_FILE = "/client_secret_myoffice.json";
 
     SignInGoogle(Context context)
     {
@@ -101,6 +105,43 @@ public class SignInGoogle extends SignInManager{
         }
     }
 
+    private String exchangeAccessToken(String authCode){
+        // Set path to the Web application client_secret_*.json file you downloaded from the
+        // Google API Console: https://console.developers.google.com/apis/credentials
+        // You can also find your Web application client ID and client secret from the
+        // console and specify them directly when you create the GoogleAuthorizationCodeTokenRequest
+        // object.
+        GoogleTokenResponse tokenResponse = null;
+
+        // Exchange auth code for access token
+        GoogleClientSecrets clientSecrets =
+                null;
+        try {
+            clientSecrets = GoogleClientSecrets.load(
+                    GsonFactory.getDefaultInstance(), new FileReader(CLIENT_SECRET_FILE));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            tokenResponse =
+                    new GoogleAuthorizationCodeTokenRequest(
+                            new NetHttpTransport(),
+                            GsonFactory.getDefaultInstance(),
+                            "https://oauth2.googleapis.com/token",
+                            clientSecrets.getDetails().getClientId(),
+                            clientSecrets.getDetails().getClientSecret(),
+                            authCode,
+                            null)   // Specify the same redirect URI that you use with your web
+                            // app. If you don't have a web version of your app, you can
+                            // specify an empty string.
+                            .execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return tokenResponse.getAccessToken();
+    }
     /*
        A fragment is used to perform the sign in interactive sign in flow. The most of
        the logic is implemented in the fragment.
