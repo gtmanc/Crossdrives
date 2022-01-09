@@ -55,7 +55,7 @@ public class SignInGoogle extends SignInManager{
     OnPhotoDownloaded mPhotoDownloadCallback;
     private Bitmap mBmp;
     private Object mObject;
-    private final String CLIENT_SECRET_FILE = "/client_secret_myoffice.json";
+    private static final String CLIENT_SECRET_FILE = "/raw/client_secret_web_backend.json";
 
     SignInGoogle(Context context)
     {
@@ -76,6 +76,8 @@ public class SignInGoogle extends SignInManager{
     public static class ReceiveSigninResult {
         public static void onSignedIn(int statuscode, Fragment fragment, GoogleSignInAccount account){
             int code = SignInManager.RESULT_FAILED;
+            String accessToken;
+            String Authcode;
 
             //Reset profile content first of all
             mProfile.Brand= SignInManager.BRAND_GOOGLE;
@@ -91,6 +93,11 @@ public class SignInGoogle extends SignInManager{
                 mProfile.Name = account.getDisplayName();
                 mProfile.Mail = account.getEmail();
                 mProfile.PhotoUri = account.getPhotoUrl();
+
+                Authcode = account.getServerAuthCode();
+                if(Authcode != null) {
+                    accessToken = exchangeAccessToken(Authcode);
+                }
             }
 
             NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
@@ -105,7 +112,11 @@ public class SignInGoogle extends SignInManager{
         }
     }
 
-    private String exchangeAccessToken(String authCode){
+    static private String exchangeAccessToken(String authCode){
+        if(authCode == null){
+            Log.w(TAG, "authCode is null!");
+            return null;
+        }
         // Set path to the Web application client_secret_*.json file you downloaded from the
         // Google API Console: https://console.developers.google.com/apis/credentials
         // You can also find your Web application client ID and client secret from the
@@ -116,9 +127,12 @@ public class SignInGoogle extends SignInManager{
         // Exchange auth code for access token
         GoogleClientSecrets clientSecrets =
                 null;
+        //https://stackoverflow.com/questions/15912825/how-to-read-file-from-res-raw-by-name
+        InputStream secret =
         try {
             clientSecrets = GoogleClientSecrets.load(
-                    GsonFactory.getDefaultInstance(), new FileReader(CLIENT_SECRET_FILE));
+                    //GsonFactory.getDefaultInstance(), new FileReader(CLIENT_SECRET_FILE));
+            GsonFactory.getDefaultInstance(), new FileReader(R.raw.client_secret_web_backend));
         } catch (IOException e) {
             e.printStackTrace();
         }

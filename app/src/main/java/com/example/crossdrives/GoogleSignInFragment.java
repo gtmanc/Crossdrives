@@ -18,6 +18,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
@@ -68,8 +69,9 @@ public class GoogleSignInFragment extends Fragment {
         // code exchange.
         String serverClientId = getString(R.string.server_client_id);
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+                .requestScopes(new Scope(Scopes.DRIVE_FILE))
                 .requestServerAuthCode(serverClientId)
+                //.requestIdToken(serverClientId)
                 .requestEmail()
                 .build();
 
@@ -86,7 +88,6 @@ public class GoogleSignInFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         GoogleSignInAccount account = null;
-        String accessToken = null;
 
         Log.d(TAG, "requestCode: " + requestCode);
         Log.d(TAG, "resultCode: " + resultCode);
@@ -164,6 +165,7 @@ public class GoogleSignInFragment extends Fragment {
                 // Please refer to the GoogleSignInStatusCodes class reference for more information.
                 // Error code :12501 if user gives up sign in. e.g. press back key in signin screen
                 Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+                Log.w(TAG, e.getCause().getMessage());
                 mSigninResult = e.getStatusCode();
             }
 

@@ -6,6 +6,7 @@ import android.util.Log;
 import com.example.crossdrives.DriveServiceHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -23,31 +24,36 @@ public class GoogleDriveClient implements IDriveClient {
     private static String TAG = "CD.GoogleDriveClient";
     private static Context mContext;
     private static GoogleSignInAccount mGoogleSignInAccount;
+    private static String mAccessToken;
     private Drive mGgoogleDriveService;
     private DriveServiceHelper mHelper;
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
-    static public GoogleDriveClient create(Context context, Object SignInAccount) throws GeneralSecurityException, IOException {
+    static public GoogleDriveClient create(Context context, Object accessToken) throws GeneralSecurityException, IOException {
         mContext = context;
 
-        GoogleSignInAccount account = (GoogleSignInAccount)SignInAccount;
+        //GoogleSignInAccount account = (GoogleSignInAccount)SignInAccount;
 
-        if(account != null) {
-            GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                            context, Collections.singleton(DriveScopes.DRIVE_FILE));
-            credential.setSelectedAccount(account.getAccount());
-
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            HTTP_TRANSPORT.
+        if(accessToken != null) {
+//            GoogleAccountCredential credential =
+//                    GoogleAccountCredential.usingOAuth2(
+//                            context, Collections.singleton(DriveScopes.DRIVE_FILE));
+//            credential.setSelectedAccount(account.getAccount());
+//
+//            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+//            HTTP_TRANSPORT.
+//            Drive googleDriveService =
+//                    new Drive.Builder(
+//                            HTTP_TRANSPORT,
+//                            new GsonFactory(),
+//                            getCredentials())
+//                            .setApplicationName("Cross Drives")
+//                            .build();
+            GoogleCredential credential = new GoogleCredential().setAccessToken((String)accessToken);
             Drive googleDriveService =
-                    new Drive.Builder(
-                            HTTP_TRANSPORT,
-                            new GsonFactory(),
-                            getCredentials())
+                    new Drive.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
                             .setApplicationName("Cross Drives")
                             .build();
-
             if (googleDriveService == null)
                 Log.w(TAG, "googleDriveService is null!");
             // The DriveServiceHelper encapsulates all REST API and SAF functionality.
@@ -60,10 +66,19 @@ public class GoogleDriveClient implements IDriveClient {
         return null;
     }
 
+    /*
+        Deprecated
+     */
     static public Builder builder(Context context, GoogleSignInAccount SignInAccount){
         mContext = context;
         mGoogleSignInAccount = SignInAccount;
         return new Builder();
+    }
+
+    static public Builder builder(Context context, String accessToken){
+            mContext = context;
+            mAccessToken = accessToken;
+            return new Builder();
     }
 
     public static class Builder{
@@ -73,18 +88,26 @@ public class GoogleDriveClient implements IDriveClient {
     }
     public static IDriveClient fromConfig(){
         GoogleDriveClient gClient = new GoogleDriveClient();
-        if(mGoogleSignInAccount != null) {
-            GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
-            credential.setSelectedAccount(mGoogleSignInAccount.getAccount());
+        if(mAccessToken != null) {
+//            GoogleAccountCredential credential =
+//                    GoogleAccountCredential.usingOAuth2(
+//                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
+//            credential.setSelectedAccount(mGoogleSignInAccount.getAccount());
+//            Drive googleDriveService =
+//                    new Drive.Builder(
+//                            AndroidHttp.newCompatibleTransport(),
+//                            new GsonFactory(),
+//                            credential)
+//                            .setApplicationName("Cross Drive")
+//                            .build();
+
+            GoogleCredential credential = new GoogleCredential().setAccessToken((String)mAccessToken);
             Drive googleDriveService =
-                    new Drive.Builder(
-                            AndroidHttp.newCompatibleTransport(),
-                            new GsonFactory(),
-                            credential)
-                            .setApplicationName("Cross Drive")
+                    new Drive.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
+                            .setApplicationName("Cross Drives")
                             .build();
+            if (googleDriveService == null)
+                Log.w(TAG, "googleDriveService is null!");
 
             gClient.setGoogleDriveService(googleDriveService);
             gClient.setGDriveHelper(new DriveServiceHelper(googleDriveService));
