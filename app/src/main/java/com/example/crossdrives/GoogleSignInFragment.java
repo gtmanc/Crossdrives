@@ -165,7 +165,7 @@ public class GoogleSignInFragment extends Fragment {
                 // Please refer to the GoogleSignInStatusCodes class reference for more information.
                 // Error code :12501 if user gives up sign in. e.g. press back key in signin screen
                 Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-                Log.w(TAG, e.getCause().getMessage());
+                Log.w(TAG, e.getMessage());
                 mSigninResult = e.getStatusCode();
             }
 

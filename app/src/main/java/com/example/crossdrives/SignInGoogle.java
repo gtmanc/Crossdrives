@@ -1,15 +1,12 @@
 package com.example.crossdrives;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -33,12 +30,10 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-
-import retrofit2.http.Url;
 
 //A concrete object for execution of google sign in flow
 public class SignInGoogle extends SignInManager{
@@ -49,13 +44,13 @@ public class SignInGoogle extends SignInManager{
     private Context mContext = null;
     //Activity mActivity;
     private static Profile mProfile = new Profile();
-    private Fragment mFragment;
+    static private Fragment mFragment;
     static OnInteractiveSignInfinished mCallback;
     static OnSignOutFinished mSignoutCallback;
     OnPhotoDownloaded mPhotoDownloadCallback;
     private Bitmap mBmp;
     private Object mObject;
-    private static final String CLIENT_SECRET_FILE = "/raw/client_secret_web_backend.json";
+    private static final String CLIENT_SECRET_FILE = "client_secret_web_backend.json";
 
     SignInGoogle(Context context)
     {
@@ -125,16 +120,25 @@ public class SignInGoogle extends SignInManager{
         GoogleTokenResponse tokenResponse = null;
 
         // Exchange auth code for access token
-        GoogleClientSecrets clientSecrets =
-                null;
+        GoogleClientSecrets clientSecrets = null;
+
+        AssetFileDescriptor descriptor = null;
+
         //https://stackoverflow.com/questions/15912825/how-to-read-file-from-res-raw-by-name
-        InputStream secret =
+        //https://stackoverflow.com/questions/4789325/android-path-to-asset-txt-file
+        //https://www.geeksforgeeks.org/resource-raw-folder-in-android-studio/
+        try {
+            descriptor = mFragment.getActivity().getAssets().openFd(CLIENT_SECRET_FILE);
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to open secret file!" + e.getMessage());
+        }
+
         try {
             clientSecrets = GoogleClientSecrets.load(
                     //GsonFactory.getDefaultInstance(), new FileReader(CLIENT_SECRET_FILE));
-            GsonFactory.getDefaultInstance(), new FileReader(R.raw.client_secret_web_backend));
+            GsonFactory.getDefaultInstance(), new FileReader(descriptor.getFileDescriptor()));
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Failed to load client secret!"  + e.getMessage());
         }
 
         try {
@@ -151,7 +155,7 @@ public class SignInGoogle extends SignInManager{
                             // specify an empty string.
                             .execute();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Failed to get GoogleAuthorizationCodeToken!");
         }
 
         return tokenResponse.getAccessToken();
