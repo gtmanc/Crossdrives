@@ -129,8 +129,19 @@ public class SignInGoogle extends SignInManager{
         //https://www.geeksforgeeks.org/resource-raw-folder-in-android-studio/
         try {
             descriptor = mFragment.getActivity().getAssets().openFd(CLIENT_SECRET_FILE);
+            Log.d(TAG, "A Valid file? " + descriptor.getFileDescriptor().valid());
         } catch (IOException e) {
             Log.w(TAG, "Failed to open secret file!" + e.getMessage());
+        }
+
+        FileReader fr = new FileReader(descriptor.getFileDescriptor());
+        char[] array = new char[1024];
+        int l;
+        try {
+             l = fr.read(array);
+            Log.d(TAG, "Read length: " + l + "Content: " + array.toString());
+        } catch (IOException e) {
+            Log.w(TAG, "File reader doenst work" + e.getMessage());
         }
 
         try {
