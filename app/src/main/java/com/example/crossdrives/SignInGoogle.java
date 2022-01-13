@@ -30,10 +30,16 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.io.Writer;
 
 //A concrete object for execution of google sign in flow
 public class SignInGoogle extends SignInManager{
@@ -41,7 +47,7 @@ public class SignInGoogle extends SignInManager{
     private static SignInGoogle mSignInGoogle = null;
     private GoogleSignInClient mGoogleSignInClient;
     private GoogleSignInAccount mGoogleSignInAccount;
-    private Context mContext = null;
+    private static Context mContext = null;
     //Activity mActivity;
     private static Profile mProfile = new Profile();
     static private Fragment mFragment;
@@ -50,7 +56,7 @@ public class SignInGoogle extends SignInManager{
     OnPhotoDownloaded mPhotoDownloadCallback;
     private Bitmap mBmp;
     private Object mObject;
-    private static final String CLIENT_SECRET_FILE = "client_secret_web_backend.json";
+    private static final String CLIENT_SECRET_FILE = "raw/client_secret_web_backend.json";
 
     SignInGoogle(Context context)
     {
@@ -121,55 +127,116 @@ public class SignInGoogle extends SignInManager{
 
         // Exchange auth code for access token
         GoogleClientSecrets clientSecrets = null;
-
         AssetFileDescriptor descriptor = null;
+        BufferedReader reader = null;
+        File f = createSecret();
+        if(f != null) {
 
-        //https://stackoverflow.com/questions/15912825/how-to-read-file-from-res-raw-by-name
-        //https://stackoverflow.com/questions/4789325/android-path-to-asset-txt-file
-        //https://www.geeksforgeeks.org/resource-raw-folder-in-android-studio/
-        try {
-            descriptor = mFragment.getActivity().getAssets().openFd(CLIENT_SECRET_FILE);
-            Log.d(TAG, "A Valid file? " + descriptor.getFileDescriptor().valid());
-        } catch (IOException e) {
-            Log.w(TAG, "Failed to open secret file!" + e.getMessage());
+            //https://stackoverflow.com/questions/15912825/how-to-read-file-from-res-raw-by-name
+            //https://stackoverflow.com/questions/4789325/android-path-to-asset-txt-file
+            //https://www.geeksforgeeks.org/resource-raw-folder-in-android-studio/
+//        try {
+//            descriptor = mFragment.getActivity().getAssets().openFd(CLIENT_SECRET_FILE);
+//            descriptor = mFragment.getActivity().getAssets().openFd("test.txt");
+//            reader = new BufferedReader(new InputStreamReader(
+//                    mFragment.getActivity().getAssets().open(CLIENT_SECRET_FILE)));
+//        } catch (IOException e) {
+//            Log.w(TAG, "Failed to open secret file!" + e.getMessage());
+//        }
+
+
+//        FileDescriptor fd = descriptor.getFileDescriptor();
+//        FileReader fr = new FileReader();
+//        char[] array = new char[1024];
+//        int l;
+//        try {
+//             l = fr.read(array);
+//            Log.d(TAG, "Read length: " + l + "Content: " + array.toString());
+//        } catch (IOException e) {
+//            Log.w(TAG, "File reader doenst work" + e.getMessage());
+//        }
+
+//        String mLine;
+//        while (true) {
+//            try {
+//                if ((mLine = reader.readLine()) != null){
+//                    Log.d(TAG, "Line read: " + mLine.toString());
+//                }else{
+//                    break;
+//                }
+//            } catch (IOException e) {
+//                Log.w(TAG, "File reader doenst work" + e.getMessage());
+//            }
+//        }
+
+            try {
+                clientSecrets = GoogleClientSecrets.load(
+                        GsonFactory.getDefaultInstance(), new FileReader(f));
+                //GsonFactory.getDefaultInstance(), new FileReader(descriptor.getFileDescriptor()));
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to load client secret!" + e.getMessage());
+            }
+
+            try {
+                tokenResponse =
+                        new GoogleAuthorizationCodeTokenRequest(
+                                new NetHttpTransport(),
+                                GsonFactory.getDefaultInstance(),
+                                "https://oauth2.googleapis.com/token",
+                                clientSecrets.getDetails().getClientId(),
+                                clientSecrets.getDetails().getClientSecret(),
+                                authCode,
+                                null)   // Specify the same redirect URI that you use with your web
+                                // app. If you don't have a web version of your app, you can
+                                // specify an empty string.
+                                .execute();
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to get GoogleAuthorizationCodeToken!");
+            }
         }
-
-        FileReader fr = new FileReader(descriptor.getFileDescriptor());
-        char[] array = new char[1024];
-        int l;
-        try {
-             l = fr.read(array);
-            Log.d(TAG, "Read length: " + l + "Content: " + array.toString());
-        } catch (IOException e) {
-            Log.w(TAG, "File reader doenst work" + e.getMessage());
-        }
-
-        try {
-            clientSecrets = GoogleClientSecrets.load(
-                    //GsonFactory.getDefaultInstance(), new FileReader(CLIENT_SECRET_FILE));
-            GsonFactory.getDefaultInstance(), new FileReader(descriptor.getFileDescriptor()));
-        } catch (IOException e) {
-            Log.w(TAG, "Failed to load client secret!"  + e.getMessage());
-        }
-
-        try {
-            tokenResponse =
-                    new GoogleAuthorizationCodeTokenRequest(
-                            new NetHttpTransport(),
-                            GsonFactory.getDefaultInstance(),
-                            "https://oauth2.googleapis.com/token",
-                            clientSecrets.getDetails().getClientId(),
-                            clientSecrets.getDetails().getClientSecret(),
-                            authCode,
-                            null)   // Specify the same redirect URI that you use with your web
-                            // app. If you don't have a web version of your app, you can
-                            // specify an empty string.
-                            .execute();
-        } catch (IOException e) {
-            Log.w(TAG, "Failed to get GoogleAuthorizationCodeToken!");
-        }
-
         return tokenResponse.getAccessToken();
+    }
+
+    static private File createSecret(){
+        InputStream ins;
+        InputStreamReader inr;
+        BufferedReader br;
+        Writer wr = new StringWriter();
+        FileOutputStream fos;
+        File f = null;
+
+        //To get a resoirce id:
+        // getResources().getIdentifier("FILENAME_WITHOUT_EXTENSION", "raw", getPackageName());
+        ins = mContext.getResources().openRawResource(R.raw.client_secret_web_backend);
+
+        //f = new File(mContext.getFilesDir().toString() + "/Google_secret");
+        f = new File(mContext.getFilesDir().toString(), "/Google_secret");
+        Log.d(TAG, "Secret path: " +  f.toString());
+        try {
+            inr = new InputStreamReader(ins, "UTF-8");
+            br = new BufferedReader(inr);
+            fos = new FileOutputStream(f);
+            char[] buf = new char[1024];
+            int read;
+            while ((read = br.read(buf)) != -1) {
+                wr.write(buf, 0, read);
+                Log.d(TAG, "Secret read: " +  wr.toString());
+
+                fos.write(buf);
+            }
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to write secret! " + e.getMessage());
+        }
+
+        try {
+            ins.close();
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to close input stream! " + e.getMessage());
+        }
+
+        return f;
     }
     /*
        A fragment is used to perform the sign in interactive sign in flow. The most of
