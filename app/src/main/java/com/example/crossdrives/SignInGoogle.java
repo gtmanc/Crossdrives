@@ -1,5 +1,6 @@
 package com.example.crossdrives;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
@@ -38,6 +39,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
@@ -178,6 +180,8 @@ public class SignInGoogle extends SignInManager{
             }
 
             try {
+                Log.d(TAG, "ClientId: " +clientSecrets.getDetails().getClientId());
+                Log.d(TAG, "ClientSecret: " +clientSecrets.getDetails().getClientSecret());
                 tokenResponse =
                         new GoogleAuthorizationCodeTokenRequest(
                                 new NetHttpTransport(),
@@ -202,8 +206,9 @@ public class SignInGoogle extends SignInManager{
         InputStreamReader inr;
         BufferedReader br;
         Writer wr = new StringWriter();
-        FileOutputStream fos;
+        //FileOutputStream fos;
         File f = null;
+        FileOutputStream fOut = null;
 
         //To get a resoirce id:
         // getResources().getIdentifier("FILENAME_WITHOUT_EXTENSION", "raw", getPackageName());
@@ -211,21 +216,31 @@ public class SignInGoogle extends SignInManager{
 
         //f = new File(mContext.getFilesDir().toString() + "/Google_secret");
         f = new File(mContext.getFilesDir().toString(), "/Google_secret");
+
         Log.d(TAG, "Secret path: " +  f.toString());
         try {
             inr = new InputStreamReader(ins, "UTF-8");
             br = new BufferedReader(inr);
-            fos = new FileOutputStream(f);
+            //fos = new FileOutputStream(f);
+            fOut = mFragment.getActivity().openFileOutput("Google_secret", Activity.MODE_PRIVATE);
+            OutputStreamWriter osw = new OutputStreamWriter(fOut);
             char[] buf = new char[1024];
             int read;
             while ((read = br.read(buf)) != -1) {
                 wr.write(buf, 0, read);
-                Log.d(TAG, "Secret read: " +  wr.toString());
+                Log.d(TAG, "Secret read: " + wr.toString());
+                // Write the string to the file
+                osw.write(wr.toString());
+                /* ensure that everything is
+                 * really written out and close */
 
-                fos.write(buf);
+                //fos.write(buf);
             }
-            fos.flush();
-            fos.close();
+            osw.flush();
+            osw.close();
+
+//            fos.flush();
+//            fos.close();
         } catch (IOException e) {
             Log.w(TAG, "Failed to write secret! " + e.getMessage());
         }
