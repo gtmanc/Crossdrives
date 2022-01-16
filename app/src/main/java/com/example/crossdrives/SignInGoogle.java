@@ -2,10 +2,12 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
@@ -59,6 +61,7 @@ public class SignInGoogle extends SignInManager{
     private Bitmap mBmp;
     private Object mObject;
     private static final String CLIENT_SECRET_FILE = "raw/client_secret_web_backend.json";
+    private static String mAccessToken;
 
     SignInGoogle(Context context)
     {
@@ -81,12 +84,14 @@ public class SignInGoogle extends SignInManager{
             int code = SignInManager.RESULT_FAILED;
             String accessToken;
             String Authcode;
+            Intent intent = new Intent();
 
             //Reset profile content first of all
             mProfile.Brand= SignInManager.BRAND_GOOGLE;
             mProfile.Name= "NoName";
             mProfile.Mail = "";
             mProfile.PhotoUri = null;
+
 
             if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
 
@@ -99,19 +104,25 @@ public class SignInGoogle extends SignInManager{
 
                 Authcode = account.getServerAuthCode();
                 if(Authcode != null) {
-                    accessToken = exchangeAccessToken(Authcode);
+                    /*
+                    android.os.NetworkOnMainThreadException will be thrown if an application attempts
+                    to perform a networking operation on its main thread.
+                    https://stackoverflow.com/questions/6343166/how-can-i-fix-android-os-networkonmainthreadexception
+                    */
+                    ExchangeToken exchangeToken = new ExchangeToken();
+                    exchangeToken.execute(Authcode);
                 }
+            }else{
+                mCallback.onFailure("Encountered problem in sign in!");
             }
 
             NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
             NavHostFragment.findNavController(fragment).navigate(a);
 
             //Translate google code to sign to auth interface ones.
-            if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
-                code = SignInManager.RESULT_SUCCESS;
-            }
-
-            mCallback.onFinished(code, mProfile, account);
+//            if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
+//                code = SignInManager.RESULT_SUCCESS;
+//            }
         }
     }
 
@@ -132,6 +143,7 @@ public class SignInGoogle extends SignInManager{
         AssetFileDescriptor descriptor = null;
         BufferedReader reader = null;
         File f = createSecret();
+        String uri = "";
         if(f != null) {
 
             //https://stackoverflow.com/questions/15912825/how-to-read-file-from-res-raw-by-name
@@ -190,7 +202,7 @@ public class SignInGoogle extends SignInManager{
                                 clientSecrets.getDetails().getClientId(),
                                 clientSecrets.getDetails().getClientSecret(),
                                 authCode,
-                                null)   // Specify the same redirect URI that you use with your web
+                                uri)   // Specify the same redirect URI that you use with your web
                                 // app. If you don't have a web version of your app, you can
                                 // specify an empty string.
                                 .execute();
@@ -201,11 +213,14 @@ public class SignInGoogle extends SignInManager{
         return tokenResponse.getAccessToken();
     }
 
+    /*
+    Since GoogleClientSecrets.load request FileReader, we create a file in app directory so that
+    a File object can be used for FileReader.
+     */
     static private File createSecret(){
         InputStream ins;
         InputStreamReader inr;
         BufferedReader br;
-        Writer wr = new StringWriter();
         //FileOutputStream fos;
         File f = null;
         FileOutputStream fOut = null;
@@ -221,6 +236,7 @@ public class SignInGoogle extends SignInManager{
         try {
             inr = new InputStreamReader(ins, "UTF-8");
             br = new BufferedReader(inr);
+            Writer wr = new StringWriter();
             //fos = new FileOutputStream(f);
             fOut = mFragment.getActivity().openFileOutput("Google_secret", Activity.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
@@ -236,9 +252,11 @@ public class SignInGoogle extends SignInManager{
 
                 //fos.write(buf);
             }
+            wr.close();
             osw.flush();
             osw.close();
-
+            inr.close();
+            br.close();
 //            fos.flush();
 //            fos.close();
         } catch (IOException e) {
@@ -247,6 +265,7 @@ public class SignInGoogle extends SignInManager{
 
         try {
             ins.close();
+            fOut.close();
         } catch (IOException e) {
             Log.w(TAG, "Failed to close input stream! " + e.getMessage());
         }
@@ -286,56 +305,16 @@ public class SignInGoogle extends SignInManager{
         return true;
     }
 
-
-//    @Override
-//    Profile HandleSigninResult(Intent data) {
-//        GoogleSignInAccount account = null;
-//
-//        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-//        try {
-//            account = task.getResult(ApiException.class);
-//
-//        }catch (ApiException e) {
-//                // The ApiException status code indicates the detailed failure reason.
-//                // Please refer to the GoogleSignInStatusCodes class reference for more information.
-//                Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-//                mProfile = null;
-//        }
-//
-//        if(account != null) {
-//            GoogleAccountCredential credential =
-//                    GoogleAccountCredential.usingOAuth2(
-//                            mContext, Collections.singleton(DriveScopes.DRIVE_FILE));
-//            credential.setSelectedAccount(account.getAccount());
-//            Drive googleDriveService =
-//                    new Drive.Builder(
-//                            AndroidHttp.newCompatibleTransport(),
-//                            new GsonFactory(),
-//                            credential)
-//                            .setApplicationName("Drive API Migration")
-//                            .build();
-//
-//            if(googleDriveService == null)
-//                Log.w(TAG, "googleDriveService is null!");
-//            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
-//            // Its instantiation is required before handling any onClick actions.
-//            // We create DriveServiceHelper here but it will be used later by using getInstance() method
-//            //new DriveServiceHelper(googleDriveService);
-//            DriveServiceHelper.Create(googleDriveService);
-//            mProfile.Name= account.getDisplayName();
-//            mProfile.Mail = account.getEmail();
-//            mProfile.PhotoUri = account.getPhotoUrl();
-//        }
-//        return mProfile;
-//    }
-
     //Silence sign in. The account information and result will be provided via callback even if the user is already signed in.
     @Override
     void silenceSignIn(OnSilenceSignInfinished callback) {
+        String Authcode = null;
+        String serverClientId = mContext.getString(R.string.server_client_id);
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+                .requestServerAuthCode(serverClientId)
                 .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
                 .build();
 
@@ -357,7 +336,17 @@ public class SignInGoogle extends SignInManager{
             mProfile.Mail = mGoogleSignInAccount.getEmail();
             mProfile.PhotoUri = mGoogleSignInAccount.getPhotoUrl();
             //requestDriveService(mGoogleSignInAccount);
-            callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mGoogleSignInAccount);
+            Authcode = mGoogleSignInAccount.getServerAuthCode();
+            if(Authcode != null) {
+                    /*
+                    android.os.NetworkOnMainThreadException will be thrown if an application attempts
+                    to perform a networking operation on its main thread.
+                    https://stackoverflow.com/questions/6343166/how-can-i-fix-android-os-networkonmainthreadexception
+                    */
+                ExchangeToken exchangeToken = new ExchangeToken();
+                exchangeToken.execute(Authcode);
+            }
+            callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mAccessToken);
         } else {
             // There's no immediate result ready, displays some progress indicator and waits for the
             // async callback.
@@ -484,6 +473,26 @@ public class SignInGoogle extends SignInManager{
 //            super.onPostExecute(bitmap);
 //            mImageView.setImageBitmap(bitmap);
             mPhotoDownloadCallback.onDownloaded(bitmap, mObject);
+        }
+    }
+
+    //1st String: authcode
+    //2nd
+    //3rd: String: accessToken
+    static private class ExchangeToken extends AsyncTask<String, Void, String>{
+
+        @Override
+        protected String doInBackground(String... authcode) {
+            String token;
+            token = exchangeAccessToken(authcode[0]);
+            Log.d(TAG, "Access Token: " + token);
+            return token;
+        }
+
+        @Override
+        protected void onPostExecute(String token) {
+            Log.d(TAG, "call back with Access Token: " + token);
+            mCallback.onFinished(mProfile, token);
         }
     }
 }

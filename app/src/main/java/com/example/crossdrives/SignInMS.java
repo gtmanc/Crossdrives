@@ -236,7 +236,7 @@ public class SignInMS extends SignInManager{
                 mProfile.PhotoUri = null;
 
                 mToken = authenticationResult.getAccessToken();
-                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, mProfile, mToken);
+                mOnInteractiveSignInfinished.onFinished(mProfile, mToken);
                 //MSGraphRestHelper msRest = new MSGraphRestHelper();
 
 
@@ -251,13 +251,13 @@ public class SignInMS extends SignInManager{
                 /* Failed to acquireToken */
                 Log.w(TAG, "Authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
+                mOnInteractiveSignInfinished.onFailure(exception.toString());
             }
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
                 Log.w(TAG, "User cancelled login.");
-                mOnInteractiveSignInfinished.onFinished(SignInManager.RESULT_FAILED, mProfile, null);
+                mOnInteractiveSignInfinished.onFailure("User cancelled the sign in");
             }
         };
     }

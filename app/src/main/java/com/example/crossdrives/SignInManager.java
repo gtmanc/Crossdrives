@@ -26,7 +26,9 @@ public abstract class SignInManager{
       Object: instance used to build API client. e.g. drive access
     */
     interface OnInteractiveSignInfinished {
-        void onFinished(int result, Profile profile, Object object);
+        void onFinished(Profile profile, Object object);
+
+        void onFailure(String err);
     }
 
     interface OnSilenceSignInfinished {

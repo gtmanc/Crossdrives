@@ -26,6 +26,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.crossdrives.cdfs.CDFS;
@@ -46,6 +47,7 @@ public class AddAccountFragment extends BaseFragment{
     SignInManager mSignInManager = null;
     private static final int RC_SIGN_IN = 0;
     View mView;
+    Activity mActivity;
     /*
         Maintenance of map between drive brand and index for add/remove CDFS client.
         It's observed 'static' must be used. Otherwise, the data in the map is lost each time the
@@ -70,6 +72,8 @@ public class AddAccountFragment extends BaseFragment{
     @Override
     public View onCreateView(@NonNull @NotNull LayoutInflater inflater, @Nullable @org.jetbrains.annotations.Nullable ViewGroup container, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
+        //Update activity object each time the fragment is shown. It will be used in callback called by background thread. e.g. onSigninFinished
+        mActivity = getActivity();
         return inflater.inflate(R.layout.add_account_fragment, container, false);
     }
 
@@ -243,17 +247,16 @@ public class AddAccountFragment extends BaseFragment{
 
     SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object object) {
+        public void onFinished(SignInManager.Profile profile, Object object) {
             boolean err = false;
 
-            if(result == SignInManager.RESULT_SUCCESS) {
+            //if(result == SignInManager.RESULT_SUCCESS) {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
-                    Log.d(TAG, "User sign in OK. Start to create google drive client");
+                    Log.d(TAG, "User sign in OK. Start to create google drive client. Token: " + (String)object);
                     GoogleDriveClient gdc =
-                            (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
-                    CDFS.getCDFSService(getActivity()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
-                    Log.d(TAG, "Add CDFS for Google. Client index");
+                            (GoogleDriveClient) GoogleDriveClient.builder(mActivity, (String)object).buildClient();
+                    CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
                     //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
@@ -261,8 +264,7 @@ public class AddAccountFragment extends BaseFragment{
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
-                    CDFS.getCDFSService(getActivity()).addClient(GlobalConstants.BRAND_MS, odc);
-                    Log.d(TAG, "Add CDFS for MS. Client index");
+                    CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_MS, odc);
                     //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }
                 else{
@@ -271,24 +273,31 @@ public class AddAccountFragment extends BaseFragment{
 
                 createAccount(profile);
 
-            }
-            else{
-                Toast.makeText(getContext(), "Sign in failed! error:" + result, Toast.LENGTH_LONG).show();
-            }
+//            }
+//            else{
+//                Toast.makeText(getContext(), "Sign in failed! error:" + result, Toast.LENGTH_LONG).show();
+//            }
 
             //The callback may not be called in main thread. e.g. Microsoft sign in
-            getActivity().runOnUiThread(new Runnable() {
+//            mActivity.runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    Fragment f = FragmentManager.findFragment(mView);
+//                    //passing name to master account fragment so that a toast is shown to the user that an account is created
+//                    AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
+//                    //action.setCreateAccountName(p.Name);
+//                    Log.d(TAG, "Fragment: " + f.toString());
+//                    //NavHostFragment.findNavController(f).navigate((NavDirections) action);
+//                    Navigation.findNavController().navigate((NavDirections) action);
+//                }
+//            });
 
-                @Override
-                public void run() {
-                    Fragment f = FragmentManager.findFragment(mView);
-                    //passing name to master account fragment so that a toast is shown to the user that an account is created
-                    AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
-                    //action.setCreateAccountName(p.Name);
-                    NavHostFragment.findNavController(f).navigate((NavDirections) action);
-                }
-            });
+        }
 
+        @Override
+        public void onFailure(String err) {
+            Toast.makeText(getContext(), err, Toast.LENGTH_LONG).show();
         }
     };
 
@@ -312,7 +321,7 @@ public class AddAccountFragment extends BaseFragment{
         ai.name = profile.Name;
         ai.mail = profile.Mail;
         ai.photouri = profile.PhotoUri;
-        err = am.createAccount(getContext(), ai);
+        err = am.createAccount(mActivity.getApplicationContext(), ai);
         if (err != true) {
             Log.w(TAG, "Create account failed!");
         }else{
