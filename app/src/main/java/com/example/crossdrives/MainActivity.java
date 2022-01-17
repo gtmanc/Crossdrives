@@ -71,45 +71,48 @@ public class MainActivity extends AppCompatActivity{
 
     }
 
-    SignInManager.OnSilenceSignInfinished onSigninFinishedGdrive = new SignInManager.OnSilenceSignInfinished(){
+    SignInManager.OnSignInfinished onSigninFinishedGdrive = new SignInManager.OnSignInfinished(){
 
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object object) {
-
+        public void onFinished(SignInManager.Profile profile, String token) {
             mSignInState.put(BRAND_GOOGLE, true);
 
-            if(result == SignInManager.RESULT_SUCCESS){
                 //Write user profile to database?
 
 
                 Log.d(TAG, "Google silence sign in OK. Create google drive client...");
                 //GoogleDriveClient google_drive = GoogleDriveClient.create(getApplicationContext(), object);
-                addGoogleDriveClient((GoogleSignInAccount) object);
+                addGoogleDriveClient(token);
 
-            }
-            else{
-                //A short term workaround is used here. Show a toast message to prompt user that he has to be signed in.
-                Log.w(TAG, "Google silence sign in failed!");
-                Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
-            }
+            ProceedNextScreen();
+        }
+
+        @Override
+        public void onFailure(String err) {
+            mSignInState.put(BRAND_GOOGLE, true);
+            //A short term workaround is used here. Show a toast message to prompt user that he has to be signed in.
+            Log.w(TAG, "Google silence sign in failed!");
+            Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
             ProceedNextScreen();
         }
     };
-    SignInManager.OnSilenceSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSilenceSignInfinished(){
+    SignInManager.OnSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object token) {
+        public void onFinished(SignInManager.Profile profile, String token) {
             mSignInState.put(BRAND_MS, true);
-            //Ready to go to the result list
-            if(result == GoogleSignInStatusCodes.SUCCESS){
                 //Write user profile to database
 
                 //GraphDriveClient onedrive = new GraphDriveClient();
-                addOneDriveClient((String)token);
+                addOneDriveClient(token);
                 Log.d(TAG, "Onedrive silence sign in works");
-            }
-            else{
-                Log.w(TAG, "Onedrive silence sign in failed");
-            }
+            ProceedNextScreen();
+        }
+
+        @Override
+        public void onFailure(String err) {
+            mSignInState.put(BRAND_MS, true);
+            Log.w(TAG, "Onedrive silence sign in failed");
+        //Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
             ProceedNextScreen();
         }
     };
@@ -138,9 +141,9 @@ public class MainActivity extends AppCompatActivity{
             startActivity(intent);
         }
     }
-    private void addGoogleDriveClient(GoogleSignInAccount account){
+    private void addGoogleDriveClient(String token){
         GoogleDriveClient gdc =
-                (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), account).buildClient();
+                (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), token).buildClient();
         CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
     }
 

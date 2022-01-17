@@ -7,7 +7,6 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
@@ -35,7 +34,6 @@ import com.google.api.services.drive.DriveScopes;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -55,7 +53,7 @@ public class SignInGoogle extends SignInManager{
     //Activity mActivity;
     private static Profile mProfile = new Profile();
     static private Fragment mFragment;
-    static OnInteractiveSignInfinished mCallback;
+    static OnSignInfinished mCallback;
     static OnSignOutFinished mSignoutCallback;
     OnPhotoDownloaded mPhotoDownloadCallback;
     private Bitmap mBmp;
@@ -278,7 +276,7 @@ public class SignInGoogle extends SignInManager{
        A static class ReceiveSigninResult which is used to exchange data between this class and the fragment.
      */
     @Override
-    boolean Start(View view, OnInteractiveSignInfinished callback) {
+    boolean Start(View view, OnSignInfinished callback) {
 //        Intent signInIntent;
 //        GoogleSignInAccount account = null;
 //        Drive googleDriveService = null;
@@ -307,9 +305,10 @@ public class SignInGoogle extends SignInManager{
 
     //Silence sign in. The account information and result will be provided via callback even if the user is already signed in.
     @Override
-    void silenceSignIn(OnSilenceSignInfinished callback) {
+    void silenceSignIn(OnSignInfinished callback) {
         String Authcode = null;
         String serverClientId = mContext.getString(R.string.server_client_id);
+        mCallback = callback;
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -344,9 +343,10 @@ public class SignInGoogle extends SignInManager{
                     https://stackoverflow.com/questions/6343166/how-can-i-fix-android-os-networkonmainthreadexception
                     */
                 ExchangeToken exchangeToken = new ExchangeToken();
+                //call back will get called in the background thread
                 exchangeToken.execute(Authcode);
             }
-            callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, mAccessToken);
+            //callback.onFinished(mProfile, mAccessToken);
         } else {
             // There's no immediate result ready, displays some progress indicator and waits for the
             // async callback.
@@ -357,21 +357,33 @@ public class SignInGoogle extends SignInManager{
 
                 @Override
                 public void onComplete(Task<GoogleSignInAccount> task) {
+                    String Authcode;
                     try {
                         Log.w(TAG, "Silence sign in done!");
                         signInAccount = task.getResult(ApiException.class);
                         mProfile.Name= signInAccount.getDisplayName();
                         mProfile.Mail = signInAccount.getEmail();
                         mProfile.PhotoUri = signInAccount.getPhotoUrl();
-                        //requestDriveService(signInAccount);
-                        callback.onFinished(GoogleSignInStatusCodes.SUCCESS, mProfile, signInAccount);
+                        Authcode = signInAccount.getServerAuthCode();
+                        if(Authcode != null) {
+                            /*
+                            android.os.NetworkOnMainThreadException will be thrown if an application attempts
+                            to perform a networking operation on its main thread.
+                            https://stackoverflow.com/questions/6343166/how-can-i-fix-android-os-networkonmainthreadexception
+                            */
+                            ExchangeToken exchangeToken = new ExchangeToken();
+                            //call back will get called in the background thread
+                            exchangeToken.execute(Authcode);
+                        }
+                        //callback.onFinished(mProfile, signInAccount);
                     } catch (ApiException apiException) {
                         Log.w(TAG, "Sign in failed! Error code: " + apiException.getStatusCode());
                         // You can get from apiException.getStatusCode() the detailed error code
                         // e.g. GoogleSignInStatusCodes.SIGN_IN_REQUIRED means user needs to take
                         // explicit action to finish sign-in;
                         // Please refer to GoogleSignInStatusCodes Javadoc for detail
-                        callback.onFinished(SignInManager.RESULT_FAILED, null, null);
+                        mCallback.onFailure("Sign in failed! Error code: " + apiException.getStatusCode() +
+                                apiException.getMessage());
                     }
                 }
             });

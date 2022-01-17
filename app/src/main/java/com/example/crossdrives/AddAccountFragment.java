@@ -4,14 +4,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -26,7 +24,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
-import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.crossdrives.cdfs.CDFS;
@@ -36,11 +33,6 @@ import com.crossdrives.driveclient.OneDriveClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class AddAccountFragment extends BaseFragment{
     private String TAG = "CD.AddAccountFragment";
@@ -245,17 +237,17 @@ public class AddAccountFragment extends BaseFragment{
         return super.onOptionsItemSelected(item);
     }
 
-    SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
+    SignInManager.OnSignInfinished onSigninFinished = new SignInManager.OnSignInfinished(){
         @Override
-        public void onFinished(SignInManager.Profile profile, Object object) {
+        public void onFinished(SignInManager.Profile profile, String token) {
             boolean err = false;
 
             //if(result == SignInManager.RESULT_SUCCESS) {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
-                    Log.d(TAG, "User sign in OK. Start to create google drive client. Token: " + (String)object);
+                    Log.d(TAG, "User sign in OK. Start to create google drive client. Token: " + token);
                     GoogleDriveClient gdc =
-                            (GoogleDriveClient) GoogleDriveClient.builder(mActivity, (String)object).buildClient();
+                            (GoogleDriveClient) GoogleDriveClient.builder(mActivity, token).buildClient();
                     CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
                     //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
@@ -263,7 +255,7 @@ public class AddAccountFragment extends BaseFragment{
                 {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
-                            (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
+                            (OneDriveClient) OneDriveClient.builder((String) token).buildClient();
                     CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_MS, odc);
                     //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }

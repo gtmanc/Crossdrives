@@ -65,7 +65,7 @@ public class CDFS {
     }
 
     public void addClient(String brand, IDriveClient client){
-        Log.d(TAG, "Add client!");
+        Log.d(TAG, "Add client. Client: " + client.toString());
         //sClient.add(client);
         mDrives.put(brand, client);
         //return getClient(client);

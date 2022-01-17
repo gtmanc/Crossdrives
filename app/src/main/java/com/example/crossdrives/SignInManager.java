@@ -1,6 +1,5 @@
 package com.example.crossdrives;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.view.View;
 
@@ -19,20 +18,17 @@ public abstract class SignInManager{
 
     }
 
-    /*The callback gets called when the requested operation is finished with or without error
-      Input
-      result: sign in result. See RESULT_XXXXX in this class
-      profile: user basic profile. Note this variants depending on brands.
-      Object: instance used to build API client. e.g. drive access
-    */
-    interface OnInteractiveSignInfinished {
-        void onFinished(Profile profile, Object object);
+    /*
+    The callback gets called when the requested operation is finished with or without error
+     */
+    interface OnSignInfinished {
+        /*
+        Profile: user basic profile. Note this variants depending on brands.
+        token: AccessToken can be used to build API client
+         */
+        void onFinished(Profile profile, String token);
 
         void onFailure(String err);
-    }
-
-    interface OnSilenceSignInfinished {
-        void onFinished(int result, Profile profile, Object object);
     }
 
     interface OnSignOutFinished {
@@ -45,10 +41,10 @@ public abstract class SignInManager{
 
     //Operations provided
     //start interactive sign in flow. Mainly start the sign in activity.
-    abstract boolean Start(View view, OnInteractiveSignInfinished callback);
+    abstract boolean Start(View view, OnSignInfinished callback);
 
     //Silence Sign in.
-    abstract void silenceSignIn(OnSilenceSignInfinished callback);
+    abstract void silenceSignIn(OnSignInfinished callback);
 
     //Sign out user
     abstract void SignOut(OnSignOutFinished callback);

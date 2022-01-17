@@ -12,10 +12,6 @@ import androidx.annotation.Nullable;
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 
-import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
-import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.http.IHttpRequest;
-
 import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
@@ -27,7 +23,6 @@ import com.microsoft.identity.client.SilentAuthenticationCallback;
 import com.microsoft.identity.client.exception.MsalException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +39,7 @@ public class SignInMS extends SignInManager{
     private final static List<String> scopes = new ArrayList<>();
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
-    OnInteractiveSignInfinished mOnInteractiveSignInfinished;
-    OnSilenceSignInfinished mOnSilenceSignInfinished;
+    OnSignInfinished mOnSignInfinished;
     OnPhotoDownloaded mPhotoDownloadCallback;
     Profile mProfile = new Profile();
     private String mToken;
@@ -61,8 +55,8 @@ public class SignInMS extends SignInManager{
     }
 
     @Override
-    boolean Start(View view, OnInteractiveSignInfinished callback) {
-        mOnInteractiveSignInfinished = callback;
+    boolean Start(View view, OnSignInfinished callback) {
+        mOnSignInfinished = callback;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -81,8 +75,8 @@ public class SignInMS extends SignInManager{
     }
 
     @Override
-    void silenceSignIn(OnSilenceSignInfinished callback) {
-        mOnSilenceSignInfinished = callback;
+    void silenceSignIn(OnSignInfinished callback) {
+        mOnSignInfinished = callback;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -236,7 +230,7 @@ public class SignInMS extends SignInManager{
                 mProfile.PhotoUri = null;
 
                 mToken = authenticationResult.getAccessToken();
-                mOnInteractiveSignInfinished.onFinished(mProfile, mToken);
+                mOnSignInfinished.onFinished(mProfile, mToken);
                 //MSGraphRestHelper msRest = new MSGraphRestHelper();
 
 
@@ -251,13 +245,13 @@ public class SignInMS extends SignInManager{
                 /* Failed to acquireToken */
                 Log.w(TAG, "Authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnInteractiveSignInfinished.onFailure(exception.toString());
+                mOnSignInfinished.onFailure(exception.toString());
             }
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
                 Log.w(TAG, "User cancelled login.");
-                mOnInteractiveSignInfinished.onFailure("User cancelled the sign in");
+                mOnSignInfinished.onFailure("User cancelled the sign in");
             }
         };
     }
@@ -270,13 +264,13 @@ public class SignInMS extends SignInManager{
 
                 //callGraphAPI(authenticationResult);
                 mToken = authenticationResult.getAccessToken();
-                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_SUCCESS, null, mToken);
+                mOnSignInfinished.onFinished(null, mToken);
             }
             @Override
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSilenceSignInfinished.onFinished(SignInManager.RESULT_FAILED, null, null);
+                mOnSignInfinished.onFailure("Silence authentication failed: " + exception.toString());
             }
         };
     }
