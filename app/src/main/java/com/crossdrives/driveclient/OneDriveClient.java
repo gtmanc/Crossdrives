@@ -100,7 +100,7 @@ public class OneDriveClient implements IDriveClient {
 
     @Override
     public IUploadRequestBuilder upload() {
-        return null;
+        return new OneDriveUploadRequestBuilder(this);
     }
 
     public static OneDriveClient fromConfig(String token){
