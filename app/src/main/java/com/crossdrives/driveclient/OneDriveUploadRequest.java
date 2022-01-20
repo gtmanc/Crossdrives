@@ -63,7 +63,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
                         .withItem(new DriveItemUploadableProperties()).build();
 
-// Create an upload session
+        // Create an upload session
+        Log.d(TAG, "create upload session");
         UploadSession uploadSession = mClient.getGraphServiceClient()
                 .me()
                 .drive()
@@ -81,6 +82,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
 
 // Do the upload
         try {
+            Log.d(TAG, "do the upload");
             largeFileUploadTask.upload(0, null, Progress_callback);
         } catch (IOException e) {
             Log.w(TAG, "Upload task doens't work! " + e.toString());

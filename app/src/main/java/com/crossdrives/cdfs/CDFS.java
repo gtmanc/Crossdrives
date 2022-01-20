@@ -59,6 +59,7 @@ public class CDFS {
         createTextFile(NAME_ALLOCATION_FILE, "Header of CDFS allocation");
         content = readFile(NAME_ALLOCATION_FILE);
         Log.d(TAG, content);
+
     }
 
     static public CDFS getCDFSService(Activity activity){
@@ -74,7 +75,7 @@ public class CDFS {
         //sClient.add(client);
         mDrives.put(brand, client);
         //return getClient(client);
-
+        createBaseFiles();
     }
 
     //public void removeClient(int i){
