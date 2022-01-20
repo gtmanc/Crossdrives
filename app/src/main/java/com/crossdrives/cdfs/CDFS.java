@@ -3,10 +3,14 @@ package com.crossdrives.cdfs;
 import android.app.Activity;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.crossdrives.driveclient.IDownloadCallBack;
 import com.crossdrives.driveclient.IFileListCallBack;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.IUploadCallBack;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.File;
@@ -38,6 +42,7 @@ public class CDFS {
     private Activity mActivity;
     static CDFS mCDFS = null;
     private final String NAME_ALLOCATION_FILE = "allocation.cdfs";
+    private String mFileId;
 
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
@@ -70,20 +75,6 @@ public class CDFS {
         mDrives.put(brand, client);
         //return getClient(client);
 
-        File metadata = new File();
-        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" +NAME_ALLOCATION_FILE);
-        metadata.setName(NAME_ALLOCATION_FILE);
-        client.upload().buildRequest(metadata, filePath).run(new IUploadCallBack() {
-            @Override
-            public void success(File file) {
-                Log.d(TAG, "Upload file OK. ID: " + file.getId());
-            }
-
-            @Override
-            public void failure(String ex) {
-                Log.w(TAG, "Failed to upload file: " + ex.toString());
-            }
-        });
     }
 
     //public void removeClient(int i){
@@ -97,6 +88,23 @@ public class CDFS {
     public IDriveClient getClient(String brand){
         //return sClient.indexOf(client);
         return mDrives.get(brand);
+    }
+
+    private void createBaseFiles(){
+        File metadata = new File();
+        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" +NAME_ALLOCATION_FILE);
+        metadata.setName(NAME_ALLOCATION_FILE);
+        upload(metadata, filePath).addOnSuccessListener(new OnSuccessListener<String>() {
+            @Override
+            public void onSuccess(String s) {
+                Log.d(TAG, "Upload OK. ID: " + s);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.w(TAG, "Upload failed. " + e.toString());
+            }
+        });
     }
 
     /*
@@ -142,7 +150,7 @@ public class CDFS {
     }
 
     /*
-        Operation download content of a file
+        Download content of a file
      */
     public Task<OutputStream> download(String id) {
         Task task;
@@ -179,6 +187,39 @@ public class CDFS {
             }
         });
 
+        return task;
+    }
+
+    public Task<String> upload(File metadata, java.io.File path) {
+
+        Task task;
+        Log.d(TAG, "CDFS: upload file. " + path.toString());
+        task = Tasks.call(sExecutor, new Callable<Object>() {
+            @Override
+            public String call() throws Exception {
+
+                msTaskfinished = false;
+                /*
+                    Drive client test only. Always use index 0 (i.e first one added)
+                 */
+                mDrives.values().iterator().next().upload().buildRequest(metadata, path).run(new IUploadCallBack() {
+                    @Override
+                    public void success(File file) {
+                        exitWait();
+                        mFileId = file.getId();
+                        Log.d(TAG, "Upload file OK. ID: " + file.getId());
+                    }
+
+                    @Override
+                    public void failure(String ex) {
+                        exitWait();
+                        Log.w(TAG, "Failed to upload file: " + ex.toString());
+                    }
+                });
+                waitUntilFinished();
+                return mFileId;
+            }
+        });
         return task;
     }
 

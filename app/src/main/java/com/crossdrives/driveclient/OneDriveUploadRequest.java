@@ -1,5 +1,7 @@
 package com.crossdrives.driveclient;
 
+import android.util.Log;
+
 import com.google.api.services.drive.model.File;
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
@@ -14,11 +16,13 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest{
+    final String TAG = "GDC.OneDriveUploadRequest";
     OneDriveClient mClient;
     java.io.File mPath;
 
     public OneDriveUploadRequest(OneDriveClient client, File metadata, java.io.File path) {
         mClient = client;
+        mPath = path;
     }
 
     @Override
@@ -39,7 +43,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         try {
             fileStream = new FileInputStream(mPath);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Open FileInputStream failed!" + e.toString());
         }
         long streamSize = mPath.length();
 
@@ -48,9 +52,10 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
             @Override
             // Called after each slice of the file is uploaded
             public void progress(final long current, final long max) {
-                System.out.println(
-                        String.format("Uploaded %d bytes of %d total bytes", current, max)
-                );
+//                System.out.println(
+//                        String.format("Uploaded %d bytes of %d total bytes", current, max)
+//                );
+                Log.d(TAG, "Uploaded %" + current + "bytes of % " + max + " total bytes");
             }
         };
 
@@ -78,7 +83,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         try {
             largeFileUploadTask.upload(0, null, Progress_callback);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Upload task doens't work! " + e.toString());
         }
     }
 }
