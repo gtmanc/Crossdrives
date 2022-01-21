@@ -91,14 +91,20 @@ public class CDFS {
         return mDrives.get(brand);
     }
 
+    /*
+        Create necessary files including folder
+        It's observed that the behavior of uploading file with the same name of existing file
+        varies cross drives. e.g. Onedrive always overwrite the existing one. Google drive create a
+        new one instead
+    */
     private void createBaseFiles(){
         File metadata = new File();
         java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" +NAME_ALLOCATION_FILE);
         metadata.setName(NAME_ALLOCATION_FILE);
         upload(metadata, filePath).addOnSuccessListener(new OnSuccessListener<String>() {
             @Override
-            public void onSuccess(String s) {
-                Log.d(TAG, "Upload OK. ID: " + s);
+            public void onSuccess(String id) {
+                Log.d(TAG, "Upload OK. ID: " + id);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override

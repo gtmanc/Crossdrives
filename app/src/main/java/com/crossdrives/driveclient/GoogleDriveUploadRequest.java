@@ -42,9 +42,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     @Override
     public void run(IUploadCallBack callback){
         Task<File> task;
-//        File fileMetadata = new File();
-//        fileMetadata.setName("Allocation.cdfs");
-//        java.io.File filePath = new java.io.File("files/photo.jpg");
+
         task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
             @Override
             public File call() throws Exception {
