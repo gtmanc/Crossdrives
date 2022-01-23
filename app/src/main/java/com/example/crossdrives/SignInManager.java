@@ -1,5 +1,6 @@
 package com.example.crossdrives;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.view.View;
 
@@ -44,7 +45,7 @@ public abstract class SignInManager{
     abstract boolean Start(View view, OnSignInfinished callback);
 
     //Silence Sign in.
-    abstract void silenceSignIn(OnSignInfinished callback);
+    abstract void silenceSignIn(Activity activity, OnSignInfinished callback);
 
     //Sign out user
     abstract void SignOut(OnSignOutFinished callback);

@@ -75,7 +75,7 @@ public class SignInMS extends SignInManager{
     }
 
     @Override
-    void silenceSignIn(OnSignInfinished callback) {
+    void silenceSignIn(Activity activity, OnSignInfinished callback) {
         mOnSignInfinished = callback;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {

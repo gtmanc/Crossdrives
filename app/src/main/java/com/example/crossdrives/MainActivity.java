@@ -64,10 +64,10 @@ public class MainActivity extends AppCompatActivity{
         mProgressBar.setVisibility(View.VISIBLE);
 
         SignInGoogle google = SignInGoogle.getInstance(getApplicationContext());
-        google.silenceSignIn(onSigninFinishedGdrive);
+        google.silenceSignIn(this, onSigninFinishedGdrive);
 
         SignInMS onedrive = SignInMS.getInstance(this);
-        onedrive.silenceSignIn(onSigninFinishedOnedrive);
+        onedrive.silenceSignIn(this, onSigninFinishedOnedrive);
 
     }
 

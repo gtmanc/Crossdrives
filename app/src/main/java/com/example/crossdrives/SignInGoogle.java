@@ -53,6 +53,7 @@ public class SignInGoogle extends SignInManager{
     //Activity mActivity;
     private static Profile mProfile = new Profile();
     static private Fragment mFragment;
+    private static Activity mActivity;
     static OnSignInfinished mCallback;
     static OnSignOutFinished mSignoutCallback;
     OnPhotoDownloaded mPhotoDownloadCallback;
@@ -236,7 +237,7 @@ public class SignInGoogle extends SignInManager{
             br = new BufferedReader(inr);
             Writer wr = new StringWriter();
             //fos = new FileOutputStream(f);
-            fOut = mFragment.getActivity().openFileOutput("Google_secret", Activity.MODE_PRIVATE);
+            fOut = mActivity.openFileOutput("Google_secret", Activity.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             char[] buf = new char[1024];
             int read;
@@ -296,8 +297,9 @@ public class SignInGoogle extends SignInManager{
 //        signInIntent = mGoogleSignInClient.getSignInIntent();
 
         Log.d(TAG, "navigate to google sign in fragment");
-        mFragment = FragmentManager.findFragment(view);
 
+        mFragment = FragmentManager.findFragment(view);
+        mActivity = mFragment.getActivity();
         NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
         NavHostFragment.findNavController(mFragment).navigate(a);
         return true;
@@ -305,10 +307,11 @@ public class SignInGoogle extends SignInManager{
 
     //Silence sign in. The account information and result will be provided via callback even if the user is already signed in.
     @Override
-    void silenceSignIn(OnSignInfinished callback) {
+    void silenceSignIn(Activity activity, OnSignInfinished callback) {
         String Authcode = null;
         String serverClientId = mContext.getString(R.string.server_client_id);
         mCallback = callback;
+        mActivity = activity;
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -359,8 +362,9 @@ public class SignInGoogle extends SignInManager{
                 public void onComplete(Task<GoogleSignInAccount> task) {
                     String Authcode;
                     try {
-                        Log.w(TAG, "Silence sign in done!");
+                        Log.d(TAG, "Silence sign in done!");
                         signInAccount = task.getResult(ApiException.class);
+                        Log.d(TAG, "getDisplayName: " + signInAccount.getDisplayName());
                         mProfile.Name= signInAccount.getDisplayName();
                         mProfile.Mail = signInAccount.getEmail();
                         mProfile.PhotoUri = signInAccount.getPhotoUrl();

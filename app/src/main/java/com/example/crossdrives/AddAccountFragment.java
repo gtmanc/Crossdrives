@@ -97,7 +97,7 @@ public class AddAccountFragment extends BaseFragment{
                 //intent.putExtra("Brand", SignInManager.BRAND_GOOGLE);
                 mStartForResult.launch(intent);
             } else {
-                mSignInManager.Start(v, onSigninFinished);
+                mSignInManager.Start(mView, onSigninFinished);
             }
 
         }
@@ -116,7 +116,7 @@ public class AddAccountFragment extends BaseFragment{
                 //intent.putExtra("Brand", SignInManager.BRAND_MS);
                 mStartForResult.launch(intent);
             } else {
-                mSignInManager.Start(v, onSigninFinished);
+                mSignInManager.Start(mView, onSigninFinished);
             }
         }
     };
