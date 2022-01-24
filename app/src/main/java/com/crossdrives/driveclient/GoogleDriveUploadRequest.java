@@ -14,11 +14,10 @@ import com.google.api.client.http.FileContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.model.Drive;
 import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Callable;
@@ -48,6 +47,45 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
 
     }
 
+    @Override
+    public void run(IUploadCallBack callback) {
+        HttpResponse response = null;
+        File file = new File();
+
+
+        try {
+            response = submitResumableRequest();
+        } catch (MalformedURLException e) {
+            Log.w(TAG, "MalformedURLException: " + e.toString());
+            callback.failure(e.toString());
+        } catch (IOException e) {
+            Log.w(TAG, "IO exception: " + e.toString());
+            callback.failure(e.toString());
+        }
+
+        if(response != null) {
+            if (!response.isSuccessStatusCode()) {
+                //throw GoogleJsonResponseException(jsonFactory, response);
+                Log.w(TAG, "Upload failed: " + response.getStatusMessage());
+                callback.failure(response.getStatusMessage());
+            }
+        }else{ callback.failure("Unknown failure: http response is null");}
+
+        Log.d(TAG, "Get Request: " + response.getRequest());
+        InputStream is;
+        try {
+            is = response.getContent();
+            Log.d(TAG, "Get Content: " + is.toString());
+        } catch (IOException e) {
+            Log.w(TAG, "Upload failed: " + e.getMessage());
+        }
+
+
+        file.setName(mPath.getName());
+        file.setId("");
+        callback.success(file);
+    }
+
     class CustomProgressListener implements MediaHttpUploaderProgressListener {
         @Override
         public void progressChanged(MediaHttpUploader uploader) throws IOException {
@@ -70,78 +108,70 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             }
         }
     }
-    //https://stackoverflow.com/questions/39887303/resumable-upload-in-drive-rest-api-v3
-    @Override
-    public void run(IUploadCallBack callback){
+
+    //a reference how to use MediaHttpUploader:
+    // https://stackoverflow.com/questions/39887303/resumable-upload-in-drive-rest-api-v3
+    private HttpResponse submitResumableRequest() throws MalformedURLException, IOException {
         NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-        File file;
+
         FileContent mediaContent = new FileContent(mMediaType, mPath);
         GenericUrl requestUrl = null;
-        try {
-            requestUrl = new GenericUrl(
-                    new URL("https://www.googleapis.com/upload/drive/v3/files?name=" + mPath));
-        } catch (MalformedURLException e) {
-            Log.w(TAG, "MalformedURLException: " + e.toString());
-        }
+        HttpResponse response = null;
 
-        Log.w(TAG, "Access Token: " + mClient.getCredentail().getAccessToken());
+        requestUrl = new GenericUrl(
+                    new URL("https://www.googleapis.com/upload/drive/v3/files?name=" + mMetadata.getName()));
+
+        //Log.w(TAG, "Access Token: " + mClient.getCredentail().getAccessToken());
 
         MediaHttpUploader uploader = new MediaHttpUploader(mediaContent, HTTP_TRANSPORT, mClient.getCredentail());
         uploader.setProgressListener(new CustomProgressListener());
-        HttpResponse response = null;
-        try {
-            response = uploader.upload(requestUrl);
-        } catch (IOException e) {
-            Log.w(TAG, "IO exception: " + e.toString());
-        }
-        if (!response.isSuccessStatusCode()) {
-//            throw GoogleJsonResponseException(jsonFactory, response);
-            Log.w(TAG, "Upload failed: " + response.getStatusMessage());
-        }
+
+        response = uploader.upload(requestUrl);
+
+        return response;
     }
 
-//    @Override
-//    public void run(IUploadCallBack callback){
-//        Task<File> task;
-//
-//        task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
-//            @Override
-//            public File call() throws Exception {
-//                File file;
-//                FileContent mediaContent = new FileContent(mMediaType, mPath);
-//                //Log.d(TAG, "Path: " + mPath);
-//                try {
-//                    file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
-//                            .setFields("id")
-//                            .execute();
-//                } catch (IOException e) {
-//                    Log.w(TAG, "IO exception: " + e.toString());
-//                    file = null;
-//                }
-//
-//                //System.out.println("File ID: " + file.getId());
-//                return file;
-//            }
-//        });
-//
-//        task.addOnSuccessListener(new OnSuccessListener<File>() {
-//            @Override
-//            public void onSuccess(File file) {
-//                //call back
-//                if(file != null){
-//                    callback.success(file);
-//                }
-//                else{
-//                    callback.failure("Unknown failure. Could be IO exception in drive client request");
-//                }
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception e) {
-//                //call back
-//                callback.failure(e.toString());
-//            }
-//        });
-//
-//    }
+    public void submitDirectRequest(IUploadCallBack callback){
+        Task<File> task;
+
+        task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
+            @Override
+            public File call() throws Exception {
+                File file;
+                FileContent mediaContent = new FileContent(mMediaType, mPath);
+                //Log.d(TAG, "Path: " + mPath);
+                try {
+                    file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
+                            .setFields("id")
+                            .execute();
+                } catch (IOException e) {
+                    Log.w(TAG, "IO exception: " + e.toString());
+                    file = null;
+                }
+
+                //System.out.println("File ID: " + file.getId());
+                return file;
+            }
+        });
+
+        task.addOnSuccessListener(new OnSuccessListener<File>() {
+            @Override
+            public void onSuccess(File file) {
+                //call back
+                if(file != null){
+                    callback.success(file);
+                }
+                else{
+                    callback.failure("Unknown failure. Could be IO exception in drive client request");
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //call back
+                callback.failure(e.toString());
+            }
+        });
+
+    }
 }

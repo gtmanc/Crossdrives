@@ -58,8 +58,6 @@ public class CDFS {
         Log.d(TAG, "create allocation file");
         createTextFile(NAME_ALLOCATION_FILE, "Header of CDFS allocation");
         content = readFile(NAME_ALLOCATION_FILE);
-        Log.d(TAG, content);
-
     }
 
     static public CDFS getCDFSService(Activity activity){
