@@ -14,6 +14,7 @@ import com.google.api.client.http.FileContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.net.URL;
 import java.util.concurrent.Callable;
 
 public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequest{
-    final String TAG = "GDC.GoogleDriveUploadRequest";
+    final String TAG = "CD.GoogleDriveUploadRequest";
     GoogleDriveClient mClient;
     File mMetadata;
     java.io.File mPath;
@@ -47,14 +48,13 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
 
     }
 
-    @Override
-    public void run(IUploadCallBack callback) {
+    public void run_NonServiceSpecific(IUploadCallBack callback){
         HttpResponse response = null;
         File file = new File();
 
 
         try {
-            response = submitResumableRequest();
+            response = submitRequestNotServiceSpecific();
         } catch (MalformedURLException e) {
             Log.w(TAG, "MalformedURLException: " + e.toString());
             callback.failure(e.toString());
@@ -80,6 +80,11 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             Log.w(TAG, "Upload failed: " + e.getMessage());
         }
 
+        try {
+            response.disconnect();
+        } catch (IOException e) {
+            Log.w(TAG, "Response disconnect failed: " + e.getMessage());
+        }
 
         file.setName(mPath.getName());
         file.setId("");
@@ -111,45 +116,57 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
 
     //a reference how to use MediaHttpUploader:
     // https://stackoverflow.com/questions/39887303/resumable-upload-in-drive-rest-api-v3
-    private HttpResponse submitResumableRequest() throws MalformedURLException, IOException {
+    private HttpResponse submitRequestNotServiceSpecific() throws MalformedURLException, IOException {
         NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
         FileContent mediaContent = new FileContent(mMediaType, mPath);
         GenericUrl requestUrl = null;
         HttpResponse response = null;
+        //String url = "https://www.googleapis.com/upload/drive/v3/files?name=" + mMetadata.getName();
+        String url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable";
+        Log.d(TAG, "Request URL: " + url);
 
+//        requestUrl = new GenericUrl(
+//                    new URL("https://www.googleapis.com/upload/drive/v3/files?name=" + mMetadata.getName()));
         requestUrl = new GenericUrl(
-                    new URL("https://www.googleapis.com/upload/drive/v3/files?name=" + mMetadata.getName()));
+                new URL(url));
 
         //Log.w(TAG, "Access Token: " + mClient.getCredentail().getAccessToken());
 
         MediaHttpUploader uploader = new MediaHttpUploader(mediaContent, HTTP_TRANSPORT, mClient.getCredentail());
         uploader.setProgressListener(new CustomProgressListener());
+        uploader.setDirectUploadEnabled(true);
+        Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+        Log.d(TAG, "Upload InitiationRequestMethod: " + uploader.getInitiationRequestMethod());
+        Log.d(TAG, "Upload InitiationHeaders: " + uploader.getInitiationHeaders());
+        //Log.d(TAG, "Upload MediaContent: " + uploader.getMediaContent().toString());
+        Log.d(TAG, "Upload MediaMetaData: " + uploader.getMetadata());
 
         response = uploader.upload(requestUrl);
 
         return response;
     }
 
-    public void submitDirectRequest(IUploadCallBack callback){
+    @Override
+    public void run(IUploadCallBack callback){
         Task<File> task;
 
         task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
             @Override
             public File call() throws Exception {
-                File file;
+                File file = null;
                 FileContent mediaContent = new FileContent(mMediaType, mPath);
+                Drive.Files.Create create;
                 //Log.d(TAG, "Path: " + mPath);
-                try {
-                    file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
-                            .setFields("id")
-                            .execute();
-                } catch (IOException e) {
-                    Log.w(TAG, "IO exception: " + e.toString());
-                    file = null;
-                }
 
-                //System.out.println("File ID: " + file.getId());
+
+                //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
+                create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
+                MediaHttpUploader uploader = create.getMediaHttpUploader();
+                uploader.setProgressListener(new CustomProgressListener());
+                create.setFields("id");
+                file = create.execute();
+                //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
                 return file;
             }
         });

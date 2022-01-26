@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest{
-    final String TAG = "GDC.OneDriveUploadRequest";
+    final String TAG = "CD.OneDriveUploadRequest";
     OneDriveClient mClient;
     java.io.File mPath;
     File mMetaData;
@@ -47,13 +47,15 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
             f = submitRequest();
             callback.success(f);
         } catch (FileNotFoundException e){
+            Log.w(TAG, "Open FileInputStream failed!" + e.toString());
             callback.failure(e.getMessage());
         } catch( IOException e){
+            Log.w(TAG, "Upload task doesn't work! " + e.toString());
             callback.failure(e.getMessage());
         }
     }
 
-    private File submitRequest() throws IOException {
+    private File submitRequest() throws IOException, FileNotFoundException {
         // Get an input stream for the file
         //File file = new File(path);
         InputStream fileStream = null;
@@ -61,12 +63,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         LargeFileUploadResult<DriveItem> result = null;
         File f = new File();
 
-        try {
-            fileStream = new FileInputStream(mPath);
-        } catch (FileNotFoundException e) {
-            Log.w(TAG, "Open FileInputStream failed!" + e.toString());
-            throw e;
-        }
+        fileStream = new FileInputStream(mPath);
+
         long streamSize = mPath.length();
 
 // Create a callback used by the upload provider
@@ -105,13 +103,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                         (uploadSession, mClient.getGraphServiceClient(), fileStream, streamSize, DriveItem.class);
 
 // Do the upload
-        try {
-            Log.d(TAG, "do the upload");
-            result = largeFileUploadTask.upload(0, null, Progress_callback);
-        } catch (IOException e) {
-            Log.w(TAG, "Upload task doesn't work! " + e.toString());
-            throw e;
-        }
+        Log.d(TAG, "do the upload");
+        result = largeFileUploadTask.upload(0, null, Progress_callback);
 
         f.setName(result.responseBody.name);
         f.setId(result.responseBody.id);

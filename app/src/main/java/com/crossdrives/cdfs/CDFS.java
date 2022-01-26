@@ -97,8 +97,9 @@ public class CDFS {
     */
     private void createBaseFiles(){
         File metadata = new File();
-        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" +NAME_ALLOCATION_FILE);
-        metadata.setName(NAME_ALLOCATION_FILE);
+        //java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + NAME_ALLOCATION_FILE);
+        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + "TBM_SK601.BIN");    //test big size file over 10 MB
+        metadata.setName("AAA/" + NAME_ALLOCATION_FILE);
         upload(metadata, filePath).addOnSuccessListener(new OnSuccessListener<String>() {
             @Override
             public void onSuccess(String id) {
