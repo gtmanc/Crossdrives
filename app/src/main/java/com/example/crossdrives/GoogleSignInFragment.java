@@ -18,24 +18,26 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 
 public class GoogleSignInFragment extends Fragment {
     private String TAG = "CD.GoogleSignInFragment";
     GoogleSignInClient mGoogleSignInClient;
     private final int RC_SIGN_IN = 0;
-//    private String mName, mMail;
-//    private Uri mPhotoUri;
-//    private Fragment mFragment;
 
     private int mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
@@ -53,9 +55,24 @@ public class GoogleSignInFragment extends Fragment {
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+//        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+//                .requestEmail()
+//                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+//                .build();
+
+        // Configure sign-in to request offline access to the user's ID, basic
+        // profile, and Google Drive. The first time you request a code you will
+        // be able to exchange it for an access token and refresh token, which
+        // you should store. In subsequent calls, the code will only result in
+        // an access token. By asking for profile access (through
+        // DEFAULT_SIGN_IN) you will also get an ID Token as a result of the
+        // code exchange.
+        String serverClientId = getString(R.string.server_client_id);
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestScopes(new Scope(Scopes.DRIVE_FILE))
+                .requestServerAuthCode(serverClientId)
+                //.requestIdToken(serverClientId)
                 .requestEmail()
-                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
                 .build();
 
         // Build a GoogleSignInClient with the options specified by gso.
@@ -112,6 +129,24 @@ public class GoogleSignInFragment extends Fragment {
         SignInGoogle.ReceiveSigninResult.onSignedIn(mSigninResult, this, account);
     }
 
+//    private void SendAuthCode(String code){
+//        HttpPost httpPost = new HttpPost("https://yourbackend.example.com/authcode");
+//
+//        try {
+//            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+//            nameValuePairs.add(new BasicNameValuePair("authCode", authCode));
+//            httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+//
+//            HttpResponse response = httpClient.execute(httpPost);
+//            int statusCode = response.getStatusLine().getStatusCode();
+//            final String responseBody = EntityUtils.toString(response.getEntity());
+//        } catch (ClientProtocolException e) {
+//            Log.e(TAG, "Error sending auth code to backend.", e);
+//        } catch (IOException e) {
+//            Log.e(TAG, "Error sending auth code to backend.", e);
+//        }
+//    }
+
     GoogleSignInAccount HandleSigninResult(Intent data) {
         GoogleSignInAccount account = null;
 
@@ -130,6 +165,7 @@ public class GoogleSignInFragment extends Fragment {
                 // Please refer to the GoogleSignInStatusCodes class reference for more information.
                 // Error code :12501 if user gives up sign in. e.g. press back key in signin screen
                 Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+                Log.w(TAG, e.getMessage());
                 mSigninResult = e.getStatusCode();
             }
 

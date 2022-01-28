@@ -4,14 +4,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -36,32 +34,28 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class AddAccountFragment extends BaseFragment{
     private String TAG = "CD.AddAccountFragment";
     SignInManager mSignInManager = null;
     private static final int RC_SIGN_IN = 0;
     View mView;
+    Activity mActivity;
     /*
         Maintenance of map between drive brand and index for add/remove CDFS client.
         It's observed 'static' must be used. Otherwise, the data in the map is lost each time the
         callback is called. It seems that fragment creates a new concrete map object each time the
         callback gets called.
      */
-    static HashMap<String, Integer> mDrives = new HashMap<>();
+    //static HashMap<String, Integer> mDrives = new HashMap<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         Log.d(TAG, "OnCreated");
         super.onCreate(savedInstanceState);
         if(savedInstanceState != null){
-            Log.d(TAG, "Restore mDrives...");
-            mDrives = (HashMap)savedInstanceState.getSerializable("Drives");
-            Log.d(TAG, "done. mDrives: " + mDrives);
+//            Log.d(TAG, "Restore mDrives...");
+//            mDrives = (HashMap)savedInstanceState.getSerializable("Drives");
+//            Log.d(TAG, "done. mDrives: " + mDrives);
         }
     }
 
@@ -70,6 +64,8 @@ public class AddAccountFragment extends BaseFragment{
     @Override
     public View onCreateView(@NonNull @NotNull LayoutInflater inflater, @Nullable @org.jetbrains.annotations.Nullable ViewGroup container, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
+        //Update activity object each time the fragment is shown. It will be used in callback called by background thread. e.g. onSigninFinished
+        mActivity = getActivity();
         return inflater.inflate(R.layout.add_account_fragment, container, false);
     }
 
@@ -86,7 +82,6 @@ public class AddAccountFragment extends BaseFragment{
         Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
-        Log.d(TAG, "onViewCreated. Drives map: " + mDrives);
     }
 
     private View.OnClickListener listener_add_gdrive = new View.OnClickListener() {
@@ -102,7 +97,7 @@ public class AddAccountFragment extends BaseFragment{
                 //intent.putExtra("Brand", SignInManager.BRAND_GOOGLE);
                 mStartForResult.launch(intent);
             } else {
-                mSignInManager.Start(v, onSigninFinished);
+                mSignInManager.Start(mView, onSigninFinished);
             }
 
         }
@@ -121,7 +116,7 @@ public class AddAccountFragment extends BaseFragment{
                 //intent.putExtra("Brand", SignInManager.BRAND_MS);
                 mStartForResult.launch(intent);
             } else {
-                mSignInManager.Start(v, onSigninFinished);
+                mSignInManager.Start(mView, onSigninFinished);
             }
         }
     };
@@ -149,7 +144,9 @@ public class AddAccountFragment extends BaseFragment{
     SignInManager.OnSignOutFinished onSignOutFinished = new SignInManager.OnSignOutFinished(){
         @Override
         public void onFinished(int result, String brand) {
-            int i;
+            boolean r;
+            IDriveClient client;
+            CDFS cdfs = CDFS.getCDFSService(getActivity());
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 String brand_am = GlobalConstants.BRAND_GOOGLE;
@@ -170,9 +167,10 @@ public class AddAccountFragment extends BaseFragment{
                     Known issue is once app has signed out due to any of reasons (e.g. app data deletion
                     in setting), null is got instead of a index. Tracked in #8, #15, #16.
                  */
-                i = mDrives.get(brand);
-                Log.d(TAG, "Remove CDFS client. Index: " + i);
-                CDFS.removeClient(i);
+                client = cdfs.getClient(brand);
+                Log.d(TAG, "Remove CDFS client");
+                r = cdfs.removeClient(brand, client);
+                if(r != true) {Log.w(TAG, "Remove CDFS client failed!");}
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -191,8 +189,8 @@ public class AddAccountFragment extends BaseFragment{
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.d(TAG, "onSaveInstanceState. mDrives: " + mDrives);
-        outState.putSerializable("Drives", mDrives);
+//        Log.d(TAG, "onSaveInstanceState. mDrives: " + mDrives);
+//        outState.putSerializable("Drives", mDrives);
     }
 
     @Override
@@ -239,30 +237,27 @@ public class AddAccountFragment extends BaseFragment{
         return super.onOptionsItemSelected(item);
     }
 
-    SignInManager.OnInteractiveSignInfinished onSigninFinished = new SignInManager.OnInteractiveSignInfinished(){
+    SignInManager.OnSignInfinished onSigninFinished = new SignInManager.OnSignInfinished(){
         @Override
-        public void onFinished(int result, SignInManager.Profile profile, Object object) {
+        public void onFinished(SignInManager.Profile profile, String token) {
             boolean err = false;
-            int i;
 
-            if(result == SignInManager.RESULT_SUCCESS) {
+            //if(result == SignInManager.RESULT_SUCCESS) {
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
-                    Log.d(TAG, "User sign in OK. Start to create google drive client");
+                    Log.d(TAG, "User sign in OK. Start to create google drive client. Token: " + token);
                     GoogleDriveClient gdc =
-                            (GoogleDriveClient) GoogleDriveClient.builder(getActivity().getApplicationContext(), (GoogleSignInAccount)object).buildClient();
-                    i = CDFS.addClient(gdc);
-                    Log.d(TAG, "Add CDFS for Google. Client index: " + i + " Drives map: " + mDrives);
-                    mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
+                            (GoogleDriveClient) GoogleDriveClient.builder(mActivity, token).buildClient();
+                    CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+                    //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
                 {
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
-                            (OneDriveClient) OneDriveClient.builder((String)object).buildClient();
-                    i = CDFS.addClient(odc);
-                    Log.d(TAG, "Add CDFS for MS. Client index: " + i + " Drives map: " + mDrives);
-                    mDrives.put(GlobalConstants.BRAND_MS, i);
+                            (OneDriveClient) OneDriveClient.builder((String) token).buildClient();
+                    CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_MS, odc);
+                    //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }
                 else{
                     Log.w(TAG, "Unknown brand!");
@@ -270,24 +265,31 @@ public class AddAccountFragment extends BaseFragment{
 
                 createAccount(profile);
 
-            }
-            else{
-                Toast.makeText(getContext(), "Sign in failed! error:" + result, Toast.LENGTH_LONG).show();
-            }
+//            }
+//            else{
+//                Toast.makeText(getContext(), "Sign in failed! error:" + result, Toast.LENGTH_LONG).show();
+//            }
 
             //The callback may not be called in main thread. e.g. Microsoft sign in
-            getActivity().runOnUiThread(new Runnable() {
+//            mActivity.runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    Fragment f = FragmentManager.findFragment(mView);
+//                    //passing name to master account fragment so that a toast is shown to the user that an account is created
+//                    AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
+//                    //action.setCreateAccountName(p.Name);
+//                    Log.d(TAG, "Fragment: " + f.toString());
+//                    //NavHostFragment.findNavController(f).navigate((NavDirections) action);
+//                    Navigation.findNavController().navigate((NavDirections) action);
+//                }
+//            });
 
-                @Override
-                public void run() {
-                    Fragment f = FragmentManager.findFragment(mView);
-                    //passing name to master account fragment so that a toast is shown to the user that an account is created
-                    AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
-                    //action.setCreateAccountName(p.Name);
-                    NavHostFragment.findNavController(f).navigate((NavDirections) action);
-                }
-            });
+        }
 
+        @Override
+        public void onFailure(String err) {
+            Toast.makeText(getContext(), err, Toast.LENGTH_LONG).show();
         }
     };
 
@@ -311,7 +313,7 @@ public class AddAccountFragment extends BaseFragment{
         ai.name = profile.Name;
         ai.mail = profile.Mail;
         ai.photouri = profile.PhotoUri;
-        err = am.createAccount(getContext(), ai);
+        err = am.createAccount(mActivity.getApplicationContext(), ai);
         if (err != true) {
             Log.w(TAG, "Create account failed!");
         }else{

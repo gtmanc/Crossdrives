@@ -98,10 +98,10 @@
         style="@style/Widget.Custom.Button2"
         />
     <Button
-        android:id="@+id/system_test_button_delete"
+        android:id="@+id/system_test_button_upload"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create Folder"
+        android:text="Upload"
         app:layout_constraintTop_toBottomOf="@+id/system_test_subject_file_managment"
         android:layout_marginTop="8dp"
         app:layout_constraintLeft_toRightOf="@id/system_test_button_create_folder"

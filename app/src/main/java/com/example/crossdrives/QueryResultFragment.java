@@ -158,7 +158,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 //			mDriveServiceHelper.resetQuery();
 			setQStateInprogress();
-			CDFS.list(mNextPage)
+			CDFS.getCDFSService(getActivity()).list(mNextPage)
 			//mDriveServiceHelper.queryFiles()
 					.addOnSuccessListener(new OnSuccessListener<FileList>() {
 						@Override
@@ -224,7 +224,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		mAdapter.notifyItemInserted(mItems.size() - 1);
 
 		//mDriveServiceHelper.queryFiles()
-		CDFS.list(mNextPage)
+		CDFS.getCDFSService(getActivity()).list(mNextPage)
 					.addOnSuccessListener(new OnSuccessListener<FileList>() {
 						@Override
 						public void onSuccess(FileList fileList) {
@@ -352,7 +352,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 				Log.d(TAG, "Start to download file: " + item.mName);
 				//Log.d(TAG, "File ID: " + item.mId);
 				//TODO: open detail of file
-				CDFS.download(item.getID()).addOnSuccessListener(new OnSuccessListener<OutputStream>() {
+				CDFS.getCDFSService(getActivity()).download(item.getID()).addOnSuccessListener(new OnSuccessListener<OutputStream>() {
 					@Override
 					public void onSuccess(OutputStream stream) {
 						Log.d(TAG, "Content of file downloaded: " + stream.toString());

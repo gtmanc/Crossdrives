@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.crossdrives.cdfs.CDFS;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -34,6 +35,11 @@ import com.google.api.services.drive.DriveScopes;
 
 
 import org.jetbrains.annotations.NotNull;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 public class SystemTestFragment extends Fragment {
     private String TAG = "CD.SystemTestFragment";
@@ -79,6 +85,7 @@ public class SystemTestFragment extends Fragment {
         //signInButton.setSize(SignInButton.SIZE_WIDE);
         view.findViewById(R.id.system_test_button_create_file).setOnClickListener(OnClickCreateFile);
         view.findViewById(R.id.system_test_button_explorer).setOnClickListener(OnClickExplorer);
+        view.findViewById(R.id.system_test_button_upload).setOnClickListener(OnClickUpload);
 
         mSubjectAccount = view.findViewById(R.id.system_test_subject_account);
         updateSigninStatus();
@@ -161,14 +168,14 @@ public class SystemTestFragment extends Fragment {
     };
 
     /**
-     * Opens the Storage Access Framework file picker using {@link #REQUEST_CODE_OPEN_DOCUMENT}.
+     *
      */
-    private View.OnClickListener OnClickDelete = new View.OnClickListener(){
+    private View.OnClickListener OnClickUpload = new View.OnClickListener(){
         @Override
         public void onClick(View v) {
             if (mDriveServiceHelper != null) {
-                Log.d(TAG, "Opening file picker.");
-                //delete();
+//                Log.d(TAG, "");
+//                CDFS.getClient(0);
             }
         }
     };

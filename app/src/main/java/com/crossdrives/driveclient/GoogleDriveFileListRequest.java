@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public class GoogleDriveFileListRequest extends BaseRequest implements IFileListRequest {
-    private String TAG = "CD.GDC.GoogleDriveQueryRequest";
+    private String TAG = "CD.GoogleDriveQueryRequest";
     GoogleDriveClient mClient;
     private String mfilterClause, mSelectClause;
     String mToken;
@@ -98,6 +98,12 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
 
                 files = list.execute();
 
+                for(int i = 0 ; i < files.getFiles().size() ; i++){
+                    Log.d(TAG, "Name: " + files.getFiles().get(i).getName() +
+                            "  ID: " + files.getFiles().get(i).getId());
+
+
+                }
                 return files;
             }
         });

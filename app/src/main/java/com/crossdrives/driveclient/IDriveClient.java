@@ -9,7 +9,13 @@ public interface IDriveClient {
     IQueryRequestBuilder list();
 
     /*
-        Download file(items) content
+        Download file(item) content
      */
     IDownloadRequestBuilder download();
+
+    /*
+        Upload file(item)
+        If parent(folder) is not given, the file is uploaded to use's root.
+     */
+    IUploadRequestBuilder upload();
 }
