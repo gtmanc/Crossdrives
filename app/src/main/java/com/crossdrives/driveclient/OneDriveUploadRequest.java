@@ -8,6 +8,8 @@ import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
 import com.microsoft.graph.models.UploadSession;
+import com.microsoft.graph.requests.DriveItemRequestBuilder;
+import com.microsoft.graph.requests.DriveRequestBuilder;
 import com.microsoft.graph.tasks.IProgressCallback;
 import com.microsoft.graph.tasks.LargeFileUploadResult;
 import com.microsoft.graph.tasks.LargeFileUploadTask;
@@ -16,6 +18,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest{
     final String TAG = "CD.OneDriveUploadRequest";
@@ -62,6 +66,9 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         UploadSession uploadSession = null;
         LargeFileUploadResult<DriveItem> result = null;
         File f = new File();
+        DriveRequestBuilder rb;
+        DriveItemRequestBuilder irb;
+        List<String> parents;
 
         fileStream = new FileInputStream(mPath);
 
@@ -83,12 +90,19 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
                         .withItem(new DriveItemUploadableProperties()).build();
 
+        //build ItemRequestBuilder according to the given parent
+        rb = mClient.getGraphServiceClient().me().drive();
+        parents = mMetaData.getParents();
+        irb = buildItemRequest(rb, parents);
+
         // Create an upload session
         Log.d(TAG, "create upload session");
-            uploadSession = mClient.getGraphServiceClient()
-                    .me()
-                    .drive()
-                    .root()
+        uploadSession = irb
+//            uploadSession = mClient.getGraphServiceClient()
+//                    .me()
+//                    .drive()
+//                    .items("CD26537079F955DF!5758")
+                    //.root()
                     // itemPath like "/Folder/file.txt"
                     // does not need to be a path to an existing item
                     .itemWithPath("/" + mMetaData.getName())
@@ -110,4 +124,22 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         f.setId(result.responseBody.id);
         return f;
     }
+
+    DriveItemRequestBuilder buildItemRequest(DriveRequestBuilder rb, List<String> parents){
+        DriveItemRequestBuilder irb = null;
+
+        irb = rb.root();
+        if(parents == null){
+            Log.d(TAG, "PID is null, upload file to root");
+        }
+        else if(parents.size() == 0) {
+            Log.d(TAG, "No PID is given, upload file to root");
+        }
+        else{
+            irb = rb.items(parents.get(0));
+        }
+
+        return irb;
+    }
+
 }

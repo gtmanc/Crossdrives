@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -97,9 +98,12 @@ public class CDFS {
     */
     private void createBaseFiles(){
         File metadata = new File();
-        //java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + NAME_ALLOCATION_FILE);
-        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + "TBM_SK601.BIN");    //test big size file over 10 MB
-        metadata.setName("AAA/" + NAME_ALLOCATION_FILE);
+        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + NAME_ALLOCATION_FILE);
+        //java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + "TBM_SK601.BIN");    //test big size file over 10 MB
+        metadata.setName(NAME_ALLOCATION_FILE);
+        //Test only. For Google, folder cdfs is used. For MS, AAA is used.
+        //metadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
+        metadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
         upload(metadata, filePath).addOnSuccessListener(new OnSuccessListener<String>() {
             @Override
             public void onSuccess(String id) {
