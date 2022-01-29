@@ -105,7 +105,7 @@ public class OneDriveClient implements IDriveClient {
 
     @Override
     public ICreateRequestBuilder create() {
-        return null;
+        return new OneDriveCreateRequestBuilder(this);
     }
 
     public static OneDriveClient fromConfig(String token){
