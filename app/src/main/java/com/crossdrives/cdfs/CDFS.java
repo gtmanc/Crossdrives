@@ -103,7 +103,7 @@ public class CDFS {
         metadata.setName(NAME_ALLOCATION_FILE);
         //Test only. For Google, folder cdfs is used. For MS, AAA is used.
         //metadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
-        metadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
+        //metadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
         upload(metadata, filePath).addOnSuccessListener(new OnSuccessListener<String>() {
             @Override
             public void onSuccess(String id) {

@@ -149,6 +149,24 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
 
     @Override
     public void run(IUploadCallBack callback){
+        File file = null;
+        FileContent mediaContent = new FileContent(mMediaType, mPath);
+        Drive.Files.Create create;
+            //Log.d(TAG, "Path: " + mPath);
+        try {
+                //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
+                create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
+                MediaHttpUploader uploader = create.getMediaHttpUploader();
+                uploader.setProgressListener(new CustomProgressListener());
+                create.setFields("id");
+                file = create.execute();
+        } catch (IOException e) {
+                Log.w(TAG, "IOException: " + e.getMessage());
+        }
+            //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+    }
+
+    public void run_(IUploadCallBack callback){
         Task<File> task;
 
         task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
