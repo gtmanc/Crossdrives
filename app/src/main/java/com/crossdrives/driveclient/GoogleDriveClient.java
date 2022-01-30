@@ -146,6 +146,11 @@ public class GoogleDriveClient implements IDriveClient {
         return new GoogleDriveCreateRequestBuilder(this);
     }
 
+    @Override
+    public IDeleteRequestBuilder delete() {
+        return new GoogleDriveDeleteRequestBuilder(this);
+    }
+
 
     private void setGoogleDriveService(Drive service){
         mGgoogleDriveService = service;

@@ -19,7 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class OneDriveFileListRequest extends BaseRequest implements IFileListRequest {
-    private String TAG = "ODC.OneDriveQueryRequest";
+    private String TAG = "CD.OneDriveQueryRequest";
     OneDriveClient mClient;
     DriveItemCollectionRequestBuilder mNextPageBuilder;
     private String mfilterClause, mSelectClause;
