@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.crossdrives.driveclient.ICreateCallBack;
+import com.crossdrives.driveclient.IDeleteCallBack;
 import com.crossdrives.driveclient.IDownloadCallBack;
 import com.crossdrives.driveclient.IFileListCallBack;
 import com.crossdrives.driveclient.IDriveClient;
@@ -72,8 +73,9 @@ public class CDFS {
         //sClient.add(client);
         mDrives.put(brand, client);
         //return getClient(client);
-        createBaseFolder();
+        //createBaseFolder();
         //createAllocationFile();
+        deleteObseleteFile();
     }
 
     //public void removeClient(int i){
@@ -137,6 +139,25 @@ public class CDFS {
         });
     }
 
+    private void deleteObseleteFile(){
+        File fileMetadata = new File();
+
+        //test only. For Google, folder cdfs is used. For MS, AAA is used.
+        //fileMetadata.setId("16IhpPc0_nrrDplc73YIevRI8C27ir1JG"); //cdfs
+        fileMetadata.setId("CD26537079F955DF!5755");
+
+        delete(fileMetadata).addOnSuccessListener(new OnSuccessListener<String>() {
+            @Override
+            public void onSuccess(String s) {
+                Log.d(TAG, "delete OK. ID: " + s);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.w(TAG, "Failed to delete item: " + e.getMessage());
+            }
+        });
+    }
     /*
     Operation: get file list
      */
@@ -277,6 +298,39 @@ public class CDFS {
                     public void failure(String ex) {
                         exitWait();
                         Log.w(TAG, "Failed to create file: " + ex.toString());
+                    }
+                });
+                waitUntilFinished();
+                return mFileId;
+            }
+        });
+        return task;
+    }
+
+    public Task<String> delete(File metadata) {
+
+        Task task;
+        Log.d(TAG, "CDFS delete file: " + metadata.getName());
+        task = Tasks.call(sExecutor, new Callable<Object>() {
+            @Override
+            public String call() throws Exception {
+
+                msTaskfinished = false;
+                /*
+                    Drive client test only. Always use index 0 (i.e first one added)
+                 */
+                mDrives.values().iterator().next().delete().buildRequest(metadata).run(new IDeleteCallBack<File>() {
+                    @Override
+                    public void success(File file) {
+                        exitWait();
+                        mFileId = file.getId();
+                        Log.d(TAG, "Delete file OK. ID: " + file.getId());
+                    }
+
+                    @Override
+                    public void failure(String ex) {
+                        exitWait();
+                        Log.w(TAG, "Failed to delete file: " + ex.toString());
                     }
                 });
                 waitUntilFinished();

@@ -20,7 +20,12 @@ public interface IDriveClient {
     IUploadRequestBuilder upload();
 
     /*
-        Create item
+        Create folder
      */
     ICreateRequestBuilder create();
+
+    /*
+        Delete file(item)
+     */
+    IDeleteRequestBuilder delete();
 }

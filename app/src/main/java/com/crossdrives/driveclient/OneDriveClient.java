@@ -108,6 +108,11 @@ public class OneDriveClient implements IDriveClient {
         return new OneDriveCreateRequestBuilder(this);
     }
 
+    @Override
+    public IDeleteRequestBuilder delete() {
+        return new OneDriveDeleteRequestBuilder(this);
+    }
+
     public static OneDriveClient fromConfig(String token){
         OneDriveClient oClient  = new OneDriveClient();
         GraphServiceClient gClient =
