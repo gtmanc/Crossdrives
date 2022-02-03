@@ -5,12 +5,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.crossdrives.driveclient.ICreateCallBack;
-import com.crossdrives.driveclient.IDeleteCallBack;
-import com.crossdrives.driveclient.IDownloadCallBack;
-import com.crossdrives.driveclient.IFileListCallBack;
+import com.crossdrives.driveclient.create.ICreateCallBack;
+import com.crossdrives.driveclient.delete.IDeleteCallBack;
+import com.crossdrives.driveclient.download.IDownloadCallBack;
+import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.IDriveClient;
-import com.crossdrives.driveclient.IUploadCallBack;
+import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;

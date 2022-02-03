@@ -3,22 +3,23 @@ package com.crossdrives.driveclient;
 import android.content.Context;
 import android.util.Log;
 
+import com.crossdrives.driveclient.create.GoogleDriveCreateRequestBuilder;
+import com.crossdrives.driveclient.create.ICreateRequestBuilder;
+import com.crossdrives.driveclient.delete.GoogleDriveDeleteRequestBuilder;
+import com.crossdrives.driveclient.delete.IDeleteRequestBuilder;
+import com.crossdrives.driveclient.download.GoogleDriveDownloadRequestBuilder;
+import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
+import com.crossdrives.driveclient.list.GoogleDriveFileListRequestBuilder;
+import com.crossdrives.driveclient.list.IQueryRequestBuilder;
+import com.crossdrives.driveclient.upload.GoogleDriveUploadRequestBuilder;
+import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.example.crossdrives.DriveServiceHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.media.MediaHttpUploader;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
