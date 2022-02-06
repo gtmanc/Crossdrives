@@ -174,7 +174,11 @@ public class BaseTranscoder {
         Log.d(TAG, "Length of split strings:" + separated.length);
         /**
             convert the split substring by calling all of the added converters. If the conversion is
+<<<<<<< HEAD
             not applied, the conversion return null instead a converted string.
+=======
+            not applied, the conversion return null instead of a converted string.
+>>>>>>> 983262f (#21 infrastructure build process)
         */
         for(int i = 0 ; i < separated.length; i++){
             conversions = mConvertions.listIterator();
@@ -185,7 +189,10 @@ public class BaseTranscoder {
                 }
             }
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 983262f (#21 infrastructure build process)
        /*
         Merge two arrays interleaved.
         Assume:
@@ -198,8 +205,15 @@ public class BaseTranscoder {
                     + conditions.size() + "length of query string: " + transcoded.size());
             return s;
         }
+<<<<<<< HEAD
         s = transcoded.get(0);
         for (int i = 0; i < conditions.size(); i++) {
+=======
+        Log.d(TAG, "Merge string: " + transcoded.get(0));
+        s = transcoded.get(0);
+        for (int i = 0; i < conditions.size(); i++) {
+            Log.d(TAG, "Substring: " + transcoded.get(i));
+>>>>>>> 983262f (#21 infrastructure build process)
             s = s.concat(conditions.get(i));
             s = s.concat(" ");
             s = s.concat(transcoded.get(i+1));

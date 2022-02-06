@@ -15,7 +15,11 @@ buildscript {
     }
     dependencies {
 
+<<<<<<< HEAD
         classpath 'com.android.tools.build:gradle:7.1.0'
+=======
+        classpath 'com.android.tools.build:gradle:7.1.1'
+>>>>>>> 983262f (#21 infrastructure build process)
 
         def nav_version = "2.3.2"
         classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$nav_version"

@@ -7,9 +7,6 @@ import android.os.Bundle;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
-;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -145,6 +142,11 @@ public class MainActivity extends AppCompatActivity{
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), token).buildClient();
         CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+//        try {
+//            Thread.sleep(5000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     void addOneDriveClient(String token){
@@ -166,6 +168,11 @@ public class MainActivity extends AppCompatActivity{
 //
 //            }
 //        });
+//        try {
+//            Thread.sleep(5000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 }
 
