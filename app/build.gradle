@@ -46,6 +46,7 @@ android {
     android {
         aaptOptions {
             noCompress "json"
+            noCompress "txt"
         }
     }
 }

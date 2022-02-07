@@ -88,10 +88,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
                         .setPageToken(mToken);  //this is ok. null means 1st page;
 
                 //apply filter?
-<<<<<<< HEAD
-=======
                 Log.d(TAG, "Apply filter: " + mfilterClause);
->>>>>>> 983262f (#21 infrastructure build process)
                 if(mfilterClause != null) {
                     list = list.setQ(mfilterClause);
                 }
