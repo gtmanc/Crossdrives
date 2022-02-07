@@ -52,12 +52,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
      */
     @Override
     public IFileListRequest filter(String value) {
-        String s = value;
-        if(value != null){
-            BaseTranscoder transcoder = new GraphTranscoder();
-            s = transcoder.execute(value);
-        }
-        mfilterClause = s;
+        mfilterClause = value;
         return this;
     }
 
@@ -85,7 +80,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
         final List<Option> options = new LinkedList<Option>();
         DriveItemCollectionRequest request;
 
-        String parent;
+        String parent, filterClause = null;
         DriveRequestBuilder drb;
         DriveItemRequestBuilder dirb;
 
@@ -95,7 +90,14 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
             drb = mClient.getGraphServiceClient()
                     .me()
                     .drive();
+
             parent = getParent(mfilterClause);
+
+            if(mfilterClause != null){
+                BaseTranscoder transcoder = new GraphTranscoder();
+                filterClause = transcoder.execute(mfilterClause);
+            }
+
             if(parent != null){
                 dirb = drb.items(parent);
             }
@@ -108,9 +110,9 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .buildRequest();
         }
         //apply filter?
-        Log.d(TAG, "Apply filter: " + mfilterClause);
-        if(mfilterClause != null){
-            request.filter(mfilterClause);
+        Log.d(TAG, "Apply filter: " + filterClause);
+        if(filterClause != null){
+            request.filter(filterClause);
         }
         //apply top?
         if(mPageSize != 0){
@@ -156,8 +158,11 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
         StringBuffer graph_qs = new StringBuffer("");
 
         Log.d(TAG, "get parents. Given string: " + google_qs);
+        if(google_qs == null)
+            return s;
+
         //Exit if query term 'parents' doesn't present
-        if(!google_qs.contains("Parents")) {
+        if(!google_qs.contains("parents")) {
             Log.d(TAG, "Query term 'parents' not found:" + google_qs);
             return null;
         }
@@ -165,10 +170,10 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
         i = google_qs.indexOf("in");
         if(i > 0 ){
             graph_qs = graph_qs.append(google_qs);
-            s = graph_qs.substring(0, i);
+            s = graph_qs.substring("'".length(), i-"'".length()-1);
         }
 
-        Log.d(TAG, "Parent ID: " + s);
+        Log.d(TAG, "parent ID: " + s);
         return s;
     }
 }

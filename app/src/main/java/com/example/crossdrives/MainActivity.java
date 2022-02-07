@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity{
             intent.setClass(MainActivity.this, QueryResultActivity.class);
 //                bundle.putStringArrayList("ResultList", mQueryFileName);
 //                intent.putExtras(bundle);
-            startActivity(intent);
+            //startActivity(intent);
         }
     }
     private void addGoogleDriveClient(String token){
