@@ -121,7 +121,7 @@ public class BaseTranscoder {
 
 
     /*
-        Separate the whole query string to query strings.
+        Separate the whole query string to query substrings.
         Good reference:
         example 6 in https://www.geeksforgeeks.org/split-string-java-examples/
         https://stackoverflow.com/questions/3481828/how-to-split-a-string-in-java
@@ -139,6 +139,9 @@ public class BaseTranscoder {
         return qs.split(regex);
     }
 
+    /*
+        Get the conditional operator present in the given query string
+     */
     private List<String> getConditionOperators(String qs){
         String s, op;
         List<String> conditions = new ArrayList<>();
@@ -186,17 +189,17 @@ public class BaseTranscoder {
             }
         }
        /*
-        Merge two arrays interleaved.
-        Assume:
-        1. length of function operations is shorter than the other.
-        2. Length of function is the one of the other - 1
+            Concatenate the transcoded sub-strings.
+            Checks before starting concatenation:
+            1. The number of transcoded substring is the one of the conditional operator + 1
         */
         s = null;
-        if(transcoded.size() != (conditions.size()+1)){
+        if(transcoded.size() != (conditions.size() + 1)){
             Log.w(TAG, "transcode failed! Length of condition op: "
                     + conditions.size() + "length of query string: " + transcoded.size());
             return s;
         }
+
         Log.d(TAG, "Merge string: " + transcoded.get(0));
         s = transcoded.get(0);
         for (int i = 0; i < conditions.size(); i++) {

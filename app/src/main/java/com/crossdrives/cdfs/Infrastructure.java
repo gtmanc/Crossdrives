@@ -2,7 +2,6 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
-import com.crossdrives.driveclient.IBaseRequest;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.google.api.services.drive.model.FileList;
@@ -25,7 +24,7 @@ public class Infrastructure {
         Strings
      */
     private final String CDFS_FOLDER = "CDFS";
-    private final String FILTER_CDFS_FOLDER = "mimeType = 'application/vnd.google-apps.folder' " +
+    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = 'application/vnd.google-apps.folder' " +
             "and name = '" + CDFS_FOLDER + "'";
 
     /*
@@ -43,31 +42,20 @@ public class Infrastructure {
         CompletableFuture<String> checkFolderFuture = new CompletableFuture<>();
 
         sExecutor.submit(() -> {
-            Log.d(TAG, "Check CDFS folder: " + FILTER_CDFS_FOLDER);
+            Log.d(TAG, "Check CDFS folder: " + FILTERCLAUSE_CDFS_FOLDER);
             mClient.list().buildRequest()
                     //sClient.get(0).list().buildRequest()
                     .setNextPage(null)
                     .setPageSize(0) //0 means no page size is applied
-                    .filter(FILTER_CDFS_FOLDER)
+                    .filter(FILTERCLAUSE_CDFS_FOLDER)
                     //.filter("mimeType = 'application/vnd.google-apps.folder'")
                     //.filter(null)   //null means no filter will be applied
                     .run(new IFileListCallBack<FileList, Object>() {
+                        //As we specified the folder name, suppose only cdfs folder in the list.
                         @Override
                         public void success(FileList fileList, Object o) {
                             String id = null;
-                            //Suppose only cdfs folder in the list. just a double check.
-//                            for(int i = 0 ; i < fileList.getFiles().size(); i++){
-//                                fileList.getFiles().get(i).getName().compareToIgnoreCase("cdfs");
-//                            }
-                            if(fileList.size() > 0) {
-                                if (fileList.getFiles().get(0).getName().compareToIgnoreCase("cdfs") == 0) {
-                                    id = fileList.getFiles().get(0).getId();
-                                }
-                            }
-
-                            if(id == null){
-                                Log.w(TAG, "No cdfs folder is found!");
-                            }
+                            id = handleResultGetCDFSFolder(fileList);
                             checkFolderFuture.complete(id);
                         }
 
@@ -78,11 +66,7 @@ public class Infrastructure {
                     });
         });
 
-        checkFolderFuture.exceptionally(
-                // TODO
-                ex ->{return null;});
-
-        CompletableFuture<String> checkAllocationFile = checkFolderFuture.thenCompose(id -> {
+        CompletableFuture<String> checkAllocationFileFuture = checkFolderFuture.thenCompose(id -> {
             CompletableFuture<String> future = new CompletableFuture<>();
             String query = "'" + id + "' in parents";
 
@@ -99,13 +83,7 @@ public class Infrastructure {
                             @Override
                             public void success(FileList fileList, Object o) {
                                 String id = null;
-                                if(fileList.size() > 0) {
-                                    if (fileList.getFiles().get(0).getName().compareToIgnoreCase("allocation.cdfs") == 0) {
-                                        id = fileList.getFiles().get(0).getId();
-                                    } else {
-                                        Log.w(TAG, "No allocation file in cdfs folder is found!");
-                                    }
-                                }
+                                id = handleResultGetAllocationFile(fileList);
                                 checkFolderFuture.complete(id);
                             }
 
@@ -120,11 +98,57 @@ public class Infrastructure {
             return future;
         });
 
-        checkAllocationFile.thenAccept(id->{
+        CompletableFuture  downloadAllocationFileFuture = checkAllocationFileFuture.thenAccept(id->{
             //parse allocation file
             Log.d(TAG, "Starting download allocation file");
         });
+
+        /*
+            exception handling
+         */
+        checkFolderFuture.exceptionally(
+                // TODO
+                ex ->{return null;});
+        checkAllocationFileFuture.exceptionally(
+                ex ->{return null;}
+        );
+
+        downloadAllocationFileFuture.exceptionally(
+                ex -> {return null;});
     }
+
+    private String handleResultGetCDFSFolder(FileList fileList){
+        String id = null;
+//      for(int i = 0 ; i < fileList.getFiles().size(); i++){
+//          fileList.getFiles().get(i).getName().compareToIgnoreCase("cdfs");
+//      }
+        if(fileList.getFiles().size() > 0) {
+            if (fileList.getFiles().get(0).getName().compareToIgnoreCase("cdfs") == 0) {
+                id = fileList.getFiles().get(0).getId();
+            }
+        }
+        else{
+            Log.w(TAG, "No CDFS folder!");
+        }
+
+        return id;
+    }
+
+    private String handleResultGetAllocationFile(FileList fileList){
+        String id = null;
+        if(fileList.getFiles().size() > 0) {
+            if (fileList.getFiles().get(0).getName().compareToIgnoreCase("allocation.cdfs") == 0) {
+                id = fileList.getFiles().get(0).getId();
+            } else {
+                Log.w(TAG, "No allocation file in cdfs folder!");
+            }
+        }
+        return id;
+    }
+
+
+
+
 
 
     private void init(){

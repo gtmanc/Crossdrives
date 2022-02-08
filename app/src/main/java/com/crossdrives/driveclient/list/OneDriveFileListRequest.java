@@ -138,7 +138,7 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                         Log.d(TAG, "Next page: " + DriveItemCollectionPage.getNextPage());
                         callback.success(fileList, DriveItemCollectionPage.getNextPage());
                 })
-                .exceptionally(ex -> {Log.w(TAG, "Get root failed: " + ex.toString());
+                .exceptionally(ex -> {Log.w(TAG, "File list failed: " + ex.toString());
                         callback.failure(ex.toString());return null;
                 });
 
@@ -149,8 +149,9 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
             e.g. To query item in a folder
             Google: '123456' in parents
             Graph: not a query string. This method simply return the parent ID. The ID will be used in
-            graph sdk call ();
+            graph sdk call such as .drive().me().item(parent_id)
 
+            Return: null is returned if none of the parent presents
     */
     private String getParent(String google_qs) {
         String s = null;
