@@ -1,5 +1,6 @@
 package com.crossdrives.cdfs;
 
+import android.app.Activity;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -12,14 +13,19 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.File;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class FileCreation implements IFileCreation{
-    private String TAG = "CD.FileCreation";
+public class CreationLocal extends BaseCDFS implements IFileCreation{
+    private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;
+    Activity mActivity;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     /*
@@ -30,8 +36,46 @@ public class FileCreation implements IFileCreation{
     private boolean msTaskfinished = false;
 
 
-    public FileCreation(IDriveClient client) {
-        mClient = client;
+    public CreationLocal(Activity activity) {
+        mActivity = activity;
+    }
+
+
+    public java.io.File create(String name){
+        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + name);
+        createTextFile(name, "Json strings");
+        return filePath;
+    }
+
+    /*
+     * Files with Activity Output/input: https://stackoverflow.com/questions/1239026/how-to-create-a-file-in-android
+     * */
+    private void createTextFile(String path, String content){
+        // catches IOException below
+        //final String TESTSTRING = new String("Hello Android");
+
+        /* We have to use the openFileOutput()-method
+         * the ActivityContext provides, to
+         * protect your file from others and
+         * This is done for security-reasons.
+         * We chose MODE_WORLD_READABLE, because
+         *  we have nothing to hide in our file */
+        FileOutputStream fOut = null;
+        try {
+            fOut = mActivity.openFileOutput(path, Activity.MODE_PRIVATE);
+            OutputStreamWriter osw = new OutputStreamWriter(fOut);
+            // Write the string to the file
+            osw.write(content);
+            /* ensure that everything is
+             * really written out and close */
+            osw.flush();
+            osw.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }catch (IOException e){
+
+        }
     }
 
     public void folder(){

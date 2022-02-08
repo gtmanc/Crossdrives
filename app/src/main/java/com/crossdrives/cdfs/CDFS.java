@@ -15,14 +15,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CDFS {
+public class CDFS extends BaseCDFS{
     private static String TAG = "CDFS.CDFS";
     //List<IDriveClient> sClient = new ArrayList<>();
     //HashMap<String, IDriveClient> mDrives = new HashMap<>();
     ConcurrentHashMap<String, Drive> mDrives = new ConcurrentHashMap<>();
     private Activity mActivity;
     static CDFS mCDFS = null;
-    private final String NAME_ALLOCATION_FILE = "allocation.cdfs";
     static Service mService;
 
 
@@ -38,7 +37,7 @@ public class CDFS {
         String content;
 
         Log.d(TAG, "create allocation file");
-        createTextFile(NAME_ALLOCATION_FILE, "Header of CDFS allocation");
+
         content = readFile(NAME_ALLOCATION_FILE);
     }
 
@@ -87,7 +86,7 @@ public class CDFS {
 //        fileMetadata.setName("CDFS2");
 //        fileMetadata.setMimeType("application/vnd.google-apps.folder");
         Infrastructure verify = new Infrastructure(client);
-        FileCreation fc = new FileCreation(client);
+        CreationLocal fc = new CreationLocal(mActivity);
 
         //Check CDFS existing folder. We will do the creation in the callback
         verify.checkAndBuild();
@@ -155,36 +154,7 @@ public class CDFS {
 //        });
     }
 
-    /*
-    * Files with Activity Output/input: https://stackoverflow.com/questions/1239026/how-to-create-a-file-in-android
-    * */
-    private void createTextFile(String path, String content){
-        // catches IOException below
-        //final String TESTSTRING = new String("Hello Android");
 
-        /* We have to use the openFileOutput()-method
-         * the ActivityContext provides, to
-         * protect your file from others and
-         * This is done for security-reasons.
-         * We chose MODE_WORLD_READABLE, because
-         *  we have nothing to hide in our file */
-        FileOutputStream fOut = null;
-        try {
-            fOut = mActivity.openFileOutput(path, Activity.MODE_PRIVATE);
-            OutputStreamWriter osw = new OutputStreamWriter(fOut);
-            // Write the string to the file
-            osw.write(content);
-            /* ensure that everything is
-             * really written out and close */
-            osw.flush();
-            osw.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }catch (IOException e){
-
-        }
-    }
     private String readFile(String path) {
         /* We have to use the openFileInput()-method
          * the ActivityContext provides.

@@ -3,6 +3,7 @@ package com.crossdrives.cdfs;
 import android.util.Log;
 
 import com.crossdrives.driveclient.IDriveClient;
+import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.google.api.services.drive.model.FileList;
 
@@ -84,12 +85,12 @@ public class Infrastructure {
                             public void success(FileList fileList, Object o) {
                                 String id = null;
                                 id = handleResultGetAllocationFile(fileList);
-                                checkFolderFuture.complete(id);
+                                future.complete(id);
                             }
 
                             @Override
                             public void failure(String ex) {
-                                checkFolderFuture.completeExceptionally(new Throwable(""));
+                                future.completeExceptionally(new Throwable(""));
                             }
                         });
             }else {
@@ -99,8 +100,25 @@ public class Infrastructure {
         });
 
         CompletableFuture  downloadAllocationFileFuture = checkAllocationFileFuture.thenAccept(id->{
-            //parse allocation file
-            Log.d(TAG, "Starting download allocation file");
+            CompletableFuture<String> future = new CompletableFuture<>();
+            if(id != null){
+                Log.d(TAG, "download allocation file");
+                mClient.download().buildRequest(id)
+                        .run(new IDownloadCallBack<OutputStream>() {
+                            @Override
+                            public void success(OutputStream outputStream) {
+                                handleResultDownload(outputStream);
+                            }
+
+                            @Override
+                            public void failure(String ex) {
+
+                            }
+                        });
+            }else{
+                Log.d(TAG, "Allocation file is missing. Create the file.");
+            }
+
         });
 
         /*
@@ -146,7 +164,9 @@ public class Infrastructure {
         return id;
     }
 
+    private void handleResultDownload(OutputStream outputStream){
 
+    }
 
 
 
