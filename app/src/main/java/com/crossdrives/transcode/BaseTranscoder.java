@@ -166,7 +166,7 @@ public class BaseTranscoder {
         List<String> transcoded = new ArrayList<>();
         List<String> conditions = new ArrayList<>();
         String[] separated;
-        String s;
+        String s = null;
         ListIterator<IConvert> conversions;
 
         Log.d(TAG, "Given gooogle query string:" + qs);
@@ -188,25 +188,20 @@ public class BaseTranscoder {
                 }
             }
         }
-       /*
-            Concatenate the transcoded sub-strings.
-            Checks before starting concatenation:
-            1. The number of transcoded substring is the one of the conditional operator + 1
-        */
-        s = null;
-        if(transcoded.size() != (conditions.size() + 1)){
-            Log.w(TAG, "transcode failed! Length of condition op: "
-                    + conditions.size() + "length of query string: " + transcoded.size());
-            return s;
-        }
 
-        Log.d(TAG, "Merge string: " + transcoded.get(0));
-        s = transcoded.get(0);
-        for (int i = 0; i < conditions.size(); i++) {
-            Log.d(TAG, "Substring: " + transcoded.get(i));
-            s = s.concat(conditions.get(i));
-            s = s.concat(" ");
-            s = s.concat(transcoded.get(i+1));
+        /*
+            Number of reanscoded substring could be zero. e.g. A google query string without any
+            conditional operator: '12345' in parents
+        */
+        Log.d(TAG, "Concantenate transcoded substrings. Number of substring: " + transcoded.size());
+        if(transcoded.size() > 0) {
+            s = transcoded.get(0);
+            for (int i = 0; i < conditions.size(); i++) {
+                Log.d(TAG, "Substring: " + transcoded.get(i));
+                s = s.concat(conditions.get(i));
+                s = s.concat(" ");
+                s = s.concat(transcoded.get(i + 1));
+            }
         }
 
         Log.d(TAG, "Converted string: " + s);

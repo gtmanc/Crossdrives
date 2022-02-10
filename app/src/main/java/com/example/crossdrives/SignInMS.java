@@ -155,7 +155,7 @@ public class SignInMS extends SignInManager{
                     try {
                         inputStream.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.w(TAG, "IO exception: " + e.getMessage());
                     }
                 })
                 .exceptionally(ex -> {Log.d(TAG, "get photo failed: " + ex.toString()); return null;});

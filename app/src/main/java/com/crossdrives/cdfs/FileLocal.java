@@ -13,15 +13,18 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.File;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CreationLocal extends BaseCDFS implements IFileCreation{
+public class FileLocal extends BaseCDFS implements IFileCreation{
     private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;
@@ -36,14 +39,14 @@ public class CreationLocal extends BaseCDFS implements IFileCreation{
     private boolean msTaskfinished = false;
 
 
-    public CreationLocal(Activity activity) {
+    public FileLocal(Activity activity) {
         mActivity = activity;
     }
 
 
-    public java.io.File create(String name){
-        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + name);
-        createTextFile(name, "Json strings");
+    public java.io.File create(){
+        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + NAME_ALLOCATION_FILE);
+        createTextFile(NAME_ALLOCATION_FILE, "Json strings");
         return filePath;
     }
 
@@ -76,6 +79,46 @@ public class CreationLocal extends BaseCDFS implements IFileCreation{
         }catch (IOException e){
 
         }
+    }
+
+    private String readFile(String path) {
+        /* We have to use the openFileInput()-method
+         * the ActivityContext provides.
+         * Again for security reasons with
+         * openFileInput(...) */
+
+        FileInputStream fIn = null;
+        String readString="";
+        String s;
+
+        try {
+            fIn = mActivity.openFileInput(path);
+            InputStreamReader isr = new InputStreamReader(fIn);
+            BufferedReader inputReader = new BufferedReader(isr);
+            /* Prepare a char-Array that will
+             * hold the chars we read back in. */
+            //char[] inputBuffer = new char[TESTSTRING.length()];
+
+            // Fill the Buffer with data from the file
+            //isr.read(inputBuffer);
+            while((s = inputReader.readLine()) != null){
+                readString = readString.concat(s);
+            }
+
+            // Transform the chars to a String
+            //String readString = new String(inputBuffer);
+
+            // Check if we read back the same chars that we had written out
+            //boolean isTheSame = TESTSTRING.equals(readString);
+
+            //Log.i("File Reading stuff", "success = " + isTheSame);
+
+        } catch (FileNotFoundException e) {
+            readString = null;
+        } catch (IOException ioe){
+            readString = null;
+        }
+        return readString;
     }
 
     public void folder(){

@@ -9,10 +9,8 @@ import com.google.api.services.drive.model.File;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CDFS extends BaseCDFS{
@@ -35,10 +33,6 @@ public class CDFS extends BaseCDFS{
     CDFS(Activity activity) {
         mActivity = activity;
         String content;
-
-        Log.d(TAG, "create allocation file");
-
-        content = readFile(NAME_ALLOCATION_FILE);
     }
 
     static public CDFS getCDFSService(Activity activity){
@@ -86,7 +80,7 @@ public class CDFS extends BaseCDFS{
 //        fileMetadata.setName("CDFS2");
 //        fileMetadata.setMimeType("application/vnd.google-apps.folder");
         Infrastructure verify = new Infrastructure(client);
-        CreationLocal fc = new CreationLocal(mActivity);
+        FileLocal fc = new FileLocal(mActivity);
 
         //Check CDFS existing folder. We will do the creation in the callback
         verify.checkAndBuild();
@@ -155,43 +149,5 @@ public class CDFS extends BaseCDFS{
     }
 
 
-    private String readFile(String path) {
-        /* We have to use the openFileInput()-method
-         * the ActivityContext provides.
-         * Again for security reasons with
-         * openFileInput(...) */
 
-        FileInputStream fIn = null;
-        String readString="";
-        String s;
-
-        try {
-            fIn = mActivity.openFileInput(path);
-            InputStreamReader isr = new InputStreamReader(fIn);
-            BufferedReader inputReader = new BufferedReader(isr);
-            /* Prepare a char-Array that will
-             * hold the chars we read back in. */
-            //char[] inputBuffer = new char[TESTSTRING.length()];
-
-            // Fill the Buffer with data from the file
-            //isr.read(inputBuffer);
-            while((s = inputReader.readLine()) != null){
-                readString = readString.concat(s);
-            }
-
-            // Transform the chars to a String
-            //String readString = new String(inputBuffer);
-
-            // Check if we read back the same chars that we had written out
-            //boolean isTheSame = TESTSTRING.equals(readString);
-
-            //Log.i("File Reading stuff", "success = " + isTheSame);
-
-        } catch (FileNotFoundException e) {
-            readString = null;
-        } catch (IOException ioe){
-            readString = null;
-        }
-        return readString;
-    }
 }

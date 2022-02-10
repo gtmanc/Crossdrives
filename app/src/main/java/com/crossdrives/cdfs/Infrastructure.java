@@ -2,10 +2,13 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.AllocationMap;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.google.api.services.drive.model.FileList;
+import com.google.gson.Gson;
 
 import java.io.OutputStream;
 import java.util.concurrent.CompletableFuture;
@@ -117,8 +120,15 @@ public class Infrastructure {
                         });
             }else{
                 Log.d(TAG, "Allocation file is missing. Create the file.");
+                AllocationMap map = new AllocationMap();
+                AllocationItem item = new AllocationItem();
+                Gson gson = new Gson();
+                item.setBrand("BrandTest");
+                map.setVersion(1);
+                map.setAllocItem(item);
+                Log.d(TAG, "Json by Gson: " + gson.toJson(map));
+                //Result : {"Items":{"mBrand":"BrandTest"},"Version":1}
             }
-
         });
 
         /*
