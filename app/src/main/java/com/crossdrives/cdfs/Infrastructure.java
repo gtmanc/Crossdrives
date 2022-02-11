@@ -3,7 +3,7 @@ package com.crossdrives.cdfs;
 import android.util.Log;
 
 import com.crossdrives.cdfs.model.AllocationItem;
-import com.crossdrives.cdfs.model.AllocationMap;
+import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -119,15 +119,27 @@ public class Infrastructure {
                             }
                         });
             }else{
-                Log.d(TAG, "Allocation file is missing. Create the file.");
-                AllocationMap map = new AllocationMap();
-                AllocationItem item = new AllocationItem();
+                Log.d(TAG, "Allocation file is missing. Create the file...");
+                AllocContainer map = new AllocContainer();
+                AllocationItem item1 = new AllocationItem();
+                AllocationItem item2 = new AllocationItem();
+                String jsonStr;
                 Gson gson = new Gson();
-                item.setBrand("BrandTest");
+                item1.setBrand("Google");
+                item2.setBrand("Microsoft");
                 map.setVersion(1);
-                map.setAllocItem(item);
+                map.setAllocItem(item1);
+                map.setAllocItem(item2);
                 Log.d(TAG, "Json by Gson: " + gson.toJson(map));
-                //Result : {"Items":{"mBrand":"BrandTest"},"Version":1}
+                //Result : {"items":[{"brand":"Google","seqNum":0,"size":0,"totalSeg":0},{"brand":"Microsoft","seqNum":0,"size":0,"totalSeg":0}],"version":1}
+                Log.d(TAG, "Parse json string...");
+                jsonStr = gson.toJson(map);
+                //test whether version still can be read if layout is incompatible with container
+                jsonStr = jsonStr.replace("brand", "my_brand");
+                map = gson.fromJson(jsonStr, AllocContainer.class);
+                Log.d(TAG, "version:" + map.getVersion());
+                Log.d(TAG, "item brand:" + map.getAllocItem().get(0).getBrand());
+
             }
         });
 
