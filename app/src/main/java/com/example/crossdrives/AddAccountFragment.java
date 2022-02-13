@@ -146,7 +146,7 @@ public class AddAccountFragment extends BaseFragment{
         public void onFinished(int result, String brand) {
             boolean r;
             IDriveClient client;
-            CDFS cdfs = CDFS.getCDFSService(getActivity());
+            CDFS cdfs = CDFS.getCDFSService(getActivity().getApplicationContext());
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 String brand_am = GlobalConstants.BRAND_GOOGLE;
@@ -248,7 +248,7 @@ public class AddAccountFragment extends BaseFragment{
                     Log.d(TAG, "User sign in OK. Start to create google drive client. Token: " + token);
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(mActivity, token).buildClient();
-                    CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+                    CDFS.getCDFSService(getActivity().getApplicationContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
                     //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
@@ -256,7 +256,7 @@ public class AddAccountFragment extends BaseFragment{
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String) token).buildClient();
-                    CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_MS, odc);
+                    CDFS.getCDFSService(getActivity().getApplicationContext()).addClient(GlobalConstants.BRAND_MS, odc);
                     //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }
                 else{

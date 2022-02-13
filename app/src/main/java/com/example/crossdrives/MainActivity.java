@@ -135,13 +135,13 @@ public class MainActivity extends AppCompatActivity{
             intent.setClass(MainActivity.this, QueryResultActivity.class);
 //                bundle.putStringArrayList("ResultList", mQueryFileName);
 //                intent.putExtras(bundle);
-            //startActivity(intent);
+            startActivity(intent);
         }
     }
     private void addGoogleDriveClient(String token){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), token).buildClient();
-        CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+        CDFS.getCDFSService(getApplicationContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
 //        try {
 //            Thread.sleep(5000);
 //        } catch (InterruptedException e) {
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity{
     void addOneDriveClient(String token){
         OneDriveClient odc =
                 (OneDriveClient) OneDriveClient.builder(token).buildClient();
-        CDFS.getCDFSService(mActivity).addClient(GlobalConstants.BRAND_MS, odc);
+        CDFS.getCDFSService(getApplicationContext()).addClient(GlobalConstants.BRAND_MS, odc);
 //        oneDriveClient.
 //                list().
 //                buildRequest().

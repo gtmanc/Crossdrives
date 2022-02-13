@@ -15,13 +15,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Infrastructure {
+public class Infrastructure extends BaseCDFS{
     final private static String TAG = "CD.Infrastructure";
     IDriveClient mClient;
-    private FileList mFileList;
-    private OutputStream mStream;
-    private String mFileId;
-    IFileListCallBack<FileList, Object> mCallback;
+//    private FileList mFileList;
+//    private OutputStream mStream;
+//    private String mFileId;
+    //IFileListCallBack<FileList, Object> mCallback;
+    String mDriveName;
+    String mFolderID;
+    final String NAME_ALLOCATION_FILE = "allocation.cdfs";
+
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     /*
@@ -37,14 +41,17 @@ public class Infrastructure {
     */
     private boolean mResponseGot = false;
 
-    public Infrastructure(IDriveClient client) {
+    public Infrastructure(String name, IDriveClient client) {
         mClient = client;
-        //mCallback = callback;
+        mDriveName = name;
     }
 
     public void checkAndBuild() {
         CompletableFuture<String> checkFolderFuture = new CompletableFuture<>();
 
+        /*
+            Check CDFS folder
+        */
         sExecutor.submit(() -> {
             Log.d(TAG, "Check CDFS folder: " + FILTERCLAUSE_CDFS_FOLDER);
             mClient.list().buildRequest()
@@ -70,6 +77,9 @@ public class Infrastructure {
                     });
         });
 
+        /*
+            Check allocation file
+         */
         CompletableFuture<String> checkAllocationFileFuture = checkFolderFuture.thenCompose(id -> {
             CompletableFuture<String> future = new CompletableFuture<>();
             String query = "'" + id + "' in parents";
@@ -98,12 +108,15 @@ public class Infrastructure {
                         });
             }else {
                 Log.d(TAG, "CDFS folder is missing. Start to create necessary files");
+                future.complete(null);
             }
             return future;
         });
-
-        CompletableFuture  downloadAllocationFileFuture = checkAllocationFileFuture.thenAccept(id->{
-            CompletableFuture<String> future = new CompletableFuture<>();
+        /*
+            Download allocation file
+         */
+        CompletableFuture<Boolean>  downloadAllocationFileFuture = checkAllocationFileFuture.thenCompose(id->{
+            CompletableFuture<Boolean> future = new CompletableFuture<>();
             if(id != null){
                 Log.d(TAG, "download allocation file");
                 mClient.download().buildRequest(id)
@@ -111,50 +124,86 @@ public class Infrastructure {
                             @Override
                             public void success(OutputStream outputStream) {
                                 handleResultDownload(outputStream);
+                                future.complete(false);
                             }
 
                             @Override
                             public void failure(String ex) {
-
+                                future.completeExceptionally(new Throwable(""));
                             }
                         });
             }else{
-                Log.d(TAG, "Allocation file is missing. Create the file...");
-                AllocContainer map = new AllocContainer();
-                AllocationItem item1 = new AllocationItem();
-                AllocationItem item2 = new AllocationItem();
-                String jsonStr;
-                Gson gson = new Gson();
-                item1.setBrand("Google");
-                item2.setBrand("Microsoft");
-                map.setVersion(1);
-                map.setAllocItem(item1);
-                map.setAllocItem(item2);
-                Log.d(TAG, "Json by Gson: " + gson.toJson(map));
-                //Result : {"items":[{"brand":"Google","seqNum":0,"size":0,"totalSeg":0},{"brand":"Microsoft","seqNum":0,"size":0,"totalSeg":0}],"version":1}
-                Log.d(TAG, "Parse json string...");
-                jsonStr = gson.toJson(map);
-                //test whether version still can be read if layout is incompatible with container
-                jsonStr = jsonStr.replace("brand", "my_brand");
-                map = gson.fromJson(jsonStr, AllocContainer.class);
-                Log.d(TAG, "version:" + map.getVersion());
-                Log.d(TAG, "item brand:" + map.getAllocItem().get(0).getBrand());
+                Log.d(TAG, "Allocation file is missing");
+                future.complete(true);
+//                AllocContainer map = new AllocContainer();
+//                AllocationItem item1 = new AllocationItem();
+//                AllocationItem item2 = new AllocationItem();
+//                String jsonStr;
+//                Gson gson = new Gson();
+//                item1.setBrand("Google");
+//                item2.setBrand("Microsoft");
+//                map.setVersion(1);
+//                map.setAllocItem(item1);
+//                map.setAllocItem(item2);
+//                Log.d(TAG, "Json by Gson: " + gson.toJson(map));
+//                //Result : {"items":[{"brand":"Google","seqNum":0,"size":0,"totalSeg":0},{"brand":"Microsoft","seqNum":0,"size":0,"totalSeg":0}],"version":1}
+//                Log.d(TAG, "Parse json string...");
+//                jsonStr = gson.toJson(map);
+//                //test whether version still can be read if layout is incompatible with container
+//                jsonStr = jsonStr.replace("brand", "my_brand");
+//                map = gson.fromJson(jsonStr, AllocContainer.class);
+//                Log.d(TAG, "version:" + map.getVersion());
+//                Log.d(TAG, "item brand:" + map.getAllocItem().get(0).getBrand());
 
             }
+            return future;
         });
 
+        /*
+            Create necessary file and upload to the remote
+         */
+        downloadAllocationFileFuture.thenAccept((result)->{
+            String json = null;
+            if(result){
+                Log.d(TAG, "Create necessary files");
+                json = AllocManager.newAllocation();
+                Log.d(TAG, "Json: " + json);
+                //write to local
+                FileLocal fc = new FileLocal();
+                fc.create(getPath(), NAME_ALLOCATION_FILE, json);
+                Log.d(TAG, "Creataion finished");
+                json = fc.read(getPath(), NAME_ALLOCATION_FILE);
+                Log.d(TAG, "read back: " + json);
+
+                //upload to remote
+                 /*
+    Create necessary files
+    It's observed that the behavior of uploading file with the same name of existing file
+    varies cross drives. e.g. Onedrive always overwrite the existing one. Google drive create a
+    new one instead
+    */
+            }
+        }).handle((s, t) -> {
+            Log.w(TAG, "Exception occurred: " + t.toString());
+            return null;
+        });
         /*
             exception handling
          */
         checkFolderFuture.exceptionally(
                 // TODO
-                ex ->{return null;});
+                ex ->{Log.w(TAG, ex.toString()); return null;});
         checkAllocationFileFuture.exceptionally(
-                ex ->{return null;}
+                ex ->{Log.w(TAG, ex.toString()); return null;}
         );
 
         downloadAllocationFileFuture.exceptionally(
-                ex -> {return null;});
+                ex -> {Log.w(TAG, ex.toString()); return null;});
+
+        downloadAllocationFileFuture.handle((s, t) -> {
+            Log.w(TAG, "Exception occurred: " + t.toString());
+            return null;
+        });
     }
 
     private String handleResultGetCDFSFolder(FileList fileList){
@@ -169,6 +218,7 @@ public class Infrastructure {
         }
         else{
             Log.w(TAG, "No CDFS folder!");
+            //Terminate the flow and start to create the necessary files.
         }
 
         return id;
@@ -187,7 +237,10 @@ public class Infrastructure {
     }
 
     private void handleResultDownload(OutputStream outputStream){
-
+        AllocManager am = new AllocManager();
+        AllocContainer ac;
+        ac = am.toContainer(outputStream);
+        mDrives.get(mDriveName).addContainer(ac);
     }
 
 

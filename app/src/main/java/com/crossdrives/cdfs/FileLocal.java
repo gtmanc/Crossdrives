@@ -1,6 +1,7 @@
 package com.crossdrives.cdfs;
 
 import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -28,7 +29,6 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
     private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;
-    Activity mActivity;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     /*
@@ -39,15 +39,29 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
     private boolean msTaskfinished = false;
 
 
-    public FileLocal(Activity activity) {
-        mActivity = activity;
+    public FileLocal() {
     }
 
-
-    public java.io.File create(){
-        java.io.File filePath = new java.io.File(mActivity.getFilesDir() + "/" + NAME_ALLOCATION_FILE);
-        createTextFile(NAME_ALLOCATION_FILE, "Json strings");
+    /*
+        path: the path end with "\"
+        name: the file to create
+        content: String to write
+     */
+    public java.io.File create(String path, String name, String content){
+        Log.d(TAG, "Create local file. Path: " + path+name);
+        java.io.File filePath = new java.io.File(path + name);
+        createTextFile(name, content);
         return filePath;
+    }
+
+    /*
+        path: the path end with "\"
+        name: the file to read
+     */
+    public String read(String path, String name){
+        String s = null;
+        s = readFile(path + name);
+        return s;
     }
 
     /*
@@ -65,7 +79,7 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
          *  we have nothing to hide in our file */
         FileOutputStream fOut = null;
         try {
-            fOut = mActivity.openFileOutput(path, Activity.MODE_PRIVATE);
+            fOut = mContext.openFileOutput(path, Activity.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             // Write the string to the file
             osw.write(content);
@@ -75,9 +89,9 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
             osw.close();
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Log.w(TAG, "File not found! " + e.getMessage());
         }catch (IOException e){
-
+            Log.w(TAG, "IOException! " + e.getMessage());
         }
     }
 
@@ -92,7 +106,7 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
         String s;
 
         try {
-            fIn = mActivity.openFileInput(path);
+            fIn = mContext.openFileInput(path);
             InputStreamReader isr = new InputStreamReader(fIn);
             BufferedReader inputReader = new BufferedReader(isr);
             /* Prepare a char-Array that will
