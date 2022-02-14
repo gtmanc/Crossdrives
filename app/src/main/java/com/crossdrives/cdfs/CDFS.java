@@ -13,8 +13,8 @@ public class CDFS extends BaseCDFS{
     //List<IDriveClient> sClient = new ArrayList<>();
     //HashMap<String, IDriveClient> mDrives = new HashMap<>();
 
-    static CDFS mCDFS = null;
-    static Service mService;
+    private static CDFS mCDFS = null;
+    private static Service mService;
 
 
     /*
@@ -25,7 +25,7 @@ public class CDFS extends BaseCDFS{
     private boolean msTaskfinished = false;
 
     CDFS(Context context) {
-        setContext(context);
+        super(context);
     }
 
     static public CDFS getCDFSService(Context context){
@@ -73,7 +73,7 @@ public class CDFS extends BaseCDFS{
         File fileMetadata = new File();
 //        fileMetadata.setName("CDFS2");
 //        fileMetadata.setMimeType("application/vnd.google-apps.folder");
-        Infrastructure verify = new Infrastructure(name, client);
+        Infrastructure verify = new Infrastructure(name, client, this);
 
         //Check CDFS existing folder. We will do the creation in the callback
         verify.checkAndBuild();

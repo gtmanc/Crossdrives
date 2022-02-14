@@ -25,10 +25,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class FileLocal extends BaseCDFS implements IFileCreation{
+public class FileLocal implements IFileCreation{
     private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;
+    CDFS mCDFS;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     /*
@@ -39,28 +40,29 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
     private boolean msTaskfinished = false;
 
 
-    public FileLocal() {
-    }
+    public FileLocal(CDFS cdfs) { mCDFS = cdfs;    }
 
     /*
-        path: the path end with "\"
+        path: the path end WITHOUT "/"
         name: the file to create
         content: String to write
      */
     public java.io.File create(String path, String name, String content){
-        Log.d(TAG, "Create local file. Path: " + path+name);
-        java.io.File filePath = new java.io.File(path + name);
+        String s = path + "/" + name;
+        Log.d(TAG, "Create local file. Path: " + s);
+        java.io.File filePath = new java.io.File(s);
         createTextFile(name, content);
         return filePath;
     }
 
     /*
-        path: the path end with "\"
+        path: the path end WITHOUT "/"
         name: the file to read
      */
     public String read(String path, String name){
-        String s = null;
-        s = readFile(path + name);
+        String s = path + "/" + name;
+        Log.d(TAG, "Read local file. Path: " + s);
+        s = readFile(s);
         return s;
     }
 
@@ -79,7 +81,7 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
          *  we have nothing to hide in our file */
         FileOutputStream fOut = null;
         try {
-            fOut = mContext.openFileOutput(path, Activity.MODE_PRIVATE);
+            fOut = mCDFS.getContext().openFileOutput(path, Activity.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             // Write the string to the file
             osw.write(content);
@@ -106,7 +108,7 @@ public class FileLocal extends BaseCDFS implements IFileCreation{
         String s;
 
         try {
-            fIn = mContext.openFileInput(path);
+            fIn = mCDFS.getContext().openFileInput(path);
             InputStreamReader isr = new InputStreamReader(fIn);
             BufferedReader inputReader = new BufferedReader(isr);
             /* Prepare a char-Array that will

@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Infrastructure extends BaseCDFS{
+public class Infrastructure{
     final private static String TAG = "CD.Infrastructure";
     IDriveClient mClient;
 //    private FileList mFileList;
@@ -34,6 +34,7 @@ public class Infrastructure extends BaseCDFS{
     private final String CDFS_FOLDER = "CDFS";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = 'application/vnd.google-apps.folder' " +
             "and name = '" + CDFS_FOLDER + "'";
+    private CDFS mCDFS;
 
     /*
     A flag used to wait until the drive client callback gets called. Always set to false each time an operation
@@ -41,9 +42,10 @@ public class Infrastructure extends BaseCDFS{
     */
     private boolean mResponseGot = false;
 
-    public Infrastructure(String name, IDriveClient client) {
+    public Infrastructure(String name, IDriveClient client, CDFS cdfs) {
         mClient = client;
         mDriveName = name;
+        mCDFS = cdfs;
     }
 
     public void checkAndBuild() {
@@ -169,10 +171,10 @@ public class Infrastructure extends BaseCDFS{
                 json = AllocManager.newAllocation();
                 Log.d(TAG, "Json: " + json);
                 //write to local
-                FileLocal fc = new FileLocal();
-                fc.create(getPath(), NAME_ALLOCATION_FILE, json);
+                FileLocal fc = new FileLocal(mCDFS);
+                fc.create(mCDFS.getPath(), NAME_ALLOCATION_FILE, json);
                 Log.d(TAG, "Creataion finished");
-                json = fc.read(getPath(), NAME_ALLOCATION_FILE);
+                json = fc.read(mCDFS.getPath(), NAME_ALLOCATION_FILE);
                 Log.d(TAG, "read back: " + json);
 
                 //upload to remote
@@ -184,7 +186,7 @@ public class Infrastructure extends BaseCDFS{
     */
             }
         }).handle((s, t) -> {
-            Log.w(TAG, "Exception occurred: " + t.toString());
+            Log.w(TAG, "Exception occurred in handle download result: " + t.toString());
             return null;
         });
         /*
@@ -240,7 +242,7 @@ public class Infrastructure extends BaseCDFS{
         AllocManager am = new AllocManager();
         AllocContainer ac;
         ac = am.toContainer(outputStream);
-        mDrives.get(mDriveName).addContainer(ac);
+        mCDFS.mDrives.get(mDriveName).addContainer(ac);
     }
 
 
