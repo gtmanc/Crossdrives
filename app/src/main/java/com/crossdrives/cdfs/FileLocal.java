@@ -43,26 +43,26 @@ public class FileLocal implements IFileCreation{
     public FileLocal(CDFS cdfs) { mCDFS = cdfs;    }
 
     /*
-        path: the path end WITHOUT "/"
+        Create file in app's directory "/"
         name: the file to create
         content: String to write
      */
-    public java.io.File create(String path, String name, String content){
-        String s = path + "/" + name;
-        Log.d(TAG, "Create local file. Path: " + s);
-        java.io.File filePath = new java.io.File(s);
+    public void create(String name, String content){
+        //String s = path + "/" + name;
+        //Log.d(TAG, "Create local file. Path: " + s);
+        //java.io.File filePath = new java.io.File(s);
         createTextFile(name, content);
-        return filePath;
+        //return filePath;
     }
 
     /*
-        path: the path end WITHOUT "/"
+        Read file in the app's directory "/"
         name: the file to read
      */
-    public String read(String path, String name){
-        String s = path + "/" + name;
-        Log.d(TAG, "Read local file. Path: " + s);
-        s = readFile(s);
+    public String read(String name){
+        String s;
+        //Log.d(TAG, "Read local file. Path: " + s);
+        s = readFile(name);
         return s;
     }
 

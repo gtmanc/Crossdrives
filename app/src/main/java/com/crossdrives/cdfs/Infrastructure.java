@@ -172,18 +172,18 @@ public class Infrastructure{
                 Log.d(TAG, "Json: " + json);
                 //write to local
                 FileLocal fc = new FileLocal(mCDFS);
-                fc.create(mCDFS.getPath(), NAME_ALLOCATION_FILE, json);
+                fc.create(NAME_ALLOCATION_FILE, json);
                 Log.d(TAG, "Creataion finished");
-                json = fc.read(mCDFS.getPath(), NAME_ALLOCATION_FILE);
-                Log.d(TAG, "read back: " + json);
+                json = fc.read(NAME_ALLOCATION_FILE);
+                Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
 
-                //upload to remote
-                 /*
-    Create necessary files
-    It's observed that the behavior of uploading file with the same name of existing file
-    varies cross drives. e.g. Onedrive always overwrite the existing one. Google drive create a
-    new one instead
-    */
+                //
+                /*
+                    upload necessary files to remote cdfs folder. If folder doens't 
+                    It's observed that the behavior of uploading file with the same name of existing file
+                    varies cross drives. e.g. Onedrive always overwrite the existing one. Google drive create a
+                    new one instead
+                */
             }
         }).handle((s, t) -> {
             Log.w(TAG, "Exception occurred in handle download result: " + t.toString());
