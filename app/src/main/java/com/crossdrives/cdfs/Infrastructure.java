@@ -5,8 +5,11 @@ import android.util.Log;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.driveclient.IDriveClient;
+import com.crossdrives.driveclient.create.ICreateCallBack;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
+import com.crossdrives.driveclient.upload.IUploadCallBack;
+import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.gson.Gson;
 
@@ -23,8 +26,19 @@ public class Infrastructure{
 //    private String mFileId;
     //IFileListCallBack<FileList, Object> mCallback;
     String mDriveName;
-    String mFolderID;
     final String NAME_ALLOCATION_FILE = "allocation.cdfs";
+
+    private class Result{
+        public String folder;
+        public String file;
+        public boolean valid;
+
+        private Result() {
+            folder = null;
+            file = null;
+            valid = false;
+        }
+    }
 
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
@@ -49,7 +63,7 @@ public class Infrastructure{
     }
 
     public void checkAndBuild() {
-        CompletableFuture<String> checkFolderFuture = new CompletableFuture<>();
+        CompletableFuture<Result> checkFolderFuture = new CompletableFuture<>();
 
         /*
             Check CDFS folder
@@ -67,9 +81,9 @@ public class Infrastructure{
                         //As we specified the folder name, suppose only cdfs folder in the list.
                         @Override
                         public void success(FileList fileList, Object o) {
-                            String id = null;
-                            id = handleResultGetCDFSFolder(fileList);
-                            checkFolderFuture.complete(id);
+                            Result result = new Result();
+                            result.folder = handleResultGetCDFSFolder(fileList);
+                            checkFolderFuture.complete(result);
                         }
 
                         @Override
@@ -82,11 +96,11 @@ public class Infrastructure{
         /*
             Check allocation file
          */
-        CompletableFuture<String> checkAllocationFileFuture = checkFolderFuture.thenCompose(id -> {
-            CompletableFuture<String> future = new CompletableFuture<>();
-            String query = "'" + id + "' in parents";
+        CompletableFuture<Result> checkAllocationFileFuture = checkFolderFuture.thenCompose(result -> {
+            CompletableFuture<Result> future = new CompletableFuture<>();
+            String query = "'" + result.folder + "' in parents";
 
-            if(id != null){
+            if(result.folder != null){
                 Log.d(TAG, "Check allocation file. Query:  " + query);
                 mClient.list().buildRequest()
                         //sClient.get(0).list().buildRequest()
@@ -99,8 +113,8 @@ public class Infrastructure{
                             @Override
                             public void success(FileList fileList, Object o) {
                                 String id = null;
-                                id = handleResultGetAllocationFile(fileList);
-                                future.complete(id);
+                                result.file = handleResultGetAllocationFile(fileList);
+                                future.complete(result);
                             }
 
                             @Override
@@ -109,24 +123,28 @@ public class Infrastructure{
                             }
                         });
             }else {
-                Log.d(TAG, "CDFS folder is missing. Start to create necessary files");
-                future.complete(null);
+                /*
+                    Directly pass the result to next stage. The ID of allocation file will be null.
+                 */
+                Log.d(TAG, "CDFS folder is missing");
+                future.complete(result);
             }
             return future;
         });
         /*
             Download allocation file
          */
-        CompletableFuture<Boolean>  downloadAllocationFileFuture = checkAllocationFileFuture.thenCompose(id->{
-            CompletableFuture<Boolean> future = new CompletableFuture<>();
-            if(id != null){
+        CompletableFuture<Result>  downloadAllocationFileFuture = checkAllocationFileFuture.thenCompose(result->{
+            CompletableFuture<Result> future = new CompletableFuture<>();
+            if(result.file != null){
                 Log.d(TAG, "download allocation file");
-                mClient.download().buildRequest(id)
+                mClient.download().buildRequest(result.file)
                         .run(new IDownloadCallBack<OutputStream>() {
+
                             @Override
                             public void success(OutputStream outputStream) {
-                                handleResultDownload(outputStream);
-                                future.complete(false);
+                                result.valid = handleResultDownload(outputStream);
+                                future.complete(result);
                             }
 
                             @Override
@@ -136,7 +154,8 @@ public class Infrastructure{
                         });
             }else{
                 Log.d(TAG, "Allocation file is missing");
-                future.complete(true);
+                result.valid = false;
+                future.complete(result);
 //                AllocContainer map = new AllocContainer();
 //                AllocationItem item1 = new AllocationItem();
 //                AllocationItem item2 = new AllocationItem();
@@ -164,9 +183,44 @@ public class Infrastructure{
         /*
             Create necessary file and upload to the remote
          */
-        downloadAllocationFileFuture.thenAccept((result)->{
+        CompletableFuture<String> createFolderFuture = downloadAllocationFileFuture.thenCompose((result)->{
+            CompletableFuture<String> future = new CompletableFuture<>();
             String json = null;
-            if(result){
+            if(result.folder == null) {
+                /*
+                    create folder
+                 */
+                File fileMetadata = new File();
+                fileMetadata.setName("CDFS2");
+                fileMetadata.setMimeType("application/vnd.google-apps.folder");
+                mClient.create().buildRequest(fileMetadata).run(new ICreateCallBack<File>() {
+                    @Override
+                    public void success(File file) {
+                        Log.d(TAG, "Create file OK. ID: " + file.getId());
+                        future.complete(file.getId());
+                    }
+
+                    @Override
+                    public void failure(String ex) {
+                        Log.w(TAG, "Failed to create file: " + ex.toString());
+                        future.completeExceptionally(new Throwable(ex.toString()));
+                    }
+                });
+            }else {
+                future.complete(null);
+            }
+            return future;
+        });
+
+        CompletableFuture<String> createFilesFuture = createFolderFuture.thenCompose(id -> {
+            CompletableFuture<String> future = new CompletableFuture<>();
+            if(id != null){
+                String json;
+                File fileMetadata = new File();
+                /*
+                    Generate local allocation file in the folder create at previous stage.
+                    Then, upload it to the remote.
+                */
                 Log.d(TAG, "Create necessary files");
                 json = AllocManager.newAllocation();
                 Log.d(TAG, "Json: " + json);
@@ -176,19 +230,39 @@ public class Infrastructure{
                 Log.d(TAG, "Creataion finished");
                 json = fc.read(NAME_ALLOCATION_FILE);
                 Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
-
-                //
                 /*
-                    upload necessary files to remote cdfs folder. If folder doens't 
+                    upload necessary files to remote cdfs folder. If folder doesn't
                     It's observed that the behavior of uploading file with the same name of existing file
                     varies cross drives. e.g. Onedrive always overwrite the existing one. Google drive create a
                     new one instead
                 */
+
+                //fileMetadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
+                //fileMetadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
+                mClient.upload().buildRequest(fileMetadata, path).run(new IUploadCallBack() {
+                    @Override
+                    public void success(File file) {
+                        Log.d(TAG, "Upload file OK. ID: " + file.getId());
+                    }
+
+                    @Override
+                    public void failure(String ex) {
+                        Log.w(TAG, "Failed to upload file: " + ex.toString());
+                    }
+                });
+            }else{
+
             }
-        }).handle((s, t) -> {
-            Log.w(TAG, "Exception occurred in handle download result: " + t.toString());
-            return null;
+            return future;
         });
+
+        createFilesFuture.thenAccept(id -> {
+           if(id == null){
+
+           }
+        });
+
+
         /*
             exception handling
          */
@@ -198,7 +272,6 @@ public class Infrastructure{
         checkAllocationFileFuture.exceptionally(
                 ex ->{Log.w(TAG, ex.toString()); return null;}
         );
-
         downloadAllocationFileFuture.exceptionally(
                 ex -> {Log.w(TAG, ex.toString()); return null;});
 
@@ -206,6 +279,11 @@ public class Infrastructure{
             Log.w(TAG, "Exception occurred: " + t.toString());
             return null;
         });
+
+        createFolderFuture.handle((s, t) -> {
+        Log.w(TAG, "Exception occurred in handle download result: " + t.toString());
+        return null;
+    });
     }
 
     private String handleResultGetCDFSFolder(FileList fileList){
@@ -238,11 +316,17 @@ public class Infrastructure{
         return id;
     }
 
-    private void handleResultDownload(OutputStream outputStream){
+    /*
+        Input:
+        outputStream: the stream to the allocation file content.
+        return: indicates whether the content is valid or not.
+     */
+    private boolean handleResultDownload(OutputStream outputStream){
         AllocManager am = new AllocManager();
         AllocContainer ac;
         ac = am.toContainer(outputStream);
         mCDFS.mDrives.get(mDriveName).addContainer(ac);
+        return true;
     }
 
 
