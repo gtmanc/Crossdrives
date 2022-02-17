@@ -52,11 +52,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         try {
             f = submitRequest();
             callback.success(f);
-        } catch (FileNotFoundException e){
-            Log.w(TAG, "Open FileInputStream failed!" + e.toString());
-            callback.failure(e.getMessage());
-        } catch( IOException e){
-            Log.w(TAG, "Upload task doesn't work! " + e.toString());
+        } catch (Exception e){
+            Log.w(TAG, e.toString());
             callback.failure(e.getMessage());
         }
     }
@@ -95,6 +92,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         //build ItemRequestBuilder according to the given parent
         rb = mClient.getGraphServiceClient().me().drive();
         parents = mMetaData.getParents();
+
         irb = buildItemRequest(rb, parents);
 
         // Create an upload session
@@ -114,6 +112,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
 //        }catch (ClientException e){
 //            Log.w(TAG, "create upload session: " + e.toString());
 //        }
+
+        Log.d(TAG, "create upload task");
         LargeFileUploadTask<DriveItem> largeFileUploadTask =
                 new LargeFileUploadTask<DriveItem>
                         (uploadSession, mClient.getGraphServiceClient(), fileStream, streamSize, DriveItem.class);

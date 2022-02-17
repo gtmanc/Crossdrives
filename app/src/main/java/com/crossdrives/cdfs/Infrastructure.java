@@ -2,7 +2,6 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
-import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.create.ICreateCallBack;
@@ -11,12 +10,14 @@ import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.google.gson.Gson;
 
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import dagger.hilt.processor.internal.definecomponent.codegen._dagger_hilt_android_components_ActivityRetainedComponent;
 
 public class Infrastructure{
     final private static String TAG = "CD.Infrastructure";
@@ -45,9 +46,10 @@ public class Infrastructure{
     /*
         Strings
      */
-    private final String CDFS_FOLDER = "CDFS";
-    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = 'application/vnd.google-apps.folder' " +
-            "and name = '" + CDFS_FOLDER + "'";
+    private final String NAME_CDFS_FOLDER = "CDFS";
+    private final String MINETYPE_FOLDER = "'application/vnd.google-apps.folder'";
+    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = " + MINETYPE_FOLDER  +
+            " and name = '" + NAME_CDFS_FOLDER + "'";
     private CDFS mCDFS;
 
     /*
@@ -183,21 +185,22 @@ public class Infrastructure{
         /*
             Create necessary file and upload to the remote
          */
-        CompletableFuture<String> createFolderFuture = downloadAllocationFileFuture.thenCompose((result)->{
-            CompletableFuture<String> future = new CompletableFuture<>();
-            String json = null;
+        CompletableFuture<Result> createFolderFuture = downloadAllocationFileFuture.thenCompose((result)->{
+            CompletableFuture<Result> future = new CompletableFuture<>();
+
             if(result.folder == null) {
                 /*
                     create folder
                  */
                 File fileMetadata = new File();
-                fileMetadata.setName("CDFS2");
-                fileMetadata.setMimeType("application/vnd.google-apps.folder");
+                fileMetadata.setName(NAME_CDFS_FOLDER);
+                fileMetadata.setMimeType(MINETYPE_FOLDER);
                 mClient.create().buildRequest(fileMetadata).run(new ICreateCallBack<File>() {
                     @Override
                     public void success(File file) {
                         Log.d(TAG, "Create file OK. ID: " + file.getId());
-                        future.complete(file.getId());
+                        result.folder = file.getId();
+                        future.complete(result);
                     }
 
                     @Override
@@ -207,14 +210,15 @@ public class Infrastructure{
                     }
                 });
             }else {
-                future.complete(null);
+                Log.d(TAG, "Folder exists.");
+                future.complete(result);
             }
             return future;
         });
 
-        CompletableFuture<String> createFilesFuture = createFolderFuture.thenCompose(id -> {
-            CompletableFuture<String> future = new CompletableFuture<>();
-            if(id != null){
+        CompletableFuture<Result> createFilesFuture = createFolderFuture.thenCompose(result -> {
+            CompletableFuture<Result> future = new CompletableFuture<>();
+            if(result.file == null){
                 String json;
                 File fileMetadata = new File();
                 /*
@@ -236,30 +240,47 @@ public class Infrastructure{
                     varies cross drives. e.g. Onedrive always overwrite the existing one. Google drive create a
                     new one instead
                 */
-
                 //fileMetadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
                 //fileMetadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
+                java.io.File path = new java.io.File(mCDFS.getContext().getFilesDir() + "/" + NAME_ALLOCATION_FILE);
+                fileMetadata.setParents(Collections.singletonList(result.folder));
+                //fileMetadata.setParents(null); //Set parent to null if you want to upload file to root
+                fileMetadata.setName(NAME_ALLOCATION_FILE);
                 mClient.upload().buildRequest(fileMetadata, path).run(new IUploadCallBack() {
                     @Override
                     public void success(File file) {
                         Log.d(TAG, "Upload file OK. ID: " + file.getId());
+                        result.file = file.getId();
+                        future.complete(result);
                     }
 
                     @Override
                     public void failure(String ex) {
                         Log.w(TAG, "Failed to upload file: " + ex.toString());
+                        future.completeExceptionally(new Throwable(ex.toString()));
                     }
                 });
             }else{
-
+                Log.d(TAG, "Allocation.cdfs exist");
+                future.complete(result);
             }
             return future;
         });
 
-        createFilesFuture.thenAccept(id -> {
-           if(id == null){
-
-           }
+        createFilesFuture.thenAccept(result -> {
+           /*
+                Infrastructure supposes to be constructed
+            */
+            if(result.folder == null)
+            {
+                Log.w(TAG, "folder ID is null!");
+            }
+            if(result.file == null){
+                Log.w(TAG, "file ID is null!");
+            }
+            else{
+                Log.d(TAG, "build infrastructure completed");
+            }
         });
 
 
