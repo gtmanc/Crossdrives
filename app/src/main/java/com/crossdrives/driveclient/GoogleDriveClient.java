@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 
 public class GoogleDriveClient implements IDriveClient {
     private static String TAG = "CD.GoogleDriveClient";
-    private static Context mContext;
+    //private static Context mContext;
     private static GoogleSignInAccount mGoogleSignInAccount;
     private static String mAccessToken;
     private Drive mGgoogleDriveService;
@@ -73,14 +73,14 @@ public class GoogleDriveClient implements IDriveClient {
     /*
         Deprecated
      */
-    static public Builder builder(Context context, GoogleSignInAccount SignInAccount){
-        mContext = context;
-        mGoogleSignInAccount = SignInAccount;
-        return new Builder();
-    }
+//    static public Builder builder(GoogleSignInAccount SignInAccount){
+//        //mContext = context;
+//        mGoogleSignInAccount = SignInAccount;
+//        return new Builder();
+//    }
 
-    static public Builder builder(Context context, String accessToken){
-            mContext = context;
+    static public Builder builder(String accessToken){
+            //mContext = context;
             mAccessToken = accessToken;
             return new Builder();
     }

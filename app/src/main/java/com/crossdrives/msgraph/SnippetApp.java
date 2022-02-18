@@ -1,6 +1,7 @@
 package com.crossdrives.msgraph;
 
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 
 import com.example.crossdrives.BuildConfig;
@@ -32,6 +33,8 @@ public class SnippetApp extends Application {
     @Inject
     protected Interceptor interceptor;
 
+    static private Context mContext;
+
     public static SnippetApp getApp() {
         //Log.d(TAG, "getApp");
         return sSnippetApp;
@@ -49,6 +52,8 @@ public class SnippetApp extends Application {
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
+
+        mContext = getApplicationContext();
     }
 
     public Retrofit getRetrofit() {
@@ -66,5 +71,9 @@ public class SnippetApp extends Application {
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
+    }
+
+    static public Context getAppContext(){
+        return mContext;
     }
 }

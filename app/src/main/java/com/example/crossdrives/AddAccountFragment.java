@@ -30,6 +30,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.jetbrains.annotations.NotNull;
@@ -246,9 +247,14 @@ public class AddAccountFragment extends BaseFragment{
                 if(profile.Brand == SignInManager.BRAND_GOOGLE){
 
                     Log.d(TAG, "User sign in OK. Start to create google drive client. Token: " + token);
+                    /*
+                        We cant guarantee that getActivity always return valid object. It is still dangerous
+                        if mActivity is used.
+                        https://stackoverflow.com/questions/6215239/getactivity-returns-null-in-fragment-function
+                     */
                     GoogleDriveClient gdc =
-                            (GoogleDriveClient) GoogleDriveClient.builder(mActivity, token).buildClient();
-                    CDFS.getCDFSService(getActivity().getApplicationContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+                            (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
+                    CDFS.getCDFSService(SnippetApp.getAppContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
                     //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
