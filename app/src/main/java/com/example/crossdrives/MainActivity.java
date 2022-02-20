@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity{
     }
     private void addGoogleDriveClient(String token){
         GoogleDriveClient gdc =
-                (GoogleDriveClient) GoogleDriveClient.builder(getApplicationContext(), token).buildClient();
+                (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
         CDFS.getCDFSService(getApplicationContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
 //        try {
 //            Thread.sleep(5000);

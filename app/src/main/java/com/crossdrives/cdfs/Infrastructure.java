@@ -47,9 +47,9 @@ public class Infrastructure{
         Strings
      */
     private final String NAME_CDFS_FOLDER = "CDFS";
-    private final String MINETYPE_FOLDER = "'application/vnd.google-apps.folder'";
-    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = " + MINETYPE_FOLDER  +
-            " and name = '" + NAME_CDFS_FOLDER + "'";
+    private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
+    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
+            "' and name = '" + NAME_CDFS_FOLDER + "'";
     private CDFS mCDFS;
 
     /*
@@ -225,15 +225,15 @@ public class Infrastructure{
                     Generate local allocation file in the folder create at previous stage.
                     Then, upload it to the remote.
                 */
-                Log.d(TAG, "Create necessary files");
+                Log.d(TAG, "Create allocation file");
                 json = AllocManager.newAllocation();
-                Log.d(TAG, "Json: " + json);
+                //Log.d(TAG, "Json: " + json);
                 //write to local
                 FileLocal fc = new FileLocal(mCDFS);
                 fc.create(NAME_ALLOCATION_FILE, json);
-                Log.d(TAG, "Creataion finished");
-                json = fc.read(NAME_ALLOCATION_FILE);
-                Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
+                //Log.d(TAG, "Creataion finished");
+                //json = fc.read(NAME_ALLOCATION_FILE);
+                //Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
                 /*
                     upload necessary files to remote cdfs folder. If folder doesn't
                     It's observed that the behavior of uploading file with the same name of existing file
@@ -287,24 +287,44 @@ public class Infrastructure{
         /*
             exception handling
          */
-        checkFolderFuture.exceptionally(
-                // TODO
-                ex ->{Log.w(TAG, ex.toString()); return null;});
-        checkAllocationFileFuture.exceptionally(
-                ex ->{Log.w(TAG, ex.toString()); return null;}
-        );
-        downloadAllocationFileFuture.exceptionally(
-                ex -> {Log.w(TAG, ex.toString()); return null;});
-
-        downloadAllocationFileFuture.handle((s, t) -> {
-            Log.w(TAG, "Exception occurred: " + t.toString());
+        checkFolderFuture.exceptionally(ex ->{
+            Log.w(TAG, "Completed with exception in folder check: " + ex.toString());
+            return null;
+        }).handle((s, t) ->{
+            Log.w(TAG, "Exception occurred in folder check: " + t.toString());
             return null;
         });
 
-        createFolderFuture.handle((s, t) -> {
-        Log.w(TAG, "Exception occurred in handle download result: " + t.toString());
-        return null;
-    });
+        checkAllocationFileFuture.exceptionally(ex ->{
+            Log.w(TAG, "Completed with exception in allocation file check: " + ex.toString());
+            return null;}
+        ).handle((s, t)->{
+            Log.w(TAG, "Exception occurred in file check: " + t.toString());
+            return null;
+        });
+
+        downloadAllocationFileFuture.exceptionally(ex -> {
+            Log.w(TAG, "Completed with exception in download allocation file: " + ex.toString());
+            return null;
+        }).handle((s, t)->{
+            Log.w(TAG, "Exception occurred in download allocation file: " + t.toString());
+            return null;
+        });
+
+        createFolderFuture.exceptionally( ex ->{
+            Log.w(TAG, "Completed with exception in create afolder: " + ex.toString());
+            return null;
+        }).handle((s, t) -> {
+            Log.w(TAG, "Exception occurred in create folder " + t.toString());
+            return null;
+        });
+        createFilesFuture.exceptionally(ex->{
+            Log.w(TAG, "Completed with exception in create and upload allocation file: " + ex.toString());
+            return null;
+        }).handle((s, t) ->{
+            Log.w(TAG, "Exception occurred in create and upload allocation file " + t.toString());
+            return null;
+        });
     }
 
     private String handleResultGetCDFSFolder(FileList fileList){
@@ -346,6 +366,8 @@ public class Infrastructure{
         AllocManager am = new AllocManager();
         AllocContainer ac;
         ac = am.toContainer(outputStream);
+        Log.d(TAG, "Allocation file version:" +Integer.toString(ac.getVersion()));
+
         mCDFS.mDrives.get(mDriveName).addContainer(ac);
         return true;
     }

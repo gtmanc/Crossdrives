@@ -117,7 +117,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     }
 
     //a reference how to use MediaHttpUploader:
-    // https://stackoverflow.com/questions/39887303/resumable-upload-in-drive-rest-api-v3
+    //https://stackoverflow.com/questions/39887303/resumable-upload-in-drive-rest-api-v3
     private HttpResponse submitRequestNotServiceSpecific() throws MalformedURLException, IOException {
         NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
@@ -150,22 +150,51 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     }
 
     @Override
-    public void run(IUploadCallBack callback){
-        File file = null;
-        FileContent mediaContent = new FileContent(mMediaType, mPath);
-        Drive.Files.Create create;
-            //Log.d(TAG, "Path: " + mPath);
-        try {
-                //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
-                create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
-                MediaHttpUploader uploader = create.getMediaHttpUploader();
-                uploader.setProgressListener(new CustomProgressListener());
-                create.setFields("id");
-                file = create.execute();
-        } catch (IOException e) {
-                Log.w(TAG, "IOException: " + e.getMessage());
-        }
-            //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+    public void run(IUploadCallBack callback) {
+        Task<File> task;
+
+        task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
+
+            @Override
+            public File call() throws Exception {
+                File file = null;
+                FileContent mediaContent = new FileContent(mMediaType, mPath);
+                Drive.Files.Create create;
+                Log.d(TAG, "path: " + mPath);
+                Log.d(TAG, "parents: " + mMetadata.getParents().get(0));
+                Log.d(TAG, "name: " + mMetadata.getName());
+                    //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
+                    create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
+                    MediaHttpUploader uploader = create.getMediaHttpUploader();
+                    uploader.setProgressListener(new CustomProgressListener());
+                    create.setFields("id");
+                    file = create.execute();
+
+                //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+                return file;
+            }
+        });
+        task.addOnSuccessListener(new OnSuccessListener<File>() {
+            @Override
+            public void onSuccess(File file) {
+                //call back
+                if(file != null){
+                    Log.d(TAG, "Upload OK: " + file.getId());
+                    callback.success(file);
+                }
+                else{
+                    Log.w(TAG, "Upload Failed!");
+                    callback.failure("Unknown failure!");
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //call back
+                Log.w(TAG, "Upload Failed: " + e.getMessage());
+                callback.failure(e.getMessage());
+            }
+        });
     }
 
     public void run_(IUploadCallBack callback){
@@ -196,9 +225,11 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             public void onSuccess(File file) {
                 //call back
                 if(file != null){
+                    Log.d(TAG, "Upload OK: " + file.getId());
                     callback.success(file);
                 }
                 else{
+                    Log.w(TAG, "Upload Failed!");
                     callback.failure("Unknown failure. Could be IO exception in drive client request");
                 }
             }
@@ -206,7 +237,8 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             @Override
             public void onFailure(@NonNull Exception e) {
                 //call back
-                callback.failure(e.toString());
+                Log.w(TAG, "Upload Faile: " + e.getMessage());
+                callback.failure(e.getMessage());
             }
         });
 

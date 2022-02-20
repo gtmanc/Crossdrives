@@ -38,6 +38,8 @@ public class Service implements IService{
     @Override
     public Task<FileList> list(Object nextPage){
         Task task;
+
+
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
         task = Tasks.call(sExecutor, new Callable<Object>() {
             @Override
