@@ -1,4 +1,4 @@
-package com.example.crossdrives;
+package com.crossdrives.data;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,8 +10,6 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-
-import java.net.URL;
 
 public class DBHelper extends SQLiteOpenHelper {
     private String TAG = "CD.DBHelper";
