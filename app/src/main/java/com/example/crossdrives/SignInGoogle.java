@@ -141,9 +141,9 @@ public class SignInGoogle extends SignInManager{
         GoogleClientSecrets clientSecrets = null;
         AssetFileDescriptor descriptor = null;
         BufferedReader reader = null;
-        File f = createSecret();
+        File secret = createSecret();
         String uri = "";
-        if(f != null) {
+        if(secret != null) {
 
             //https://stackoverflow.com/questions/15912825/how-to-read-file-from-res-raw-by-name
             //https://stackoverflow.com/questions/4789325/android-path-to-asset-txt-file
@@ -184,7 +184,7 @@ public class SignInGoogle extends SignInManager{
 
             try {
                 clientSecrets = GoogleClientSecrets.load(
-                        GsonFactory.getDefaultInstance(), new FileReader(f));
+                        GsonFactory.getDefaultInstance(), new FileReader(secret));
                 //GsonFactory.getDefaultInstance(), new FileReader(descriptor.getFileDescriptor()));
             } catch (IOException e) {
                 Log.w(TAG, "Failed to load client secret!" + e.getMessage());
@@ -208,6 +208,9 @@ public class SignInGoogle extends SignInManager{
             } catch (IOException e) {
                 Log.w(TAG, "Failed to get GoogleAuthorizationCodeToken!");
             }
+        }
+        else{
+            Log.w(TAG, "Secret file is not available");
         }
         return tokenResponse.getAccessToken();
     }

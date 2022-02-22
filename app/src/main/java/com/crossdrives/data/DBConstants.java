@@ -8,19 +8,26 @@ public interface DBConstants {
     *   Tables
     * */
     final String TABLE_MASTER_USER_PROFILE = "master_profile";
-    final String TABLE_CDFSITEM_LIST = "cdfs_itemlist";
+    final String TABLE_ALLOCITEM_LIST = "allocitem_list";
 
     /*
         Columns
      */
+    //Account manager - user profile
     final String USERPROFILE_TABLE_COL_BRAND = "brand";
     final String USERPROFILE_TABLE_COL_NAME = "user_name";
     final String USERPROFILE_TABLE_COL_MAIL = "user_mail";
     final String USERPROFILE_TABLE_COL_PHOTOURL = "user_photourl";
     final String USERPROFILE_TABLE_COL_STATE = "user_state";
 
-    final String CDFSITEMS_LIST_COL_NAME = "name";
-    final String CDFSITEMS_LIST_COL_PATH = "name";
+    //Allocation item list
+    final String ALLOCITEMS_LIST_COL_NAME = "name";
+    final String ALLOCITEMS_LIST_COL_PATH = "path";
+    final String ALLOCITEMS_LIST_COL_DRIVENAME = "drive_name";
+    final String ALLOCITEMS_LIST_COL_SEQUENCE = "sequence";
+    final String ALLOCITEMS_LIST_COL_TOTALSEG = "total_segment";
+    final String ALLOCITEMS_LIST_COL_SIZE = "item_size";
+    final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = "cdfsitem_size";
 
     /*
         Index to column

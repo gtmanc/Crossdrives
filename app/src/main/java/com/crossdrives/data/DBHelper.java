@@ -22,6 +22,15 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String USERPROFILE_TABLE_COL_PHOTOURL = DBConstants.USERPROFILE_TABLE_COL_PHOTOURL;
     private static final String USERPROFILE_TABLE_COL_STATE = DBConstants.USERPROFILE_TABLE_COL_STATE;
 
+    private static final String TABLE_ALLOCITEM_LIST = DBConstants.TABLE_ALLOCITEM_LIST;
+    private static final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
+    private static final String ALLOCITEMS_LIST_COL_PATH = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+    private static final String ALLOCITEMS_LIST_COL_DRIVENAME = DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME;
+    private static final String ALLOCITEMS_LIST_COL_SEQUENCE = DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE;
+    private static final String ALLOCITEMS_LIST_COL_TOTALSEG = DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG;
+    private static final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
+    private static final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
+
     SQLiteDatabase mdb = null;
 
     public DBHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
@@ -32,7 +41,7 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         Log.d(TAG, "DBHelper onCreated");
-        String sql_statement = "CREATE TABLE " + USERPROFILE_TABLE_NAME
+        String sql_statement1 = "CREATE TABLE " + USERPROFILE_TABLE_NAME
                 + " ("
                 + "INTEGER AUTO_INCREMENT primary key, "
                 + USERPROFILE_TABLE_COL_BRAND + " text, "
@@ -40,9 +49,22 @@ public class DBHelper extends SQLiteOpenHelper {
                 + USERPROFILE_TABLE_COL_MAIL + " text, "
                 + USERPROFILE_TABLE_COL_PHOTOURL + " url, "
                 + USERPROFILE_TABLE_COL_STATE + " text"
+                + "); ";
+        String sql_statement2 = "CREATE TABLE " + TABLE_ALLOCITEM_LIST
+                + " ("
+                + "INTEGER AUTO_INCREMENT primary key, "
+                + ALLOCITEMS_LIST_COL_NAME + " text, "
+                + ALLOCITEMS_LIST_COL_PATH + "text, "
+                + ALLOCITEMS_LIST_COL_DRIVENAME + "text, "
+                + ALLOCITEMS_LIST_COL_SEQUENCE + "integer, "
+                + ALLOCITEMS_LIST_COL_TOTALSEG + "integer, "
+                + ALLOCITEMS_LIST_COL_SIZE + "integer, "
+                + ALLOCITEMS_LIST_COL_CDFSITEMSIZE + "integer "
                 + ");";
-        Log.d(TAG, sql_statement);
-        db.execSQL(sql_statement);
+        Log.d(TAG, sql_statement1);
+        Log.d(TAG, sql_statement2);
+        db.execSQL(sql_statement1);
+        db.execSQL(sql_statement2);
     }
 
     @Override

@@ -10,18 +10,30 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AllocManager{
-    private final String TAG = "CD.AllocManager";
+public class AllocManager implements IAllocManager{
+    static private final String TAG = "CD.AllocManager";
     static private final int mVersion = 1;
     //List<AllocContainer> mAllocations = new ArrayList<>();
 
-    public AllocContainer toContainer(OutputStream stream){
+    static public AllocContainer toContainer(OutputStream stream){
         AllocContainer container;
         Gson gson = new Gson();
         Drive drive;
 
         container = gson.fromJson(stream.toString(), AllocContainer.class);
         return container;
+    }
+
+    static int checkCompatibility(AllocContainer container){
+        int result = ERR_COMPATIBILITY_SUCCESS;
+
+        /*
+            Expect more checks need to be added in the future.
+         */
+        if(container.getVersion() != mVersion){
+            result = ERR_COMPATIBILITY_VER_NOT_COMPATIBLE;
+        }
+        return result;
     }
 
     /*
@@ -34,6 +46,11 @@ public class AllocManager{
         container.setVersion(mVersion);
         json = gson.toJson(container);
         return json;
+    }
+
+    static public void saveNewAllocation(AllocContainer container)
+    {
+        Log.d(TAG, "Allocation file version:" +Integer.toString(container.getVersion()));
     }
 
     public OutputStream upload(File file){

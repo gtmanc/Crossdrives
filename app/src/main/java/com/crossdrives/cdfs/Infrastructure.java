@@ -363,10 +363,11 @@ public class Infrastructure{
         return: indicates whether the content is valid or not.
      */
     private boolean handleResultDownload(OutputStream outputStream){
-        AllocManager am = new AllocManager();
         AllocContainer ac;
-        ac = am.toContainer(outputStream);
-        Log.d(TAG, "Allocation file version:" +Integer.toString(ac.getVersion()));
+        ac = AllocManager.toContainer(outputStream);
+        if(AllocManager.checkCompatibility(ac) != IAllocManager.ERR_COMPATIBILITY_SUCCESS){
+            AllocManager.saveNewAllocation(ac);
+        }
 
         mCDFS.mDrives.get(mDriveName).addContainer(ac);
         return true;
