@@ -1,4 +1,4 @@
-package com.crossdrives.cdfs;
+package com.crossdrives.cdfs.data;
 
 import android.app.Activity;
 import android.content.Context;
@@ -6,6 +6,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.IFileCreation;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.create.ICreateCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -25,7 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class FileLocal implements IFileCreation{
+public class FileLocal implements IFileCreation {
     private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;

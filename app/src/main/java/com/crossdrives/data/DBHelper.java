@@ -72,6 +72,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     }
 
+    public SQLiteDatabase getDB(){
+        return getWritableDatabase();
+    }
+
     public long insert(String brand, String name, String mail, Uri photourl, String state){
         long r_id = -1;
         ContentValues cv = new ContentValues();

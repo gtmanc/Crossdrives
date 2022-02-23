@@ -33,6 +33,9 @@ public class AllocManager implements IAllocManager{
         if(container.getVersion() != mVersion){
             result = ERR_COMPATIBILITY_VER_NOT_COMPATIBLE;
         }
+        else{
+            Log.w(TAG, "Expected version: " + mVersion + "version in container: " + container.getVersion());
+        }
         return result;
     }
 
