@@ -2,13 +2,14 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
+import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class AllocManager implements IAllocManager{
     static private final String TAG = "CD.AllocManager";
@@ -53,7 +54,18 @@ public class AllocManager implements IAllocManager{
 
     static public void saveNewAllocation(AllocContainer container)
     {
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        AllocationItem item = container.getAllocItem().get(0);
         Log.d(TAG, "Allocation file version:" +Integer.toString(container.getVersion()));
+
+        dh.setName(item.getName());
+        dh.setDrive(item.getDrive());
+        dh.setPath(item.getPath());
+        dh.setSequence(item.getSequence());
+        dh.setTotalSegment(item.getTotalSeg());
+        dh.setSize(item.getSize());
+        dh.setCDFSItemSize(item.getCDFSItemSize());
+        dh.insert();
     }
 
     public OutputStream upload(File file){

@@ -10,11 +10,15 @@ import android.util.Log;
 
 import com.crossdrives.data.DBConstants;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DBHelper{
     private final String TAG = "CD.DBHelper";
     com.crossdrives.data.DBHelper dbh;
-    ContentValues cv = new ContentValues();
+    List<ContentValues> cvs = new ArrayList<>();
 
+    final String  TABLE_ALLOCITEM_LIST = DBConstants.TABLE_ALLOCITEM_LIST;
     //Columns
     final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
     final String ALLOCITEMS_LIST_COL_PATH = DBConstants.ALLOCITEMS_LIST_COL_PATH;
@@ -29,22 +33,61 @@ public class DBHelper{
     }
 
     public DBHelper setName(String name){
+        ContentValues cv;
+        cv = cvs.get(0);
         cv.put(ALLOCITEMS_LIST_COL_NAME, name);
         return this;
     }
 
-    /*
-        insert multiple rows:
-        https://stackoverflow.com/questions/42619923/how-to-insert-multiple-rows-into-sqlite-android
-     */
-    public long insert(String brand, String name, String mail, Uri photourl, String state){
+    public DBHelper setPath(String path){
+        ContentValues cv;
+        cv = cvs.get(0);
+        cv.put(ALLOCITEMS_LIST_COL_PATH, path);
+        return this;
+    }
+
+    public DBHelper setDrive(String drive){
+        ContentValues cv;
+        cv = cvs.get(0);
+        cv.put(ALLOCITEMS_LIST_COL_DRIVENAME, drive);
+        return this;
+    }
+
+    public DBHelper setSequence(int seq){
+        ContentValues cv;
+        cv = cvs.get(0);
+        cv.put(ALLOCITEMS_LIST_COL_SEQUENCE, seq);
+        return this;
+    }
+
+    public DBHelper setTotalSegment(int total){
+        ContentValues cv;
+        cv = cvs.get(0);
+        cv.put(ALLOCITEMS_LIST_COL_TOTALSEG, total);
+        return this;
+    }
+
+    public DBHelper setSize(long size){
+        ContentValues cv;
+        cv = cvs.get(0);
+        cv.put(ALLOCITEMS_LIST_COL_SIZE, size);
+        return this;
+    }
+
+    public DBHelper setCDFSItemSize(long size){
+        ContentValues cv;
+        cv = cvs.get(0);
+        cv.put(ALLOCITEMS_LIST_COL_CDFSITEMSIZE, size);
+        return this;
+    }
+
+    public long insert(){
         SQLiteDatabase db = null;
         long r_id = -1;
 
 
         Log.d(TAG, "Insert");
         try{
-
 ;            db = dbh.getWritableDatabase();
         }
         catch (SQLiteException e)
@@ -53,17 +96,36 @@ public class DBHelper{
         }
 
         if(db != null){
-            cv.put(USERPROFILE_TABLE_COL_BRAND, brand);
-            cv.put(USERPROFILE_TABLE_COL_NAME, name);
-            cv.put(USERPROFILE_TABLE_COL_MAIL, mail);
-            if(photourl != null) {
-                cv.put(USERPROFILE_TABLE_COL_PHOTOURL, photourl.toString());
-            }
-            cv.put(USERPROFILE_TABLE_COL_STATE, state);
-            r_id = db.insert(USERPROFILE_TABLE_NAME, null,cv);
+            r_id = db.insert(TABLE_ALLOCITEM_LIST, null, cvs.get(0));
             db.close();
         }
 
         return r_id;
+    }
+
+    /*
+        insert multiple rows:
+        https://stackoverflow.com/questions/42619923/how-to-insert-multiple-rows-into-sqlite-android
+    */
+    public void insertMultiple(){
+        SQLiteDatabase db = null;
+
+        try{
+            db = dbh.getWritableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "db open failed: " + e.getMessage());
+        }
+
+        if(db != null){
+            db.beginTransaction();
+            
+            db.insert(TABLE_ALLOCITEM_LIST, null, cvs.get(0));
+
+            db.setTransactionSuccessful();
+            db.endTransaction();
+            db.close();
+        }
     }
 }
