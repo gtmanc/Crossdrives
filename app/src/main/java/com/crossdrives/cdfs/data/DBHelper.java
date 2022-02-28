@@ -2,6 +2,7 @@ package com.crossdrives.cdfs.data;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -16,7 +17,7 @@ import java.util.List;
 public class DBHelper{
     private final String TAG = "CD.DBHelper";
     com.crossdrives.data.DBHelper dbh;
-    List<ContentValues> cvs = new ArrayList<>();
+    ContentValues mCV = new ContentValues();
 
     final String  TABLE_ALLOCITEM_LIST = DBConstants.TABLE_ALLOCITEM_LIST;
     //Columns
@@ -34,50 +35,43 @@ public class DBHelper{
 
     public DBHelper setName(String name){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_NAME, name);
+        mCV.put(ALLOCITEMS_LIST_COL_NAME, name);
         return this;
     }
 
     public DBHelper setPath(String path){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_PATH, path);
+        mCV.put(ALLOCITEMS_LIST_COL_PATH, path);
         return this;
     }
 
     public DBHelper setDrive(String drive){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_DRIVENAME, drive);
+        mCV.put(ALLOCITEMS_LIST_COL_DRIVENAME, drive);
         return this;
     }
 
     public DBHelper setSequence(int seq){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_SEQUENCE, seq);
+        mCV.put(ALLOCITEMS_LIST_COL_SEQUENCE, seq);
         return this;
     }
 
     public DBHelper setTotalSegment(int total){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_TOTALSEG, total);
+        mCV.put(ALLOCITEMS_LIST_COL_TOTALSEG, total);
         return this;
     }
 
     public DBHelper setSize(long size){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_SIZE, size);
+        mCV.put(ALLOCITEMS_LIST_COL_SIZE, size);
         return this;
     }
 
     public DBHelper setCDFSItemSize(long size){
         ContentValues cv;
-        cv = cvs.get(0);
-        cv.put(ALLOCITEMS_LIST_COL_CDFSITEMSIZE, size);
+        mCV.put(ALLOCITEMS_LIST_COL_CDFSITEMSIZE, size);
         return this;
     }
 
@@ -86,7 +80,7 @@ public class DBHelper{
         long r_id = -1;
 
 
-        Log.d(TAG, "Insert");
+        Log.d(TAG, "DB operation insert");
         try{
 ;            db = dbh.getWritableDatabase();
         }
@@ -96,7 +90,7 @@ public class DBHelper{
         }
 
         if(db != null){
-            r_id = db.insert(TABLE_ALLOCITEM_LIST, null, cvs.get(0));
+            r_id = db.insert(TABLE_ALLOCITEM_LIST, null, mCV);
             db.close();
         }
 
@@ -121,11 +115,106 @@ public class DBHelper{
         if(db != null){
             db.beginTransaction();
             
-            db.insert(TABLE_ALLOCITEM_LIST, null, cvs.get(0));
+            //TODO: db.insert(TABLE_ALLOCITEM_LIST, null, cvs.get(0));
 
             db.setTransactionSuccessful();
             db.endTransaction();
             db.close();
         }
+    }
+
+    /*
+        expresion: clause for th rows to be deleted. Note "\" must be added in front of the value if
+        te value is in type of string
+     */
+    public int delete(String ... expression){
+        SQLiteDatabase db = null;
+        int number_row = 0;
+        ContentValues cv = new ContentValues();
+
+        Log.d(TAG, "DB operation Delete");
+        /*
+        So far, only one conditions and AND operator are supported
+         */
+        if(expression.length > 2)
+        {
+            Log.w(TAG, "Too many conditions are required!");
+            return number_row;
+        }
+
+        try{
+            db = dbh.getWritableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "db open failed" + e.getMessage());
+        }
+
+        if(db != null){
+            Log.d(TAG, "Clause: " + expression[0] + "=" + expression[1]);
+            number_row = db.delete(TABLE_ALLOCITEM_LIST,
+                    expression[0] + "=" + expression[1]
+//                            + "AND" +
+//                            expression[2] + "=" + expression[3] + "AND" +
+//                            expression[4] + "=" + expression[5]
+                    ,
+                    null);
+            if(number_row == 0){
+                Log.w(TAG, "db delete failed");
+            }
+            db.close();
+        }
+
+        return number_row;
+    }
+
+    /*
+     * expresion: clause for the rows to be read. Note "\" must be added in front of the value if
+        the value is in type of string
+     * If no expression is giving, all rows are read out from database.
+     * The input expression is a pair of column name and value. Max is 2 pairs.
+     * Conditional and Equality operator are set to "=" and "AND".
+     * */
+    public Cursor query(String ... expression){
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+        String statement;
+
+        Log.d(TAG, "DB operation Query");
+        /*
+        So far, two conditions and AND operator are supported
+         */
+        if(expression.length > 4)
+        {
+            Log.w(TAG, "Too many conditions are required!");
+            return null;
+        }
+
+        try {
+            db = dbh.getReadableDatabase();
+        }
+        catch (SQLiteException e)
+        {
+            Log.w(TAG, "db open failed" + e.getMessage());
+        }
+
+        if(expression.length == 0) {
+            Log.d(TAG, "Query all");
+            statement = "SELECT * FROM " + TABLE_ALLOCITEM_LIST + ";";
+        }else{
+            statement = "SELECT * "
+                    + " FROM " + TABLE_ALLOCITEM_LIST
+                    + " WHERE " + expression[0] + " = " + expression[1] + " AND "
+                    + expression[2] + " = " + expression[3]
+                    + ";";
+            Log.d(TAG, "clause: " + statement);
+        }
+
+        if(db != null)    {
+            cursor = db.rawQuery(statement, null);
+            //Do not close database after query.
+        }
+
+        return cursor;
     }
 }

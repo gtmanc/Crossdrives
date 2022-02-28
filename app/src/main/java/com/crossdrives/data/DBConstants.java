@@ -30,13 +30,18 @@ public interface DBConstants {
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = "cdfsitem_size";
 
     /*
-        Index to column
+        Index
      */
     //Table master account user profile Column Index
-    final int COL_INDX_RECORD_ID = 0;
-    final int COL_INDX_BRAND = 1;
-    final int COL_INDX_NAME = 2;
-    final int COL_INDX_MAIL = 3;
-    final int COL_INDX_PHOTOURL = 4;
-    final int COL_INDX_STATE = 5;
+    final int TABLE_ACCOUNT_COL_INDX_ID = 0;
+    final int TABLE_ACCOUNT_COL_INDX_BRAND = 1;
+    final int TABLE_ACCOUNT_COL_INDX_NAME = 2;
+    final int TABLE_ACCOUNT_COL_INDX_MAIL = 3;
+    final int TABLE_ACCOUNT_COL_INDX_PHOTOURL = 4;
+    final int TABLE_ACCOUNT_COL_INDX_STATE = 5;
+
+    //Table allocation item column Index
+    final int TABLE_ALLOCITEM_COL_INDX_ID = 0;
+    final int TABLE_ALLOCITEM_COL_INDX_NAME = 1;
+    final int TABLE_ALLOCITEM_COL_INDX_PATH = 2;
 }

@@ -8,7 +8,7 @@ public abstract class SignInManager{
     public static final int RESULT_SUCCESS = 0;
     public static final int RESULT_FAILED = 1;
     public static final String BRAND_GOOGLE = "Google";
-    public static final String BRAND_MS = "MicroSoft";
+    public static final String BRAND_MS = "Microsoft";
 
     //Basic user profile information could be got as soon as app is signed in and get the API token successfully
     static class Profile{

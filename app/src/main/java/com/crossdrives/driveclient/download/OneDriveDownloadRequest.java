@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class OneDriveDownloadRequest extends BaseRequest implements IDownloadRequest {
-    final String TAG = "ODC.OneDriveDownloadRequest";
+    final String TAG = "CD.OneDriveDownloadRequest";
     OneDriveClient mClient;
     String mID;
     String mUrl = "/me/drive/items/{item-id}/content";

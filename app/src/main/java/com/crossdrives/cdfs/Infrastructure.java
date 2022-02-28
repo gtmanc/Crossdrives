@@ -2,6 +2,7 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.driveclient.IDriveClient;
@@ -217,9 +218,11 @@ public class Infrastructure{
 
         CompletableFuture<Result> createFilesFuture = createFolderFuture.thenCompose(result -> {
             CompletableFuture<Result> future = new CompletableFuture<>();
+
             if(result.file == null){
                 String json;
                 File fileMetadata = new File();
+                FileLocal fc = new FileLocal(mCDFS);
                 /*
                     Generate local allocation file in the folder create at previous stage.
                     Then, upload it to the remote.
@@ -228,11 +231,10 @@ public class Infrastructure{
                 json = AllocManager.newAllocation();
                 //Log.d(TAG, "Json: " + json);
                 //write to local
-                FileLocal fc = new FileLocal(mCDFS);
                 fc.create(NAME_ALLOCATION_FILE, json);
-                //Log.d(TAG, "Creataion finished");
-                //json = fc.read(NAME_ALLOCATION_FILE);
-                //Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
+                Log.d(TAG, "Creataion finished");
+                json = fc.read(NAME_ALLOCATION_FILE);
+                Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
                 /*
                     upload necessary files to remote cdfs folder. If folder doesn't
                     It's observed that the behavior of uploading file with the same name of existing file
@@ -364,8 +366,10 @@ public class Infrastructure{
     private boolean handleResultDownload(OutputStream outputStream){
         AllocContainer ac;
         ac = AllocManager.toContainer(outputStream);
-        if(AllocManager.checkCompatibility(ac) != IAllocManager.ERR_COMPATIBILITY_SUCCESS){
-            AllocManager.saveNewAllocation(ac);
+        if(AllocManager.checkCompatibility(ac) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
+            AllocManager.saveNewAllocation(ac, mDriveName);
+        }else{
+            Log.w(TAG, "allocation version is not compatible!");
         }
 
         mCDFS.mDrives.get(mDriveName).addContainer(ac);

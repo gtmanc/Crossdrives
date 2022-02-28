@@ -54,12 +54,12 @@ public class DBHelper extends SQLiteOpenHelper {
                 + " ("
                 + "INTEGER AUTO_INCREMENT primary key, "
                 + ALLOCITEMS_LIST_COL_NAME + " text, "
-                + ALLOCITEMS_LIST_COL_PATH + "text, "
-                + ALLOCITEMS_LIST_COL_DRIVENAME + "text, "
-                + ALLOCITEMS_LIST_COL_SEQUENCE + "integer, "
-                + ALLOCITEMS_LIST_COL_TOTALSEG + "integer, "
-                + ALLOCITEMS_LIST_COL_SIZE + "integer, "
-                + ALLOCITEMS_LIST_COL_CDFSITEMSIZE + "integer "
+                + ALLOCITEMS_LIST_COL_PATH + " text, "
+                + ALLOCITEMS_LIST_COL_DRIVENAME + " text, "
+                + ALLOCITEMS_LIST_COL_SEQUENCE + " integer, "
+                + ALLOCITEMS_LIST_COL_TOTALSEG + " integer, "
+                + ALLOCITEMS_LIST_COL_SIZE + " integer, "
+                + ALLOCITEMS_LIST_COL_CDFSITEMSIZE + " integer "
                 + ");";
         Log.d(TAG, sql_statement1);
         Log.d(TAG, sql_statement2);

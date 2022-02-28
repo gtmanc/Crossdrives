@@ -125,8 +125,8 @@ public class AccountManager {
         AccountInfo info = null;
         String Col_State = DBConstants.USERPROFILE_TABLE_COL_STATE;
         String Col_Brand = DBConstants.USERPROFILE_TABLE_COL_BRAND;
-        int iname = DBConstants.COL_INDX_NAME;
-        int imail = DBConstants.COL_INDX_MAIL;
+        int iname = DBConstants.TABLE_ACCOUNT_COL_INDX_NAME;
+        int imail = DBConstants.TABLE_ACCOUNT_COL_INDX_MAIL;
         //int iphoto = DBConstants.COL_INDX_PHOTOURL;
 
         /*
