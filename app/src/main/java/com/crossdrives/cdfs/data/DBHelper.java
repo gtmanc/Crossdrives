@@ -28,6 +28,7 @@ public class DBHelper{
     final String ALLOCITEMS_LIST_COL_TOTALSEG = DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG;
     final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
+    final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
 
     public DBHelper(Context context) {
         dbh = new com.crossdrives.data.DBHelper(context, null, null, 0);
@@ -72,6 +73,12 @@ public class DBHelper{
     public DBHelper setCDFSItemSize(long size){
         ContentValues cv;
         mCV.put(ALLOCITEMS_LIST_COL_CDFSITEMSIZE, size);
+        return this;
+    }
+
+    public DBHelper setAttrFolder(boolean folder){
+        ContentValues cv;
+        mCV.put(ALLOCITEMS_LIST_COL_FOLDER, folder);
         return this;
     }
 

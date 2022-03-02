@@ -23,17 +23,24 @@ public class List {
         FileList filelist = null;
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         Cursor cursor = null;
-        java.util.List<String> names = new ArrayList<>();
-        String column, value;
+        java.util.List<String> names;
+        String column1, value1, column2, value2;
 
-        column = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+        /*
+            Set filter(clause) parent
+         */
+        column1 = DBConstants.ALLOCITEMS_LIST_COL_PATH;
         if(parent == null) {
-            value = "\"" + "Root" + "\"";
+            value1 = "\"" + "Root" + "\"";
         }else{
-            value = "";
+            value1 = "";
         }
-
-        cursor = dh.query(column, value);
+        /*
+            Set filter(clause) attribute folder
+         */
+        column2 = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
+        value2 = "\"" + "false" + "\"";
+        cursor = dh.query(column2, value2);
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
@@ -44,20 +51,32 @@ public class List {
             return filelist;
         }
 
-        cursor.moveToFirst();
-        for(int i = 0 ; i < cursor.getCount(); i++) {
-            boolean presnted = false;
-            for (int j = 0; j < names.size(); j++){
-                if (names.get(i).equals(cursor.getString(DBConstants.TABLE_ALLOCITEM_COL_INDX_NAME))) {
-                    presnted = true;
-                }
-            }
-        }
-        name = cursor.getString(DBConstants.TABLE_ALLOCITEM_COL_INDX_NAME);
+        names = buildNameList(cursor);
+
         Log.d(TAG, "Name: " + name);
         return filelist;
     }
 
+    private java.util.List<String> buildNameList(Cursor cursor){
+        java.util.List<String> names = new ArrayList<>();
+
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++) {
+            boolean matched = false;
+            String col_name = cursor.getString(DBConstants.TABLE_ALLOCITEM_COL_INDX_NAME);
+            for (int j = 0; j < names.size(); j++){
+                if (names.get(i).equals(col_name)) {
+                    matched = true;
+                }
+            }
+            if(matched == false){
+                names.add(col_name);
+            }
+            cursor.moveToNext();
+        }
+
+        return names;
+    }
 
 //    public void list(){
 //        Set<String> set = map.keySet();

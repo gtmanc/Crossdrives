@@ -30,6 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String ALLOCITEMS_LIST_COL_TOTALSEG = DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG;
     private static final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
     private static final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
+    private static final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
 
     SQLiteDatabase mdb = null;
 
@@ -59,7 +60,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 + ALLOCITEMS_LIST_COL_SEQUENCE + " integer, "
                 + ALLOCITEMS_LIST_COL_TOTALSEG + " integer, "
                 + ALLOCITEMS_LIST_COL_SIZE + " integer, "
-                + ALLOCITEMS_LIST_COL_CDFSITEMSIZE + " integer "
+                + ALLOCITEMS_LIST_COL_CDFSITEMSIZE + " integer, "
+                + ALLOCITEMS_LIST_COL_FOLDER + " BIT"
                 + ");";
         Log.d(TAG, sql_statement1);
         Log.d(TAG, sql_statement2);

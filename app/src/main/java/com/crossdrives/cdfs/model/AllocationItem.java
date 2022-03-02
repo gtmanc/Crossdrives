@@ -32,6 +32,11 @@ public class AllocationItem {
      */
     private long CDFSItemSize;
 
+    /*
+        Attribute folder. Indicates whether this item is a folder or not.
+     */
+    private boolean folder;
+
     public String create(){
         String s = null;
 
@@ -70,5 +75,8 @@ public class AllocationItem {
 
     public void setCDFSItemSize(long size){this.CDFSItemSize = size;}
     public long getCDFSItemSize(){return this.CDFSItemSize;}
+
+    public void setAttrFolder(boolean isFolder){this.folder = isFolder;}
+    public boolean getAttrFolder(){return this.folder;}
 
 }

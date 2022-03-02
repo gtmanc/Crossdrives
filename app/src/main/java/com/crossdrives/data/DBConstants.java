@@ -28,6 +28,7 @@ public interface DBConstants {
     final String ALLOCITEMS_LIST_COL_TOTALSEG = "total_segment";
     final String ALLOCITEMS_LIST_COL_SIZE = "item_size";
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = "cdfsitem_size";
+    final String ALLOCITEMS_LIST_COL_FOLDER = "folder";
 
     /*
         Index

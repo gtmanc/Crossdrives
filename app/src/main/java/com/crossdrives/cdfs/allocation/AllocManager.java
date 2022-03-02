@@ -31,7 +31,7 @@ public class AllocManager implements IAllocManager {
         return container;
     }
 
-    static int checkCompatibility(AllocContainer container){
+    static public int checkCompatibility(AllocContainer container){
         int result = ERR_COMPATIBILITY_SUCCESS;
 
         /*
@@ -69,6 +69,7 @@ public class AllocManager implements IAllocManager {
         item.setTotalSeg(2);
         item.setSize(32);
         item.setCDFSItemSize(64);
+        item.setAttrFolder(false);
         container.setAllocItem(item);
     }
     static private void addTestContentMicrosoft(AllocContainer container){
@@ -81,6 +82,7 @@ public class AllocManager implements IAllocManager {
         item.setTotalSeg(2);
         item.setSize(32);
         item.setCDFSItemSize(64);
+        item.setAttrFolder(false);
         container.setAllocItem(item);
     }
     static public void saveNewAllocation(AllocContainer container, String drive)
