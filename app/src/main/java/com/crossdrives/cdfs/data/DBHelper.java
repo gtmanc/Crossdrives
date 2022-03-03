@@ -209,10 +209,15 @@ public class DBHelper{
             Log.d(TAG, "Query all");
             statement = "SELECT * FROM " + TABLE_ALLOCITEM_LIST + ";";
         }else{
+//            statement = "SELECT * "
+//                    + " FROM " + TABLE_ALLOCITEM_LIST
+//                    + " WHERE " + expression[0] + " = " + expression[1] + " AND "
+//                    + expression[2] + " = " + expression[3]
+//                    + ";";
             statement = "SELECT * "
                     + " FROM " + TABLE_ALLOCITEM_LIST
-                    + " WHERE " + expression[0] + " = " + expression[1] + " AND "
-                    + expression[2] + " = " + expression[3]
+                    + " WHERE " + expression[0] + " AND "
+                    + expression[2]
                     + ";";
             Log.d(TAG, "clause: " + statement);
         }
