@@ -1,4 +1,4 @@
-package com.crossdrives.cdfs;
+package com.crossdrives.cdfs.data;
 
 public interface IFileCreation {
 }

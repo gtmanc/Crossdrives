@@ -1,20 +1,10 @@
 package com.crossdrives.cdfs.data;
 
 import android.app.Activity;
-import android.content.Context;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.IFileCreation;
 import com.crossdrives.driveclient.IDriveClient;
-import com.crossdrives.driveclient.create.ICreateCallBack;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
-import com.google.api.services.drive.model.File;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -23,7 +13,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

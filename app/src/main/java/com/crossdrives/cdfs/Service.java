@@ -2,6 +2,7 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.allocation.List;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.google.android.gms.tasks.Task;
@@ -36,47 +37,63 @@ public class Service implements IService{
         Operation: get file list
          */
     @Override
+//    public Task<FileList> list(Object nextPage){
+//        Task task;
+//
+//
+//        Log.d(TAG, "Service: list files. nextPage: " + nextPage);
+//        task = Tasks.call(sExecutor, new Callable<Object>() {
+//            @Override
+//            public FileList call() throws Exception {
+//                msTaskfinished = false;
+//                /*
+//                    Drive client test only. Always use index 0 (i.e first one added)
+//                 */
+//                mCDFS.getDrives().values().iterator().next().getClient().list().buildRequest()
+//                        //sClient.get(0).list().buildRequest()
+//                        .setNextPage(nextPage)
+//                        .setPageSize(0) //0 means no page size is applied
+//                        //.filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
+//                        //.filter("mimeType = application/vnd.google-apps.folder")
+//                        .filter(null)   //null means no filter will be applied
+//                        .run(new IFileListCallBack<FileList, Object>() {
+//                            @Override
+//                            public void success(FileList fileList, Object o) {
+//                                exitWait();
+//                                mFileList = fileList;
+//                                Log.d(TAG, "list finished");
+//                            }
+//
+//                            @Override
+//                            public void failure(String ex) {
+//                                exitWait();
+//                                Log.w(TAG, "list finished with failure!");
+//                            }
+//                        });
+//                waitUntilFinished();
+//                return mFileList;
+//            }
+//        });
+//
+//        return task;
+//    }
+
     public Task<FileList> list(Object nextPage){
         Task task;
-
+        List cdfsList = new List(mCDFS);
 
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
-        task = Tasks.call(sExecutor, new Callable<Object>() {
-            @Override
-            public FileList call() throws Exception {
-                msTaskfinished = false;
-                /*
-                    Drive client test only. Always use index 0 (i.e first one added)
-                 */
-                mCDFS.getDrives().values().iterator().next().getClient().list().buildRequest()
-                        //sClient.get(0).list().buildRequest()
-                        .setNextPage(nextPage)
-                        .setPageSize(0) //0 means no page size is applied
-                        //.filter("mimeType = application/vnd.google-apps.folder and name contains 'cdfs'")
-                        //.filter("mimeType = application/vnd.google-apps.folder")
-                        .filter(null)   //null means no filter will be applied
-                        .run(new IFileListCallBack<FileList, Object>() {
-                            @Override
-                            public void success(FileList fileList, Object o) {
-                                exitWait();
-                                mFileList = fileList;
-                                Log.d(TAG, "list finished");
-                            }
-
-                            @Override
-                            public void failure(String ex) {
-                                exitWait();
-                                Log.w(TAG, "list finished with failure!");
-                            }
-                        });
-                waitUntilFinished();
-                return mFileList;
-            }
-        });
+        task = Tasks.call(sExecutor, new Callable<FileList>() {
+                    @Override
+                    public FileList call() throws Exception {
+                        FileList fileList;
+                        fileList = cdfsList.list(null);
+                        return fileList;
+                    }
+                });
 
         return task;
     }
-
     /*
         Download content of a file
      */

@@ -29,23 +29,28 @@ public class List {
         java.util.List<String> names, dirs;
         names = getItems(parent);
         dirs = getItemsDir(parent);
-        for (int i = 0 ; i < names.size(); i++){
-            com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
-            f.setName(names.get(i));
-            f.setParents(null);
-            Itemlist.add(f);
-        }
-        filelist.setFiles(Itemlist);
 
-        java.util.List<String> parentList = new ArrayList<>();
-        parentList.add(parent);
-        for (int i=0 ; i < dirs.size(); i++){
-            com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
-            f.setName(dirs.get(i));
-            f.setParents(parentList);
-            Dirlist.add(f);
+        if(names != null) {
+            for (int i = 0; i < names.size(); i++) {
+                com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
+                f.setName(names.get(i));
+                f.setParents(null);
+                Itemlist.add(f);
+            }
         }
-        filelist.setFiles(Dirlist);
+
+        if(dirs !=null) {
+            java.util.List<String> parentList = new ArrayList<>();
+            parentList.add(parent);
+            for (int i = 0; i < dirs.size(); i++) {
+                com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
+                f.setName(dirs.get(i));
+                f.setParents(parentList);
+                Itemlist.add(f);
+            }
+        }
+
+        filelist.setFiles(Itemlist);
 
         return filelist;
     }
@@ -60,15 +65,15 @@ public class List {
          */
         clause1 = DBConstants.ALLOCITEMS_LIST_COL_PATH;
         if(parent == null) {
-            clause1.concat(" =" + "\"" + "Root" + "\"");
+            clause1 = clause1.concat(" =" + "\"" + "Root" + "\"");
         }else{
-            clause1.concat(" =" + "\"" + parent + "\"");
+            clause1 = clause1.concat(" =" + "\"" + parent + "\"");
         }
         /*
             Set filter(clause) attribute folder
          */
         clause2 = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
-        clause2.concat("=" + "0");
+        clause2 = clause2.concat(" =" + " 0");
 
         Log.w(TAG, "Get items not a dir. Clause: " + clause1 + " and " + clause2);
         cursor = dh.query(clause1, clause2);
@@ -96,15 +101,15 @@ public class List {
          */
         clause1 = DBConstants.ALLOCITEMS_LIST_COL_PATH;
         if(parent == null) {
-            clause1.concat(" =" + "\"" + "Root" + "\"");
+            clause1 = clause1.concat(" =" + "\"" + "Root" + "\"");
         }else{
-            clause1.concat(" =" + "\"" + parent + "\"");
+            clause1 = clause1.concat(" =" + "\"" + parent + "\"");
         }
         /*
             Set filter(clause) attribute folder
          */
         clause2 = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
-        clause2.concat("=" + "1");
+        clause2 = clause2.concat(" =" + "1");
 
         Log.w(TAG, "Get dir items. Clause: " + clause1 + " and " + clause2);
         cursor = dh.query(clause1, clause2);

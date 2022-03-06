@@ -177,10 +177,10 @@ public class DBHelper{
 
     /*
      * expresion: clause for the rows to be read. Note "\" must be added in front of the value if
-        the value is in type of string
+        the value is in type of string. e.g. parent = "Root".
      * If no expression is giving, all rows are read out from database.
-     * The input expression is a pair of column name and value. Max is 2 pairs.
-     * Conditional and Equality operator are set to "=" and "AND".
+     * The input expression is a string which contains a pair of column name and value. Max is 2 string.
+     * Conditional operator between the two query strings is set to "AND".
      * */
     public Cursor query(String ... expression){
         SQLiteDatabase db = null;
@@ -191,7 +191,7 @@ public class DBHelper{
         /*
         So far, two conditions and AND operator are supported
          */
-        if(expression.length > 4)
+        if(expression.length > 2)
         {
             Log.w(TAG, "Too many conditions are required!");
             return null;
@@ -217,7 +217,7 @@ public class DBHelper{
             statement = "SELECT * "
                     + " FROM " + TABLE_ALLOCITEM_LIST
                     + " WHERE " + expression[0] + " AND "
-                    + expression[2]
+                    + expression[1]
                     + ";";
             Log.d(TAG, "clause: " + statement);
         }

@@ -1,4 +1,4 @@
-package com.crossdrives.cdfs;
+package com.crossdrives.cdfs.data;
 
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.driveclient.IDriveClient;

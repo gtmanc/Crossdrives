@@ -1,8 +1,9 @@
 package com.crossdrives.cdfs;
 
-import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
+
+import com.crossdrives.cdfs.data.Drive;
 
 import java.util.concurrent.ConcurrentHashMap;
 

@@ -1,16 +1,15 @@
 package com.crossdrives.cdfs.allocation;
 
-import android.database.Cursor;
 import android.util.Log;
 
-import com.crossdrives.cdfs.Drive;
+import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
-import com.google.api.services.drive.model.FileList;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -21,6 +20,9 @@ public class AllocManager implements IAllocManager {
     static private final String TAG = "CD.AllocManager";
     static private final int mVersion = 1;
     //List<AllocContainer> mAllocations = new ArrayList<>();
+    static CDFS mCDFS;
+
+    public AllocManager(CDFS cdfs) { mCDFS = cdfs;}
 
     static public AllocContainer toContainer(OutputStream stream){
         AllocContainer container;
@@ -90,6 +92,8 @@ public class AllocManager implements IAllocManager {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         AllocationItem item = container.getAllocItem().get(0);
         int deleted;
+        AllocationFetcher fetcher = new AllocationFetcher(mCDFS.getDrives());
+
 
         Log.d(TAG, "Save new allocation. Drive: " + drive);
 
