@@ -40,6 +40,7 @@ public class AllocationFetcher {
         static public final int STATE_CHECK_FOLDER = 1;
         static public final int STATE_CHECK_FILE = 2;
         static public final int STATE_DOWNLOAD_FILE = 3;
+        static public final int STATE_FINISHED = 4;
 
         int state = STATE_IDLE;
 
@@ -54,15 +55,24 @@ public class AllocationFetcher {
     public void fetchAll(ICallBackAllocationFetch<String> callback){
 
         this.callback = callback;
+
+        mDrives.forEach((key, value)->{
+            State state = new State();
+            states.put(key,state);
+        });
+
+        mDrives.forEach((key, value)->{
+            getFolder(states.get());
+        });
+
     }
 
     private void fetch(String name, IDriveClient client){
-//            return future;
-//        });
+
     }
 
-    private void getFolder(String name, IDriveClient client){
-        State state = new State();
+    private void getFolder(State state, String name, IDriveClient client){
+
 //        CompletableFuture<String> future = new CompletableFuture<>();
 //
 //        sExecutor.submit(() -> {
@@ -79,34 +89,22 @@ public class AllocationFetcher {
                     //As we specified the folder name, suppose only cdfs folder in the list.
                     @Override
                     public void success(FileList fileList, Object o) {
-                        boolean joinResult;
                         String id = null;
 
                         id = handleResultGetFolder(fileList);
                         if(id != null) {
-                            getFileID(state, client, id);
+                            getFileID(state, name, client, id);
                         }
                         else{
                             //There must be something wrong.
                             callback.onCompletedExceptionally(new Throwable("CDFS folder is missing"));
-                        }
-                        joinResult = joinResult();
-                        if(joinResult == true) {
-                            callback.onCompleted(null);
                         }
                         //future.complete(result);
                     }
 
                     @Override
                     public void failure(String ex) {
-                        boolean joinResult;
-
-                        joinResult = joinResult();
-
-                        fr.setState(State.STATE_FINISHED);
-                        if(joinResult == true) {
-                            callback.onCompletedExceptionally(new Throwable(ex));
-                        }
+                        callback.onCompletedExceptionally(new Throwable(ex));
                         //future.completeExceptionally(new Throwable(""));
                     }
                 });
@@ -133,7 +131,7 @@ public class AllocationFetcher {
         return id;
     }
 
-    private void getFileID(State state, IDriveClient client, String parentid){
+    private void getFileID(State state, String name, IDriveClient client, String parentid){
         String query = "'" + parentid + "' in parents";
 
         state.setState(State.STATE_CHECK_FILE);
@@ -151,7 +149,7 @@ public class AllocationFetcher {
                         String id = null;
                         id = handleResultGetFile(fileList);
                         if(id != null) {
-                            download(state, client, id);
+                            download(state, name, client, id);
                         }else{
                             callback.onCompletedExceptionally(new Throwable("Allocation file is missing"));
                         }
@@ -180,7 +178,7 @@ public class AllocationFetcher {
         return id;
     }
 
-    private void download(State state, IDriveClient client, String fileid){
+    private void download(State state, String name, IDriveClient client, String fileid){
         state.setState(State.STATE_DOWNLOAD_FILE);
 
         client.download().buildRequest(fileid)
@@ -188,12 +186,25 @@ public class AllocationFetcher {
 
                     @Override
                     public void success(OutputStream outputStream) {
-                        result.valid = handleResultDownload(outputStream);
+                        boolean joinResult;
+                        output.put(name, outputStream);
                         //future.complete(result);
+                        joinResult = joinResult();
+                        if(joinResult == true) {
+                            state.setState(State.STATE_FINISHED);
+                            callback.onCompleted(output);
+                        }
+
                     }
 
                     @Override
                     public void failure(String ex) {
+                        boolean joinResult;
+                        joinResult = joinResult();
+                        if(joinResult == true) {
+                            state.setState(State.STATE_FINISHED);
+                            callback.onCompletedExceptionally(new Throwable(ex));
+                        }
                         //future.completeExceptionally(new Throwable(""));
                     }
                 });
@@ -208,5 +219,7 @@ public class AllocationFetcher {
                 result.set(false);
             }
         });
+
+        return result.get();
     }
 }
