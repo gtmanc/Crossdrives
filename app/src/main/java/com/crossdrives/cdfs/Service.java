@@ -2,9 +2,8 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
-import com.crossdrives.cdfs.allocation.List;
+import com.crossdrives.cdfs.list.List;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
-import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
@@ -80,7 +79,7 @@ public class Service implements IService{
 
     public Task<FileList> list(Object nextPage){
         Task task;
-        List cdfsList = new List(mCDFS);
+        List list = new List(mCDFS);
 
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
         task = Tasks.call(sExecutor, new Callable<FileList>() {

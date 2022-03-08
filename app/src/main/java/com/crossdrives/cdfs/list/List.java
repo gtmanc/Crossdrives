@@ -1,9 +1,11 @@
-package com.crossdrives.cdfs.allocation;
+package com.crossdrives.cdfs.list;
 
 import android.database.Cursor;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.allocation.AllocationFetcher;
+import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
@@ -20,39 +22,53 @@ public class List {
         mCDFS = cdfs;
     }
 
-    public FileList list(String parent){
+    public void list(String parent, ICallbackList<FileList> callback){
         FileList filelist = new FileList();
         java.util.List<com.google.api.services.drive.model.File> Itemlist = null;
         java.util.List<com.google.api.services.drive.model.File> Dirlist = null;
 
+        /*
+            Fetch the remote allocation files. The fetcher will ensure all of the allocations file
+            are downloaded. We will search the local database for the file list as soon as the
+            content of the downloaded allocation files are updated to local database.
+         */
+        AllocationFetcher fetcher = new AllocationFetcher(mCDFS.getDrives());
+        fetcher.fetchAll(new ICallBackAllocationFetch<String>() {
+            @Override
+            public void onCompleted(String s) {
+                java.util.List<String> names, dirs;
+                names = getItems(parent);
+                dirs = getItemsDir(parent);
 
-        java.util.List<String> names, dirs;
-        names = getItems(parent);
-        dirs = getItemsDir(parent);
+                if(names != null) {
+                    for (int i = 0; i < names.size(); i++) {
+                        com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
+                        f.setName(names.get(i));
+                        f.setParents(null);
+                        Itemlist.add(f);
+                    }
+                }
 
-        if(names != null) {
-            for (int i = 0; i < names.size(); i++) {
-                com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
-                f.setName(names.get(i));
-                f.setParents(null);
-                Itemlist.add(f);
+                if(dirs !=null) {
+                    java.util.List<String> parentList = new ArrayList<>();
+                    parentList.add(parent);
+                    for (int i = 0; i < dirs.size(); i++) {
+                        com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
+                        f.setName(dirs.get(i));
+                        f.setParents(parentList);
+                        Itemlist.add(f);
+                    }
+                }
+
+                filelist.setFiles(Itemlist);
+                callback.onCompleted(filelist);
             }
-        }
 
-        if(dirs !=null) {
-            java.util.List<String> parentList = new ArrayList<>();
-            parentList.add(parent);
-            for (int i = 0; i < dirs.size(); i++) {
-                com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
-                f.setName(dirs.get(i));
-                f.setParents(parentList);
-                Itemlist.add(f);
+            @Override
+            public void onCompletedExceptionally(Throwable throwable) {
+                callback.onCompletedExceptionally(throwable);
             }
-        }
-
-        filelist.setFiles(Itemlist);
-
-        return filelist;
+        });
     }
 
     private java.util.List<String> getItems(String parent){

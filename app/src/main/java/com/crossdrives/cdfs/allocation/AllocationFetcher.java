@@ -56,19 +56,25 @@ public class AllocationFetcher {
 
         this.callback = callback;
 
+        /*
+            Create all states. We have to do this at once before we start the fetchs.
+        */
         mDrives.forEach((key, value)->{
             State state = new State();
             states.put(key,state);
         });
 
-        mDrives.forEach((key, value)->{
-            getFolder(states.get());
+        /*
+            Start fetching one by one
+        * */
+        mDrives.forEach((name, drive)->{
+            fetch(states.get(name), name, drive.getClient());
         });
 
     }
 
-    private void fetch(String name, IDriveClient client){
-
+    private void fetch(State state, String name, IDriveClient client){
+        getFolder(state, name, client);
     }
 
     private void getFolder(State state, String name, IDriveClient client){
@@ -212,8 +218,7 @@ public class AllocationFetcher {
 
     private boolean joinResult(){
         AtomicBoolean result = new AtomicBoolean(true);
-        mDrives.forEach((name, drive) -> {
-            State state;
+        states.forEach((name, state) -> {
             state = states.get(name);
             if(state.getState() != State.STATE_FINISHED){
                 result.set(false);
