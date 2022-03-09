@@ -6,7 +6,7 @@ import com.google.api.services.drive.model.FileList;
 import java.io.OutputStream;
 
 public interface IService {
-    public Task<FileList> list(Object nextPage);
+    public void list(Object nextPage, IServiceCallback callback);
 
     public Task<OutputStream> download(String id);
 }

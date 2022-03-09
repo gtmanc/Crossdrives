@@ -2,6 +2,7 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.google.android.gms.tasks.Task;
@@ -35,7 +36,6 @@ public class Service implements IService{
     /*
         Operation: get file list
          */
-    @Override
 //    public Task<FileList> list(Object nextPage){
 //        Task task;
 //
@@ -76,22 +76,24 @@ public class Service implements IService{
 //
 //        return task;
 //    }
-
-    public Task<FileList> list(Object nextPage){
-        Task task;
+    @Override
+    public void list(Object nextPage, IServiceCallback callback) {
         List list = new List(mCDFS);
+        FileList fileList;
 
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
-        task = Tasks.call(sExecutor, new Callable<FileList>() {
-                    @Override
-                    public FileList call() throws Exception {
-                        FileList fileList;
-                        fileList = cdfsList.list(null);
-                        return fileList;
-                    }
-                });
 
-        return task;
+        list.list(null, new ICallbackList<FileList>() {
+            @Override
+            public void onCompleted(FileList fileList) {
+                callback.onCompleted(fileList);
+            }
+
+            @Override
+            public void onCompletedExceptionally(Throwable throwable) {
+                callback.onCompletedExceptionally(throwable);
+            }
+        });
     }
     /*
         Download content of a file
