@@ -2,7 +2,9 @@ package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.BaseCDFS;
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -49,10 +51,13 @@ public class AllocationFetcher {
 
     }
 
-    public AllocationFetcher(ConcurrentHashMap<String, Drive> drives) { mDrives = drives; }
+    public AllocationFetcher(ConcurrentHashMap<String, Drive> drives) {
+        super();
+
+        mDrives = drives; }
 
 
-    public void fetchAll(ICallBackAllocationFetch<String> callback){
+    public void fetchAll(ICallBackAllocationFetch<String> callback) {
 
         this.callback = callback;
 
@@ -74,6 +79,9 @@ public class AllocationFetcher {
     }
 
     private void fetch(State state, String name, IDriveClient client){
+        /*
+            Start with get CDFS folder
+         */
         getFolder(state, name, client);
     }
 

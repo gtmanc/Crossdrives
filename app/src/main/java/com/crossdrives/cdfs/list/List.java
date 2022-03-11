@@ -7,6 +7,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocationFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
 import com.crossdrives.cdfs.data.DBHelper;
+import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.api.services.drive.model.FileList;
@@ -22,7 +23,7 @@ public class List {
         mCDFS = cdfs;
     }
 
-    public void list(String parent, ICallbackList<FileList> callback){
+    public void list(String parent, ICallbackList<FileList> callback) {
         FileList filelist = new FileList();
         java.util.List<com.google.api.services.drive.model.File> Itemlist = null;
         java.util.List<com.google.api.services.drive.model.File> Dirlist = null;

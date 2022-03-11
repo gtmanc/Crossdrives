@@ -2,6 +2,7 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
@@ -77,11 +78,13 @@ public class Service implements IService{
 //        return task;
 //    }
     @Override
-    public void list(Object nextPage, IServiceCallback callback) {
+    public void list(Object nextPage, IServiceCallback callback) throws MissingDriveClientException {
         List list = new List(mCDFS);
         FileList fileList;
 
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
+
+        mCDFS.requiresDriveClientNonNull();
 
         list.list(null, new ICallbackList<FileList>() {
             @Override
@@ -95,6 +98,7 @@ public class Service implements IService{
             }
         });
     }
+
     /*
         Download content of a file
      */
