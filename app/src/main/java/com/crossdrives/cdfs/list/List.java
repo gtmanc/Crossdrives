@@ -4,16 +4,20 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.IAllocManager;
+import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.AllocationFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
 import com.crossdrives.cdfs.data.DBHelper;
-import com.crossdrives.cdfs.exception.MissingDriveClientException;
+import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.api.services.drive.model.FileList;
 
-import java.io.File;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class List {
     final String TAG = "CD.Allocation.List";
@@ -25,8 +29,8 @@ public class List {
 
     public void list(String parent, ICallbackList<FileList> callback) {
         FileList filelist = new FileList();
-        java.util.List<com.google.api.services.drive.model.File> Itemlist = null;
-        java.util.List<com.google.api.services.drive.model.File> Dirlist = null;
+        java.util.List<com.google.api.services.drive.model.File> Itemlist = new ArrayList<>();
+        java.util.List<com.google.api.services.drive.model.File> Dirlist = new ArrayList<>();
 
         /*
             Fetch the remote allocation files. The fetcher will ensure all of the allocations file
@@ -34,10 +38,29 @@ public class List {
             content of the downloaded allocation files are updated to local database.
          */
         AllocationFetcher fetcher = new AllocationFetcher(mCDFS.getDrives());
-        fetcher.fetchAll(new ICallBackAllocationFetch<String>() {
+        fetcher.fetchAll(new ICallBackAllocationFetch<HashMap<String, OutputStream>>() {
             @Override
-            public void onCompleted(String s) {
+            public void onCompleted(HashMap<String, OutputStream> allocations)  {
                 java.util.List<String> names, dirs;
+                AtomicReference<AllocContainer> ac = new AtomicReference<>();
+                AllocManager am = new AllocManager(mCDFS);
+
+                /*
+                    Update the fetched allocation content to database. We will query local database
+                    for the file list requested by caller.
+                 */
+                mCDFS.getDrives().forEach((key, value)->{
+                    ac.set(am.toContainer(allocations.get(key)));
+                    if(am.checkCompatibility(ac.get()) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
+                        am.saveNewAllocation(ac.get(), key);
+                    }else{
+                        Log.w(TAG, "allocation version is not compatible!");
+                    }
+
+                    mCDFS.getDrives().get(key).addContainer(ac.get());
+                });
+
+
                 names = getItems(parent);
                 dirs = getItemsDir(parent);
 
@@ -152,7 +175,7 @@ public class List {
             boolean matched = false;
             String col_name = cursor.getString(DBConstants.TABLE_ALLOCITEM_COL_INDX_NAME);
             for (int j = 0; j < names.size(); j++){
-                if (names.get(i).equals(col_name)) {
+                if (names.get(j).equals(col_name)) {
                     matched = true;
                 }
             }

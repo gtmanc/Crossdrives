@@ -24,7 +24,7 @@ public class AllocManager implements IAllocManager {
 
     public AllocManager(CDFS cdfs) { mCDFS = cdfs;}
 
-    static public AllocContainer toContainer(OutputStream stream){
+    public AllocContainer toContainer(OutputStream stream){
         AllocContainer container;
         Gson gson = new Gson();
         Drive drive;
@@ -33,7 +33,7 @@ public class AllocManager implements IAllocManager {
         return container;
     }
 
-    static public int checkCompatibility(AllocContainer container){
+    public int checkCompatibility(AllocContainer container){
         int result = ERR_COMPATIBILITY_SUCCESS;
 
         /*
@@ -50,18 +50,18 @@ public class AllocManager implements IAllocManager {
     /*
         Create a new allocation file
      */
-    static public String newAllocation(){
+    public String newAllocation(){
         AllocContainer container = new AllocContainer();
         Gson gson = new Gson();
         String json;
         container.setVersion(mVersion);
-        //addTestContentGoogle(container);
-        addTestContentMicrosoft(container);
+        addTestContentGoogle(container);
+        //addTestContentMicrosoft(container);
         json = gson.toJson(container);
         return json;
     }
 
-    static private void addTestContentGoogle(AllocContainer container){
+    private void addTestContentGoogle(AllocContainer container){
         java.util.List<AllocationItem> items = new ArrayList<>();
         AllocationItem item = new AllocationItem();
         item.setDrive("Google");
@@ -74,7 +74,7 @@ public class AllocManager implements IAllocManager {
         item.setAttrFolder(false);
         container.setAllocItem(item);
     }
-    static private void addTestContentMicrosoft(AllocContainer container){
+    private void addTestContentMicrosoft(AllocContainer container){
         java.util.List<AllocationItem> items = new ArrayList<>();
         AllocationItem item = new AllocationItem();
         item.setDrive("Microsoft");
@@ -87,13 +87,11 @@ public class AllocManager implements IAllocManager {
         item.setAttrFolder(false);
         container.setAllocItem(item);
     }
-    static public void saveNewAllocation(AllocContainer container, String drive)
+    public void saveNewAllocation(AllocContainer container, String drive)
     {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         AllocationItem item = container.getAllocItem().get(0);
         int deleted;
-        AllocationFetcher fetcher = new AllocationFetcher(mCDFS.getDrives());
-
 
         Log.d(TAG, "Save new allocation. Drive: " + drive);
 
@@ -104,9 +102,10 @@ public class AllocManager implements IAllocManager {
         dh.setTotalSegment(item.getTotalSeg());
         dh.setSize(item.getSize());
         dh.setCDFSItemSize(item.getCDFSItemSize());
-
+        dh.setAttrFolder(item.getAttrFolder());
         /*
-            Delete the old rows and then insert the new items
+            Each time new allocation fetched, we have to delete the old rows and then insert the new items
+            so that the duplicated rows can be removed.
          */
         deleted = dh.delete(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME, "\"" + drive + "\"");
         Log.d(TAG, "Drive " + drive + " items have been deleted: " + deleted);

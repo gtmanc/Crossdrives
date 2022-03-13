@@ -57,7 +57,7 @@ public class AllocationFetcher {
         mDrives = drives; }
 
 
-    public void fetchAll(ICallBackAllocationFetch<String> callback) {
+    public void fetchAll(ICallBackAllocationFetch<HashMap<String, OutputStream>> callback) {
 
         this.callback = callback;
 
@@ -91,7 +91,7 @@ public class AllocationFetcher {
 //
 //        sExecutor.submit(() -> {
         state.setState(State.STATE_CHECK_FOLDER);
-        states.put(name, state);
+        //states.put(name, state);
         client.list().buildRequest()
                 //sClient.get(0).list().buildRequest()
                 .setNextPage(null)
@@ -149,6 +149,8 @@ public class AllocationFetcher {
         String query = "'" + parentid + "' in parents";
 
         state.setState(State.STATE_CHECK_FILE);
+        //states.put(name, state);
+
         Log.d(TAG, "Check allocation file. Query:  " + query);
         client.list().buildRequest()
                 //sClient.get(0).list().buildRequest()
@@ -194,18 +196,22 @@ public class AllocationFetcher {
 
     private void download(State state, String name, IDriveClient client, String fileid){
         state.setState(State.STATE_DOWNLOAD_FILE);
+        //states.put(name, state);
 
+        Log.d(TAG, "Download allocation file. Query");
         client.download().buildRequest(fileid)
                 .run(new IDownloadCallBack<OutputStream>() {
 
                     @Override
                     public void success(OutputStream outputStream) {
+                        Log.d(TAG, "Download allocation file OK");
                         boolean joinResult;
                         output.put(name, outputStream);
                         //future.complete(result);
+                        state.setState(State.STATE_FINISHED);
                         joinResult = joinResult();
                         if(joinResult == true) {
-                            state.setState(State.STATE_FINISHED);
+                            Log.d(TAG, "Join result got. Now call back");
                             callback.onCompleted(output);
                         }
 
@@ -214,9 +220,10 @@ public class AllocationFetcher {
                     @Override
                     public void failure(String ex) {
                         boolean joinResult;
+                        Log.w(TAG, ex);
+                        state.setState(State.STATE_FINISHED);
                         joinResult = joinResult();
                         if(joinResult == true) {
-                            state.setState(State.STATE_FINISHED);
                             callback.onCompletedExceptionally(new Throwable(ex));
                         }
                         //future.completeExceptionally(new Throwable(""));
@@ -226,8 +233,11 @@ public class AllocationFetcher {
 
     private boolean joinResult(){
         AtomicBoolean result = new AtomicBoolean(true);
+        Log.d(TAG, "size of states: " + states.size());
+
         states.forEach((name, state) -> {
             state = states.get(name);
+            Log.d(TAG, "State: " + state.getState());
             if(state.getState() != State.STATE_FINISHED){
                 result.set(false);
             }

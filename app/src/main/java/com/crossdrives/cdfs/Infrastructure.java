@@ -223,12 +223,13 @@ public class Infrastructure{
                 String json;
                 File fileMetadata = new File();
                 FileLocal fc = new FileLocal(mCDFS);
+                AllocManager am = new AllocManager(mCDFS);
                 /*
                     Generate local allocation file in the folder create at previous stage.
                     Then, upload it to the remote.
                 */
                 Log.d(TAG, "Create allocation file");
-                json = AllocManager.newAllocation();
+                json = am.newAllocation();
                 //Log.d(TAG, "Json: " + json);
                 //write to local
                 fc.create(NAME_ALLOCATION_FILE, json);
@@ -365,9 +366,13 @@ public class Infrastructure{
      */
     private boolean handleResultDownload(OutputStream outputStream){
         AllocContainer ac;
-        ac = AllocManager.toContainer(outputStream);
-        if(AllocManager.checkCompatibility(ac) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
-            AllocManager.saveNewAllocation(ac, mDriveName);
+        AllocManager am = new AllocManager(mCDFS);
+        ac = am.toContainer(outputStream);
+        if(am.checkCompatibility(ac) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
+            /*
+                This is no longer because the remote allocation will be synchronized in the List.
+             */
+            //am.saveNewAllocation(ac, mDriveName);
         }else{
             Log.w(TAG, "allocation version is not compatible!");
         }
