@@ -32,6 +32,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IServiceCallback;
+import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -161,51 +162,57 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 //			mDriveServiceHelper.resetQuery();
 			setQStateInprogress();
 		try {
-			CDFS.getCDFSService(getActivity().getApplicationContext()).getService().list(mNextPage, new IServiceCallback<FileList>() {
-				@Override
-				public void onCompleted(FileList fileList) {
-					List<File> f = fileList.getFiles();
-					//ListView listview = (ListView) findViewById(R.id.listview_query);
+			CDFS.getCDFSService(getActivity().getApplicationContext()).getService().list(mNextPage)
+					.addOnSuccessListener(new OnSuccessListener<FileList>() {
+						@Override
+						public void onSuccess(FileList fileList) {
+							List<File> f = fileList.getFiles();
+							//ListView listview = (ListView) findViewById(R.id.listview_query);
 
 
-					mItems = new ArrayList<>();
-					Log.i(TAG, "Number of files: " + f.size());
-					for (File file : fileList.getFiles()) {
+							mItems = new ArrayList<>();
+							Log.i(TAG, "Number of files: " + f.size());
+							for (File file : fileList.getFiles()) {
 //                                if(file.getModifiedTime() == null){
 //                                    Log.w(TAG, "Modified dateTime is null");
 //                                }
 
-						//Log.d(TAG, "files name: " + file.getName());
-						mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
-					}
+								//Log.d(TAG, "files name: " + file.getName());
+								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
+							}
 
-					mAdapter = new QueryFileAdapter(mItems, getContext());
-					mAdapter.setOnItemClickListener(itemClickListener);
-					mRecyclerView.setAdapter(mAdapter);
+							mAdapter = new QueryFileAdapter(mItems, getContext());
+							mAdapter.setOnItemClickListener(itemClickListener);
+							mRecyclerView.setAdapter(mAdapter);
 
-					mNextPage = fileList.getNextPageToken();
-					if(mNextPage == null){
-						Log.d(TAG, "Next page handler is null!");
-						CloseQuery();
-					}
-					mProgressBar.setVisibility(View.INVISIBLE);
-				}
+							mNextPage = fileList.getNextPageToken();
+							if(mNextPage == null){
+								Log.d(TAG, "Next page handler is null!");
+								CloseQuery();
+							}
+							mProgressBar.setVisibility(View.INVISIBLE);
+						}
 
-				@Override
-				public void onCompletedExceptionally(Throwable throwable) {
-					//mProgressBar.setVisibility(View.GONE);
-					Log.e(TAG, "Unable to query files.", throwable.getCause());
-					//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-					//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-					mProgressBar.setVisibility(View.INVISIBLE);
-				}
-			});
+					})
+					.addOnFailureListener(new OnFailureListener() {
+						@Override
+						public void onFailure(@NonNull Exception exception) {
+							//mProgressBar.setVisibility(View.GONE);
+							Log.e(TAG, "Unable to query files.", exception);
+							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
+							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
+							mProgressBar.setVisibility(View.INVISIBLE);
+						}
+					});
 		} catch (MissingDriveClientException e) {
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
 			mProgressBar.setVisibility(View.INVISIBLE);
+		} catch (GeneralServiceException e){
+			Log.w(TAG, e.getMessage());
+			Log.w(TAG, e.getCause());
+			mProgressBar.setVisibility(View.INVISIBLE);
 		}
-		//mDriveServiceHelper.queryFiles()
 //					.addOnSuccessListener(new OnSuccessListener<FileList>() {
 //						@Override
 //						public void onSuccess(FileList fileList) {
@@ -271,100 +278,62 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 		//mDriveServiceHelper.queryFiles()
 		try {
-			CDFS.getCDFSService(getActivity()).getService().list(mNextPage, new IServiceCallback<FileList>() {
-				@Override
-				public void onCompleted(FileList fileList) {
-					List<File> f = fileList.getFiles();
-					int i = 0;
-					//now we are done with the query. take out the progress bar from the list
-					Log.i(TAG, "Notify removed");
-					mItems.remove(mItems.size() - 1);
-					mAdapter.notifyItemRemoved(mItems.size());
+			CDFS.getCDFSService(getActivity()).getService().list(mNextPage)
+					.addOnSuccessListener(new OnSuccessListener<FileList>() {
+						@Override
+						public void onSuccess(FileList fileList) {
+							List<File> f = fileList.getFiles();
+							int i = 0;
+							//now we are done with the query. take out the progress bar from the list
+							Log.i(TAG, "Notify removed");
+							mItems.remove(mItems.size() - 1);
+							mAdapter.notifyItemRemoved(mItems.size());
 
-					Log.i(TAG, "Number of files fetched: " + f.size());
+							Log.i(TAG, "Number of files fetched: " + f.size());
 
-					for (File file : fileList.getFiles()) {
-	//                                if(file.getModifiedTime() == null){
-	//                                    Log.w(TAG, "Modified dateTime is null");
-	//                                }
-						//ItemModelBase item = mItems.get(i);
-						mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
-						//item.setName(file.getName());
-						i++;
-					}
+							for (File file : fileList.getFiles()) {
+//                                if(file.getModifiedTime() == null){
+//                                    Log.w(TAG, "Modified dateTime is null");
+//                                }
+								//ItemModelBase item = mItems.get(i);
+								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
+								//item.setName(file.getName());
+								i++;
+							}
 
-					//now update adapter
-					//mAdapter.updateRecords(mItems);
-					Log.d(TAG, "Notify data set change");
-					//TODO: to clarify why the newly loaded items are not updated to screen if we dont do any further scroll.
-					// i.e. enter the recycler view from previous screen and only few items are initially loaded
-					mAdapter.notifyDataSetChanged();
+							//now update adapter
+							//mAdapter.updateRecords(mItems);
+							Log.d(TAG, "Notify data set change");
+							//TODO: to clarify why the newly loaded items are not updated to screen if we dont do any further scroll.
+							// i.e. enter the recycler view from previous screen and only few items are initially loaded
+							mAdapter.notifyDataSetChanged();
 
-					mNextPage = fileList.getNextPageToken();
-					if(mNextPage == null){
-						Log.d(TAG, "Next page handler is null!");
-						CloseQuery();
-					}
-				}
+							mNextPage = fileList.getNextPageToken();
+							if(mNextPage == null){
+								Log.d(TAG, "Next page handler is null!");
+								CloseQuery();
+							}
+						}
+					})
+					.addOnFailureListener(new OnFailureListener() {
+						@Override
+						public void onFailure(@NonNull Exception exception) {
+							//mProgressBar.setVisibility(View.GONE);
+							Log.e(TAG, "Unable to query files.", exception);
+							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
+							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
+						}
+					});
 
-				@Override
-				public void onCompletedExceptionally(Throwable throwable) {
-					//mProgressBar.setVisibility(View.GONE);
-					Log.e(TAG, "Unable to query files.", throwable.getCause());
-					//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-					//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-				}
-			});
 		} catch (MissingDriveClientException e) {
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
 			mProgressBar.setVisibility(View.INVISIBLE);
+		}catch (GeneralServiceException e){
+			Log.w(TAG, e.getMessage());
+			Log.w(TAG, e.getCause());
+			mProgressBar.setVisibility(View.INVISIBLE);
 		}
-//					.addOnSuccessListener(new OnSuccessListener<FileList>() {
-//						@Override
-//						public void onSuccess(FileList fileList) {
-//							List<File> f = fileList.getFiles();
-//							int i = 0;
-//							//now we are done with the query. take out the progress bar from the list
-//							Log.i(TAG, "Notify removed");
-//							mItems.remove(mItems.size() - 1);
-//							mAdapter.notifyItemRemoved(mItems.size());
-//
-//							Log.i(TAG, "Number of files fetched: " + f.size());
-//
-//							for (File file : fileList.getFiles()) {
-////                                if(file.getModifiedTime() == null){
-////                                    Log.w(TAG, "Modified dateTime is null");
-////                                }
-//								//ItemModelBase item = mItems.get(i);
-//								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
-//								//item.setName(file.getName());
-//								i++;
-//							}
-//
-//							//now update adapter
-//							//mAdapter.updateRecords(mItems);
-//							Log.d(TAG, "Notify data set change");
-//							//TODO: to clarify why the newly loaded items are not updated to screen if we dont do any further scroll.
-//							// i.e. enter the recycler view from previous screen and only few items are initially loaded
-//							mAdapter.notifyDataSetChanged();
-//
-//							mNextPage = fileList.getNextPageToken();
-//							if(mNextPage == null){
-//								Log.d(TAG, "Next page handler is null!");
-//								CloseQuery();
-//							}
-//						}
-//					})
-//					.addOnFailureListener(new OnFailureListener() {
-//						@Override
-//						public void onFailure(@NonNull Exception exception) {
-//							//mProgressBar.setVisibility(View.GONE);
-//							Log.e(TAG, "Unable to query files.", exception);
-//							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-//							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-//						}
-//					});
 		//}
 	}
 

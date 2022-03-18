@@ -2,6 +2,7 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
@@ -13,8 +14,17 @@ import com.google.api.services.drive.model.FileList;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+/*
+    Interface for application.
+    Google play service task api is adopted so that the application can decide the thread can be used
+    to run.
+ */
 public class Service implements IService{
     private static String TAG = "CD.Service";
     CDFS mCDFS;
@@ -25,8 +35,11 @@ public class Service implements IService{
         mCDFS = cdfs;
     }
 
-    private final Executor sExecutor = Executors.newSingleThreadExecutor();
+    //private final Executor sExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
+    final Lock lock = new ReentrantLock();
+    final Condition queryFinished  = lock.newCondition();
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
@@ -78,25 +91,46 @@ public class Service implements IService{
 //        return task;
 //    }
     @Override
-    public void list(Object nextPage, IServiceCallback callback) throws MissingDriveClientException {
+    public Task list(Object nextPage) throws MissingDriveClientException, GeneralServiceException{
         List list = new List(mCDFS);
-        FileList fileList;
+        final FileList[] fileList = {null};
+        final Throwable[] throwables = {null};
+        Task task;
 
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
 
         mCDFS.requiresDriveClientNonNull();
 
-        list.list(null, new ICallbackList<FileList>() {
+        task = Tasks.call(mExecutor, new Callable<Object>() {
             @Override
-            public void onCompleted(FileList fileList) {
-                callback.onCompleted(fileList);
-            }
+            public Object call() throws Exception {
+                lock.lock();
+                list.list(null, new ICallbackList<FileList>() {
+                    @Override
+                    public void onCompleted(FileList files) {
+                        fileList[0] = files;
+                        lock.lock();
+                        queryFinished.signal();
+                        lock.unlock();
+                    }
 
-            @Override
-            public void onCompletedExceptionally(Throwable throwable) {
-                callback.onCompletedExceptionally(throwable);
+                    @Override
+                    public void onCompletedExceptionally(Throwable throwable){
+                        throwables[0] = throwable;
+                    }
+                });
+
+                queryFinished.await();
+                lock.unlock();
+
+                if(throwables[0] != null){
+                    throw new GeneralServiceException("", throwables[0]);
+                }
+                return fileList[0];
             }
         });
+
+        return task;
     }
 
     /*
@@ -105,7 +139,7 @@ public class Service implements IService{
     public Task<OutputStream> download(String id) {
         Task task;
         Log.d(TAG, "Operation: download " + id);
-        task = Tasks.call(sExecutor, new Callable<Object>() {
+        task = Tasks.call(mExecutor, new Callable<Object>() {
             @Override
             public OutputStream call() throws Exception {
                 msTaskfinished = false;

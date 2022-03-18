@@ -7,7 +7,7 @@ import com.google.api.services.drive.model.FileList;
 import java.io.OutputStream;
 
 public interface IService {
-    public void list(Object nextPage, IServiceCallback callback) throws MissingDriveClientException;
+    public Task list(Object nextPage) throws MissingDriveClientException, Throwable;
 
     public Task<OutputStream> download(String id);
 }
