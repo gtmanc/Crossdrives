@@ -117,6 +117,9 @@ public class Service implements IService{
                     @Override
                     public void onCompletedExceptionally(Throwable throwable){
                         throwables[0] = throwable;
+                        lock.lock();
+                        queryFinished.signal();
+                        lock.unlock();
                     }
                 });
 

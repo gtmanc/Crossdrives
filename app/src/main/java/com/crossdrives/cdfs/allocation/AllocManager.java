@@ -19,6 +19,7 @@ import java.util.ArrayList;
 public class AllocManager implements IAllocManager {
     static private final String TAG = "CD.AllocManager";
     static private final int mVersion = 1;
+    private String mDriveName;
     //List<AllocContainer> mAllocations = new ArrayList<>();
     static CDFS mCDFS;
 
@@ -55,12 +56,23 @@ public class AllocManager implements IAllocManager {
         Gson gson = new Gson();
         String json;
         container.setVersion(mVersion);
-        addTestContentGoogle(container);
-        //addTestContentMicrosoft(container);
+        /*
+            Add test content
+         */
+        if(mDriveName.contains("Google")) {
+            Log.d(TAG, "Add test allocation item: Google, seq = 1");
+            addTestContentGoogle(container);
+        }
+        if(mDriveName.contains("Microsoft")) {
+            Log.d(TAG, "Add test allocation item: Microsoft, seq = 2");
+            addTestContentMicrosoft(container);
+        }
+
         json = gson.toJson(container);
         return json;
     }
 
+    public void setDriveNameForTest(String name){mDriveName = name;}
     private void addTestContentGoogle(AllocContainer container){
         java.util.List<AllocationItem> items = new ArrayList<>();
         AllocationItem item = new AllocationItem();

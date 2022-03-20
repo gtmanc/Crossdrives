@@ -229,7 +229,15 @@ public class Infrastructure{
                     Then, upload it to the remote.
                 */
                 Log.d(TAG, "Create allocation file");
+
+                /*
+                    Set drive name now is adding so that allocaion manager knows which test items
+                    should be created. Only keep this if you want to do the test.
+                 */
+                am.setDriveNameForTest(mDriveName);
+
                 json = am.newAllocation();
+
                 //Log.d(TAG, "Json: " + json);
                 //write to local
                 fc.create(NAME_ALLOCATION_FILE, json);
