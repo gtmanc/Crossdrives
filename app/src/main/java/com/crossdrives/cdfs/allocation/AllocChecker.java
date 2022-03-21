@@ -7,39 +7,66 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AllocChecker {
-    List<Rule> rules = new ArrayList<>();
+    List<Rule<Result>> rules = new ArrayList<>();
 
-    interface Rule{
-        boolean check(AllocationItem item);
+    interface Rule<Result>{
+        Result check(AllocationItem item);
     }
 
     public AllocChecker() {
+
         rules.add(new RuleCheckSeqNum());
+        rules.add(new RuleCheckSize());
     }
 
-    boolean checkAllocationFile(AllocContainer ac){
+    List<Result> checkAllocationFile(AllocContainer ac){
+        List<Result> results = new ArrayList<>();
+
         ac.getAllocItem().forEach((item)->{
             rules.forEach((rule)->{
-                rule.check(item);
+                results.add(rule.check(item));
             });
         });
 
+        return results;
     }
 
-    boolean checkItemJoin(List<AllocationItem> items){
+    List<Result> checkItemJoin(List<AllocationItem> items){
+        List<Result> results = new ArrayList<>();
 
+        return results;
     }
 
-    class RuleCheckSeqNum implements Rule {
+    /*
+        Single item checks
+     */
+    class RuleCheckSeqNum implements Rule<Result> {
 
         @Override
-        public boolean check(AllocationItem item) {
+        public Result check(AllocationItem item) {
             int seq = item.getSequence();
             int totalSeg = item.getTotalSeg();
-            boolean result = true;
+            Result result = new Result(ResultCode.SUCCESS, "");
 
             if (seq >= totalSeg) {
-                result = false;
+                result.setErr(ResultCode.ERR_SEQ_OVER_SEG);
+                result.setReason("Sequence number(SEQ) = " + seq + ". However total segment(totalSeg) is " + totalSeg );
+            }
+            return result;
+        }
+    }
+
+    class RuleCheckSize implements Rule<Result>{
+
+        @Override
+        public Result check(AllocationItem item) {
+            long size = item.getSize();
+            long maxSize = item.getCDFSItemSize();
+            Result result = new Result(ResultCode.SUCCESS, "");
+
+            if (size >= maxSize) {
+                result.setErr(ResultCode.ERR_SIZE_OVER_MAX);
+                result.setReason("size of item (SIZE) = " + size + ". However maximum size(CDFSitemSize) is " +  maxSize);
             }
             return result;
         }
