@@ -115,7 +115,7 @@ public class Service implements IService{
                     }
 
                     @Override
-                    public void onCompletedExceptionally(Throwable throwable){
+                    public void onCompletedExceptionally(FileList fileList, Throwable throwable){
                         throwables[0] = throwable;
                         lock.lock();
                         queryFinished.signal();

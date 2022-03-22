@@ -4,12 +4,14 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.IAllocManager;
+import com.crossdrives.cdfs.allocation.AllocChecker;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.AllocationFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
+import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.api.services.drive.model.FileList;
@@ -17,6 +19,7 @@ import com.google.api.services.drive.model.FileList;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class List {
@@ -44,6 +47,9 @@ public class List {
                 java.util.List<String> names, dirs;
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
                 AllocManager am = new AllocManager(mCDFS);
+                AllocChecker checker = new AllocChecker();
+                AtomicReference<java.util.List<Result>> results = null;
+                AtomicBoolean result = new AtomicBoolean(true);
 
                 /*
                     Update the fetched allocation content to database. We will query local database
@@ -51,15 +57,25 @@ public class List {
                  */
                 mCDFS.getDrives().forEach((key, value)->{
                     ac.set(am.toContainer(allocations.get(key)));
-                    if(am.checkCompatibility(ac.get()) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
-                        am.saveNewAllocation(ac.get(), key);
-                    }else{
-                        Log.w(TAG, "allocation version is not compatible!");
+//                    if(am.checkCompatibility(ac.get()) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
+//                        am.saveAllocItem(ac.get(), key);
+//                    }else{
+//                        Log.w(TAG, "allocation version is not compatible!");
+//                    }
+                    /*
+                        Check item and save to database if valid
+                    */
+                    for(AllocationItem item : ac.get().getAllocItem()) {
+                        results.set(checker.checkAllocItem(item));
+                        if(getConclusion(results.get())){
+                            am.saveAllocItem(ac.get(), key);
+                        }else{
+                            result.set(false);
+                        }
                     }
 
                     mCDFS.getDrives().get(key).addContainer(ac.get());
                 });
-
 
                 names = getItems(parent);
                 dirs = getItemsDir(parent);
@@ -85,14 +101,24 @@ public class List {
                 }
 
                 filelist.setFiles(Itemlist);
-                callback.onCompleted(filelist);
+
+                if(result.get()){
+                    callback.onCompleted(filelist);
+                }else{
+                    callback.onCompletedExceptionally(filelist, new Throwable("Some allocation item may be damaged"));
+                }
+
             }
 
             @Override
             public void onCompletedExceptionally(Throwable throwable) {
-                callback.onCompletedExceptionally(throwable);
+                callback.onCompletedExceptionally(null, throwable);
             }
         });
+    }
+
+    private boolean getConclusion(java.util.List<Result> results){
+        return true;
     }
 
     private java.util.List<String> getItems(String parent){

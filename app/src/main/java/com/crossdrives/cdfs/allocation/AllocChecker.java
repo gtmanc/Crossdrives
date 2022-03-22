@@ -19,14 +19,21 @@ public class AllocChecker {
         rules.add(new RuleCheckSize());
     }
 
-    List<Result> checkAllocationFile(AllocContainer ac){
+    /*
+        Stream API tutorial: https://www.baeldung.com/java-8-streams
+     */
+    public List<Result> checkAllocationFile(AllocContainer ac){
         List<Result> results = new ArrayList<>();
 
-        ac.getAllocItem().forEach((item)->{
-            rules.forEach((rule)->{
-                results.add(rule.check(item));
+
+        return results;
+    }
+
+    public List<Result> checkAllocItem(final AllocationItem item){
+        List<Result> results = new ArrayList<>();
+        rules.forEach((rule)->{
+            results.add(rule.check(item));
             });
-        });
 
         return results;
     }

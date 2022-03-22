@@ -99,7 +99,7 @@ public class AllocManager implements IAllocManager {
         item.setAttrFolder(false);
         container.setAllocItem(item);
     }
-    public void saveNewAllocation(AllocContainer container, String drive)
+    public void saveAllocItem(AllocContainer container, String drive)
     {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         AllocationItem item = container.getAllocItem().get(0);
