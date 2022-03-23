@@ -2,6 +2,7 @@ package com.crossdrives.cdfs;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ICallbackList;
@@ -12,6 +13,7 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -91,11 +93,14 @@ public class Service implements IService{
 //        return task;
 //    }
     @Override
-    public Task list(Object nextPage) throws MissingDriveClientException, GeneralServiceException{
+    public Task<com.crossdrives.cdfs.Result> list(Object nextPage) throws MissingDriveClientException, GeneralServiceException{
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
         final Throwable[] throwables = {null};
+        final java.util.List<Result>[] allocCheckResults = new java.util.List[]{null};
+        com.crossdrives.cdfs.Result result = new com.crossdrives.cdfs.Result();
         Task task;
+
 
         Log.d(TAG, "Service: list files. nextPage: " + nextPage);
 
@@ -103,19 +108,26 @@ public class Service implements IService{
 
         task = Tasks.call(mExecutor, new Callable<Object>() {
             @Override
-            public Object call() throws Exception {
+            public com.crossdrives.cdfs.Result call() throws Exception {
                 lock.lock();
                 list.list(null, new ICallbackList<FileList>() {
                     @Override
-                    public void onCompleted(FileList files) {
+                    public void onSuccess(FileList files) {
                         fileList[0] = files;
                         lock.lock();
                         queryFinished.signal();
                         lock.unlock();
                     }
-
                     @Override
-                    public void onCompletedExceptionally(FileList fileList, Throwable throwable){
+                    public void onCompleteExceptionally(FileList files, java.util.List<Result> results) {
+                        fileList[0] = files;
+                        allocCheckResults[0] = results;
+                        lock.lock();
+                        queryFinished.signal();
+                        lock.unlock();
+                    }
+                    @Override
+                    public void onFailure(Throwable throwable) {
                         throwables[0] = throwable;
                         lock.lock();
                         queryFinished.signal();
@@ -129,7 +141,10 @@ public class Service implements IService{
                 if(throwables[0] != null){
                     throw new GeneralServiceException("", throwables[0]);
                 }
-                return fileList[0];
+
+                result.setFileList(fileList[0]);
+                result.setResults(allocCheckResults[0]);
+                return result;
             }
         });
 

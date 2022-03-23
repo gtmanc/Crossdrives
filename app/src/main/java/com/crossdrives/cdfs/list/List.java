@@ -68,7 +68,7 @@ public class List {
                     for(AllocationItem item : ac.get().getAllocItem()) {
                         results.set(checker.checkAllocItem(item));
                         if(getConclusion(results.get())){
-                            am.saveAllocItem(ac.get(), key);
+                            am.saveAllocItem(item, key);
                         }else{
                             result.set(false);
                         }
@@ -102,17 +102,18 @@ public class List {
 
                 filelist.setFiles(Itemlist);
 
+
                 if(result.get()){
-                    callback.onCompleted(filelist);
+                    callback.onSuccess(filelist);
                 }else{
-                    callback.onCompletedExceptionally(filelist, new Throwable("Some allocation item may be damaged"));
+                    callback.onCompleteExceptionally(filelist, results.get());
                 }
 
             }
 
             @Override
             public void onCompletedExceptionally(Throwable throwable) {
-                callback.onCompletedExceptionally(null, throwable);
+                callback.onFailure(throwable);
             }
         });
     }

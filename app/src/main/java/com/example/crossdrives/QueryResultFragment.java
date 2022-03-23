@@ -163,16 +163,16 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 			setQStateInprogress();
 		try {
 			CDFS.getCDFSService(getActivity().getApplicationContext()).getService().list(mNextPage)
-					.addOnSuccessListener(new OnSuccessListener<FileList>() {
+					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
 						@Override
-						public void onSuccess(FileList fileList) {
-							List<File> f = fileList.getFiles();
+						public void onSuccess(com.crossdrives.cdfs.Result result) {
+							List<File> f = result.getFileList().getFiles();
 							//ListView listview = (ListView) findViewById(R.id.listview_query);
 
 
 							mItems = new ArrayList<>();
 							Log.i(TAG, "Number of files: " + f.size());
-							for (File file : fileList.getFiles()) {
+							for (File file : result.getFileList().getFiles()) {
 //                                if(file.getModifiedTime() == null){
 //                                    Log.w(TAG, "Modified dateTime is null");
 //                                }
@@ -185,12 +185,14 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							mAdapter.setOnItemClickListener(itemClickListener);
 							mRecyclerView.setAdapter(mAdapter);
 
-							mNextPage = fileList.getNextPageToken();
+							mNextPage = result.getFileList().getNextPageToken();
 							if(mNextPage == null){
 								Log.d(TAG, "Next page handler is null!");
 								CloseQuery();
 							}
 							mProgressBar.setVisibility(View.INVISIBLE);
+
+
 						}
 
 					})
@@ -279,10 +281,10 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		//mDriveServiceHelper.queryFiles()
 		try {
 			CDFS.getCDFSService(getActivity()).getService().list(mNextPage)
-					.addOnSuccessListener(new OnSuccessListener<FileList>() {
+					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
 						@Override
-						public void onSuccess(FileList fileList) {
-							List<File> f = fileList.getFiles();
+						public void onSuccess(com.crossdrives.cdfs.Result result) {
+							List<File> f = result.getFileList().getFiles();
 							int i = 0;
 							//now we are done with the query. take out the progress bar from the list
 							Log.i(TAG, "Notify removed");
@@ -291,7 +293,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 
 							Log.i(TAG, "Number of files fetched: " + f.size());
 
-							for (File file : fileList.getFiles()) {
+							for (File file : result.getFileList().getFiles()) {
 //                                if(file.getModifiedTime() == null){
 //                                    Log.w(TAG, "Modified dateTime is null");
 //                                }
@@ -308,7 +310,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 							// i.e. enter the recycler view from previous screen and only few items are initially loaded
 							mAdapter.notifyDataSetChanged();
 
-							mNextPage = fileList.getNextPageToken();
+							mNextPage = result.getFileList().getNextPageToken();
 							if(mNextPage == null){
 								Log.d(TAG, "Next page handler is null!");
 								CloseQuery();

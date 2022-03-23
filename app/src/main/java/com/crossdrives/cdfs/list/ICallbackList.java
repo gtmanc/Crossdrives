@@ -1,7 +1,10 @@
 package com.crossdrives.cdfs.list;
 
 public interface ICallbackList <Result> {
-    void onCompleted(Result result);
+    void onSuccess(Result result);
 
-    void onCompletedExceptionally(Result result, Throwable throwable);
+    void onFailure(Throwable throwable);
+
+    void onCompleteExceptionally(Result result, java.util.List<com.crossdrives.cdfs.allocation.Result> casues);
+
 }
