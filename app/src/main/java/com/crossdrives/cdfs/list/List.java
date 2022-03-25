@@ -9,6 +9,7 @@ import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.AllocationFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
 import com.crossdrives.cdfs.allocation.Result;
+import com.crossdrives.cdfs.allocation.ResultCode;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -48,8 +49,8 @@ public class List {
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
                 AllocManager am = new AllocManager(mCDFS);
                 AllocChecker checker = new AllocChecker();
-                AtomicReference<java.util.List<Result>> results = null;
-                AtomicBoolean result = new AtomicBoolean(true);
+                AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
+                AtomicBoolean globalResult = new AtomicBoolean(true);
 
                 /*
                     Update the fetched allocation content to database. We will query local database
@@ -63,14 +64,28 @@ public class List {
 //                        Log.w(TAG, "allocation version is not compatible!");
 //                    }
                     /*
-                        Check item and save to database if valid
+                        Each time new allocation fetched, we have to delete the old rows and then insert the new items
+                        so that the duplicated rows can be removed.
+                    */
+                    am.deleteAllExistingByDrive(key);
+                    /*
+                        Check allocation item traversely and save to database if the item is valid
+                        Here we will lost the cause because it could consume large amount of memory.
                     */
                     for(AllocationItem item : ac.get().getAllocItem()) {
                         results.set(checker.checkAllocItem(item));
+                        /*
+                            We only want to know whether the item is good or not. Therefore, any check
+                            failure we treat the item as faulty item. If any faulty item detected, set
+                            the global result to false so that we will call back via onCompleteExceptionally.
+                        */
+                        Log.d(TAG, "Conclusion allocation check: ");
                         if(getConclusion(results.get())){
-                            am.saveAllocItem(item, key);
+                            Log.d(TAG, "Successful");
+                            am.saveItem(item, key);
                         }else{
-                            result.set(false);
+                            Log.d(TAG, "Failed");
+                            globalResult.set(false);
                         }
                     }
 
@@ -103,7 +118,7 @@ public class List {
                 filelist.setFiles(Itemlist);
 
 
-                if(result.get()){
+                if(globalResult.get()){
                     callback.onSuccess(filelist);
                 }else{
                     callback.onCompleteExceptionally(filelist, results.get());
@@ -119,7 +134,19 @@ public class List {
     }
 
     private boolean getConclusion(java.util.List<Result> results){
-        return true;
+        boolean conlusion = false;
+//        if(results.stream().filter((result)->{
+//            return (result.getErr() != ResultCode.SUCCESS);
+//        }).count() > 0){
+//            conlusion = false;
+//        }
+
+        if(results.stream().allMatch((r)->{
+           return r.getErr() == ResultCode.SUCCESS;
+        })){
+            conlusion = true;
+        }
+        return conlusion;
     }
 
     private java.util.List<String> getItems(String parent){

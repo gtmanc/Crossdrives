@@ -99,10 +99,11 @@ public class AllocManager implements IAllocManager {
         item.setAttrFolder(false);
         container.setAllocItem(item);
     }
-    public void saveAllocItem(AllocationItem item, String drive)
+
+    public void saveItem(AllocationItem item, String drive)
     {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        int deleted;
+
 
         Log.d(TAG, "Save new allocation. Drive: " + drive);
 
@@ -114,15 +115,17 @@ public class AllocManager implements IAllocManager {
         dh.setSize(item.getSize());
         dh.setCDFSItemSize(item.getCDFSItemSize());
         dh.setAttrFolder(item.getAttrFolder());
-        /*
-            Each time new allocation fetched, we have to delete the old rows and then insert the new items
-            so that the duplicated rows can be removed.
-         */
-        deleted = dh.delete(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME, "\"" + drive + "\"");
-        Log.d(TAG, "Drive " + drive + " items have been deleted: " + deleted);
         dh.insert();
     }
 
+    public int deleteAllExistingByDrive(String drive){
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        int deleted;
+
+        deleted = dh.delete(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME, "\"" + drive + "\"");
+        Log.d(TAG, "Drive " + drive + " items have been deleted: " + deleted);
+        return deleted;
+    }
 
 
     public OutputStream upload(File file){

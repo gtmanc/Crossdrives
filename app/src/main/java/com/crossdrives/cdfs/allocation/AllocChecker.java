@@ -47,6 +47,9 @@ public class AllocChecker {
     /*
         Single item checks
      */
+    /*
+        Seq starts with 1 and the max equals to totalSeg.
+     */
     class RuleCheckSeqNum implements Rule<Result> {
 
         @Override
@@ -55,7 +58,11 @@ public class AllocChecker {
             int totalSeg = item.getTotalSeg();
             Result result = new Result(ResultCode.SUCCESS, "");
 
-            if (seq >= totalSeg) {
+            if( seq == 0){
+                result.setErr(ResultCode.ERR_SEQ_OVER_SEG);
+                result.setReason("Sequence number(SEQ) = " + seq + "An invalid Seq.");
+            }
+            if (seq > totalSeg) {
                 result.setErr(ResultCode.ERR_SEQ_OVER_SEG);
                 result.setReason("Sequence number(SEQ) = " + seq + ". However total segment(totalSeg) is " + totalSeg );
             }
