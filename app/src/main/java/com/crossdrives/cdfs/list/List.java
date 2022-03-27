@@ -17,6 +17,8 @@ import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.api.services.drive.model.FileList;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,7 +95,25 @@ public class List {
                 });
 
                 names = getItems(parent);
+                if(names.stream().filter((name)->{
+                    boolean result = true;
+                    java.util.List<AllocationItem> items;
+                    items = getItemsByName(name);
+                    results.set(checker.checkItems(items));
+                    if(getConclusion(results.get())){
+                        Log.d(TAG, "Successful");
+                    }else{
+                        Log.d(TAG, "Failed");
+                        am.deleteItemsByName(name);
+                        result = false;
+                    }
+                    return result;
+                }).count() < names.size()){
+                    globalResult.set(false);
+                }
+
                 dirs = getItemsDir(parent);
+                //TODO: add the same check
 
                 if(names != null) {
                     for (int i = 0; i < names.size(); i++) {
@@ -219,6 +239,55 @@ public class List {
 
         names = buildNameList(cursor);
         return names;
+    }
+
+    private java.util.List<AllocationItem> getItemsByName(String name){
+        java.util.List<AllocationItem> items= new ArrayList<>();
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        String clause;
+        Cursor cursor = null;
+        java.util.List<String> names = null;
+        /*
+            Set filter(clause) parent
+         */
+        clause = DBConstants.ALLOCITEMS_LIST_COL_NAME;
+        clause = clause.concat(" =" + "\"" + name + "\"");
+
+        Log.w(TAG, "Get items by name. Clause: " + clause);
+        cursor = dh.query(clause);
+
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            return items;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+            return items;
+        }
+
+        final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
+        final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
+        final int indexDrive = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME);
+        final int indexSeq = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE);
+        final int indexTotalSeg = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG);
+        final int indexSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SIZE);
+        final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
+        final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++) {
+            AllocationItem item = new AllocationItem();
+            item.setName(cursor.getString(indexName));
+            item.setPath(cursor.getString(indexPath));
+            item.setDrive(cursor.getString(indexDrive));
+            item.setSequence(cursor.getInt(indexSeq));
+            item.setTotalSeg(cursor.getInt(indexTotalSeg));
+            item.setSize(cursor.getLong(indexSize));
+            item.setCDFSItemSize(cursor.getLong(indexCDFSSize));
+            item.setAttrFolder(cursor.getInt(indexAttrFolder)>0);
+            items.add(item);
+            cursor.moveToNext();
+        }
+        return items;
     }
 
     private java.util.List<String> buildNameList(Cursor cursor){

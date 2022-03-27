@@ -127,6 +127,15 @@ public class AllocManager implements IAllocManager {
         return deleted;
     }
 
+    public int deleteItemsByName(String name){
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        int deleted;
+
+        deleted = dh.delete(DBConstants.ALLOCITEMS_LIST_COL_NAME, "\"" + name + "\"");
+        Log.d(TAG, "Name " + name + " items have been deleted: " + deleted);
+        return deleted;
+    }
+
 
     public OutputStream upload(File file){
         OutputStream stream = null;

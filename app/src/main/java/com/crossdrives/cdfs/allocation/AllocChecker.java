@@ -5,18 +5,29 @@ import com.crossdrives.cdfs.model.AllocationItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class AllocChecker {
-    List<Rule<Result>> rules = new ArrayList<>();
+    List<RuleSingle<Result>> rulesSingle = new ArrayList<>();
+    List<RuleJoined<Result>> rulesJoined = new ArrayList<>();
 
-    interface Rule<Result>{
+    interface RuleSingle<Result>{
         Result check(AllocationItem item);
+    }
+
+    interface RuleJoined<Result>{
+        Result check(List<AllocationItem> items);
     }
 
     public AllocChecker() {
 
-        rules.add(new RuleCheckSeqNum());
-        rules.add(new RuleCheckSize());
+        rulesSingle.add(new RuleCheckSeqNum());
+        rulesSingle.add(new RuleCheckSize());
+
+        rulesJoined.add(new RuleCheckSizeCrossly());
+        rulesJoined.add(new RuleCheckTotalSegCrossly());
+        rulesJoined.add(new RuleCheckMissingItem());
     }
 
     /*
@@ -31,15 +42,18 @@ public class AllocChecker {
 
     public List<Result> checkAllocItem(final AllocationItem item){
         List<Result> results = new ArrayList<>();
-        rules.forEach((rule)->{
+        rulesSingle.forEach((rule)->{
             results.add(rule.check(item));
             });
 
         return results;
     }
 
-    List<Result> checkItemJoin(List<AllocationItem> items){
+    public List<Result> checkItems(List<AllocationItem> items){
         List<Result> results = new ArrayList<>();
+        rulesJoined.forEach((rule)->{
+            results.add(rule.check(items));
+        });
 
         return results;
     }
@@ -50,7 +64,7 @@ public class AllocChecker {
     /*
         Seq starts with 1 and the max equals to totalSeg.
      */
-    class RuleCheckSeqNum implements Rule<Result> {
+    class RuleCheckSeqNum implements RuleSingle<Result> {
 
         @Override
         public Result check(AllocationItem item) {
@@ -70,7 +84,7 @@ public class AllocChecker {
         }
     }
 
-    class RuleCheckSize implements Rule<Result>{
+    class RuleCheckSize implements RuleSingle<Result> {
 
         @Override
         public Result check(AllocationItem item) {
@@ -82,6 +96,83 @@ public class AllocChecker {
                 result.setErr(ResultCode.ERR_SIZE_OVER_MAX);
                 result.setReason("size of item (SIZE) = " + size + ". However maximum size(CDFSitemSize) is " +  maxSize);
             }
+            return result;
+        }
+    }
+
+    class RuleCheckSizeCrossly implements RuleJoined<Result>{
+
+        @Override
+        public Result check(List<AllocationItem> items) {
+            Result result = new Result(ResultCode.ERR_CDFSSIZE_NOT_IDENTICAL, "");
+            final long size = items.get(0).getCDFSItemSize();
+            if(items.stream().allMatch((item)->{
+                return item.getCDFSItemSize() == size;
+            }) == false){
+                result.setErr(ResultCode.SUCCESS);
+            }
+
+            return result;
+        }
+    }
+
+    class RuleCheckTotalSegCrossly implements RuleJoined<Result>{
+
+        @Override
+        public Result check(List<AllocationItem> items) {
+            Result result = new Result(ResultCode.ERR_TOTALSEG_NOT_IDENTICAL, "");
+
+            final int totalSeg = items.get(0).getTotalSeg();
+            /*
+                The CDFS size and Total seg must be identical
+             */
+            if(items.stream().allMatch((item)-> {
+                return item.getTotalSeg() == totalSeg;
+            }) == true) {result.setErr(ResultCode.SUCCESS);}
+            return result;
+        }
+    }
+
+//    class RuleCheckSeqNumCrossly implements RuleJoined<Result>{
+//
+//        @Override
+//        public Result check(final List<AllocationItem> items) {
+//            Result result = new Result(ResultCode.SUCCESS, "");
+//            final int totalSeg = items.get(0).getTotalSeg();
+////            final int[] i = {0};
+////            IntStream ints;
+////            ints = IntStream.generate(()->{
+////                int seq = items.get(i[0]).getSequence();
+////                i[0]++;
+////                return seq;
+////            }).limit(items.size());
+//
+//            if(items.stream().
+//                    map((item)-> item.getSequence()).
+//                    max(Integer::compareTo).get() != totalSeg){
+//                result.setErr(ResultCode.ERR_MAXSEQ_NOTEQUAL_TOTALSEG);
+//            }
+//
+//            return result;
+//        }
+//    }
+
+    class RuleCheckMissingItem implements RuleJoined<Result>{
+
+        @Override
+        public Result check(final List<AllocationItem> items) {
+            Result result = new Result(ResultCode.SUCCESS, "");
+            final int totalSeg = items.get(0).getTotalSeg();
+
+            if(items.stream().map((item)-> item.getSequence()).
+                    sorted().skip(1).reduce(items.get(0).getSequence(),(prev, seq)-> {
+                int newSeq = 0;
+                if(prev == seq-1) {
+                    newSeq = seq;}
+                return newSeq; }) != totalSeg){
+                result.setErr(ResultCode.ERR_MISSING_ITEM);
+            }
+
             return result;
         }
     }
