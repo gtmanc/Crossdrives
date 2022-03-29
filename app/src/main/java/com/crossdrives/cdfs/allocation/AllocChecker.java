@@ -1,5 +1,7 @@
 package com.crossdrives.cdfs.allocation;
 
+import android.util.Log;
+
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 
@@ -9,6 +11,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class AllocChecker {
+    final String TAG = "CD.allocation.AllocChecker";
     List<RuleSingle<Result>> rulesSingle = new ArrayList<>();
     List<RuleJoined<Result>> rulesJoined = new ArrayList<>();
 
@@ -49,7 +52,7 @@ public class AllocChecker {
         return results;
     }
 
-    public List<Result> checkItems(List<AllocationItem> items){
+    public List<Result> checkItemsCrossly(List<AllocationItem> items){
         List<Result> results = new ArrayList<>();
         rulesJoined.forEach((rule)->{
             results.add(rule.check(items));
@@ -99,17 +102,20 @@ public class AllocChecker {
             return result;
         }
     }
-
+    /*
+        Cross item checks
+    */
     class RuleCheckSizeCrossly implements RuleJoined<Result>{
 
         @Override
         public Result check(List<AllocationItem> items) {
-            Result result = new Result(ResultCode.ERR_CDFSSIZE_NOT_IDENTICAL, "");
+            Result result = new Result(ResultCode.SUCCESS, "SUCCESS");
             final long size = items.get(0).getCDFSItemSize();
-            if(items.stream().allMatch((item)->{
+            if(!items.stream().allMatch((item) -> {
                 return item.getCDFSItemSize() == size;
-            }) == false){
-                result.setErr(ResultCode.SUCCESS);
+            })){
+                Log.w(TAG, "CDFS Sizes are not identical.");
+                result.setErr(ResultCode.ERR_CDFSSIZE_NOT_IDENTICAL);
             }
 
             return result;
@@ -120,19 +126,41 @@ public class AllocChecker {
 
         @Override
         public Result check(List<AllocationItem> items) {
-            Result result = new Result(ResultCode.ERR_TOTALSEG_NOT_IDENTICAL, "");
+            Result result = new Result(ResultCode.SUCCESS, "");
 
             final int totalSeg = items.get(0).getTotalSeg();
-            /*
-                The CDFS size and Total seg must be identical
-             */
-            if(items.stream().allMatch((item)-> {
+
+            if(!items.stream().allMatch((item) -> {
                 return item.getTotalSeg() == totalSeg;
-            }) == true) {result.setErr(ResultCode.SUCCESS);}
+            })) {
+                Log.w(TAG, "totalSeq are not identical.");
+                result.setErr(ResultCode.ERR_TOTALSEG_NOT_IDENTICAL);
+            }
+
             return result;
         }
     }
 
+    class RuleCheckMissingItem implements RuleJoined<Result>{
+
+        @Override
+        public Result check(final List<AllocationItem> items) {
+            Result result = new Result(ResultCode.SUCCESS, "");
+            final int totalSeg = items.get(0).getTotalSeg();
+
+            if(items.stream().map((item)-> item.getSequence()).
+                    sorted().skip(1).reduce(items.get(0).getSequence(),(prev, seq)-> {
+                int newSeq = 0;
+                if(prev == seq-1) {
+                    newSeq = seq;}
+                return newSeq; }) != totalSeg){
+                Log.w(TAG, "Seq number check unsuccessful. item may be missing");
+                result.setErr(ResultCode.ERR_MISSING_ITEM);
+            }
+
+            return result;
+        }
+    }
 //    class RuleCheckSeqNumCrossly implements RuleJoined<Result>{
 //
 //        @Override
@@ -157,23 +185,5 @@ public class AllocChecker {
 //        }
 //    }
 
-    class RuleCheckMissingItem implements RuleJoined<Result>{
 
-        @Override
-        public Result check(final List<AllocationItem> items) {
-            Result result = new Result(ResultCode.SUCCESS, "");
-            final int totalSeg = items.get(0).getTotalSeg();
-
-            if(items.stream().map((item)-> item.getSequence()).
-                    sorted().skip(1).reduce(items.get(0).getSequence(),(prev, seq)-> {
-                int newSeq = 0;
-                if(prev == seq-1) {
-                    newSeq = seq;}
-                return newSeq; }) != totalSeg){
-                result.setErr(ResultCode.ERR_MISSING_ITEM);
-            }
-
-            return result;
-        }
-    }
 }

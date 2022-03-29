@@ -17,8 +17,6 @@ import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.api.services.drive.model.FileList;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +45,7 @@ public class List {
         fetcher.fetchAll(new ICallBackAllocationFetch<HashMap<String, OutputStream>>() {
             @Override
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
-                java.util.List<String> names, dirs;
+                java.util.List<String> names, dirs, complete;
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
                 AllocManager am = new AllocManager(mCDFS);
                 AllocChecker checker = new AllocChecker();
@@ -79,14 +77,13 @@ public class List {
                         /*
                             We only want to know whether the item is good or not. Therefore, any check
                             failure we treat the item as faulty item. If any faulty item detected, set
-                            the global result to false so that we will call back via onCompleteExceptionally.
+                            the global result to false so that we can call back to via onCompleteExceptionally.
+                            instead onSuccess.
                         */
-                        Log.d(TAG, "Conclusion allocation check: ");
                         if(getConclusion(results.get())){
-                            Log.d(TAG, "Successful");
                             am.saveItem(item, key);
                         }else{
-                            Log.d(TAG, "Failed");
+                            Log.w(TAG, "Single item check: faulty item detected ");
                             globalResult.set(false);
                         }
                     }
@@ -94,26 +91,41 @@ public class List {
                     mCDFS.getDrives().get(key).addContainer(ac.get());
                 });
 
-                names = getItems(parent);
-                if(names.stream().filter((name)->{
-                    boolean result = true;
-                    java.util.List<AllocationItem> items;
-                    items = getItemsByName(name);
-                    results.set(checker.checkItems(items));
-                    if(getConclusion(results.get())){
-                        Log.d(TAG, "Successful");
-                    }else{
-                        Log.d(TAG, "Failed");
-                        am.deleteItemsByName(name);
-                        result = false;
+                /*
+                    To do the item cross check, the database functionality is utilized.
+                    Build name list contains the unique names. We will use the list to query local
+                    database for cross item check.
+                 */
+                complete = new ArrayList<>();
+                names = getNonDirItems(parent);
+                if(names != null){complete.addAll(names);}
+                dirs = getItemsDir(parent);
+                if(dirs != null){complete.addAll(dirs);}
+
+                if(complete != null) {
+                    if (complete.stream().filter((name) -> {
+                        boolean result = true;
+                        java.util.List<AllocationItem> items;
+                        items = getItemsByName(name);
+                        results.set(checker.checkItemsCrossly(items));
+                        if (getConclusion(results.get())) {
+                        } else {
+                            Log.w(TAG, "Corss item check: faulty items detected ");
+                            am.deleteItemsByName(name);
+                            result = false;
+                        }
+                        return result;
+                    }).count() < complete.size()) {
+                        globalResult.set(false);
                     }
-                    return result;
-                }).count() < names.size()){
-                    globalResult.set(false);
                 }
 
+                /*
+                    The faulty items have been removed from database if detected. Rebuild name list for
+                    the result to be sent to callback.
+                 */
+                names = getNonDirItems(parent);
                 dirs = getItemsDir(parent);
-                //TODO: add the same check
 
                 if(names != null) {
                     for (int i = 0; i < names.size(); i++) {
@@ -155,11 +167,6 @@ public class List {
 
     private boolean getConclusion(java.util.List<Result> results){
         boolean conlusion = false;
-//        if(results.stream().filter((result)->{
-//            return (result.getErr() != ResultCode.SUCCESS);
-//        }).count() > 0){
-//            conlusion = false;
-//        }
 
         if(results.stream().allMatch((r)->{
            return r.getErr() == ResultCode.SUCCESS;
@@ -169,7 +176,7 @@ public class List {
         return conlusion;
     }
 
-    private java.util.List<String> getItems(String parent){
+    private java.util.List<String> getNonDirItems(String parent){
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         String clause1, clause2;
         Cursor cursor = null;
