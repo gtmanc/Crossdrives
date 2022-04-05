@@ -24,6 +24,8 @@ public interface DBConstants {
     final String ALLOCITEMS_LIST_COL_NAME = "name";
     final String ALLOCITEMS_LIST_COL_PATH = "path";
     final String ALLOCITEMS_LIST_COL_DRIVENAME = "drive_name";
+    final String ALLOCITEMS_LIST_COL_CDFSID = "csfs_id";
+    final String ALLOCITEMS_LIST_COL_ITEMID = "item_id";
     final String ALLOCITEMS_LIST_COL_SEQUENCE = "sequence";
     final String ALLOCITEMS_LIST_COL_TOTALSEG = "total_segment";
     final String ALLOCITEMS_LIST_COL_SIZE = "item_size";

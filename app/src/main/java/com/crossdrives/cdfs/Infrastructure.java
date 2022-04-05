@@ -27,7 +27,7 @@ public class Infrastructure{
 //    private String mFileId;
     //IFileListCallBack<FileList, Object> mCallback;
     String mDriveName;
-    final String NAME_ALLOCATION_FILE = "allocation.cdfs";
+    private final String NAME_ALLOCATION_ROOT = "Allocation_root.cdfs";
 
     private class Result{
         public String folder;
@@ -50,6 +50,7 @@ public class Infrastructure{
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
+
     private CDFS mCDFS;
 
     /*
@@ -139,7 +140,7 @@ public class Infrastructure{
         CompletableFuture<Result>  downloadAllocationFileFuture = checkAllocationFileFuture.thenCompose(result->{
             CompletableFuture<Result> future = new CompletableFuture<>();
             if(result.file != null){
-                Log.d(TAG, "download allocation file");
+                Log.d(TAG, "download root allocation file");
                 mClient.download().buildRequest(result.file)
                         .run(new IDownloadCallBack<OutputStream>() {
 
@@ -240,9 +241,9 @@ public class Infrastructure{
 
                 //Log.d(TAG, "Json: " + json);
                 //write to local
-                fc.create(NAME_ALLOCATION_FILE, json);
+                fc.create(NAME_ALLOCATION_ROOT, json);
                 Log.d(TAG, "Creataion finished");
-                json = fc.read(NAME_ALLOCATION_FILE);
+                json = fc.read(NAME_ALLOCATION_ROOT);
                 Log.d(TAG, "read back: " + json); //{"items":[],"version":1}
                 /*
                     upload necessary files to remote cdfs folder. If folder doesn't
@@ -252,10 +253,10 @@ public class Infrastructure{
                 */
                 //fileMetadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
                 //fileMetadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
-                java.io.File path = new java.io.File(mCDFS.getContext().getFilesDir() + "/" + NAME_ALLOCATION_FILE);
+                java.io.File path = new java.io.File(mCDFS.getContext().getFilesDir() + "/" + NAME_ALLOCATION_ROOT);
                 fileMetadata.setParents(Collections.singletonList(result.folder));
                 //fileMetadata.setParents(null); //Set parent to null if you want to upload file to root
-                fileMetadata.setName(NAME_ALLOCATION_FILE);
+                fileMetadata.setName(NAME_ALLOCATION_ROOT);
                 mClient.upload().buildRequest(fileMetadata, path).run(new IUploadCallBack() {
                     @Override
                     public void success(File file) {
@@ -358,10 +359,10 @@ public class Infrastructure{
     private String handleResultGetAllocationFile(FileList fileList){
         String id = null;
         if(fileList.getFiles().size() > 0) {
-            if (fileList.getFiles().get(0).getName().compareToIgnoreCase("allocation.cdfs") == 0) {
+            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0) {
                 id = fileList.getFiles().get(0).getId();
             } else {
-                Log.w(TAG, "No allocation file in cdfs folder!");
+                Log.w(TAG, "No root allocation file in cdfs folder!");
             }
         }
         return id;

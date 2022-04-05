@@ -1,5 +1,6 @@
 package com.crossdrives.cdfs.allocation;
 
+import android.database.Cursor;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
@@ -15,6 +16,10 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class AllocManager implements IAllocManager {
     static private final String TAG = "CD.AllocManager";
@@ -72,12 +77,232 @@ public class AllocManager implements IAllocManager {
         return json;
     }
 
+    public boolean CheckThenUpdateLocalCopy(String parent, HashMap<String, OutputStream> allocations){
+        AtomicReference<AllocContainer> ac = new AtomicReference<>();
+        AllocChecker checker = new AllocChecker();
+        AtomicBoolean globalResult = new AtomicBoolean(true);
+        java.util.List<String> whole;
+        AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
+
+        /*
+            Update the fetched allocation content to database. We will query local database
+            for the file list requested by caller.
+        */
+        mCDFS.getDrives().forEach((key, value)->{
+            ac.set(toContainer(allocations.get(key)));
+            /*
+                Each time new allocation fetched, we have to delete the old rows and then insert the new items
+                so that the duplicated rows can be removed.
+            */
+            deleteAllExistingByDrive(key);
+            /*
+                Check allocation item traversely and save to database if the item is valid
+                Here we will lost the cause because it could consume large amount of memory.
+            */
+            for(AllocationItem item : ac.get().getAllocItem()) {
+                results.set(checker.checkAllocItem(item));
+                /*
+                    We only want to know whether the item is good or not. Therefore, any check
+                    failure we treat the item as faulty item. If any faulty item detected, set
+                    the global result to false so that we can call back to via onCompleteExceptionally.
+                    instead onSuccess.
+                */
+                if(getConclusion(results.get())){
+                    saveItem(item, key);
+                }else{
+                    Log.w(TAG, "Single item check: faulty item detected ");
+                    globalResult.set(false);
+                }
+            }
+
+            mCDFS.getDrives().get(key).addContainer(ac.get());
+        });
+
+        /*
+            To do the item cross check, the database functionality is utilized.
+            Build name list contains the unique names. We will use the list to query local
+            database for cross item check.
+        */
+        whole = getNameList(parent);
+        if(whole != null) {
+            if (whole.stream().filter((name) -> {
+                boolean result = true;
+                java.util.List<AllocationItem> items;
+                items = getItemsByName(name);
+                results.set(checker.checkItemsCrossly(items));
+                if (getConclusion(results.get())) {
+                } else {
+                    Log.w(TAG, "Corss item check: faulty items detected ");
+                    deleteItemsByName(name);
+                    result = false;
+                }
+                return result;
+            }).count() < whole.size()) {
+                globalResult.set(false);
+            }
+        }
+
+        java.util.List<String> IDs;
+        IDs = getCdfsIdList(parent);
+        if(IDs != null) {
+            if (IDs.stream().filter((id) -> {
+                boolean result = true;
+                java.util.List<AllocationItem> items;
+                items = getItemsByID(id);
+                results.set(checker.checkItemsCrossly(items));
+                if (getConclusion(results.get())) {
+                } else {
+                    Log.w(TAG, "Corss item check: faulty items detected ");
+                    deleteItemsByName(id);
+                    result = false;
+                }
+                return result;
+            }).count() < whole.size()) {
+                globalResult.set(false);
+            }
+        }
+
+        return globalResult.get();
+    }
+
+    private boolean getConclusion(java.util.List<Result> results){
+        boolean conlusion = false;
+
+        if(results.stream().allMatch((r)->{
+            return r.getErr() == ResultCode.SUCCESS;
+        })){
+            conlusion = true;
+        }
+        return conlusion;
+    }
+
+    private List<Result> grtErrorList(){
+        List<Result> errors= new ArrayList<>();
+
+        return errors;
+    }
+
+    private java.util.List<String> getNameList(String parent){
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        String clause1, clause2;
+        Cursor cursor = null;
+        java.util.List<String> names = null;
+        /*
+            Set filter(clause) parent
+         */
+        clause1 = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+        if(parent == null) {
+            clause1 = clause1.concat(" =" + "\"" + "Root" + "\"");
+        }else{
+            clause1 = clause1.concat(" =" + "\"" + parent + "\"");
+        }
+
+        cursor = dh.query(clause1);
+
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            return names;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+            return names;
+        }
+
+        names = new utils().buildNameList(cursor);
+        return names;
+    }
+
+    private java.util.List<String> getCdfsIdList(String parent){
+        java.util.List<String> IDs= new ArrayList<>();
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        String clause;
+        Cursor cursor = null;
+        java.util.List<String> names = null;
+
+        /*
+            Set filter(clause) parent
+         */
+        clause = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+        if(parent == null) {
+            clause = clause.concat(" =" + "\"" + "Root" + "\"");
+        }else{
+            clause = clause.concat(" =" + "\"" + parent + "\"");
+        }
+
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            return IDs;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+            return IDs;
+        }
+
+        IDs = new utils().buildCdfsIdList(cursor);
+        return IDs;
+    }
+
+    private java.util.List<AllocationItem> getItemsByName(String name){
+        java.util.List<AllocationItem> items= new ArrayList<>();
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        String clause;
+        Cursor cursor = null;
+        java.util.List<String> names = null;
+        /*
+            Set filter(clause) parent
+         */
+        clause = DBConstants.ALLOCITEMS_LIST_COL_NAME;
+        clause = clause.concat(" =" + "\"" + name + "\"");
+
+        Log.w(TAG, "Get items by name. Clause: " + clause);
+        cursor = dh.query(clause);
+
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            return items;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+            return items;
+        }
+
+        final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
+        final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
+        final int indexDrive = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME);
+        final int indexCDFSId = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSID);
+        final int indexItemId = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_ITEMID);
+        final int indexSeq = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE);
+        final int indexTotalSeg = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG);
+        final int indexSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SIZE);
+        final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
+        final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++) {
+            AllocationItem item = new AllocationItem();
+            item.setName(cursor.getString(indexName));
+            item.setPath(cursor.getString(indexPath));
+            item.setDrive(cursor.getString(indexDrive));
+            item.setCdfsId(cursor.getString(indexCDFSId));
+            item.setItemId(cursor.getString(indexItemId));
+            item.setSequence(cursor.getInt(indexSeq));
+            item.setTotalSeg(cursor.getInt(indexTotalSeg));
+            item.setSize(cursor.getLong(indexSize));
+            item.setCDFSItemSize(cursor.getLong(indexCDFSSize));
+            item.setAttrFolder(cursor.getInt(indexAttrFolder)>0);
+            items.add(item);
+            cursor.moveToNext();
+        }
+        return items;
+    }
+
     public void setDriveNameForTest(String name){mDriveName = name;}
     private void addTestContentGoogle(AllocContainer container){
         java.util.List<AllocationItem> items = new ArrayList<>();
         AllocationItem item = new AllocationItem();
         item.setDrive("Google");
         item.setName("Test1.txt");
+        item.setCdfsId("CDFSID_Text1");
+        item.setItemId("google_text1");
         item.setPath("Root");
         item.setSequence(1);
         item.setTotalSeg(2);
@@ -91,6 +316,8 @@ public class AllocManager implements IAllocManager {
         AllocationItem item = new AllocationItem();
         item.setDrive("Microsoft");
         item.setName("Test1.txt");
+        item.setCdfsId("CDFSID_Text1");
+        item.setItemId("Microsoft_text1");
         item.setPath("Root");
         item.setSequence(2);
         item.setTotalSeg(2);
@@ -110,6 +337,8 @@ public class AllocManager implements IAllocManager {
         dh.setName(item.getName());
         dh.setDrive(item.getDrive());
         dh.setPath(item.getPath());
+        dh.setCdfsID(item.getCdfsId());
+        dh.setItemID(item.getItemId());
         dh.setSequence(item.getSequence());
         dh.setTotalSegment(item.getTotalSeg());
         dh.setSize(item.getSize());

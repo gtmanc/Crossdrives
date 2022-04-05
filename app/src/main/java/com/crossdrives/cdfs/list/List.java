@@ -10,6 +10,7 @@ import com.crossdrives.cdfs.allocation.AllocationFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
 import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.allocation.ResultCode;
+import com.crossdrives.cdfs.allocation.utils;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -42,7 +43,7 @@ public class List {
             content of the downloaded allocation files are updated to local database.
          */
         AllocationFetcher fetcher = new AllocationFetcher(mCDFS.getDrives());
-        fetcher.fetchAll(new ICallBackAllocationFetch<HashMap<String, OutputStream>>() {
+        fetcher.fetchAll(parent, new ICallBackAllocationFetch<HashMap<String, OutputStream>>() {
             @Override
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
                 java.util.List<String> names, dirs, complete;
@@ -52,73 +53,75 @@ public class List {
                 AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
                 AtomicBoolean globalResult = new AtomicBoolean(true);
 
-                /*
-                    Update the fetched allocation content to database. We will query local database
-                    for the file list requested by caller.
-                 */
-                mCDFS.getDrives().forEach((key, value)->{
-                    ac.set(am.toContainer(allocations.get(key)));
-//                    if(am.checkCompatibility(ac.get()) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
-//                        am.saveAllocItem(ac.get(), key);
-//                    }else{
-//                        Log.w(TAG, "allocation version is not compatible!");
+
+                globalResult.set(am.CheckThenUpdateLocalCopy(parent, allocations));
+//                /*
+//                    Update the fetched allocation content to database. We will query local database
+//                    for the file list requested by caller.
+//                 */
+//                mCDFS.getDrives().forEach((key, value)->{
+//                    ac.set(am.toContainer(allocations.get(key)));
+////                    if(am.checkCompatibility(ac.get()) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
+////                        am.saveAllocItem(ac.get(), key);
+////                    }else{
+////                        Log.w(TAG, "allocation version is not compatible!");
+////                    }
+//                    /*
+//                        Each time new allocation fetched, we have to delete the old rows and then insert the new items
+//                        so that the duplicated rows can be removed.
+//                    */
+//                    am.deleteAllExistingByDrive(key);
+//                    /*
+//                        Check allocation item traversely and save to database if the item is valid
+//                        Here we will lost the cause because it could consume large amount of memory.
+//                    */
+//                    for(AllocationItem item : ac.get().getAllocItem()) {
+//                        results.set(checker.checkAllocItem(item));
+//                        /*
+//                            We only want to know whether the item is good or not. Therefore, any check
+//                            failure we treat the item as faulty item. If any faulty item detected, set
+//                            the global result to false so that we can call back to via onCompleteExceptionally.
+//                            instead onSuccess.
+//                        */
+//                        if(getConclusion(results.get())){
+//                            am.saveItem(item, key);
+//                        }else{
+//                            Log.w(TAG, "Single item check: faulty item detected ");
+//                            globalResult.set(false);
+//                        }
 //                    }
-                    /*
-                        Each time new allocation fetched, we have to delete the old rows and then insert the new items
-                        so that the duplicated rows can be removed.
-                    */
-                    am.deleteAllExistingByDrive(key);
-                    /*
-                        Check allocation item traversely and save to database if the item is valid
-                        Here we will lost the cause because it could consume large amount of memory.
-                    */
-                    for(AllocationItem item : ac.get().getAllocItem()) {
-                        results.set(checker.checkAllocItem(item));
-                        /*
-                            We only want to know whether the item is good or not. Therefore, any check
-                            failure we treat the item as faulty item. If any faulty item detected, set
-                            the global result to false so that we can call back to via onCompleteExceptionally.
-                            instead onSuccess.
-                        */
-                        if(getConclusion(results.get())){
-                            am.saveItem(item, key);
-                        }else{
-                            Log.w(TAG, "Single item check: faulty item detected ");
-                            globalResult.set(false);
-                        }
-                    }
-
-                    mCDFS.getDrives().get(key).addContainer(ac.get());
-                });
-
-                /*
-                    To do the item cross check, the database functionality is utilized.
-                    Build name list contains the unique names. We will use the list to query local
-                    database for cross item check.
-                 */
-                complete = new ArrayList<>();
-                names = getNonDirItems(parent);
-                if(names != null){complete.addAll(names);}
-                dirs = getItemsDir(parent);
-                if(dirs != null){complete.addAll(dirs);}
-
-                if(complete != null) {
-                    if (complete.stream().filter((name) -> {
-                        boolean result = true;
-                        java.util.List<AllocationItem> items;
-                        items = getItemsByName(name);
-                        results.set(checker.checkItemsCrossly(items));
-                        if (getConclusion(results.get())) {
-                        } else {
-                            Log.w(TAG, "Corss item check: faulty items detected ");
-                            am.deleteItemsByName(name);
-                            result = false;
-                        }
-                        return result;
-                    }).count() < complete.size()) {
-                        globalResult.set(false);
-                    }
-                }
+//
+//                    mCDFS.getDrives().get(key).addContainer(ac.get());
+//                });
+//
+//                /*
+//                    To do the item cross check, the database functionality is utilized.
+//                    Build name list contains the unique names. We will use the list to query local
+//                    database for cross item check.
+//                 */
+//                complete = new ArrayList<>();
+//                names = getNonDirItems(parent);
+//                if(names != null){complete.addAll(names);}
+//                dirs = getItemsDir(parent);
+//                if(dirs != null){complete.addAll(dirs);}
+//
+//                if(complete != null) {
+//                    if (complete.stream().filter((name) -> {
+//                        boolean result = true;
+//                        java.util.List<AllocationItem> items;
+//                        items = getItemsByName(name);
+//                        results.set(checker.checkItemsCrossly(items));
+//                        if (getConclusion(results.get())) {
+//                        } else {
+//                            Log.w(TAG, "Corss item check: faulty items detected ");
+//                            am.deleteItemsByName(name);
+//                            result = false;
+//                        }
+//                        return result;
+//                    }).count() < complete.size()) {
+//                        globalResult.set(false);
+//                    }
+//                }
 
                 /*
                     The faulty items have been removed from database if detected. Rebuild name list for
@@ -165,17 +168,6 @@ public class List {
         });
     }
 
-    private boolean getConclusion(java.util.List<Result> results){
-        boolean conlusion = false;
-
-        if(results.stream().allMatch((r)->{
-           return r.getErr() == ResultCode.SUCCESS;
-        })){
-            conlusion = true;
-        }
-        return conlusion;
-    }
-
     private java.util.List<String> getNonDirItems(String parent){
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         String clause1, clause2;
@@ -208,7 +200,7 @@ public class List {
             return names;
         }
 
-        names = buildNameList(cursor);
+        names = new utils().buildNameList(cursor);
         return names;
     }
 
@@ -244,77 +236,7 @@ public class List {
             return names;
         }
 
-        names = buildNameList(cursor);
-        return names;
-    }
-
-    private java.util.List<AllocationItem> getItemsByName(String name){
-        java.util.List<AllocationItem> items= new ArrayList<>();
-        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        String clause;
-        Cursor cursor = null;
-        java.util.List<String> names = null;
-        /*
-            Set filter(clause) parent
-         */
-        clause = DBConstants.ALLOCITEMS_LIST_COL_NAME;
-        clause = clause.concat(" =" + "\"" + name + "\"");
-
-        Log.w(TAG, "Get items by name. Clause: " + clause);
-        cursor = dh.query(clause);
-
-        if(cursor == null){
-            Log.w(TAG, "Cursor is null!");
-            return items;
-        }
-        if(cursor.getCount() <= 0){
-            Log.w(TAG, "Count of cursor is zero!");
-            return items;
-        }
-
-        final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
-        final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
-        final int indexDrive = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME);
-        final int indexSeq = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE);
-        final int indexTotalSeg = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG);
-        final int indexSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SIZE);
-        final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
-        final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
-        cursor.moveToFirst();
-        for(int i = 0 ; i < cursor.getCount(); i++) {
-            AllocationItem item = new AllocationItem();
-            item.setName(cursor.getString(indexName));
-            item.setPath(cursor.getString(indexPath));
-            item.setDrive(cursor.getString(indexDrive));
-            item.setSequence(cursor.getInt(indexSeq));
-            item.setTotalSeg(cursor.getInt(indexTotalSeg));
-            item.setSize(cursor.getLong(indexSize));
-            item.setCDFSItemSize(cursor.getLong(indexCDFSSize));
-            item.setAttrFolder(cursor.getInt(indexAttrFolder)>0);
-            items.add(item);
-            cursor.moveToNext();
-        }
-        return items;
-    }
-
-    private java.util.List<String> buildNameList(Cursor cursor){
-        java.util.List<String> names = new ArrayList<>();
-
-        cursor.moveToFirst();
-        for(int i = 0 ; i < cursor.getCount(); i++) {
-            boolean matched = false;
-            String col_name = cursor.getString(DBConstants.TABLE_ALLOCITEM_COL_INDX_NAME);
-            for (int j = 0; j < names.size(); j++){
-                if (names.get(j).equals(col_name)) {
-                    matched = true;
-                }
-            }
-            if(matched == false){
-                names.add(col_name);
-            }
-            cursor.moveToNext();
-        }
-
+        names = new utils().buildNameList(cursor);
         return names;
     }
 

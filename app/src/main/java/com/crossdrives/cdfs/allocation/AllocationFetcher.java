@@ -26,6 +26,7 @@ public class AllocationFetcher {
         Query strings
      */
     private final String NAME_CDFS_FOLDER = "CDFS";
+    private final String NAME_ALLOCATION_ROOT = "Allocation_root.cdfs";
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
@@ -57,7 +58,7 @@ public class AllocationFetcher {
         mDrives = drives; }
 
 
-    public void fetchAll(ICallBackAllocationFetch<HashMap<String, OutputStream>> callback) {
+    public void fetchAll(String parent, ICallBackAllocationFetch<HashMap<String, OutputStream>> callback) {
 
         this.callback = callback;
 
@@ -183,10 +184,10 @@ public class AllocationFetcher {
     private String handleResultGetFile(FileList fileList){
         String id = null;
         if(fileList.getFiles().size() > 0) {
-            if (fileList.getFiles().get(0).getName().compareToIgnoreCase("allocation.cdfs") == 0) {
+            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0) {
                 id = fileList.getFiles().get(0).getId();
             } else {
-                Log.w(TAG, "Files re found. But no allocation file in cdfs folder!");
+                Log.w(TAG, "Files are found. But no root allocation file in cdfs folder!");
             }
         }else{
             Log.w(TAG, "No file is found in CDFS folder");

@@ -26,6 +26,8 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
     private static final String ALLOCITEMS_LIST_COL_PATH = DBConstants.ALLOCITEMS_LIST_COL_PATH;
     private static final String ALLOCITEMS_LIST_COL_DRIVENAME = DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME;
+    private static final String ALLOCITEMS_LIST_COL_CDFSID = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
+    private static final String ALLOCITEMS_LIST_COL_ITEMID = DBConstants.ALLOCITEMS_LIST_COL_ITEMID;
     private static final String ALLOCITEMS_LIST_COL_SEQUENCE = DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE;
     private static final String ALLOCITEMS_LIST_COL_TOTALSEG = DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG;
     private static final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
@@ -57,6 +59,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 + ALLOCITEMS_LIST_COL_NAME + " text, "
                 + ALLOCITEMS_LIST_COL_PATH + " text, "
                 + ALLOCITEMS_LIST_COL_DRIVENAME + " text, "
+                + ALLOCITEMS_LIST_COL_CDFSID + " text, "
+                + ALLOCITEMS_LIST_COL_ITEMID + " text, "
                 + ALLOCITEMS_LIST_COL_SEQUENCE + " integer, "
                 + ALLOCITEMS_LIST_COL_TOTALSEG + " integer, "
                 + ALLOCITEMS_LIST_COL_SIZE + " integer, "

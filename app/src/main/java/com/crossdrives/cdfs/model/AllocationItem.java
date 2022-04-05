@@ -2,9 +2,30 @@ package com.crossdrives.cdfs.model;
 
 public class AllocationItem {
     /*
+        Item name shown in CDFS
+     */
+    private String name;
+
+    /*
+        Item path shown in CDFS
+     */
+    private String path;
+
+    /*
         Brand of user drive
     */
     private String drive;
+
+    /*
+        file id assigned by user's drive
+    */
+    private String cdfsId;
+
+    /*
+        file id assigned by user's drive
+    */
+    private String itemId;
+
     /*
         The segment number of the item. The number must be smaller than mTotalSeg.
      */
@@ -14,14 +35,6 @@ public class AllocationItem {
      */
     private int totalSeg;
 
-    /*
-        Item path shown in CDFS
-     */
-    private String path;
-    /*
-        Item name shown in CDFS
-     */
-    private String name;
     /*
         Size of a allocation item in byte
      */
@@ -79,4 +92,19 @@ public class AllocationItem {
     public void setAttrFolder(boolean isFolder){this.folder = isFolder;}
     public boolean getAttrFolder(){return this.folder;}
 
+    public String getCdfsId() {
+        return cdfsId;
+    }
+
+    public void setCdfsId(String cdfsId) {
+        this.cdfsId = cdfsId;
+    }
+
+    public String getItemId() {
+        return itemId;
+    }
+
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
 }

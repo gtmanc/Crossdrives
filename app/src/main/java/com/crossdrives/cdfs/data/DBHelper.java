@@ -5,14 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
 import android.util.Log;
 
 import com.crossdrives.data.DBConstants;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DBHelper{
     private final String TAG = "CD.DBHelper";
@@ -24,6 +19,8 @@ public class DBHelper{
     final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
     final String ALLOCITEMS_LIST_COL_PATH = DBConstants.ALLOCITEMS_LIST_COL_PATH;
     final String ALLOCITEMS_LIST_COL_DRIVENAME = DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME;
+    final String ALLOCITEMS_LIST_COL_CDFSID = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
+    final String ALLOCITEMS_LIST_COL_ITEMID = DBConstants.ALLOCITEMS_LIST_COL_ITEMID;
     final String ALLOCITEMS_LIST_COL_SEQUENCE = DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE;
     final String ALLOCITEMS_LIST_COL_TOTALSEG = DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG;
     final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
@@ -49,6 +46,18 @@ public class DBHelper{
     public DBHelper setDrive(String drive){
         ContentValues cv;
         mCV.put(ALLOCITEMS_LIST_COL_DRIVENAME, drive);
+        return this;
+    }
+
+    public DBHelper setCdfsID(String id){
+        ContentValues cv;
+        mCV.put(ALLOCITEMS_LIST_COL_CDFSID, id);
+        return this;
+    }
+
+    public DBHelper setItemID(String id){
+        ContentValues cv;
+        mCV.put(ALLOCITEMS_LIST_COL_ITEMID, id);
         return this;
     }
 
