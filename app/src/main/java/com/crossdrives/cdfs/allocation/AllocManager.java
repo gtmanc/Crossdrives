@@ -25,8 +25,19 @@ public class AllocManager implements IAllocManager {
     static private final String TAG = "CD.AllocManager";
     static private final int mVersion = 1;
     private String mDriveName;
-    //List<AllocContainer> mAllocations = new ArrayList<>();
     static CDFS mCDFS;
+
+    //Columns
+    final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
+    final String ALLOCITEMS_LIST_COL_PATH = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+    final String ALLOCITEMS_LIST_COL_DRIVENAME = DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME;
+    final String ALLOCITEMS_LIST_COL_CDFSID = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
+    final String ALLOCITEMS_LIST_COL_ITEMID = DBConstants.ALLOCITEMS_LIST_COL_ITEMID;
+    final String ALLOCITEMS_LIST_COL_SEQUENCE = DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE;
+    final String ALLOCITEMS_LIST_COL_TOTALSEG = DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG;
+    final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
+    final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
+    final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
 
     public AllocManager(CDFS cdfs) { mCDFS = cdfs;}
 
@@ -184,31 +195,43 @@ public class AllocManager implements IAllocManager {
 
     private java.util.List<String> getNameList(String parent){
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        String clause1, clause2;
+        String filter;
         Cursor cursor = null;
         java.util.List<String> names = null;
         /*
-            Set filter(clause) parent
+            Set filter for parent
          */
-        clause1 = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+        filter = DBConstants.ALLOCITEMS_LIST_COL_PATH;
         if(parent == null) {
-            clause1 = clause1.concat(" =" + "\"" + "Root" + "\"");
+            filter = filter.concat(" =" + "\"" + "Root" + "\"");
         }else{
-            clause1 = clause1.concat(" =" + "\"" + parent + "\"");
+            filter = filter.concat(" =" + "\"" + parent + "\"");
         }
 
-        cursor = dh.query(clause1);
+        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
+
+        cursor = dh.query(filter);
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
+            cursor.close();
             return names;
         }
         if(cursor.getCount() <= 0){
             Log.w(TAG, "Count of cursor is zero!");
+            cursor.close();
             return names;
         }
 
-        names = new utils().buildNameList(cursor);
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++){
+            Log.d(TAG, "Name: " + cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_NAME)));
+            names.add(cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_NAME)));
+            cursor.moveToNext();
+        }
+
+        //names = new utils().buildNameList(cursor);
+        cursor.close();
         return names;
     }
 
@@ -229,16 +252,27 @@ public class AllocManager implements IAllocManager {
             clause = clause.concat(" =" + "\"" + parent + "\"");
         }
 
+        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
+
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
+            cursor.close();
             return IDs;
         }
         if(cursor.getCount() <= 0){
             Log.w(TAG, "Count of cursor is zero!");
+            cursor.close();
             return IDs;
         }
 
-        IDs = new utils().buildCdfsIdList(cursor);
+        //IDs = new utils().buildCdfsIdList(cursor);
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++){
+            Log.d(TAG, "CDFS ID: " + cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_CDFSID)));
+            names.add(cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_CDFSID)));
+            cursor.moveToNext();
+        }
+        cursor.close();
         return IDs;
     }
 
@@ -259,10 +293,12 @@ public class AllocManager implements IAllocManager {
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
+            cursor.close();
             return items;
         }
         if(cursor.getCount() <= 0){
             Log.w(TAG, "Count of cursor is zero!");
+            cursor.close();
             return items;
         }
 
@@ -292,6 +328,65 @@ public class AllocManager implements IAllocManager {
             items.add(item);
             cursor.moveToNext();
         }
+
+        cursor.close();
+        return items;
+    }
+
+    private java.util.List<AllocationItem> getItemsByID(String id){
+        java.util.List<AllocationItem> items= new ArrayList<>();
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        String clause;
+        Cursor cursor = null;
+        java.util.List<String> names = null;
+        /*
+            Set filter(clause) parent
+         */
+        clause = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
+        clause = clause.concat(" =" + "\"" + id + "\"");
+
+        Log.w(TAG, "Get items by ID. Clause: " + clause);
+        cursor = dh.query(clause);
+
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            cursor.close();
+            return items;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+            cursor.close();
+            return items;
+        }
+
+        final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
+        final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
+        final int indexDrive = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME);
+        final int indexCDFSId = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSID);
+        final int indexItemId = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_ITEMID);
+        final int indexSeq = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE);
+        final int indexTotalSeg = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG);
+        final int indexSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SIZE);
+        final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
+        final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++) {
+            AllocationItem item = new AllocationItem();
+            item.setName(cursor.getString(indexName));
+            item.setPath(cursor.getString(indexPath));
+            item.setDrive(cursor.getString(indexDrive));
+            item.setCdfsId(cursor.getString(indexCDFSId));
+            item.setItemId(cursor.getString(indexItemId));
+            item.setSequence(cursor.getInt(indexSeq));
+            item.setTotalSeg(cursor.getInt(indexTotalSeg));
+            item.setSize(cursor.getLong(indexSize));
+            item.setCDFSItemSize(cursor.getLong(indexCDFSSize));
+            item.setAttrFolder(cursor.getInt(indexAttrFolder)>0);
+            items.add(item);
+            cursor.moveToNext();
+        }
+
+        cursor.close();
         return items;
     }
 

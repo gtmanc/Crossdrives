@@ -13,6 +13,7 @@ public class DBHelper{
     private final String TAG = "CD.DBHelper";
     com.crossdrives.data.DBHelper dbh;
     ContentValues mCV = new ContentValues();
+    private String mClauseGroup;
 
     final String  TABLE_ALLOCITEM_LIST = DBConstants.TABLE_ALLOCITEM_LIST;
     //Columns
@@ -89,6 +90,13 @@ public class DBHelper{
         ContentValues cv;
         mCV.put(ALLOCITEMS_LIST_COL_FOLDER, folder);
         return this;
+    }
+
+    /*
+        Sql clauses
+    */
+    public void GroupBy(String clause){
+        mClauseGroup = clause;
     }
 
     public long insert(){
@@ -185,7 +193,7 @@ public class DBHelper{
     }
 
     /*
-     * expresion: clause for the rows to be read. Note "\" must be added in front of the value if
+     * expresion: filter clause for the rows to be read. Note "\" must be added in front of the value if
         the value is in type of string. e.g. parent = "Root".
      * If no expression is giving, all rows are read out from database.
      * The input expression is a string which contains a pair of column name and value. Max is 2 strings.
@@ -227,10 +235,20 @@ public class DBHelper{
             statement = "SELECT * "
                     + " FROM " + TABLE_ALLOCITEM_LIST
                     + " WHERE ";
+            /*
+                filter
+             */
             for(i = 0; i < expression.length-1 ; i++){
                 statement = statement.concat(expression[i] + "AND ");
             }
             statement = statement.concat(expression[i]);
+            /*
+                Grouping
+             */
+            if(mClauseGroup != null){
+                statement = statement.concat(" " + mClauseGroup);
+            }
+
             statement = statement.concat(";");
             Log.d(TAG, "clause: " + statement);
         }

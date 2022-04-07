@@ -124,8 +124,8 @@ public class List {
 //                }
 
                 /*
-                    The faulty items have been removed from database if detected. Rebuild name list for
-                    the result to be sent to callback.
+                    The faulty items have been removed from database if detected in previous step.
+                    Rebuild name list for the list result to be sent to callback.
                  */
                 names = getNonDirItems(parent);
                 dirs = getItemsDir(parent);

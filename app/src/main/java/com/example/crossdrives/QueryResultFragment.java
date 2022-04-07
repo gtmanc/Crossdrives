@@ -213,6 +213,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		} catch (GeneralServiceException e){
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
+			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 			mProgressBar.setVisibility(View.INVISIBLE);
 		}
 //					.addOnSuccessListener(new OnSuccessListener<FileList>() {
@@ -334,6 +335,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		}catch (GeneralServiceException e){
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
+			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 			mProgressBar.setVisibility(View.INVISIBLE);
 		}
 		//}
