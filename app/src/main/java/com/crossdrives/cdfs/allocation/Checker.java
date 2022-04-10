@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class AllocChecker {
+public class Checker {
     final String TAG = "CD.Allocation.Checker";
     List<RuleSingle<Result>> rulesSingle = new ArrayList<>();
     List<RuleJoined<Result>> rulesJoined = new ArrayList<>();
@@ -23,7 +23,7 @@ public class AllocChecker {
         Result check(List<AllocationItem> items);
     }
 
-    public AllocChecker() {
+    public Checker() {
 
         rulesSingle.add(new RuleCheckSeqNum());
         rulesSingle.add(new RuleCheckSize());

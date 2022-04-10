@@ -169,10 +169,9 @@ public class AddAccountFragment extends BaseFragment{
                     Known issue is once app has signed out due to any of reasons (e.g. app data deletion
                     in setting), null is got instead of a index. Tracked in #8, #15, #16.
                  */
-                client = cdfs.getClient(brand);
-                Log.d(TAG, "Remove CDFS client");
-                r = cdfs.removeClient(brand, client);
-                if(r != true) {Log.w(TAG, "Remove CDFS client failed!");}
+                //client = cdfs.getClient(brand);
+                r = cdfs.removeClient(brand);
+                if(!r) {Log.w(TAG, "Remove CDFS client failed!");}
             }
 
             mSignInManager.Start(mView, onSigninFinished);
@@ -255,6 +254,7 @@ public class AddAccountFragment extends BaseFragment{
                      */
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
+                    Log.d(TAG, "Add CDFS client: " + gdc);
                     CDFS.getCDFSService(SnippetApp.getAppContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
                     //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
@@ -266,6 +266,7 @@ public class AddAccountFragment extends BaseFragment{
 //                    if(getActivity() == null){
 //                        Log.e(TAG, "getActivity returns null!");
 //                    }
+                    Log.d(TAG, "Add CDFS client: " + odc);
                     CDFS.getCDFSService(SnippetApp.getAppContext()).addClient(GlobalConstants.BRAND_MS, odc);
                     //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }

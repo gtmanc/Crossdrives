@@ -54,9 +54,17 @@ public class CDFS extends BaseCDFS{
     }
 
     //public void removeClient(int i){
-    public boolean removeClient(String name, IDriveClient client){
+    public boolean removeClient(String name){
         //sClient.remove(i);
-        return mDrives.remove(name, client);
+        boolean result = true;
+        Drive drive;
+        drive = mDrives.remove(name);
+        if(drive == null){
+            Log.d(TAG, "Remove client failed!");
+            mDrives.forEach((k, v)-> Log.d(TAG, "Key:" + k + " Value: " + v));
+            result = false;
+        }
+        return result;
     }
 //    public IDriveClient getClient(int i){
 //        return sClient.get(i);

@@ -4,13 +4,11 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.allocation.AllocChecker;
+import com.crossdrives.cdfs.allocation.Checker;
 import com.crossdrives.cdfs.allocation.AllocManager;
-import com.crossdrives.cdfs.allocation.AllocationFetcher;
+import com.crossdrives.cdfs.allocation.Fetcher;
 import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
 import com.crossdrives.cdfs.allocation.Result;
-import com.crossdrives.cdfs.allocation.ResultCode;
-import com.crossdrives.cdfs.allocation.utils;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -54,14 +52,14 @@ public class List {
             are downloaded. We will search the local database for the file list as soon as the
             content of the downloaded allocation files are updated to local database.
          */
-        AllocationFetcher fetcher = new AllocationFetcher(mCDFS.getDrives());
+        Fetcher fetcher = new Fetcher(mCDFS.getDrives());
         fetcher.fetchAll(parent, new ICallBackAllocationFetch<HashMap<String, OutputStream>>() {
             @Override
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
                 java.util.List<AllocationItem> children, dirs;
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
                 AllocManager am = new AllocManager(mCDFS);
-                AllocChecker checker = new AllocChecker();
+                //Checker checker = new Checker();
                 AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
                 AtomicBoolean globalResult = new AtomicBoolean(true);
 

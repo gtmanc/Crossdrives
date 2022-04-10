@@ -90,7 +90,7 @@ public class AllocManager implements IAllocManager {
 
     public boolean CheckThenUpdateLocalCopy(String parent, HashMap<String, OutputStream> allocations){
         AtomicReference<AllocContainer> ac = new AtomicReference<>();
-        AllocChecker checker = new AllocChecker();
+        Checker checker = new Checker();
         AtomicBoolean globalResult = new AtomicBoolean(true);
         java.util.List<String> whole;
         AtomicReference<java.util.List<Result>> results = new AtomicReference<>();

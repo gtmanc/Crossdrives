@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -36,6 +37,7 @@ import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -47,7 +49,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class QueryResultFragment extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener,
+public class QueryResultFragment extends Fragment implements NavigationView.OnNavigationItemSelectedListener,
 		DrawerLayout.DrawerListener{
 	private String TAG = "CD.QueryResultFragment";
 	DrawerLayout mDrawer = null;
@@ -60,6 +62,7 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 	private View mProgressBar = null;
 	private QueryFileAdapter mAdapter;
 	private Toolbar mToolbar = null;
+	private View mView = null;
 
 	final String STATE_NORMAL = "state_normal";
 	final String STATE_ITEM_SELECTION = "state_selection";
@@ -107,10 +110,12 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		Log.d(TAG, "onViewCreated");
 		super.onViewCreated(view, savedInstanceState);
 
+		mView = view;
 		NavController navController = Navigation.findNavController(view);
 		DrawerLayout drawerLayout = view.findViewById(R.id.layout_query_result);
 		mDrawer = drawerLayout;
 		drawerLayout.addDrawerListener(this);
+		FloatingActionButton fab = view.findViewById(R.id.fab);
 
 		AppBarConfiguration appBarConfiguration =
 				new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
@@ -130,7 +135,9 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		mNavigationView.setNavigationItemSelectedListener(this);
 		mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
 		View hv = mNavigationView.getHeaderView(0);
-		hv.setOnClickListener(this);
+		hv.setOnClickListener(onHeaderClick);
+		fab.setOnClickListener(onFabClick);
+
 		//always register the callback because it is removed in onPause
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
@@ -545,15 +552,23 @@ public class QueryResultFragment extends Fragment implements View.OnClickListene
 		}
 
 	}
-	@Override
-	public void onClick(View v) {
-		Log.d(TAG, "header is clicked");
-		mCountPressDrawerHeader++;
 
-		NavDirections a = QueryResultFragmentDirections.navigateToSystemTest();
-		NavHostFragment.findNavController(this).navigate(a);
+	View.OnClickListener onHeaderClick = new View.OnClickListener(){
+		@Override
+		public void onClick(View v) {
+			Fragment f = FragmentManager.findFragment(mView);
+			Log.d(TAG, "header is clicked");
+			mCountPressDrawerHeader++;
 
-	}
+			NavDirections a = QueryResultFragmentDirections.navigateToSystemTest();
+			NavHostFragment.findNavController(f).navigate(a);
+	}};
+
+	View.OnClickListener onFabClick = new View.OnClickListener(){
+		@Override
+		public void onClick(View v) {
+			Log.d(TAG, "fab is clicked");
+		}};
 
 	@Override
 	public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {

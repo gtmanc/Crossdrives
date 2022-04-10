@@ -18,8 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class AllocationFetcher {
-    private final String TAG = "CD.AllocationFetcher";
+public class Fetcher {
+    private final String TAG = "CD.Fetcher";
     ConcurrentHashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
@@ -53,7 +53,7 @@ public class AllocationFetcher {
 
     }
 
-    public AllocationFetcher(ConcurrentHashMap<String, Drive> drives) {
+    public Fetcher(ConcurrentHashMap<String, Drive> drives) {
         super();
 
         mDrives = drives; }

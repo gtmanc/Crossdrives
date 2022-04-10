@@ -37,6 +37,7 @@
 
   <!-- Action buttons -->
   <color name="colorActionButton1BackgroundPress">#41BBDEFB</color>
+  <color name="colorFABBackground">#039BE5</color>
 
   <!-- Dialog-->
   <color name="colorDialog1background">#222222</color>
