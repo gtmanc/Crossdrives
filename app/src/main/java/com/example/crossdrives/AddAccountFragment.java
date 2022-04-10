@@ -1,6 +1,7 @@
 package com.example.crossdrives;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -262,7 +263,10 @@ public class AddAccountFragment extends BaseFragment{
                     Log.d(TAG, "User sign in OK. Start to create one drive client");
                     OneDriveClient odc =
                             (OneDriveClient) OneDriveClient.builder((String) token).buildClient();
-                    CDFS.getCDFSService(getActivity().getApplicationContext()).addClient(GlobalConstants.BRAND_MS, odc);
+//                    if(getActivity() == null){
+//                        Log.e(TAG, "getActivity returns null!");
+//                    }
+                    CDFS.getCDFSService(SnippetApp.getAppContext()).addClient(GlobalConstants.BRAND_MS, odc);
                     //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }
                 else{
@@ -325,5 +329,17 @@ public class AddAccountFragment extends BaseFragment{
         }else{
             //TODO: may need a proper handling if something wrong when creating an account.
         }
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        Log.d(TAG, "Fragment attached to Activity.");
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        Log.d(TAG, "Fragment de-attached from Activity.");
     }
 }

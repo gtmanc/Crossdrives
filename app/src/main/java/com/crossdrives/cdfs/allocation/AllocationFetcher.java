@@ -2,20 +2,21 @@ package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
-import com.crossdrives.cdfs.BaseCDFS;
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
+import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class AllocationFetcher {
     private final String TAG = "CD.AllocationFetcher";
@@ -74,6 +75,7 @@ public class AllocationFetcher {
             Start fetching one by one
         * */
         mDrives.forEach((name, drive)->{
+            Log.d(TAG, "Start to fetch root allocation file. Drive: " + name);
             fetch(states.get(name), name, drive.getClient());
         });
 
@@ -164,6 +166,7 @@ public class AllocationFetcher {
                     @Override
                     public void success(FileList fileList, Object o) {
                         String id = null;
+                        Log.d(TAG, "Result of List got. Drive: " + name);
                         id = handleResultGetFile(fileList);
                         if(id != null) {
                             download(state, name, client, id);
@@ -182,17 +185,28 @@ public class AllocationFetcher {
     }
 
     private String handleResultGetFile(FileList fileList){
-        String id = null;
-        if(fileList.getFiles().size() > 0) {
-            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0) {
-                id = fileList.getFiles().get(0).getId();
-            } else {
-                Log.w(TAG, "Files are found. But no root allocation file in cdfs folder!");
-            }
-        }else{
-            Log.w(TAG, "No file is found in CDFS folder");
-        }
-        return id;
+        AtomicReference<String> id = new AtomicReference<>();
+        Optional<File> files = null;
+//        if(fileList.getFiles().size() > 0) {
+//            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0) {
+//                id.set(fileList.getFiles().get(0).getId());
+//            } else {
+//                Log.w(TAG, "Files are found. But no root allocation file in cdfs folder!");
+//            }
+//        }else{
+//            Log.w(TAG, "No file is found in CDFS folder");
+//        }
+
+        if(fileList.getFiles().size() > 0) {Log.d(TAG, "Files found in CDFS folder.");}
+
+        files = fileList.getFiles().stream().filter((file)->{
+            return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ?  true : false;
+        }).findAny();
+        if(!files.isPresent()){Log.w(TAG, "No root allocation file presents!");}
+        files.ifPresent((file) -> {
+            Log.d(TAG, "Root allocation file presents.");
+            id.set(file.getId());});
+        return id.get();
     }
 
     private void download(State state, String name, IDriveClient client, String fileid){

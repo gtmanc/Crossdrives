@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class AllocChecker {
-    final String TAG = "CD.allocation.AllocChecker";
+    final String TAG = "CD.Allocation.Checker";
     List<RuleSingle<Result>> rulesSingle = new ArrayList<>();
     List<RuleJoined<Result>> rulesJoined = new ArrayList<>();
 
@@ -148,9 +148,21 @@ public class AllocChecker {
             Result result = new Result(ResultCode.SUCCESS, "");
             final int totalSeg = items.get(0).getTotalSeg();
 
+            /*
+                Here we dont check whether all of the items have the same totSegment or not because it is
+                checked in another rule checker.
+                Check whether the number of items equals to totSegment
+             */
+            if(items.size() != totalSeg) {
+                Log.w(TAG, " Number of items check unsuccessful. Item may be missing. " +
+                        "Number of item:" + items.size() + "TotalSeg: " + totalSeg);
+                result.setErr(ResultCode.ERR_MISSING_ITEM);
+            }
+
             if(items.stream().map((item)-> item.getSequence()).
                     sorted().skip(1).reduce(items.get(0).getSequence(),(prev, seq)-> {
                 int newSeq = 0;
+                Log.d(TAG, "Reduce");
                 if(prev == seq-1) {
                     newSeq = seq;}
                 return newSeq; }) != totalSeg){

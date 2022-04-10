@@ -15,9 +15,11 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Infrastructure{
     final private static String TAG = "CD.Infrastructure";
@@ -357,15 +359,25 @@ public class Infrastructure{
     }
 
     private String handleResultGetAllocationFile(FileList fileList){
-        String id = null;
-        if(fileList.getFiles().size() > 0) {
-            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0) {
-                id = fileList.getFiles().get(0).getId();
-            } else {
-                Log.w(TAG, "No root allocation file in cdfs folder!");
-            }
-        }
-        return id;
+        AtomicReference<String> id = new AtomicReference<>();
+        Optional<File> files = null;
+//        if(fileList.getFiles().size() > 0) {
+//            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0) {
+//                id = fileList.getFiles().get(0).getId();
+//            } else {
+//                Log.w(TAG, "No root allocation file in cdfs folder!");
+//            }
+//        }
+        if(fileList.getFiles().size() > 0) {Log.d(TAG, "Files found in CDFS folder.");}
+
+        files = fileList.getFiles().stream().filter((file)->{
+            return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ?  true : false;
+        }).findAny();
+        if(!files.isPresent()){Log.w(TAG, "No root allocation file presents!");}
+        files.ifPresent((file) -> {
+            Log.d(TAG, "Root allocation file presents.");
+            id.set(file.getId());});
+        return id.get();
     }
 
     /*

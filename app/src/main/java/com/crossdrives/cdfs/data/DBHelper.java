@@ -9,11 +9,15 @@ import android.util.Log;
 
 import com.crossdrives.data.DBConstants;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DBHelper{
     private final String TAG = "CD.DBHelper";
     com.crossdrives.data.DBHelper dbh;
     ContentValues mCV = new ContentValues();
     private String mClauseGroup;
+    private List<String> mClauseSelect;
 
     final String  TABLE_ALLOCITEM_LIST = DBConstants.TABLE_ALLOCITEM_LIST;
     //Columns
@@ -95,8 +99,14 @@ public class DBHelper{
     /*
         Sql clauses
     */
-    public void GroupBy(String clause){
+    public DBHelper GroupBy(String clause){
         mClauseGroup = clause;
+        return this;
+    }
+
+    public DBHelper Select(List<String> columns){
+        mClauseSelect = columns;
+        return this;
     }
 
     public long insert(){
@@ -232,12 +242,26 @@ public class DBHelper{
 //                    + " WHERE " + expression[0] + " = " + expression[1] + " AND "
 //                    + expression[2] + " = " + expression[3]
 //                    + ";";
-            statement = "SELECT * "
-                    + " FROM " + TABLE_ALLOCITEM_LIST
-                    + " WHERE ";
+            statement = "SELECT";
+            /*
+                Select
+             */
+            if(mClauseSelect == null){
+                statement = statement.concat(" * ");
+            }else{
+                for(i = 0; i < mClauseSelect.size() - 1 ; i++) {
+                    statement = statement.concat(" " + mClauseSelect.get(i) + ",");
+                }
+                statement = statement.concat(" " + mClauseSelect.get(i));
+            }
+
+
+            statement = statement.concat(" FROM " + TABLE_ALLOCITEM_LIST);
+
             /*
                 filter
              */
+            statement = statement.concat(" WHERE ");
             for(i = 0; i < expression.length-1 ; i++){
                 statement = statement.concat(expression[i] + "AND ");
             }
@@ -246,7 +270,7 @@ public class DBHelper{
                 Grouping
              */
             if(mClauseGroup != null){
-                statement = statement.concat(" " + mClauseGroup);
+                statement = statement.concat(" GROUP BY " + mClauseGroup);
             }
 
             statement = statement.concat(";");

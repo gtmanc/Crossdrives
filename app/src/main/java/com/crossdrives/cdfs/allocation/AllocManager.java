@@ -104,6 +104,7 @@ public class AllocManager implements IAllocManager {
             /*
                 Each time new allocation fetched, we have to delete the old rows and then insert the new items
                 so that the duplicated rows can be removed.
+                TODO: this may not be the best way.
             */
             deleteAllExistingByDrive(key);
             /*
@@ -134,41 +135,43 @@ public class AllocManager implements IAllocManager {
             Build name list contains the unique names. We will use the list to query local
             database for cross item check.
         */
-        whole = getNameList(parent);
-        if(whole != null) {
-            if (whole.stream().filter((name) -> {
-                boolean result = true;
-                java.util.List<AllocationItem> items;
-                items = getItemsByName(name);
-                results.set(checker.checkItemsCrossly(items));
-                if (getConclusion(results.get())) {
-                } else {
-                    Log.w(TAG, "Corss item check: faulty items detected ");
-                    deleteItemsByName(name);
-                    result = false;
-                }
-                return result;
-            }).count() < whole.size()) {
-                globalResult.set(false);
-            }
-        }
+//        whole = getNameList(parent);
+//        if(whole != null) {
+//            if (whole.stream().filter((name) -> {
+//                boolean result = true;
+//                java.util.List<AllocationItem> items;
+//                items = getItemsByName(name);
+//                results.set(checker.checkItemsCrossly(items));
+//                if (getConclusion(results.get())) {
+//                } else {
+//                    Log.w(TAG, "Corss item check: faulty items detected ");
+//                    deleteItemsByName(name);
+//                    result = false;
+//                }
+//                return result;
+//            }).count() < whole.size()) {
+//                globalResult.set(false);
+//            }
+//        }
 
         java.util.List<String> IDs;
         IDs = getCdfsIdList(parent);
         if(IDs != null) {
+            Log.d(TAG, "Cross item check...");
             if (IDs.stream().filter((id) -> {
                 boolean result = true;
                 java.util.List<AllocationItem> items;
                 items = getItemsByID(id);
+                //Log.d(TAG, "Size of items: " + items.size());
                 results.set(checker.checkItemsCrossly(items));
                 if (getConclusion(results.get())) {
                 } else {
-                    Log.w(TAG, "Corss item check: faulty items detected ");
-                    deleteItemsByName(id);
+                    Log.w(TAG, "faulty items detected ");
+                    deleteItemsByID(id);
                     result = false;
                 }
                 return result;
-            }).count() < whole.size()) {
+            }).count() < IDs.size()) {
                 globalResult.set(false);
             }
         }
@@ -197,7 +200,9 @@ public class AllocManager implements IAllocManager {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         String filter;
         Cursor cursor = null;
-        java.util.List<String> names = null;
+        java.util.List<String> names = new ArrayList<>();
+        java.util.List<String> selects= new ArrayList<>();
+
         /*
             Set filter for parent
          */
@@ -208,13 +213,15 @@ public class AllocManager implements IAllocManager {
             filter = filter.concat(" =" + "\"" + parent + "\"");
         }
 
-        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
+        Log.d(TAG, "Get name list. Filter clause: " + filter);
 
+        dh.GroupBy(ALLOCITEMS_LIST_COL_NAME);
+        selects.add(ALLOCITEMS_LIST_COL_NAME);
+        dh.Select(selects);
         cursor = dh.query(filter);
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
-            cursor.close();
             return names;
         }
         if(cursor.getCount() <= 0){
@@ -238,25 +245,30 @@ public class AllocManager implements IAllocManager {
     private java.util.List<String> getCdfsIdList(String parent){
         java.util.List<String> IDs= new ArrayList<>();
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        String clause;
+        String filter;
+        java.util.List<String> selects= new ArrayList<>();
         Cursor cursor = null;
-        java.util.List<String> names = null;
 
         /*
             Set filter(clause) parent
          */
-        clause = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+        filter = DBConstants.ALLOCITEMS_LIST_COL_PATH;
         if(parent == null) {
-            clause = clause.concat(" =" + "\"" + "Root" + "\"");
+            filter = filter.concat(" =" + "\"" + "Root" + "\"");
         }else{
-            clause = clause.concat(" =" + "\"" + parent + "\"");
+            filter = filter.concat(" =" + "\"" + parent + "\"");
         }
 
+        Log.d(TAG, "Get CDFS ID list. Filter clause: " + filter);
+
+        selects.add(DBConstants.ALLOCITEMS_LIST_COL_CDFSID);
+        dh.Select(selects);
         dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
+
+        cursor = dh.query(filter);
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
-            cursor.close();
             return IDs;
         }
         if(cursor.getCount() <= 0){
@@ -269,7 +281,7 @@ public class AllocManager implements IAllocManager {
         cursor.moveToFirst();
         for(int i = 0 ; i < cursor.getCount(); i++){
             Log.d(TAG, "CDFS ID: " + cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_CDFSID)));
-            names.add(cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_CDFSID)));
+            IDs.add(cursor.getString(cursor.getColumnIndex(ALLOCITEMS_LIST_COL_CDFSID)));
             cursor.moveToNext();
         }
         cursor.close();
@@ -279,21 +291,21 @@ public class AllocManager implements IAllocManager {
     private java.util.List<AllocationItem> getItemsByName(String name){
         java.util.List<AllocationItem> items= new ArrayList<>();
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        String clause;
+        String filter;
         Cursor cursor = null;
         java.util.List<String> names = null;
+
         /*
             Set filter(clause) parent
          */
-        clause = DBConstants.ALLOCITEMS_LIST_COL_NAME;
-        clause = clause.concat(" =" + "\"" + name + "\"");
+        filter = DBConstants.ALLOCITEMS_LIST_COL_NAME;
+        filter = filter.concat(" =" + "\"" + name + "\"");
 
-        Log.w(TAG, "Get items by name. Clause: " + clause);
-        cursor = dh.query(clause);
+        Log.w(TAG, "Get items by name. Clause: " + filter);
+        cursor = dh.query(filter);
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
-            cursor.close();
             return items;
         }
         if(cursor.getCount() <= 0){
@@ -336,21 +348,21 @@ public class AllocManager implements IAllocManager {
     private java.util.List<AllocationItem> getItemsByID(String id){
         java.util.List<AllocationItem> items= new ArrayList<>();
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        String clause;
+        String filter;
         Cursor cursor = null;
         java.util.List<String> names = null;
+
         /*
             Set filter(clause) parent
          */
-        clause = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
-        clause = clause.concat(" =" + "\"" + id + "\"");
+        filter = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
+        filter = filter.concat(" =" + "\"" + id + "\"");
 
-        Log.w(TAG, "Get items by ID. Clause: " + clause);
-        cursor = dh.query(clause);
+        Log.d(TAG, "Get items by ID. Clause: " + filter);
+        cursor = dh.query(filter);
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
-            cursor.close();
             return items;
         }
         if(cursor.getCount() <= 0){
@@ -392,11 +404,11 @@ public class AllocManager implements IAllocManager {
 
     public void setDriveNameForTest(String name){mDriveName = name;}
     private void addTestContentGoogle(AllocContainer container){
-        java.util.List<AllocationItem> items = new ArrayList<>();
         AllocationItem item = new AllocationItem();
+        AllocationItem item2 = new AllocationItem();
         item.setDrive("Google");
         item.setName("Test1.txt");
-        item.setCdfsId("CDFSID_Text1");
+        item.setCdfsId("CDFSID_GoogleMicrosoft_Text1");
         item.setItemId("google_text1");
         item.setPath("Root");
         item.setSequence(1);
@@ -405,13 +417,25 @@ public class AllocManager implements IAllocManager {
         item.setCDFSItemSize(64);
         item.setAttrFolder(false);
         container.setAllocItem(item);
+
+        item2.setDrive("Google");
+        item2.setName("Test1.txt");
+        item2.setCdfsId("CDFSID_GoogleMicrosoft_Text1-1");
+        item2.setItemId("google_text1-1");
+        item2.setPath("Root");
+        item2.setSequence(1);
+        item2.setTotalSeg(2);
+        item2.setSize(32);
+        item2.setCDFSItemSize(64);
+        item2.setAttrFolder(false);
+        container.setAllocItem(item2);
     }
     private void addTestContentMicrosoft(AllocContainer container){
-        java.util.List<AllocationItem> items = new ArrayList<>();
         AllocationItem item = new AllocationItem();
+        AllocationItem item2 = new AllocationItem();
         item.setDrive("Microsoft");
         item.setName("Test1.txt");
-        item.setCdfsId("CDFSID_Text1");
+        item.setCdfsId("CDFSID_GoogleMicrosoft_Text1");
         item.setItemId("Microsoft_text1");
         item.setPath("Root");
         item.setSequence(2);
@@ -420,6 +444,18 @@ public class AllocManager implements IAllocManager {
         item.setCDFSItemSize(64);
         item.setAttrFolder(false);
         container.setAllocItem(item);
+
+        item2.setDrive("Microsoft");
+        item2.setName("Test1.txt");
+        item2.setCdfsId("CDFSID_GoogleMicrosoft_Text1-1");
+        item2.setItemId("Microsoft_text1-1");
+        item2.setPath("Root");
+        item2.setSequence(2);
+        item2.setTotalSeg(2);
+        item2.setSize(32);
+        item2.setCDFSItemSize(64);
+        item2.setAttrFolder(false);
+        container.setAllocItem(item2);
     }
 
     public void saveItem(AllocationItem item, String drive)
@@ -460,6 +496,14 @@ public class AllocManager implements IAllocManager {
         return deleted;
     }
 
+    public int deleteItemsByID(String ID){
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        int deleted;
+
+        deleted = dh.delete(DBConstants.ALLOCITEMS_LIST_COL_CDFSID, "\"" + ID + "\"");
+        Log.d(TAG, "ID " + ID + " items have been deleted: " + deleted);
+        return deleted;
+    }
 
     public OutputStream upload(File file){
         OutputStream stream = null;
