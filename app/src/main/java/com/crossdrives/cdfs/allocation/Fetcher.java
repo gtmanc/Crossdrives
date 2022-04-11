@@ -34,7 +34,7 @@ public class Fetcher {
 
     private HashMap<String, State> states = new HashMap<>();
     private HashMap<String, OutputStream> output = new HashMap<>();
-    ICallBackAllocationFetch callback;
+    ICallBackFetch callback;
 
     /*
         State for fetch
@@ -59,7 +59,7 @@ public class Fetcher {
         mDrives = drives; }
 
 
-    public void fetchAll(String parent, ICallBackAllocationFetch<HashMap<String, OutputStream>> callback) {
+    public void fetchAll(String parent, ICallBackFetch<HashMap<String, OutputStream>> callback) {
 
         this.callback = callback;
 

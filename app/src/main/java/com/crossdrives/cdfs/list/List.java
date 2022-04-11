@@ -4,10 +4,9 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.allocation.Checker;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Fetcher;
-import com.crossdrives.cdfs.allocation.ICallBackAllocationFetch;
+import com.crossdrives.cdfs.allocation.ICallBackFetch;
 import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
@@ -53,7 +52,7 @@ public class List {
             content of the downloaded allocation files are updated to local database.
          */
         Fetcher fetcher = new Fetcher(mCDFS.getDrives());
-        fetcher.fetchAll(parent, new ICallBackAllocationFetch<HashMap<String, OutputStream>>() {
+        fetcher.fetchAll(parent, new ICallBackFetch<HashMap<String, OutputStream>>() {
             @Override
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
                 java.util.List<AllocationItem> children, dirs;

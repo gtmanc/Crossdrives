@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity{
         silenceSignin();
     }
 
+    /*
+        TODO: Ticket #14
+     */
     private void silenceSignin() {
         SignInManager.Profile p = null;
 
