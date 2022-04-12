@@ -35,4 +35,8 @@
     <string name="signout_dialog_message">The App will be signed out</string>
     <string name="signout_dialog_action_signout">Sign out</string>
     <string name="signout_dialog_action_cancel">Cancel</string>
+
+    <!-- Option dialog floating action button -->
+    <string name="title_fab_option">Add</string>
+    <string name="button_fab_option_upload">Upload file</string>
 </resources>
