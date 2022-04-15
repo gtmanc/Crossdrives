@@ -247,6 +247,7 @@ public class AllocManager implements IAllocManager {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         String filter;
         java.util.List<String> selects= new ArrayList<>();
+
         Cursor cursor = null;
 
         /*
@@ -358,7 +359,8 @@ public class AllocManager implements IAllocManager {
         filter = DBConstants.ALLOCITEMS_LIST_COL_CDFSID;
         filter = filter.concat(" =" + "\"" + id + "\"");
 
-        Log.d(TAG, "Get items by ID. Clause: " + filter);
+        Log.w(TAG, "Get items by ID. Clause: " + filter);
+
         cursor = dh.query(filter);
 
         if(cursor == null){

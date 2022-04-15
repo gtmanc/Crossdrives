@@ -1,7 +1,9 @@
 package com.example.crossdrives;
 
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ActionMode;
@@ -15,6 +17,10 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 import android.widget.SearchView;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,6 +37,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.activity.FABOptionDialog;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IServiceCallback;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
@@ -568,7 +575,12 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		@Override
 		public void onClick(View v) {
 			Log.d(TAG, "fab is clicked");
-		}};
+			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
+			//intent.putExtra("Brand", SignInManager.BRAND_MS);
+			mStartForResult.launch(intent);
+
+		}
+	};
 
 	@Override
 	public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
@@ -763,4 +775,30 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 			return true;
 		}
 	};
+
+	private ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+			new ActivityResultCallback<ActivityResult>() {
+				@Override
+				public void onActivityResult(ActivityResult result) {
+
+					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
+					if (result.getResultCode() == Activity.RESULT_OK) {
+						Intent intent = result.getData();
+						String option = intent.getStringExtra(FABOptionDialog.KEY_ACTION);
+						handleOptionFab(option);
+					}
+					else{
+						Log.w(TAG, "Activity result not success!");
+					}
+				}
+			});
+
+	@NonNull
+	private void handleOptionFab(String option){
+		if(option == null){
+			Log.w(TAG, "Option is null!");
+		}
+
+		if(option == FABOptionDialog.ACTION_UPLOAD){}
+	}
 }
