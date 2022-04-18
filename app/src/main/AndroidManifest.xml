@@ -54,7 +54,8 @@
             android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
         </activity>
         <activity android:name="com.crossdrives.activity.FABOptionDialog"
-            android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
+            android:theme="@style/Theme.Custom.Option.MaterialComponents.Dialog.MinWidth"
+            android:excludeFromRecents="true">
         </activity>
         <!--Intent filter to capture System Browser or Authenticator calling back to our app after sign-in-->
         <activity
@@ -65,7 +66,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="msauth"
                     android:host="com.example.crossdrives"
-                    android:path="/7NUW7dEPvRvg/yipPPdvMD/CwYA=" />
+                    android:path="/yuA+nLjqHb+lo8n78AI7ZAgEens=" />
             </intent-filter>
         </activity>
         <provider android:name=".SearchSuggestionProvider"

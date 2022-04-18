@@ -113,6 +113,7 @@
   <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
   </style>
 
+  <!-- Alert dialogs -->
   <style name="Theme.Custom.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog.MinWidth">
     <!--Background: Transparent-->
     <item name="android:windowBackground">@color/colorTransparant</item>
@@ -131,6 +132,43 @@
     <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
     <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
     <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
+  </style>
+
+  <!-- Option Dialogs -->
+  <style name="Theme.Custom.Option.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog">
+    <!--Background. This is the background of the dialog. Dont confused with the parent-->
+    <item name="android:windowBackground">@color/colorTransparant</item>
+
+    <!--Border-->
+    <item name="android:windowFrame">@null</item>
+
+    <!--<item name="android:windowIsTranslucent">true</item>-->
+
+    <item name="android:background">@drawable/option_dialog_background</item>
+    <!-- No effect observed:
+    <item name="android:backgroundDimEnabled">true</item>
+    <item name="android:backgroundDimAmount">0.5</item>
+    <item name="android:windowIsFloating">false</item>
+    <item name="android:windowIsTranslucent">true</item>-->
+
+
+    <!-- Material input text -->
+    <item name="colorOnSurface">@android:color/holo_blue_light</item>
+    <!-- colorPrimary will affect stroke and floating text color -->
+    <item name="colorPrimary">@android:color/holo_blue_light</item>
+
+    <!--Action buttons -->
+    <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
+    <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
+    <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
+    <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
+    <item name="colorActionButton1Content">@android:color/white</item>
+
+    <!-- activity transition animation. No effect observed:
+    <item name="android:windowActivityTransitions">true</item>
+    <item name="android:windowEnterTransition">@android:transition/slide_bottom</item>
+    <item name="android:windowExitTransition">@android:transition/slide_bottom</item> -->
+
   </style>
 
   <style name="Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">

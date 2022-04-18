@@ -3,7 +3,6 @@ package com.example.crossdrives;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ActionMode;
@@ -37,17 +36,17 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.activity.FABOptionAlertDialog;
 import com.crossdrives.activity.FABOptionDialog;
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.IServiceCallback;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -144,6 +143,9 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		View hv = mNavigationView.getHeaderView(0);
 		hv.setOnClickListener(onHeaderClick);
 		fab.setOnClickListener(onFabClick);
+
+		View bottomSheet = view.findViewById(R.id.bottom_nav_view);
+		mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 
 		//always register the callback because it is removed in onPause
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
@@ -577,8 +579,9 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 			Log.d(TAG, "fab is clicked");
 			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
 			//intent.putExtra("Brand", SignInManager.BRAND_MS);
-			mStartForResult.launch(intent);
-
+			//mStartForResult.launch(intent);
+			FABOptionAlertDialog dialog = new FABOptionAlertDialog();
+			dialog.show(getParentFragmentManager(), "FABOptionAlertDialog");
 		}
 	};
 
@@ -780,12 +783,12 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 			new ActivityResultCallback<ActivityResult>() {
 				@Override
 				public void onActivityResult(ActivityResult result) {
-
+					Log.d(TAG, "callback from FABOptionDialog!");
 					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
 					if (result.getResultCode() == Activity.RESULT_OK) {
 						Intent intent = result.getData();
-						String option = intent.getStringExtra(FABOptionDialog.KEY_ACTION);
-						handleOptionFab(option);
+
+						handleOptionFab(intent);
 					}
 					else{
 						Log.w(TAG, "Activity result not success!");
@@ -793,12 +796,19 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 				}
 			});
 
-	@NonNull
-	private void handleOptionFab(String option){
+	private void handleOptionFab(@NonNull Intent intent){
+		String option = intent.getStringExtra(FABOptionDialog.KEY_ACTION);
+		String uri = intent.getStringExtra(FABOptionDialog.KEY_DATA_URI);
+
 		if(option == null){
 			Log.w(TAG, "Option is null!");
 		}
 
-		if(option == FABOptionDialog.ACTION_UPLOAD){}
+		if(option.equals(FABOptionDialog.ACTION_UPLOAD)){
+			Log.d(TAG, "User action: Upload. Uri: " + uri);
+		}
+		else{
+			Log.w(TAG, "Unknown option!");
+		}
 	}
 }

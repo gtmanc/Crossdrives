@@ -104,7 +104,12 @@
         android:layout_gravity="start"
         app:headerLayout="@layout/drawer_header"
         app:menu="@menu/menu_main_drawer"
+        app:layout_behavior="@string/bottom_sheet_behavior"
+        app:behavior_hideable="true"
         android:fitsSystemWindows="true" />
-
-
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id = "@+id/bottom_nav_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+    />
 </androidx.drawerlayout.widget.DrawerLayout>

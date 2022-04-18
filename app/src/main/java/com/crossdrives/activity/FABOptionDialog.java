@@ -1,8 +1,6 @@
 package com.crossdrives.activity;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,23 +12,18 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
 
 import com.example.crossdrives.R;
-import com.example.crossdrives.SignOutDialog;
 
 public class FABOptionDialog extends ComponentActivity {
     final String TAG = "CD.FABOptionDialog";
     public static String KEY_ACTION = "Action";
     public static String ACTION_UPLOAD = "upload";
-
-    public static String KEY_ADDITIONAL_DATA = "Additional data";
+    public static String KEY_DATA_URI = "data uri";
 
     private FABOptionDialog mActivity;
+    private Intent intent = new Intent();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,6 +32,7 @@ public class FABOptionDialog extends ComponentActivity {
         setContentView(R.layout.fab_option_dialog);
         mActivity = this;
 
+        this.setFinishOnTouchOutside(false);
         findViewById(R.id.button_fab_option_dialog_upload).setOnClickListener(clickUpload);
     }
 
@@ -47,7 +41,6 @@ public class FABOptionDialog extends ComponentActivity {
     View.OnClickListener clickUpload = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Intent intent = new Intent();
             intent.putExtra(KEY_ACTION, ACTION_UPLOAD);
             mActivity.setResult(RESULT_OK, intent);
             mStartForResult.launch(createFilePickerIntent());
@@ -76,15 +69,13 @@ public class FABOptionDialog extends ComponentActivity {
             new ActivityResultCallback<ActivityResult>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    Intent resultData = new Intent();
 
                     //Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
                     if (result.getResultCode() == Activity.RESULT_OK) {
-                        Intent intent = result.getData();
-                        Uri uri = intent.getData();
+                        Uri uri = result.getData().getData();
                         if (uri != null){
-
-                            resultData..putExtra(KEY_ADDITIONAL_DATA, uri);
+                            intent.putExtra(KEY_DATA_URI, uri.toString());
+                            mActivity.setResult(RESULT_OK, intent);
                         }
                         else{
                             Log.w(TAG, "URL is null!");
