@@ -94,6 +94,15 @@
                 app:tint="@color/colorPrimary"
                 />
         </androidx.constraintlayout.widget.ConstraintLayout>
+        <com.google.android.material.bottomappbar.BottomAppBar
+            android:id = "@+id/bottom_nav_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            style="@style/Widget.MaterialComponents.BottomAppBar"
+            app:menu="@menu/menu_main_drawer"
+            />
+        <!--app:navigationIcon="@drawable/ic_menu_24dp"-->
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView
@@ -104,12 +113,8 @@
         android:layout_gravity="start"
         app:headerLayout="@layout/drawer_header"
         app:menu="@menu/menu_main_drawer"
-        app:layout_behavior="@string/bottom_sheet_behavior"
-        app:behavior_hideable="true"
         android:fitsSystemWindows="true" />
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id = "@+id/bottom_nav_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-    />
+    <!--app:layout_behavior="@string/bottom_sheet_behavior"
+        app:behavior_hideable="true" -->
+
 </androidx.drawerlayout.widget.DrawerLayout>

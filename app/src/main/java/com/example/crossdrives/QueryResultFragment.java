@@ -144,8 +144,8 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		hv.setOnClickListener(onHeaderClick);
 		fab.setOnClickListener(onFabClick);
 
-		View bottomSheet = view.findViewById(R.id.bottom_nav_view);
-		mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+//		View bottomSheet = view.findViewById(R.id.bottom_nav_view);
+//		mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 
 		//always register the callback because it is removed in onPause
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);

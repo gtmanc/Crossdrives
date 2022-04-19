@@ -68,6 +68,7 @@ public class SignInMS extends SignInManager{
                     @Override
                     public void onError(MsalException exception) {
                         Log.w(TAG, "signInResult:failed! " + exception.toString());
+                        callback.onFailure(exception.toString());
                     }
                 });
 
@@ -88,6 +89,7 @@ public class SignInMS extends SignInManager{
                     @Override
                     public void onError(MsalException exception) {
                         Log.w(TAG, "signInResult:failed! " + exception.toString());
+                        mOnSignInfinished.onFailure(exception.toString());
                     }
                 });
 
@@ -174,6 +176,7 @@ public class SignInMS extends SignInManager{
     private void loadAccount(){
         if (mSingleAccountApp == null) {
             Log.w(TAG, "mSingleAccountApp is null!");
+            mOnSignInfinished.onFailure("Unknown failure!");
             return;
         }
 
@@ -193,6 +196,7 @@ public class SignInMS extends SignInManager{
                     // Perform a cleanup task as the signed-in account changed.
                     //performOperationOnSignOut();
                     Log.d(TAG, "onAccountChanged");
+                    mOnSignInfinished.onFailure("Account has changed. Not yet implemented.");
                 }
             }
 
@@ -201,6 +205,7 @@ public class SignInMS extends SignInManager{
                 //displayError(exception);
                 Log.w(TAG, "signInResult:failed! Code=" + exception.toString());
                 Log.w(TAG, " + exception.getMessage())");
+                mOnSignInfinished.onFailure(exception.getMessage());
             }
         });
     }
