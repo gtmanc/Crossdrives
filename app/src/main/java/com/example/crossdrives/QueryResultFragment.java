@@ -69,6 +69,7 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 	private QueryFileAdapter mAdapter;
 	private Toolbar mToolbar = null;
 	private View mView = null;
+	private BottomSheetBehavior bottomSheetBehavior;
 
 	final String STATE_NORMAL = "state_normal";
 	final String STATE_ITEM_SELECTION = "state_selection";
@@ -130,7 +131,7 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 
 		mProgressBar = view.findViewById(R.id.progressBar);
 
-		//Note: drawer doenst work if this line of code is added after setupWithNavController
+		//Note: drawer doesn't work if this line of code is added after setupWithNavController
 		((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
 		Log.d(TAG, "Set toolbar done");
 
@@ -144,9 +145,10 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		hv.setOnClickListener(onHeaderClick);
 		fab.setOnClickListener(onFabClick);
 
-//		View bottomSheet = view.findViewById(R.id.bottom_nav_view);
-//		mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-
+		View bottomSheet = view.findViewById(R.id.bottomNavigationView);
+		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+		bottomSheetBehavior.setHideable(true);//this one has been set to true in layout
+		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		//always register the callback because it is removed in onPause
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
@@ -158,8 +160,11 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
+		mDrawer.setOnClickListener(onContainerClick);
 
 		mProgressBar.setVisibility(View.VISIBLE);
+
+
 
 		initialQuery();
 		queryFile(view);
@@ -577,11 +582,21 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		@Override
 		public void onClick(View v) {
 			Log.d(TAG, "fab is clicked");
-			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
-			//intent.putExtra("Brand", SignInManager.BRAND_MS);
-			//mStartForResult.launch(intent);
-			FABOptionAlertDialog dialog = new FABOptionAlertDialog();
-			dialog.show(getParentFragmentManager(), "FABOptionAlertDialog");
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+//			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
+//			//intent.putExtra("Brand", SignInManager.BRAND_MS);
+//			//mStartForResult.launch(intent);
+//			FABOptionAlertDialog dialog = new FABOptionAlertDialog();
+//			dialog.show(getParentFragmentManager(), "FABOptionAlertDialog");
+		}
+	};
+
+	View.OnClickListener onContainerClick = new View.OnClickListener(){
+
+		@Override
+		public void onClick(View view) {
+			Log.d(TAG, "onContainerClick");
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 	};
 
