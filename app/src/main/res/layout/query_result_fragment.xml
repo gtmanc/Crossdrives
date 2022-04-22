@@ -95,13 +95,17 @@
                 />
                 <!-- app:layout_anchor="@id/bottomAppBar" -->
         <!--</androidx.constraintlayout.widget.ConstraintLayout> -->
+        <FrameLayout
+            android:id="@+id/scrim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
         <com.google.android.material.navigation.NavigationView
             android:id = "@+id/bottomNavigationView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_behavior="@string/bottom_sheet_behavior"
             app:behavior_hideable="true"
-            app:menu="@menu/menu_main_drawer" />
+            app:menu="@menu/menu_bottom_sheet" />
         <com.google.android.material.bottomappbar.BottomAppBar
             android:id = "@+id/bottomAppBar"
             android:layout_width="match_parent"
@@ -109,6 +113,7 @@
             android:layout_gravity="bottom"
             style="@style/Widget.MaterialComponents.BottomAppBar"
             app:menu="@menu/menu_bottom_appbar"
+            android:visibility="visible"
             />
         <!--app:navigationIcon="@drawable/ic_menu_24dp"-->
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

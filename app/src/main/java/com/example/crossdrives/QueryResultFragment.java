@@ -36,7 +36,6 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.crossdrives.activity.FABOptionAlertDialog;
 import com.crossdrives.activity.FABOptionDialog;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
@@ -55,11 +54,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class QueryResultFragment extends Fragment implements NavigationView.OnNavigationItemSelectedListener,
-		DrawerLayout.DrawerListener{
+public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
 	private String TAG = "CD.QueryResultFragment";
 	DrawerLayout mDrawer = null;
-	NavigationView mNavigationView;
+	NavigationView mNavigationView, mBottomNavigationView;
 
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
@@ -67,7 +65,7 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	private QueryFileAdapter mAdapter;
-	private Toolbar mToolbar = null;
+	private Toolbar mToolbar, mBottomAppBar;
 	private View mView = null;
 	private BottomSheetBehavior bottomSheetBehavior;
 
@@ -128,7 +126,7 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 				new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
 
 		mToolbar = view.findViewById(R.id.qr_toolbar);
-
+		mBottomAppBar = view.findViewById(R.id.bottomAppBar);
 		mProgressBar = view.findViewById(R.id.progressBar);
 
 		//Note: drawer doesn't work if this line of code is added after setupWithNavController
@@ -139,11 +137,16 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 				mToolbar, navController, appBarConfiguration);
 
 		mNavigationView = view.findViewById(R.id.nav_view);
-		mNavigationView.setNavigationItemSelectedListener(this);
+		mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
 		mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
 		View hv = mNavigationView.getHeaderView(0);
 		hv.setOnClickListener(onHeaderClick);
 		fab.setOnClickListener(onFabClick);
+
+		mBottomNavigationView = view.findViewById(R.id.bottomNavigationView);
+		mBottomNavigationView.setNavigationItemSelectedListener(OnBottomNavItemSelectedListener);
+		//mBottomAppBar.setNavigationOnClickListener(); //e.g. the drawer icon. We never use so far
+		mBottomAppBar.setOnMenuItemClickListener(onBottomAppBarMenuItemClickListener);
 
 		View bottomSheet = view.findViewById(R.id.bottomNavigationView);
 		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
@@ -160,7 +163,7 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
-		mDrawer.setOnClickListener(onContainerClick);
+		view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
 		mProgressBar.setVisibility(View.VISIBLE);
 
@@ -591,11 +594,11 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		}
 	};
 
-	View.OnClickListener onContainerClick = new View.OnClickListener(){
+	View.OnClickListener onScrimClick = new View.OnClickListener(){
 
 		@Override
 		public void onClick(View view) {
-			Log.d(TAG, "onContainerClick");
+			Log.d(TAG, "onScrimClick");
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 	};
@@ -652,30 +655,55 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 
 	}
 
-	@Override
-	public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-		// Handle navigation view item clicks here.
-		int id = item.getItemId();
+	NavigationView.OnNavigationItemSelectedListener OnNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+		@Override
+		public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+			// Handle navigation view item clicks here.
+			int id = item.getItemId();
 
-		if(item.isChecked())
-			Log.d(TAG, "checked!");
+//			if(item.isChecked())
+//				Log.d(TAG, "checked!");
 
-		//close drawer right here. Otherwise, the drawer is still there if screen is switched back from next one
-		mDrawer.closeDrawers();
+			//close drawer right here. Otherwise, the drawer is still there if screen is switched back from next one
+			mDrawer.closeDrawers();
 
-		//The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
-		//drawer is closed exactly before screen proceed to next one
-		if (id == R.id.drawer_menu_item_master_account) {
-			Log.d(TAG, "Master account selected!");
-		}else if(id == R.id.drawer_menu_item_two){
-			Log.d(TAG, "nav_item_two selected!");
-		}else if(id == R.id.nav_item_hidden){
-			Log.d(TAG, "nav_item_three selected!");
-		}else{
-			Log.d(TAG, "Unknown selected!");
+			//The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
+			//drawer is closed exactly before screen proceed to next one
+			if (id == R.id.drawer_menu_item_master_account) {
+				Log.d(TAG, "Master account selected!");
+			}else if(id == R.id.drawer_menu_item_two){
+				Log.d(TAG, "nav_item_two selected!");
+			}else if(id == R.id.nav_item_hidden){
+				Log.d(TAG, "nav_item_three selected!");
+			}else{
+				Log.d(TAG, "Unknown selected!");
+			}
+			return true;
 		}
-		return true;
-	}
+	};
+
+	NavigationView.OnNavigationItemSelectedListener OnBottomNavItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+		@Override
+		public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+			// Handle navigation view item clicks here.
+			int id = item.getItemId();
+
+//			if(item.isChecked())
+//				Log.d(TAG, "checked!");
+
+			//close bottom sheet here. Otherwise, the sheet is still there if screen is switched back from next one
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+			//The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
+			//drawer is closed exactly before screen proceed to next one
+			if (id == R.id.sheet_menu_item_upload_file) {
+				Log.d(TAG, "Bottom sheet option upload file is selected");
+			}else{
+				Log.d(TAG, "Unknown selected!");
+			}
+			return true;
+		}
+	};
 
 	@Override
 	public void onPause() {
@@ -789,7 +817,16 @@ public class QueryResultFragment extends Fragment implements NavigationView.OnNa
 		@Override
 		public boolean onMenuItemClick(MenuItem item) {
 			//YourActivity.this.someFunctionInYourActivity();
-			Log.d(TAG, "Menu item action pressed!!");
+			Log.d(TAG, "Top app bar menu item action pressed!!");
+			return true;
+		}
+	};
+
+	private Toolbar.OnMenuItemClickListener onBottomAppBarMenuItemClickListener = new Toolbar.OnMenuItemClickListener() {
+		@Override
+		public boolean onMenuItemClick(MenuItem item) {
+			//YourActivity.this.someFunctionInYourActivity();
+			Log.d(TAG, "Bottom app bar menu item action pressed!!");
 			return true;
 		}
 	};
