@@ -83,6 +83,7 @@
                 />
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fab"
+                style = "@style/Widget.App.FloatingActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:layout_constraintRight_toRightOf="parent"
@@ -90,8 +91,6 @@
                 android:layout_gravity="bottom|end"
                 android:layout_margin="@dimen/fab_margin"
                 app:srcCompat="@android:drawable/ic_input_add"
-                app:backgroundTint="@color/colorFABBackground"
-                app:tint="@color/colorPrimary"
                 />
                 <!-- app:layout_anchor="@id/bottomAppBar" -->
         <!--</androidx.constraintlayout.widget.ConstraintLayout> -->
@@ -113,7 +112,7 @@
             android:layout_gravity="bottom"
             style="@style/Widget.MaterialComponents.BottomAppBar"
             app:menu="@menu/menu_bottom_appbar"
-            android:visibility="visible"
+            android:visibility="invisible"
             />
         <!--app:navigationIcon="@drawable/ic_menu_24dp"-->
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

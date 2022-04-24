@@ -36,7 +36,7 @@
         />
     <Button
         android:id="@+id/add_account_btn_google"
-        style="@style/Widget.Custom.Button1"
+        style="@style/Widget.App.Button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/button_signin_google"
@@ -48,7 +48,7 @@
         android:drawablePadding="16dp"/>
     <Button
         android:id="@+id/add_account_btn_ms"
-        style="@style/Widget.Custom.Button1"
+        style="@style/Widget.App.Button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/button_signin_ms"

@@ -1,17 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Button2: Add master account (navigate to add master account fragment)-->
-    <style name="Widget.Custom.Button2" parent="Widget.AppCompat.Button">
-        <item name="android:background">?attr/button2Background</item>
+    <style name="Widget.App.Button2" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:background">?attr/button2Background</item>-->
+        <!-- The background is transparent by default in outline button. We don't specify backgroundTine
+        in attribute button2Background. Set backgroundTint to specify background color -->
         <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
         <item name="android:textColor">?attr/colorButton2Content</item>
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
         <item name="android:drawableTint">?attr/colorButton2Content</item>
+        <!-- Setting strokeColor and strokeWidth have no effect we already set android:background
+        However, changing stroke color and width in button2_background_xxx doenst work!-->
     </style>
-    <!-- Button1: Add master account brand-->
-    <style name="Widget.Custom.Button1" parent="Widget.AppCompat.Button">
+
+    <style name="Widget.Test.App.Button2" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/colorAccent</item>
+
+    </style>
+
+    <!-- Button1: Brand button in Add master account screen-->
+    <style name="Widget.App.Button1" parent="Widget.MaterialComponents.Button">
         <item name="android:background">?attr/button1Background</item>
+        <item name="backgroundTint">@color/colorSecondary</item>
         <item name="android:textAppearance">
             @style/TextAppearance.AppCompat.Light.SearchResult.Subtitle
         </item>
@@ -19,9 +30,29 @@
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
         <item name="android:drawableTint">?attr/colorButton1Content</item>
+        <!--<item name="iconTint">?attr/colorButton1Content</item>-->
     </style>
 
+    <!-- Button in Signout dialog and system test -->
     <style name="Widget.Custom.ActionButton1" parent="Widget.AppCompat.ActionButton">
         <item name="android:textColor">?attr/colorActionButton1Content</item>
     </style>
+
+    <!-- Floating action buttom-->
+    <style name="Widget.App.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.FloatingActionButton</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.SmallComponent </item>
+        <item name="backgroundTint">@color/colorFABBackground</item>
+        <item name="tint">@color/colorPrimary</item>
+    </style>
+    <style name="ShapeAppearance.App.SmallComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+    <style name="ThemeOverlay.App.FloatingActionButton" parent="">
+        <!--<item name="colorSecondary">@color/shrine_pink_100</item>
+         <item name="colorOnSecondary">@color/shrine_pink_900</item>
+        <item name="colorOnSurface">@color/shrine_pink_900</item> -->
+    </style>
+
 </resources>

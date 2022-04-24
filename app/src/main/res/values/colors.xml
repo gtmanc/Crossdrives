@@ -5,10 +5,11 @@
   <color name="colorPrimaryDark">#00574B</color>
   <color name="colorAccent">#D81B60</color>
   <color name="colorTransparant">#000000</color>
+  <color name="colorSecondary">#00ACC1</color>
 
   <!--            background          -->
   <!--Common used-->
-  <color name="colorBackground">#222222</color>
+  <color name="colorBackground">@color/colorPrimary</color>
 
   <!-- Tool bar -->
   <color name="colorToolbarBackground">#363640</color>
@@ -30,14 +31,14 @@
   Buttons
   -->
   <!-- General buttons -->
-  <color name="colorButton1BackgroundRelease">#00ACC1</color>
+  <color name="colorButton1BackgroundRelease">@color/colorSecondary</color>
   <color name="colorButton1BackgroundPress">#41BBDEFB</color>
   <!--Tool bar buttons-->
-  <color name="colorActionModeOverflow">#00ACC1</color>
+  <color name="colorActionModeOverflow">@color/colorSecondary</color>
 
   <!-- Action buttons -->
   <color name="colorActionButton1BackgroundPress">#41BBDEFB</color>
-  <color name="colorFABBackground">#039BE5</color>
+  <color name="colorFABBackground">@color/colorSecondary</color>
 
   <!-- Dialog-->
   <color name="colorDialog1background">#222222</color>
@@ -45,13 +46,13 @@
   <!--            Text           -->
   <color name="colorTextSecondary">#939393</color>
   <!-- Tool bar-->
-  <color name="colorActionModeText">#00ACC1</color>
+  <color name="colorActionModeText">@color/colorSecondary</color>
 
   <!-- General buttons -->
   <color name="colorTextButton1">#1B1B1B</color>
   <color name="colorTextButton2">#1B1B1B</color>
   <!-- Action button -->
-  <color name="colorTextActionButton1">#00ACC1</color>
+  <color name="colorTextActionButton1">@color/colorSecondary</color>
 
 
   <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#FFFFFF</color>

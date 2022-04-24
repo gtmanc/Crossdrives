@@ -43,6 +43,7 @@
     <item name="button2Background">@drawable/button2_background_state</item>
     <item name="colorButton2BackgroundPress">@color/colorButton1BackgroundPress</item>
     <item name="colorButton2BackgroundRelease">@color/colorBackground</item>
+    <!-- stroke color doesnt show as expected after AppTheme is changed to Material. It seems transparent always-->
     <item name="colorButton2Stroke">@color/colorButton1BackgroundRelease</item>
     <item name="colorButton2Content">@color/button1_content_color_state</item>
     <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
@@ -129,7 +130,7 @@
     <!--Action buttons -->
     <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
     <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
-    <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
+    <item name="colorActionButton1BackgroundRelease">@color/colorSecondary</item>
     <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
     <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
   </style>
@@ -160,7 +161,7 @@
     <!--Action buttons -->
     <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
     <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
-    <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
+    <item name="colorActionButton1BackgroundRelease">@color/colorSecondary</item>
     <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
     <item name="colorActionButton1Content">@android:color/white</item>
 
