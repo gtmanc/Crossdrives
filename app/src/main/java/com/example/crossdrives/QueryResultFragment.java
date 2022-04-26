@@ -696,10 +696,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			//The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
 			//drawer is closed exactly before screen proceed to next one
+			Log.d(TAG, "Bottom item is clicked: ");
 			if (id == R.id.sheet_menu_item_upload_file) {
-				Log.d(TAG, "Bottom sheet option upload file is selected");
+				Log.d(TAG, "Upload");
 			}else{
-				Log.d(TAG, "Unknown selected!");
+				Log.w(TAG, "Unknown!");
 			}
 			return true;
 		}
