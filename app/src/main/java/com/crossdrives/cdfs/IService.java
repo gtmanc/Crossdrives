@@ -9,5 +9,8 @@ import java.io.OutputStream;
 public interface IService {
     public Task list(Object nextPage) throws MissingDriveClientException, Throwable;
 
+
+    public Task upload() throws MissingDriveClientException, Throwable;
+
     public Task<OutputStream> download(String id);
 }

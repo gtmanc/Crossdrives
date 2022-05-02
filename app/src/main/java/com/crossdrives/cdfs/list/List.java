@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class List {
-    final String TAG = "CD.Allocation.List";
+    final String TAG = "CD.List";
     CDFS mCDFS;
 
     //Columns

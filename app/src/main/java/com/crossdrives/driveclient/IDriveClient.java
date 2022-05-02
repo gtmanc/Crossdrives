@@ -1,5 +1,6 @@
 package com.crossdrives.driveclient;
 
+import com.crossdrives.driveclient.about.IAboutRequestBuilder;
 import com.crossdrives.driveclient.create.ICreateRequestBuilder;
 import com.crossdrives.driveclient.delete.IDeleteRequestBuilder;
 import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
@@ -34,4 +35,9 @@ public interface IDriveClient {
         Delete file(item)
      */
     IDeleteRequestBuilder delete();
+
+    /*
+        About
+     */
+    IAboutRequestBuilder about();
 }

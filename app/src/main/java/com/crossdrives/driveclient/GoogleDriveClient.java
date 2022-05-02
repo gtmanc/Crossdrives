@@ -3,6 +3,8 @@ package com.crossdrives.driveclient;
 import android.content.Context;
 import android.util.Log;
 
+import com.crossdrives.driveclient.about.GoogleDriveAboutRequestBuilder;
+import com.crossdrives.driveclient.about.IAboutRequestBuilder;
 import com.crossdrives.driveclient.create.GoogleDriveCreateRequestBuilder;
 import com.crossdrives.driveclient.create.ICreateRequestBuilder;
 import com.crossdrives.driveclient.delete.GoogleDriveDeleteRequestBuilder;
@@ -19,7 +21,9 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.About;
 
+import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -115,7 +119,6 @@ public class GoogleDriveClient implements IDriveClient {
                 Log.w(TAG, "googleDriveService is null!");
 
             gClient.setGoogleDriveService(googleDriveService);
-            //gClient.setGDriveHelper(new DriveServiceHelper(googleDriveService));
 
             if (googleDriveService == null)
                 Log.w(TAG, "googleDriveService is null!");
@@ -150,6 +153,11 @@ public class GoogleDriveClient implements IDriveClient {
     @Override
     public IDeleteRequestBuilder delete() {
         return new GoogleDriveDeleteRequestBuilder(this);
+    }
+
+    @Override
+    public IAboutRequestBuilder about() {
+        return new GoogleDriveAboutRequestBuilder(this);
     }
 
 

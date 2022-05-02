@@ -4,6 +4,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.crossdrives.driveclient.about.IAboutRequestBuilder;
+import com.crossdrives.driveclient.about.OneDriveAboutRequestBuilder;
 import com.crossdrives.driveclient.create.ICreateRequestBuilder;
 import com.crossdrives.driveclient.create.OneDriveCreateRequestBuilder;
 import com.crossdrives.driveclient.delete.IDeleteRequestBuilder;
@@ -121,6 +123,11 @@ public class OneDriveClient implements IDriveClient {
     @Override
     public IDeleteRequestBuilder delete() {
         return new OneDriveDeleteRequestBuilder(this);
+    }
+
+    @Override
+    public IAboutRequestBuilder about() {
+        return new OneDriveAboutRequestBuilder(this);
     }
 
     public static OneDriveClient fromConfig(String token){

@@ -7,15 +7,15 @@ import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
+import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
@@ -40,8 +40,10 @@ public class Service implements IService{
     //private final Executor sExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
-    final Lock lock = new ReentrantLock();
-    final Condition queryFinished  = lock.newCondition();
+    final Lock ListLock = new ReentrantLock();
+    final Lock uploadLock = new ReentrantLock();
+    final Condition queryFinished  = ListLock.newCondition();
+    final Condition uploadFinished  = ListLock.newCondition();
     /*
     A flag used to synchronize the drive client callback. Always set to false each time an operation
     is performed.
@@ -109,34 +111,34 @@ public class Service implements IService{
         task = Tasks.call(mExecutor, new Callable<Object>() {
             @Override
             public com.crossdrives.cdfs.Result call() throws Exception {
-                lock.lock();
+                ListLock.lock();
                 list.list(null, new ICallbackList<FileList>() {
                     @Override
                     public void onSuccess(FileList files) {
                         fileList[0] = files;
-                        lock.lock();
+                        ListLock.lock();
                         queryFinished.signal();
-                        lock.unlock();
+                        ListLock.unlock();
                     }
                     @Override
                     public void onCompleteExceptionally(FileList files, java.util.List<Result> results) {
                         fileList[0] = files;
                         allocCheckResults[0] = results;
-                        lock.lock();
+                        ListLock.lock();
                         queryFinished.signal();
-                        lock.unlock();
+                        ListLock.unlock();
                     }
                     @Override
                     public void onFailure(Throwable throwable) {
                         throwables[0] = throwable;
-                        lock.lock();
+                        ListLock.lock();
                         queryFinished.signal();
-                        lock.unlock();
+                        ListLock.unlock();
                     }
                 });
 
                 queryFinished.await();
-                lock.unlock();
+                ListLock.unlock();
 
                 if(throwables[0] != null){
                     throw new GeneralServiceException("", throwables[0]);
@@ -148,6 +150,35 @@ public class Service implements IService{
             }
         });
 
+        return task;
+    }
+
+    @Override
+    public Task upload() throws MissingDriveClientException {
+        Upload upload = new Upload(mCDFS);
+        Task task;
+
+        Log.d(TAG, "CDFS Service: Upload");
+
+        mCDFS.requiresDriveClientNonNull();
+
+        task = Tasks.call(mExecutor, new Callable<About>() {
+
+            @Override
+            public About call() throws Exception {
+                About about = null;
+                //uploadLock.lock();
+                upload.upload();
+                return about;
+
+//                uploadFinished.await();
+//                ListLock.unlock();
+
+//                if(throwables[0] != null){
+//                    throw new GeneralServiceException("", throwables[0]);
+//                }
+            }
+        });
         return task;
     }
 

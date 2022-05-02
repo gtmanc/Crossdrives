@@ -699,6 +699,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.d(TAG, "Bottom item is clicked: ");
 			if (id == R.id.sheet_menu_item_upload_file) {
 				Log.d(TAG, "Upload");
+				try {
+					CDFS.getCDFSService(getActivity()).getService().upload();
+				} catch (MissingDriveClientException e) {
+					e.printStackTrace();
+				}
 			}else{
 				Log.w(TAG, "Unknown!");
 			}

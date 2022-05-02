@@ -93,7 +93,7 @@ public class Infrastructure{
 
                         @Override
                         public void failure(String ex) {
-                            checkFolderFuture.completeExceptionally(new Throwable(""));
+                            checkFolderFuture.completeExceptionally(new Throwable(ex));
                         }
                     });
         });
