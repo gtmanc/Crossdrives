@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Checker {
-    final String TAG = "CD.Allocation.Checker";
+    final String TAG = "CD.Checker";
     List<RuleSingle<Result>> rulesSingle = new ArrayList<>();
     List<RuleJoined<Result>> rulesJoined = new ArrayList<>();
 

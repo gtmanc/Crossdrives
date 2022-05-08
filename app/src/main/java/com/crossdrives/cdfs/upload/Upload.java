@@ -5,14 +5,14 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.allocation.DriveQuota;
+import com.crossdrives.cdfs.allocation.Allocator;
+import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.driveclient.about.IAboutCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.services.drive.model.About;
 
-import java.lang.invoke.ConstantCallSite;
+import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,16 +24,22 @@ public class Upload {
         mCDFS = cdfs;
     }
 
-    public void upload(){
+    public void upload(File file){
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
 
         DriveQuota dq = new DriveQuota(drives);
-        dq.fetchAllOf(null)
-                .addOnSuccessListener(new OnSuccessListener<HashMap<String, About.StorageQuota>>() {
+        dq.fetchAllOf().addOnSuccessListener(new OnSuccessListener<HashMap<String, About.StorageQuota>>() {
             @Override
             public void onSuccess(HashMap<String, About.StorageQuota> quotaMap) {
                 quotaMap.forEach((k, quota)->{
+                    HashMap<String, Long> allocation;
+                    Allocator allocator = new Allocator(quotaMap, file.length());
                     Log.d(TAG, "Drive Name: " + k + "Limit: " + quota.getLimit() + " usage: " + quota.getUsage());
+
+                    allocation = allocator.getAllocationResult();
+
+
+
                 });
             }
         }).addOnFailureListener(new OnFailureListener() {

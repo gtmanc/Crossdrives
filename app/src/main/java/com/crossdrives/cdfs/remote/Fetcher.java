@@ -1,7 +1,8 @@
-package com.crossdrives.cdfs.allocation;
+package com.crossdrives.cdfs.remote;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.allocation.ICallBackFetch;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;

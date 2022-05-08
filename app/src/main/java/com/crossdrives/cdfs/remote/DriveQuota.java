@@ -1,4 +1,4 @@
-package com.crossdrives.cdfs.allocation;
+package com.crossdrives.cdfs.remote;
 
 import android.util.Log;
 
@@ -24,23 +24,16 @@ import java.util.stream.Stream;
 public class DriveQuota {
     private final String TAG = "CD.DriveQuota";
     ConcurrentHashMap<String, Drive> mDrives;
-    ICallback callback;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
-    interface ICallback<T>{
-        public void onSuccess(T result);
-        public void onFailure(String ex);
-        public void onComplete(T result);
-    }
     HashMap<String, CompletableFuture<About>> Futures= new HashMap<>();
 
     public DriveQuota(ConcurrentHashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 
-    public Task<HashMap<String, About.StorageQuota>> fetchAllOf(ICallback callback){
-        this.callback = callback;
+    public Task<HashMap<String, About.StorageQuota>> fetchAllOf(){
         Task<HashMap<String, About.StorageQuota>> task=null;
 
         /*

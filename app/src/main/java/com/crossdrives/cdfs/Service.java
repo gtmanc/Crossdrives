@@ -14,6 +14,7 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.FileList;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +41,10 @@ public class Service implements IService{
     //private final Executor sExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
+    /*
+        TODO: We should allow to run the operations in parallel.
+        Maybe the locks can be removed.
+     */
     final Lock ListLock = new ReentrantLock();
     final Lock uploadLock = new ReentrantLock();
     final Condition queryFinished  = ListLock.newCondition();
@@ -154,7 +159,7 @@ public class Service implements IService{
     }
 
     @Override
-    public Task upload() throws MissingDriveClientException {
+    public Task upload(File file) throws MissingDriveClientException {
         Upload upload = new Upload(mCDFS);
         Task task;
 
@@ -162,23 +167,15 @@ public class Service implements IService{
 
         mCDFS.requiresDriveClientNonNull();
 
-        task = Tasks.call(mExecutor, new Callable<About>() {
+        task = Tasks.call(mExecutor, new Callable<String>() {
 
             @Override
-            public About call() throws Exception {
-                About about = null;
-                //uploadLock.lock();
-                upload.upload();
-                return about;
-
-//                uploadFinished.await();
-//                ListLock.unlock();
-
-//                if(throwables[0] != null){
-//                    throw new GeneralServiceException("", throwables[0]);
-//                }
+            public String call() throws Exception {
+                upload.upload(file);
+                return "";
             }
         });
+
         return task;
     }
 
