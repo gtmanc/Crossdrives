@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.Allocator;
+import com.crossdrives.cdfs.allocation.ISplitProgressCallback;
+import com.crossdrives.cdfs.allocation.Splitter;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -37,9 +39,28 @@ public class Upload {
                     Log.d(TAG, "Drive Name: " + k + "Limit: " + quota.getLimit() + " usage: " + quota.getUsage());
 
                     allocation = allocator.getAllocationResult();
+                    Splitter splitter = new Splitter(file, allocation);
+                    splitter.split(new ISplitProgressCallback() {
+                        @Override
+                        public void start(String name, long total) {
 
+                        }
 
+                        @Override
+                        public void progress(File slice) {
+                            //upload slice to remote
+                        }
 
+                        @Override
+                        public void finish(String name, long remaining) {
+
+                        }
+
+                        @Override
+                        public void onFailure(String ex) {
+
+                        }
+                    });
                 });
             }
         }).addOnFailureListener(new OnFailureListener() {

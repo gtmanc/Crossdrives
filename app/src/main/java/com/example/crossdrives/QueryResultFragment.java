@@ -3,6 +3,7 @@ package com.example.crossdrives;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ActionMode;
@@ -50,6 +51,7 @@ import com.google.api.services.drive.model.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -76,6 +78,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private int mCountPressDrawerHeader = 0;
 
 	private ActionMode mActionMode = null;
+
+	private Uri mUri;
 	/*
 	Next page handler. Use this handler to get file list of next page. It is available in response of
 	previous file list request
@@ -698,9 +702,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//drawer is closed exactly before screen proceed to next one
 			Log.d(TAG, "Bottom item is clicked: ");
 			if (id == R.id.sheet_menu_item_upload_file) {
+				java.io.File file = new java.io.File(mUri.toString());
 				Log.d(TAG, "Upload");
+				//null means no filter is applied
+				mStartOpenDocument.launch(null);
 				try {
-					CDFS.getCDFSService(getActivity()).getService().upload();
+					CDFS.getCDFSService(getActivity()).getService().upload(file);
 				} catch (MissingDriveClientException e) {
 					e.printStackTrace();
 				}
@@ -837,20 +844,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
-	private ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-			new ActivityResultCallback<ActivityResult>() {
+	private ActivityResultLauncher<String[]> mStartOpenDocument = registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+			new ActivityResultCallback<Uri>() {
 				@Override
-				public void onActivityResult(ActivityResult result) {
-					Log.d(TAG, "callback from FABOptionDialog!");
-					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
-					if (result.getResultCode() == Activity.RESULT_OK) {
-						Intent intent = result.getData();
-
-						handleOptionFab(intent);
-					}
-					else{
-						Log.w(TAG, "Activity result not success!");
-					}
+				public void onActivityResult(Uri result) {
+					Log.d(TAG, "Document Uri is got");
+					mUri = result;
 				}
 			});
 

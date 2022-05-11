@@ -10,9 +10,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Splitter {
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
@@ -23,52 +25,59 @@ public class Splitter {
     ISplitProgressCallback mCallback;
     FileInputStream fIn = null;
     final int chunkSize = 10 * 1000 * 1000; //10 Mega Byes
+    HashMap<String, Long> Allocation;
 
-    public Splitter(File file, List<Long> lengths) {
+    public Splitter(File file, HashMap<String, Long> allocation) {
         this.file = file;
+        Allocation = allocation;
     }
 
     public void split(ISplitProgressCallback callback){
         Context context = SnippetApp.getAppContext();
         mCallback = callback;
         String name = baseName+ chunkCount.toString();
-        String ex = null;
+        AtomicReference<String> ex = null;
 
         try {
             fIn = context.openFileInput(file.getPath());
 
         } catch (FileNotFoundException e) {
-            ex = e.getMessage();
+            ex.set(e.getMessage());
         } catch (IOException e) {
-            ex = e.getMessage();
+            ex.set(e.getMessage());
         }
 
-        if(ex == null) {
+        if(ex.get() == null) {
 
             //sExecutor.submit(()->{
-            long remaining = file.length();
-            while (remaining > 0) {
-                FileOutputStream fOut = null;
-                int rd_len = 0;
-                try {
-                    fOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
-                    rd_len = chunkCopy(fIn, fOut);
-                } catch (FileNotFoundException e) {
-                    ex = e.getMessage();
-                    break;
-                } catch (IOException e) {
-                    ex = e.getMessage();
-                    break;
+            Allocation.entrySet().forEach((entry)->{
+                long remaining = entry.getValue();
+                mCallback.start(entry.getKey(), remaining);
+                while (remaining > 0) {
+                    FileOutputStream fOut = null;
+                    int rd_len = 0;
+                    try {
+                        fOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
+                        rd_len = chunkCopy(fIn, fOut);
+                    } catch (FileNotFoundException e) {
+                        ex.set(e.getMessage());
+                        break;
+                    } catch (IOException e) {
+                        ex.set(e.getMessage());
+                        break;
+                    }
+                    remaining -= rd_len;
+                    chunkCount++;
+                    mCallback.progress(new File(context.getDataDir() + name));
+                    context.deleteFile(name);
                 }
-                remaining -= rd_len;
-                chunkCount++;
-                mCallback.progress(new File(context.getDataDir() + name));
-            }
+                mCallback.finish(entry.getKey(), remaining);
+            });
             //});
         }
 
-        if(ex != null){
-            mCallback.onFailure(ex);
+        if(ex.get() != null) {
+            mCallback.onFailure(ex.get());
         }
     }
 
