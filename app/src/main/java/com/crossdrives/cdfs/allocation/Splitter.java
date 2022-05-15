@@ -55,9 +55,9 @@ public class Splitter {
 //            ex.set(e.getMessage());
 //        }
 
-        if(ex.get() == null) {
+//        if(ex.get() == null) {
 
-            //sExecutor.submit(()->{
+        sExecutor.submit(()->{
             Allocation.entrySet().forEach((entry)->{
                 long remaining = entry.getValue();
                 mCallback.start(entry.getKey(), remaining);
@@ -84,7 +84,7 @@ public class Splitter {
                 mCallback.finish(entry.getKey(), remaining);
             });
             //});
-        }
+        });
 
         if(ex.get() != null) {
             mCallback.onFailure(ex.get());
