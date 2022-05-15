@@ -2,6 +2,7 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.app.SearchManager;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.activity.FABOptionDialog;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
+import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -48,10 +50,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -702,15 +707,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//drawer is closed exactly before screen proceed to next one
 			Log.d(TAG, "Bottom item is clicked: ");
 			if (id == R.id.sheet_menu_item_upload_file) {
-				java.io.File file = new java.io.File(mUri.toString());
 				Log.d(TAG, "Upload");
 				//null means no filter is applied
 				mStartOpenDocument.launch(null);
-				try {
-					CDFS.getCDFSService(getActivity()).getService().upload(file);
-				} catch (MissingDriveClientException e) {
-					e.printStackTrace();
-				}
 			}else{
 				Log.w(TAG, "Unknown!");
 			}
@@ -848,8 +847,24 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			new ActivityResultCallback<Uri>() {
 				@Override
 				public void onActivityResult(Uri result) {
-					Log.d(TAG, "Document Uri is got");
-					mUri = result;
+					URI javaUri = null;
+					InputStream in = null;
+
+					if(result != null) {
+						try {
+							in = getActivity().getContentResolver().openInputStream(result);
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
+//
+						Log.d(TAG, "Opened document Uri: " + result.getPath());
+
+						try {
+							CDFS.getCDFSService(getActivity()).getService().upload(in);
+						} catch (MissingDriveClientException | InvalidArgumentException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 			});
 
