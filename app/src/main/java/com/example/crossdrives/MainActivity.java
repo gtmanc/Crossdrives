@@ -7,6 +7,7 @@ import android.os.Bundle;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
+import com.crossdrives.msgraph.SnippetApp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -63,10 +64,10 @@ public class MainActivity extends AppCompatActivity{
         mProgressBar = findViewById(R.id.main_activity_progressBar);
         mProgressBar.setVisibility(View.VISIBLE);
 
-        SignInGoogle google = SignInGoogle.getInstance(getApplicationContext());
+        SignInGoogle google = SignInGoogle.getInstance();
         google.silenceSignIn(this, onSigninFinishedGdrive);
 
-        SignInMS onedrive = SignInMS.getInstance(this);
+        SignInMS onedrive = SignInMS.getInstance();
         onedrive.silenceSignIn(this, onSigninFinishedOnedrive);
 
     }

@@ -42,7 +42,7 @@ public abstract class SignInManager{
 
     //Operations provided
     //start interactive sign in flow. Mainly start the sign in activity.
-    abstract boolean Start(View view, OnSignInfinished callback);
+    abstract boolean Start(Activity activity, OnSignInfinished callback);
 
     //Silence Sign in.
     abstract void silenceSignIn(Activity activity, OnSignInfinished callback);

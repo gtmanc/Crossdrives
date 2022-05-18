@@ -6,21 +6,28 @@ import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -50,9 +57,7 @@ public class SignInGoogle extends SignInManager{
     private GoogleSignInClient mGoogleSignInClient;
     private GoogleSignInAccount mGoogleSignInAccount;
     private static Context mContext = null;
-    //Activity mActivity;
     private static Profile mProfile = new Profile();
-    static private Fragment mFragment;
     private static Activity mActivity;
     static OnSignInfinished mCallback;
     static OnSignOutFinished mSignoutCallback;
@@ -61,25 +66,27 @@ public class SignInGoogle extends SignInManager{
     private Object mObject;
     private static final String CLIENT_SECRET_FILE = "raw/client_secret_web_backend.json";
     private static String mAccessToken;
+    private final int RC_SIGN_IN = 0;
+    private int mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
     SignInGoogle(Context context)
     {
         mContext = context;
     }
 
-    public static SignInGoogle getInstance(Context context){
+    public static SignInGoogle getInstance(){
         if(mSignInGoogle == null){
             //Log.d(TAG, "Create instance");
-            mSignInGoogle = new SignInGoogle(context);
+            mSignInGoogle = new SignInGoogle(SnippetApp.getAppContext());
         }
 //        Log.d(TAG, "instance is " + mSignInGoogle);
 //        Log.d(TAG, "mProfile is " + mProfile);
         return mSignInGoogle;
     }
 
-    //A static class used to exchange data between this class and the interactive sign in fragment
+    //A static class used to exchange data between this class and the interactive sign in activity
     public static class ReceiveSigninResult {
-        public static void onSignedIn(int statuscode, Fragment fragment, GoogleSignInAccount account){
+        public static void onSignedIn(int statuscode/*, Fragment fragment*/, GoogleSignInAccount account){
             int code = SignInManager.RESULT_FAILED;
             String accessToken;
             String Authcode;
@@ -115,8 +122,8 @@ public class SignInGoogle extends SignInManager{
                 mCallback.onFailure("Encountered problem in sign in!");
             }
 
-            NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
-            NavHostFragment.findNavController(fragment).navigate(a);
+//            NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
+//            NavHostFragment.findNavController(fragment).navigate(a);
 
             //Translate google code to sign to auth interface ones.
 //            if(statuscode == GoogleSignInStatusCodes.SUCCESS) {
@@ -275,36 +282,25 @@ public class SignInGoogle extends SignInManager{
         return f;
     }
     /*
-       A fragment is used to perform the sign in interactive sign in flow. The most of
-       the logic is implemented in the fragment.
+       A activity is used to perform the sign in interactive sign in flow. The most of
+       the logic is implemented in the activity: GoogleSigninActivity
        A static class ReceiveSigninResult which is used to exchange data between this class and the fragment.
      */
     @Override
-    boolean Start(View view, OnSignInfinished callback) {
-//        Intent signInIntent;
-//        GoogleSignInAccount account = null;
-//        Drive googleDriveService = null;
+    boolean Start(Activity activity, OnSignInfinished callback) {
+        Intent signInIntent;
 
         mCallback = callback;
+        mActivity = activity;
 
-//        // Configure sign-in to request the user's ID, email address, and basic
-//        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-//        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-//                .requestEmail()
-//                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
-//                .build();
-//
-//        // Build a GoogleSignInClient with the options specified by gso.
-//        mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);
-//
-//        signInIntent = mGoogleSignInClient.getSignInIntent();
+        Intent intent = new Intent();
+        intent.setClass(SnippetApp.getAppContext(), GoogleSigninActivity.class);
+        mActivity.startActivity(intent);
 
         Log.d(TAG, "navigate to google sign in fragment");
 
-        mFragment = FragmentManager.findFragment(view);
-        mActivity = mFragment.getActivity();
-        NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
-        NavHostFragment.findNavController(mFragment).navigate(a);
+//        NavDirections a = AddAccountFragmentDirections.navigteToGoogleSigninFragment();
+//        NavHostFragment.findNavController(mFragment).navigate(a);
         return true;
     }
 
@@ -515,4 +511,3 @@ public class SignInGoogle extends SignInManager{
         }
     }
 }
-

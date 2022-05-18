@@ -167,7 +167,7 @@ public class MasterAccountFragment extends BaseFragment {
     }
     private void downloadPhotoGoogle(ImageView iv){
 
-        SignInGoogle google = SignInGoogle.getInstance(getContext());
+        SignInGoogle google = SignInGoogle.getInstance();
         google.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
             @Override
@@ -183,7 +183,7 @@ public class MasterAccountFragment extends BaseFragment {
     private void downloadPhotoMicrosoft(ImageView iv){
         mIvUserPhoto = iv;
 
-        SignInMS ms = SignInMS.getInstance(getActivity());
+        SignInMS ms = SignInMS.getInstance();
         ms.getPhoto(iv, new SignInManager.OnPhotoDownloaded(){
 
             @Override

@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.crossdrives.msgraph.SharedPrefsUtil;
+import com.crossdrives.msgraph.SnippetApp;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 
 import com.microsoft.graph.requests.GraphServiceClient;
@@ -45,18 +46,19 @@ public class SignInMS extends SignInManager{
     private String mToken;
     private Object mObject;
 
-    public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext(); scopes.add("Files.Read");}
+    public SignInMS(){; mContext = SnippetApp.getAppContext(); scopes.add("Files.Read");}
 
-    public static SignInMS getInstance(Activity activity){
+    public static SignInMS getInstance(){
         if(mSignInMS == null){
-            mSignInMS = new SignInMS(activity);
+            mSignInMS = new SignInMS();
         }
         return mSignInMS;
     }
 
     @Override
-    boolean Start(View view, OnSignInfinished callback) {
+    boolean Start(Activity activity, OnSignInfinished callback) {
         mOnSignInfinished = callback;
+        mActivity = activity;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -78,6 +80,7 @@ public class SignInMS extends SignInManager{
     @Override
     void silenceSignIn(Activity activity, OnSignInfinished callback) {
         mOnSignInfinished = callback;
+        mActivity = activity;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override

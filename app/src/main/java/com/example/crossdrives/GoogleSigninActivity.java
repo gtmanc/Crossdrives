@@ -1,17 +1,16 @@
 package com.example.crossdrives;
 
-import androidx.fragment.app.Fragment;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
 
+import androidx.activity.ComponentActivity;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentManager;
 
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -23,36 +22,20 @@ import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.DriveScopes;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Collections;
-
-public class GoogleSignInFragment extends Fragment {
-    private String TAG = "CD.GoogleSignInFragment";
-    GoogleSignInClient mGoogleSignInClient;
+public class GoogleSigninActivity extends ComponentActivity {
+    private String TAG = "CD.GoogleSigninActivity";
     private final int RC_SIGN_IN = 0;
 
     private int mSigninResult = GoogleSignInStatusCodes.SUCCESS;
 
-    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.google_signin_fragment, container, false);
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        GoogleSignInClient GoogleSignInClient;
         Intent signInIntent;
-        Log.d(TAG, "onViewCreated");
+
+        setContentView(R.layout.activity_google_signin);
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -77,76 +60,61 @@ public class GoogleSignInFragment extends Fragment {
                 .build();
 
         // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(SnippetApp.getAppContext(), gso);
+        GoogleSignInClient = GoogleSignIn.getClient(SnippetApp.getAppContext(), gso);
 
-        signInIntent = mGoogleSignInClient.getSignInIntent();
+        signInIntent = GoogleSignInClient.getSignInIntent();
 
-//        mFragment = FragmentManager.findFragment(view);
-
-        startActivityForResult(signInIntent, RC_SIGN_IN);
+        //startActivityForResult(signInIntent, RC_SIGN_IN);
+        startSigninActivity.launch(signInIntent);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        GoogleSignInAccount account = null;
+    ActivityResultLauncher<Intent> startSigninActivity = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>(){
+        @Override
+        public void onActivityResult(ActivityResult result) {
+            GoogleSignInAccount account = null;
 
-        Log.d(TAG, "requestCode: " + requestCode);
-        Log.d(TAG, "resultCode: " + resultCode);
+            Log.d(TAG, "resultCode: " + result.getResultCode());
 
-        /*
-        HTC One Android 6:
-        The sign in activity is always shown even if app is already signed in
-        Result code is 0 if the user
-        1. enter sign in credentials (user decides to use a new account has never be signed on the device)
-        2. user selects an account that has signed in on the device
-        3. Press BACK in the sign in activity.
-        Not yet clean in which case a NOT zero is returned.
-        Samsung Gallxy S Android 6
-        THe signin activity is not shown if app is signed in.
-        1. resultcode:-1: enter sign in credentials (user decides to use a new account has never be signed on the device)
-        2. resultcode:-1: user selects an account that has signed in on the device
-        3. resultrcode is 0 if user press BACK in the sign in activity.
-        Samsung A70 Android 9
-        TBD
-        */
-        //According to the observed behavior, it's hard determine the sign in result with resultCode.
-        //Use Intent as an alternative solution
 
-        if(data != null) {
-            Log.d(TAG, "handle sign flow");
-            account = HandleSigninResult(data);
+            /*
+            HTC One Android 6:
+            The sign in activity is always shown even if app is already signed in
+            Result code is 0 if the user
+            1. enter sign in credentials (user decides to use a new account has never be signed on the device)
+            2. user selects an account that has signed in on the device
+            3. Press BACK in the sign in activity.
+            Not yet clean in which case a NOT zero is returned.
+            Samsung Gallxy S Android 6
+            THe signin activity is not shown if app is signed in.
+            1. resultcode:-1: enter sign in credentials (user decides to use a new account has never be signed on the device)
+            2. resultcode:-1: user selects an account that has signed in on the device
+            3. resultrcode is 0 if user press BACK in the sign in activity.
+            Samsung A70 Android 9
+            TBD
+            */
+            //According to the observed behavior, it's hard determine the sign in result with resultCode.
+            //Use Intent as an alternative solution
+
+            if (result.getData() != null) {
+                Log.d(TAG, "handle sign flow");
+                account = HandleSigninResult(result.getData());
 
 //            Log.d(TAG, "User name:" + mName);
 //            Log.d(TAG, "User mail:" + mMail);
 //            Log.d(TAG, "User photo url:" + mPhotoUri);
-        }
-        else{
-            //Set the profile data to default
+            } else {
+                //Set the profile data to default
 //            mName = "";
 //            mMail = "";
 //            mPhotoUri = null;
+            }
+
+            SignInGoogle.ReceiveSigninResult.onSignedIn(mSigninResult, /*this,*/ account);
+
+            finish();
         }
-
-        SignInGoogle.ReceiveSigninResult.onSignedIn(mSigninResult, /*this,*/ account);
-    }
-
-//    private void SendAuthCode(String code){
-//        HttpPost httpPost = new HttpPost("https://yourbackend.example.com/authcode");
-//
-//        try {
-//            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-//            nameValuePairs.add(new BasicNameValuePair("authCode", authCode));
-//            httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-//
-//            HttpResponse response = httpClient.execute(httpPost);
-//            int statusCode = response.getStatusLine().getStatusCode();
-//            final String responseBody = EntityUtils.toString(response.getEntity());
-//        } catch (ClientProtocolException e) {
-//            Log.e(TAG, "Error sending auth code to backend.", e);
-//        } catch (IOException e) {
-//            Log.e(TAG, "Error sending auth code to backend.", e);
-//        }
-//    }
+    });
 
     GoogleSignInAccount HandleSigninResult(Intent data) {
         GoogleSignInAccount account = null;
@@ -188,10 +156,10 @@ public class GoogleSignInFragment extends Fragment {
 //                    Log.w(TAG, "googleDriveService is null!");
 //                }
 
-                // The DriveServiceHelper encapsulates all REST API and SAF functionality.
-                // Its instantiation is required before handling any onClick actions.
-                // We create DriveServiceHelper here but it will be used later by using getInstance() method
-                //new DriveServiceHelper(googleDriveService);
+            // The DriveServiceHelper encapsulates all REST API and SAF functionality.
+            // Its instantiation is required before handling any onClick actions.
+            // We create DriveServiceHelper here but it will be used later by using getInstance() method
+            //new DriveServiceHelper(googleDriveService);
 //                DriveServiceHelper.Create(googleDriveService);
 
 //            mName = account.getDisplayName();
