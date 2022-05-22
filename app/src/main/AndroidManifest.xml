@@ -57,6 +57,10 @@
             android:theme="@style/Theme.Custom.Option.MaterialComponents.Dialog.MinWidth"
             android:excludeFromRecents="true">
         </activity>
+        <activity android:name=".GoogleSigninActivity"
+            android:theme="@style/Theme.Custom.Option.MaterialComponents.Dialog.MinWidth"
+            android:excludeFromRecents="true">
+        </activity>
         <!--Intent filter to capture System Browser or Authenticator calling back to our app after sign-in-->
         <activity
             android:name="com.microsoft.identity.client.BrowserTabActivity">

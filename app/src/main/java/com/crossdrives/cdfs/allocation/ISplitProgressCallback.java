@@ -1,6 +1,7 @@
 package com.crossdrives.cdfs.allocation;
 
 import java.io.File;
+import java.util.Collection;
 
 public interface ISplitProgressCallback {
 
@@ -17,5 +18,8 @@ public interface ISplitProgressCallback {
     public void finish(String name, long remaining);
 
     public void onFailure(String ex);
+
+    //called after progress() is called. The client call return the file which needs to be deleted
+    public Collection<File> RequestDeletion();
 
 }

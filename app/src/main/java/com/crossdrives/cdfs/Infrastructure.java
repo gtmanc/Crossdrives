@@ -48,7 +48,7 @@ public class Infrastructure{
     /*
         Strings
      */
-    private final String NAME_CDFS_FOLDER = "CDFS";
+    private final String NAME_CDFS_FOLDER = IConstant.NAME_CDFS_FOLDER;
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
@@ -261,9 +261,9 @@ public class Infrastructure{
                 fileMetadata.setName(NAME_ALLOCATION_ROOT);
                 mClient.upload().buildRequest(fileMetadata, path).run(new IUploadCallBack() {
                     @Override
-                    public void success(File file) {
-                        Log.d(TAG, "Upload file OK. ID: " + file.getId());
-                        result.file = file.getId();
+                    public void success(com.crossdrives.driveclient.model.File file) {
+                        Log.d(TAG, "Upload file OK. ID: " + file.getFile().getId());
+                        result.file = file.getFile().getId();
                         future.complete(result);
                     }
 

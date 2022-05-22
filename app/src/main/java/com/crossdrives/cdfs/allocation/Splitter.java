@@ -79,7 +79,8 @@ public class Splitter {
                     remaining -= rd_len;
                     chunkCount++;
                     mCallback.progress(new File(context.getFilesDir().getPath() + "/" + name));
-                    context.deleteFile(name);
+
+                    //context.deleteFile(name);
                 }
                 mCallback.finish(entry.getKey(), remaining);
             });
