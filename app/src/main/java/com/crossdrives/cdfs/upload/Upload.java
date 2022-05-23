@@ -81,10 +81,10 @@ public class Upload {
                                     //As we specified the folder name, suppose only cdfs folder in the list.
                                     @Override
                                     public void success(FileList fileList, Object o) {
-                                        String cdfs_id =
+                                        String cdfsFolderId =
                                         fileList.getFiles().stream().
                                                 filter((f)-> f.getName().equals(NAME_CDFS_FOLDER)).findAny().get().getName();
-                                        checkFolderFuture.complete(cdfs_id);
+                                        checkFolderFuture.complete(cdfsFolderId);
                                     }
 
                                     @Override
@@ -94,7 +94,8 @@ public class Upload {
                                 });
                     });
 
-                    CompletableFuture<List<String>> CommitAllocationMapFuture = checkFolderFuture.thenCompose((cdfs_id)->{
+                    CompletableFuture<List<String>> CommitAllocationMapFuture = checkFolderFuture.thenCompose((cdfsFolderId)->{
+                        CompletableFuture<String> future = new CompletableFuture<>();
                         HashMap<String, Long> allocation;
                         Collection<File> toUpload = new ArrayList<>();
                         Collection<File> toFreeUp = new ArrayList<>();
@@ -103,6 +104,12 @@ public class Upload {
 
                         long size = 0;
                         final boolean[] isAllSplittd = {false};
+                        final boolean[] terminateExceptionally = {false};
+
+                        if(cdfsFolderId == null){
+                            Log.w(TAG, "CDFS folder is missing!");
+                            future.completeExceptionally(new Throwable("CDFS folder is missing"));
+                        }
 
                         try {
                             size = (long)inputStream.available();
@@ -125,7 +132,6 @@ public class Upload {
 
                             @Override
                             public void progress(File slice) {
-
                                 //upload slice to remote
                                 Log.d(TAG, "Split progress: " + slice.getPath());
                                 uploadLock.lock();
@@ -143,6 +149,7 @@ public class Upload {
                             @Override
                             public void onFailure(String ex) {
                                 Log.d(TAG, "Split file failed! " +ex);
+                                terminateExceptionally[0] = true;
                                 mCallback.onFailure(new Throwable(ex));
                             }
 
@@ -158,32 +165,48 @@ public class Upload {
                             }
                         });
 
+                        Log.d(TAG, "Upload slice of file once available... ");
                         while(isAllSplittd[0] == false && toUpload.isEmpty()){
-                            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                            fileMetadata.setParents(Collections.singletonList(cdfs_id));
-                            File localFile;
-                            uploadLock.lock();
-                            String name = toUpload.stream().findAny().get().getName();
-                            uploadLock.unlock();
-                            fileMetadata.setName(name);
-                            mCDFS.getDrives().get(k).getClient().upload().
-                                    buildRequest(fileMetadata, toUpload.stream().findAny().get()).run(new IUploadCallBack() {
-                                        @Override
-                                        public void success(com.crossdrives.driveclient.model.File file) {
-                                            uploadLock.lock();
-                                            toUpload.remove(file.getOriginalLocalFile());
-                                            uploadLock.unlock();
-                                            freeupLock.lock();
-                                            toFreeUp.add(file.getOriginalLocalFile());
-                                            freeupLock.unlock();
-                                        }
+                            if(terminateExceptionally[0]){
+                                break;
+                            }
 
-                                        @Override
-                                        public void failure(String ex) {
-                                            Log.d(TAG, ex);
-                                        }
-                                    });
+                            Log.d(TAG, "Get item in upload list...");
+                            uploadLock.lock();
+                            File localFile = toUpload.stream().findAny().get();
+                            uploadLock.unlock();
+                            Log.d(TAG, "Done!");
+                            if(localFile != null){
+                                com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                                fileMetadata.setParents(Collections.singletonList(cdfsFolderId));
+
+                                Log.d(TAG, "local file to upload: " + localFile.getName());
+                                fileMetadata.setName(localFile.getName());
+                                mCDFS.getDrives().get(k).getClient().upload().
+                                        buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {
+                                            @Override
+                                            public void success(com.crossdrives.driveclient.model.File file) {
+                                                Log.d(TAG, "slice uploaded. Name: " + file.getFile().getName()
+                                                        + " local name: " + file.getOriginalLocalFile());
+                                                uploadLock.lock();
+                                                toUpload.remove(file.getOriginalLocalFile());
+                                                uploadLock.unlock();
+                                                freeupLock.lock();
+                                                toFreeUp.add(file.getOriginalLocalFile());
+                                                freeupLock.unlock();
+                                            }
+
+                                            @Override
+                                            public void failure(String ex) {
+                                                Log.d(TAG, ex);
+                                            }
+                                        });
+                            }else{
+                                Log.d(TAG, "no item available in upload list!");
+                            }
                         }
+
+                        Log.d(TAG, "upload completed!");
 
                         return null;
                     });

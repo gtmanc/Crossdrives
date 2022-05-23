@@ -53,6 +53,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     public void run_NonServiceSpecific(IUploadCallBack callback){
         HttpResponse response = null;
         File file = new File();
+        com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
 
 
         try {
@@ -90,7 +91,9 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
 
         file.setName(mPath.getName());
         file.setId("");
-        callback.success(file);
+        fileToClient.setFile(file);
+        fileToClient.setOriginalLocalFile(mPath);
+        callback.success(fileToClient);
     }
 
     class CustomProgressListener implements MediaHttpUploaderProgressListener {
@@ -177,10 +180,13 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
         task.addOnSuccessListener(new OnSuccessListener<File>() {
             @Override
             public void onSuccess(File file) {
+                com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
                 //call back
                 if(file != null){
                     Log.d(TAG, "Upload OK: " + file.getId());
-                    callback.success(file);
+                    fileToClient.setFile(file);
+                    fileToClient.setOriginalLocalFile(mPath);
+                    callback.success(fileToClient);
                 }
                 else{
                     Log.w(TAG, "Upload Failed!");
@@ -223,10 +229,13 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
         task.addOnSuccessListener(new OnSuccessListener<File>() {
             @Override
             public void onSuccess(File file) {
+                com.crossdrives.driveclient.model.File fileToClient= new com.crossdrives.driveclient.model.File();
                 //call back
                 if(file != null){
                     Log.d(TAG, "Upload OK: " + file.getId());
-                    callback.success(file);
+                    fileToClient.setFile(file);
+                    fileToClient.setOriginalLocalFile(mPath);
+                    callback.success(fileToClient);
                 }
                 else{
                     Log.w(TAG, "Upload Failed!");

@@ -48,10 +48,14 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
     @Override
     public void run (IUploadCallBack callback) {
         File f;
+        com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
+
 
         try {
             f = submitRequest();
-            callback.success(f);
+            fileToClient.setFile(f);
+            fileToClient.setOriginalLocalFile(mPath);
+            callback.success(fileToClient);
         } catch (Exception e){
             Log.w(TAG, e.toString());
             callback.failure(e.getMessage());

@@ -1,6 +1,12 @@
 package com.crossdrives.cdfs;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
@@ -11,6 +17,8 @@ import com.crossdrives.cdfs.list.List;
 import com.crossdrives.cdfs.upload.IUploadCallbck;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
+import com.crossdrives.msgraph.SnippetApp;
+import com.example.crossdrives.R;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
@@ -35,6 +43,8 @@ public class Service implements IService{
     CDFS mCDFS;
     private FileList mFileList;
     private OutputStream mStream;
+
+    final String NOTIFICATION_CH_ID = "0" ;
 
     public Service(CDFS cdfs) {
         mCDFS = cdfs;
@@ -160,12 +170,40 @@ public class Service implements IService{
         return task;
     }
 
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Channel 0";//getString(R.string.channel_name);
+            String description = "This is channel 0";//(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CH_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = SnippetApp.getAppContext().getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
     @Override
     public Task upload(InputStream ins) throws MissingDriveClientException, InvalidArgumentException {
         Upload upload = new Upload(mCDFS, ins);
         Task task;
         final Throwable[] throwables = {null};
         final String[] cdfs_id = {null};
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(SnippetApp.getAppContext(), NOTIFICATION_CH_ID)
+                .setSmallIcon(R.drawable.ic_baseline_cloud_circle_24)
+                .setContentTitle("CDS-upload")
+                .setContentText("Upload is in progress")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        createNotificationChannel();
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(SnippetApp.getAppContext());
+        // notificationId is a unique int for each notification that you must define
+        notificationManager.notify(0, builder.build());
 
         Log.d(TAG, "CDFS Service: Upload");
 

@@ -60,6 +60,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
 	private String TAG = "CD.QueryResultFragment";
@@ -594,6 +595,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void onClick(View v) {
 			Log.d(TAG, "fab is clicked");
+			String cdfsid1 = "cdfsid1";
+			Log.d(TAG, String.valueOf(Objects.hash(cdfsid1))); //629195495
+			cdfsid1 = "cdfsid2";
+			Log.d(TAG, String.valueOf(Objects.hash(cdfsid1))); //629195496
+
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
 //			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
 //			//intent.putExtra("Brand", SignInManager.BRAND_MS);
