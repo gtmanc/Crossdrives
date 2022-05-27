@@ -31,10 +31,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -81,9 +84,13 @@ public class Upload {
                                     //As we specified the folder name, suppose only cdfs folder in the list.
                                     @Override
                                     public void success(FileList fileList, Object o) {
-                                        String cdfsFolderId =
+                                        String cdfsFolderId = null;
+                                        Optional<com.google.api.services.drive.model.File> optional =
                                         fileList.getFiles().stream().
-                                                filter((f)-> f.getName().equals(NAME_CDFS_FOLDER)).findAny().get().getName();
+                                                filter((f)-> f.getName().equals(NAME_CDFS_FOLDER)).findAny();
+                                        if(optional != null){
+                                            cdfsFolderId = optional.get().getId();
+                                        }
                                         checkFolderFuture.complete(cdfsFolderId);
                                     }
 
@@ -94,17 +101,18 @@ public class Upload {
                                 });
                     });
 
-                    CompletableFuture<List<String>> CommitAllocationMapFuture = checkFolderFuture.thenCompose((cdfsFolderId)->{
-                        CompletableFuture<String> future = new CompletableFuture<>();
+                    CompletableFuture<Collection<String>> CommitAllocationMapFuture = checkFolderFuture.thenCompose((cdfsFolderId)->{
+                        CompletableFuture<Collection<String>> future = new CompletableFuture<>();
                         HashMap<String, Long> allocation;
-                        Collection<File> toUpload = new ArrayList<>();
-                        Collection<File> toFreeUp = new ArrayList<>();
-                        final Lock uploadLock = new ReentrantLock();
-                        final Lock freeupLock = new ReentrantLock();
+                        ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(10);
+                        ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(10);
+                        LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
+                        Collection<String> ids = new ArrayList<>();
+                        final int[] totalSlice = {0};
 
                         long size = 0;
                         final boolean[] isAllSplittd = {false};
-                        final boolean[] terminateExceptionally = {false};
+                        final boolean[] SplitterminateExceptionally = {false};
 
                         if(cdfsFolderId == null){
                             Log.w(TAG, "CDFS folder is missing!");
@@ -134,9 +142,11 @@ public class Upload {
                             public void progress(File slice) {
                                 //upload slice to remote
                                 Log.d(TAG, "Split progress: " + slice.getPath());
-                                uploadLock.lock();
-                                toUpload.add(slice);
-                                uploadLock.unlock();
+//                                uploadLock.lock();
+//                                toUpload.add(slice);
+                                toUploadQueue.add(slice);
+                                totalSlice[0]++;
+//                                uploadLock.unlock();
                             }
 
                             @Override
@@ -149,66 +159,61 @@ public class Upload {
                             @Override
                             public void onFailure(String ex) {
                                 Log.d(TAG, "Split file failed! " +ex);
-                                terminateExceptionally[0] = true;
+                                SplitterminateExceptionally[0] = true;
                                 mCallback.onFailure(new Throwable(ex));
-                            }
-
-                            @Override
-                            public Collection<File> RequestDeletion() {
-                                Collection<File> collection = new ArrayList<>();
-
-                                freeupLock.lock();
-                                collection.addAll(toFreeUp);
-                                toFreeUp.removeAll(Arrays.asList(collection.toArray()));
-                                freeupLock.unlock();
-                                return collection;
                             }
                         });
 
-                        Log.d(TAG, "Upload slice of file once available... ");
-                        while(isAllSplittd[0] == false && toUpload.isEmpty()){
-                            if(terminateExceptionally[0]){
+                        while(!isAllSplittd[0]){
+
+                            if(SplitterminateExceptionally[0]){
                                 break;
                             }
 
-                            Log.d(TAG, "Get item in upload list...");
-                            uploadLock.lock();
-                            File localFile = toUpload.stream().findAny().get();
-                            uploadLock.unlock();
-                            Log.d(TAG, "Done!");
-                            if(localFile != null){
+                            File localFile = takeFromQueue(toUploadQueue);
+//                            if(toUploadQueue.isEmpty()){Log.d(TAG, "To upload queue is empty!");}
+
+//                            if(localFileOptional.isPresent()){
+//                                File localFile = localFileOptional.get();
                                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                                 fileMetadata.setParents(Collections.singletonList(cdfsFolderId));
-
-                                Log.d(TAG, "local file to upload: " + localFile.getName());
                                 fileMetadata.setName(localFile.getName());
+                                //Log.d(TAG, "local file to upload: " + localFile.getName());
                                 mCDFS.getDrives().get(k).getClient().upload().
                                         buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {
                                             @Override
                                             public void success(com.crossdrives.driveclient.model.File file) {
                                                 Log.d(TAG, "slice uploaded. Name: " + file.getFile().getName()
                                                         + " local name: " + file.getOriginalLocalFile());
-                                                uploadLock.lock();
-                                                toUpload.remove(file.getOriginalLocalFile());
-                                                uploadLock.unlock();
-                                                freeupLock.lock();
-                                                toFreeUp.add(file.getOriginalLocalFile());
-                                                freeupLock.unlock();
+                                                ids.add(file.getFile().getId());
+                                                toFreeupQueue.add(file.getOriginalLocalFile());
                                             }
 
                                             @Override
-                                            public void failure(String ex) {
-                                                Log.d(TAG, ex);
+                                            public void failure(String ex, File originalFile) {
+                                                Log.w(TAG, ex);
+                                                remainingQueue.offer(originalFile);
                                             }
                                         });
-                            }else{
-                                Log.d(TAG, "no item available in upload list!");
-                            }
+                            //inUploadQueue.add(localFile);
+                            //moveBetweenQueues(toUploadQueue,inUploadQueue);
+                            //                           }
+//                            else{
+//                                Log.d(TAG, "no item available in upload list!");
+//                            }
                         }
 
-                        Log.d(TAG, "upload completed!");
+                        Log.d(TAG, "upload are scheduled but not yet completed!");
 
-                        return null;
+                        while(!isUploadCompleted(totalSlice[0], toFreeupQueue, remainingQueue));
+
+                        Collection<File> collection = new ArrayList<>();
+                        toFreeupQueue.drainTo(collection);
+                        splitter.cleanup(collection);
+
+                        future.complete(ids);
+
+                        return future;
                     });
 
                     CommitAllocationMapFuture.thenAccept((ids)->{
@@ -222,6 +227,14 @@ public class Upload {
                         return null;
                     }).handle((s, t) ->{
                         Log.w(TAG, "Exception occurred in folder check: " + t.toString());
+                        return null;
+                    });
+
+                    CommitAllocationMapFuture.exceptionally(ex ->{
+                        Log.w(TAG, "Completed with exception in CommitAllocationMapFuture: " + ex.toString());
+                        return null;
+                    }).handle((s, t) ->{
+                        Log.w(TAG, "Exception occurred in CommitAllocationMapFuture: " + t.toString());
                         return null;
                     });
                 });
@@ -251,6 +264,45 @@ public class Upload {
 //        });
     }
 
+    boolean isUploadCompleted(int total, ArrayBlockingQueue<File> Q1, LinkedBlockingQueue<File> Q2){
+        boolean result = false;
+//        int number1 = Q1.size()-Q1.remainingCapacity();
+//        int number2 = Q2.size()-Q2.remainingCapacity();
+//        Log.d(TAG, "size1: " + Q1.size() + " remaining1: " + Q1.remainingCapacity());
+//        Log.d(TAG, "number1: " + number1 + " number2 " + number2 + " total: " + total);
+        if((Q1.size() + Q2.size()) >= total){
+            Log.d(TAG, "Upload completed!");
+            result = true;
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 
+    File takeFromQueue(ArrayBlockingQueue<File> q){
+        File f = null;
+        try {
+            f = q.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return f;
+    }
+
+    void moveBetweenQueues(ArrayBlockingQueue<File>src, ArrayBlockingQueue<File> dest, File item){
+        File f;
+
+        try {
+            f = src.take();
+            dest.add(f);
+            src.remove(f);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 }

@@ -58,7 +58,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
             callback.success(fileToClient);
         } catch (Exception e){
             Log.w(TAG, e.toString());
-            callback.failure(e.getMessage());
+            callback.failure(e.getMessage(), mPath);
         }
     }
 

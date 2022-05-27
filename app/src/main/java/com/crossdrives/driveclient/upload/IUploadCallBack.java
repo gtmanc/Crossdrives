@@ -16,5 +16,5 @@ public interface IUploadCallBack{
      *
      * @param ex the exception
      */
-    void failure(final String ex);
+    void failure(final String ex, java.io.File originalFile);
 }

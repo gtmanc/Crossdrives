@@ -19,7 +19,4 @@ public interface ISplitProgressCallback {
 
     public void onFailure(String ex);
 
-    //called after progress() is called. The client call return the file which needs to be deleted
-    public Collection<File> RequestDeletion();
-
 }

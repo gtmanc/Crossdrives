@@ -7,15 +7,15 @@ import android.util.Log;
 import com.crossdrives.msgraph.SnippetApp;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Splitter {
@@ -60,6 +60,7 @@ public class Splitter {
         sExecutor.submit(()->{
             Allocation.entrySet().forEach((entry)->{
                 long remaining = entry.getValue();
+                File file = null;
                 mCallback.start(entry.getKey(), remaining);
                 while (remaining > 0) {
                     FileOutputStream fOut = null;
@@ -78,9 +79,8 @@ public class Splitter {
                     //Log.d(TAG, "Read length: " + rd_len + "remaining: " + remaining);
                     remaining -= rd_len;
                     chunkCount++;
-                    mCallback.progress(new File(context.getFilesDir().getPath() + "/" + name));
-
-                    //context.deleteFile(name);
+                    file = new File(context.getFilesDir().getPath() + "/" + name);
+                    mCallback.progress(file);
                 }
                 mCallback.finish(entry.getKey(), remaining);
             });
@@ -90,6 +90,16 @@ public class Splitter {
         if(ex.get() != null) {
             mCallback.onFailure(ex.get());
         }
+    }
+
+    public void cleanup(Collection<File> toDelete){
+        Context context = SnippetApp.getAppContext();
+
+
+        toDelete.stream().forEach((item)-> {
+            Log.d(TAG, "delete item: " + item.getPath());
+            context.deleteFile(item.getName());
+        });
     }
 
     private int chunkCopy(InputStream fIn, FileOutputStream fOut, long upload_len) throws IOException {

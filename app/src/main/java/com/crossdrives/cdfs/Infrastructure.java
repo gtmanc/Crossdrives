@@ -268,7 +268,7 @@ public class Infrastructure{
                     }
 
                     @Override
-                    public void failure(String ex) {
+                    public void failure(String ex, java.io.File originalFile) {
                         Log.w(TAG, "Failed to upload file: " + ex.toString());
                         future.completeExceptionally(new Throwable(ex.toString()));
                     }

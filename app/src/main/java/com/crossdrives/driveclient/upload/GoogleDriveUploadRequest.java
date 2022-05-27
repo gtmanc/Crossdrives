@@ -24,6 +24,9 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequest {
     final String TAG = "CD.GoogleDriveUploadRequest";
@@ -32,6 +35,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     java.io.File mPath;
     String mMediaType = "text/plain";
     String mUploadType = "uploadType=resumable";
+    private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
     public GoogleDriveUploadRequest(GoogleDriveClient client, File metadata, java.io.File path) {
         mClient = client;
@@ -60,19 +64,19 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             response = submitRequestNotServiceSpecific();
         } catch (MalformedURLException e) {
             Log.w(TAG, "MalformedURLException: " + e.toString());
-            callback.failure(e.toString());
+            callback.failure(e.toString(), mPath);
         } catch (IOException e) {
             Log.w(TAG, "IO exception: " + e.toString());
-            callback.failure(e.toString());
+            callback.failure(e.toString(), mPath);
         }
 
         if(response != null) {
             if (!response.isSuccessStatusCode()) {
                 //throw GoogleJsonResponseException(jsonFactory, response);
                 Log.w(TAG, "Upload failed: " + response.getStatusMessage());
-                callback.failure(response.getStatusMessage());
+                callback.failure(response.getStatusMessage(), mPath);
             }
-        }else{ callback.failure("Unknown failure: http response is null");}
+        }else{ callback.failure("Unknown failure: http response is null", mPath);}
 
         Log.d(TAG, "Get Request: " + response.getRequest());
         InputStream is;
@@ -155,52 +159,99 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     @Override
     public void run(IUploadCallBack callback) {
         Task<File> task;
+        CompletableFuture<File> uploadFuture = new CompletableFuture<>();
 
-        task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
+        sExecutor.submit(()->{
+            File file = null;
+            FileContent mediaContent = new FileContent(mMediaType, mPath);
+            Drive.Files.Create create;
+            Log.d(TAG, "path: " + mPath);
+            Log.d(TAG, "parents: " + mMetadata.getParents().get(0));
+            Log.d(TAG, "name: " + mMetadata.getName());
 
-            @Override
-            public File call() throws Exception {
-                File file = null;
-                FileContent mediaContent = new FileContent(mMediaType, mPath);
-                Drive.Files.Create create;
-                Log.d(TAG, "path: " + mPath);
-                Log.d(TAG, "parents: " + mMetadata.getParents().get(0));
-                Log.d(TAG, "name: " + mMetadata.getName());
-                    //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
-                    create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
-                    MediaHttpUploader uploader = create.getMediaHttpUploader();
-                    uploader.setProgressListener(new CustomProgressListener());
-                    create.setFields("id");
-                    file = create.execute();
+            try {
+                //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
+                create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
+                MediaHttpUploader uploader = create.getMediaHttpUploader();
+                uploader.setProgressListener(new CustomProgressListener());
+                create.setFields("id");
+                /*
+                    The callback is called then execute funtion returns
+                 */
+                file = create.execute();
+                Log.d(TAG, "Upload executed. ID:" + file.getId() + "Name: " + file.getName());
+                uploadFuture.complete(file);
+            } catch (IOException e) {
+                uploadFuture.completeExceptionally(new Exception(e.getMessage()));
+            }
 
-                //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
-                return file;
+            //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+            //return file;
+
+        });
+
+        uploadFuture.thenAccept((file)->{
+            com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
+            if(file != null){
+                fileToClient.setFile(file);
+                fileToClient.setOriginalLocalFile(mPath);
+                callback.success(fileToClient);
+            }
+            else{
+                Log.w(TAG, "Upload Failed!");
+                callback.failure("Unknown failure!", mPath);
             }
         });
-        task.addOnSuccessListener(new OnSuccessListener<File>() {
-            @Override
-            public void onSuccess(File file) {
-                com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
-                //call back
-                if(file != null){
-                    Log.d(TAG, "Upload OK: " + file.getId());
-                    fileToClient.setFile(file);
-                    fileToClient.setOriginalLocalFile(mPath);
-                    callback.success(fileToClient);
-                }
-                else{
-                    Log.w(TAG, "Upload Failed!");
-                    callback.failure("Unknown failure!");
-                }
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                //call back
-                Log.w(TAG, "Upload Failed: " + e.getMessage());
-                callback.failure(e.getMessage());
-            }
+        uploadFuture.exceptionally((ex) -> {
+            Log.w(TAG, "Upload Failed: " + ex.getMessage());
+            callback.failure(ex.getMessage(), mPath);
+            return null;
         });
+//        task = Tasks.call(mClient.getExecutor(), new Callable<File>() {
+//
+//            @Override
+//            public File call() throws Exception {
+//                File file = null;
+//                FileContent mediaContent = new FileContent(mMediaType, mPath);
+//                Drive.Files.Create create;
+//                Log.d(TAG, "path: " + mPath);
+//                Log.d(TAG, "parents: " + mMetadata.getParents().get(0));
+//                Log.d(TAG, "name: " + mMetadata.getName());
+//                    //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
+//                    create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
+//                    MediaHttpUploader uploader = create.getMediaHttpUploader();
+//                    uploader.setProgressListener(new CustomProgressListener());
+//                    create.setFields("id");
+//                    file = create.execute();
+//
+//                //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+//                return file;
+//            }
+//        });
+//        task.addOnSuccessListener(new OnSuccessListener<File>() {
+//            @Override
+//            public void onSuccess(File file) {
+//                com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
+//                //call back
+//                if(file != null){
+//                    Log.d(TAG, "Upload OK: " + file.getId());
+//                    fileToClient.setFile(file);
+//                    fileToClient.setOriginalLocalFile(mPath);
+//                    callback.success(fileToClient);
+//                }
+//                else{
+//                    Log.w(TAG, "Upload Failed!");
+//                    callback.failure("Unknown failure!");
+//                }
+//            }
+//        }).addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception e) {
+//                //call back
+//                Log.w(TAG, "Upload Failed: " + e.getMessage());
+//                callback.failure(e.getMessage());
+//            }
+//        });
     }
 
     public void run_(IUploadCallBack callback){
@@ -239,7 +290,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
                 }
                 else{
                     Log.w(TAG, "Upload Failed!");
-                    callback.failure("Unknown failure. Could be IO exception in drive client request");
+                    callback.failure("Unknown failure. Could be IO exception in drive client request", mPath);
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -247,7 +298,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
             public void onFailure(@NonNull Exception e) {
                 //call back
                 Log.w(TAG, "Upload Faile: " + e.getMessage());
-                callback.failure(e.getMessage());
+                callback.failure(e.getMessage(), mPath);
             }
         });
 
