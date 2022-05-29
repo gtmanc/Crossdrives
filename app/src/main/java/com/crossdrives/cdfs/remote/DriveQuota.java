@@ -127,6 +127,8 @@ public class DriveQuota {
 
                 HashMap<String, About> result = new HashMap<>(combined);
                 result.forEach((k, v)-> {
+                    Log.d(TAG, "Drive Name: " + k + "Limit: " + v.getStorageQuota().getLimit()
+                            + " usage: " + v.getStorageQuota().getUsage());
                     quotas.put(k, v.getStorageQuota());
                 });
                 return quotas;

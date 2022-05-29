@@ -3,14 +3,14 @@ package com.crossdrives.cdfs.upload;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IConstant;
-import com.crossdrives.cdfs.Infrastructure;
 import com.crossdrives.cdfs.allocation.Allocator;
-import com.crossdrives.cdfs.allocation.ISplitProgressCallback;
+import com.crossdrives.cdfs.allocation.ISplitAllCallback;
+import com.crossdrives.cdfs.allocation.ISplitCallback;
 import com.crossdrives.cdfs.allocation.Splitter;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -20,16 +20,15 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.FileList;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -38,29 +37,31 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Upload {
     final String TAG = "CD.Upload";
     CDFS mCDFS;
-    IUploadCallbck mCallback = null;
+    IUploadCallbck mCallback;
     InputStream inputStream;
     private final String NAME_CDFS_FOLDER = IConstant.NAME_CDFS_FOLDER;
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
+    String name;
+    final int MAX_CHUNK = 10;
+    com.google.api.services.drive.model.File mParent;
+    HashMap<String, CompletableFuture<Collection<String>>> Futures= new HashMap<>();
 
     public Upload(CDFS cdfs) {
         mCDFS = cdfs;
     }
 
-    public Upload(CDFS cdfs, InputStream ins) {
+    public Upload(CDFS cdfs, InputStream ins, String name, com.google.api.services.drive.model.File parent) {
         mCDFS = cdfs;
         inputStream = ins;
+        this.name = name;
+        mParent = parent;
     }
 
     public void upload(File file, IUploadCallbck callback){
@@ -68,13 +69,26 @@ public class Upload {
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
 
         DriveQuota dq = new DriveQuota(drives);
-        dq.fetchAllOf().addOnSuccessListener(new OnSuccessListener<HashMap<String, About.StorageQuota>>() {
+        dq.fetchAllOf().addOnSuccessListener(sExecutor, new OnSuccessListener<HashMap<String, About.StorageQuota>>() {
             @Override
-            public void onSuccess(HashMap<String, About.StorageQuota> quotaMap) {
-                quotaMap.forEach((k, quota)->{
+            public void onSuccess(HashMap<String, About.StorageQuota> quotaMap){
+                HashMap<String, Long> allocation;
+                final int[] totalSlice = {0};
+                final long[] size = {0};
+                try {
+                    size[0] = (long)inputStream.available();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Log.d(TAG, "Size to upload: " + size[0]);
+                //Allocator allocator = new Allocator(quotaMap, file.length());
+                Allocator allocator = new Allocator(quotaMap, size[0]);
+                allocation = allocator.getAllocationResult();
+                allocation.forEach((driveName, allocatedLen)->{
+                    HashMap<String, AllocationItem> items = new HashMap<>();
                     CompletableFuture<String> checkFolderFuture = new CompletableFuture<>();
                     sExecutor.submit(()->{
-                        mCDFS.getDrives().get(k).getClient().list().buildRequest()
+                        mCDFS.getDrives().get(driveName).getClient().list().buildRequest()
                                 .setNextPage(null)
                                 .setPageSize(0) //0 means no page size is applied
                                 .filter(FILTERCLAUSE_CDFS_FOLDER)
@@ -103,14 +117,11 @@ public class Upload {
 
                     CompletableFuture<Collection<String>> CommitAllocationMapFuture = checkFolderFuture.thenCompose((cdfsFolderId)->{
                         CompletableFuture<Collection<String>> future = new CompletableFuture<>();
-                        HashMap<String, Long> allocation;
-                        ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(10);
-                        ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(10);
+
+                        ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
+                        ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                         LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
                         Collection<String> ids = new ArrayList<>();
-                        final int[] totalSlice = {0};
-
-                        long size = 0;
                         final boolean[] isAllSplittd = {false};
                         final boolean[] SplitterminateExceptionally = {false};
 
@@ -119,39 +130,34 @@ public class Upload {
                             future.completeExceptionally(new Throwable("CDFS folder is missing"));
                         }
 
-                        try {
-                            size = (long)inputStream.available();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        Log.d(TAG, "Size to upload: " + size);
-                        //Allocator allocator = new Allocator(quotaMap, file.length());
-                        Allocator allocator = new Allocator(quotaMap, size);
-                        Log.d(TAG, "Drive Name: " + k + "Limit: " + quota.getLimit() + " usage: " + quota.getUsage());
-
-                        allocation = allocator.getAllocationResult();
-                        Splitter splitter = new Splitter(inputStream, allocation);
-                        splitter.split(new ISplitProgressCallback() {
+                        Splitter splitter = new Splitter(inputStream, allocatedLen, name, MAX_CHUNK);
+                        splitter.split(new ISplitCallback() {
                             @Override
-                            public void start(String name, long total) {
-                                Log.d(TAG, "Split start. drive name: " + name +
+                            public void start(long total) {
+                                Log.d(TAG, "Split start. drive name: " + driveName +
                                         " allocated length: " + total);
                             }
 
                             @Override
-                            public void progress(File slice) {
-                                //upload slice to remote
-                                Log.d(TAG, "Split progress: " + slice.getPath());
-//                                uploadLock.lock();
-//                                toUpload.add(slice);
+                            public void progress(File slice, long len) {
+                                AllocationItem item = new AllocationItem();
+                                Log.d(TAG, "Split progress: Path: " + slice.getPath() + "Name: "
+                                + slice.getName());
                                 toUploadQueue.add(slice);
                                 totalSlice[0]++;
-//                                uploadLock.unlock();
+                                item.setSize(len);
+                                item.setName(slice.getName());
+                                item.setDrive(driveName);
+                                item.setSequence(totalSlice[0]);
+                                item.setPath(mParent.getName());
+                                item.setAttrFolder(false);
+                                item.setCDFSItemSize(size[0]);
+                                items.put(slice.getName(), item);
                             }
 
                             @Override
-                            public void finish(String name, long remaining) {
-                                Log.d(TAG, "split finished. drive name: " + name +
+                            public void finish(long remaining) {
+                                Log.d(TAG, "split finished. drive name: " + driveName +
                                         " Remaining data: " + remaining);
                                 isAllSplittd[0] = true;
                             }
@@ -179,13 +185,16 @@ public class Upload {
                                 fileMetadata.setParents(Collections.singletonList(cdfsFolderId));
                                 fileMetadata.setName(localFile.getName());
                                 //Log.d(TAG, "local file to upload: " + localFile.getName());
-                                mCDFS.getDrives().get(k).getClient().upload().
+                                mCDFS.getDrives().get(driveName).getClient().upload().
                                         buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {
                                             @Override
                                             public void success(com.crossdrives.driveclient.model.File file) {
-                                                Log.d(TAG, "slice uploaded. Name: " + file.getFile().getName()
-                                                        + " local name: " + file.getOriginalLocalFile());
-                                                ids.add(file.getFile().getId());
+                                                AllocationItem item;
+                                                Log.d(TAG, "slice uploaded. local name: " + file.getOriginalLocalFile().getName());
+                                                item = items.get(file.getOriginalLocalFile().getName());
+                                                if(item == null) {Log.w(TAG,"item mot found!");}
+                                                item.setItemId(file.getFile().getId());
+
                                                 toFreeupQueue.add(file.getOriginalLocalFile());
                                             }
 
@@ -216,8 +225,24 @@ public class Upload {
                         return future;
                     });
 
+                    //Put the future to the map for joined result later
+                    Futures.put(driveName, CommitAllocationMapFuture);
+                    
                     CommitAllocationMapFuture.thenAccept((ids)->{
+                        CompletableFuture<Collection<String>> future = new CompletableFuture<>();
 
+                        items.forEach((k, v)->{
+                            Log.d(TAG,
+                                        "Drive: " + v.getDrive() +
+                                        ". Name: " + v.getName() +
+                                        ". Seq: " + v.getSequence() +
+                                        ". Item id: " + v.getItemId() +
+                                        ". Parent: " + v.getPath() +
+                                        ". Size: " + v.getSize() +
+                                        ". CDFS Size: " + v.getCDFSItemSize() +
+                                        ". Total segs: " + v.getTotalSeg()
+                            );
+                        });
                     });
                     /*
                     exception handling
@@ -266,10 +291,9 @@ public class Upload {
 
     boolean isUploadCompleted(int total, ArrayBlockingQueue<File> Q1, LinkedBlockingQueue<File> Q2){
         boolean result = false;
-//        int number1 = Q1.size()-Q1.remainingCapacity();
-//        int number2 = Q2.size()-Q2.remainingCapacity();
-//        Log.d(TAG, "size1: " + Q1.size() + " remaining1: " + Q1.remainingCapacity());
-//        Log.d(TAG, "number1: " + number1 + " number2 " + number2 + " total: " + total);
+        int number1 = Q1.size()-Q1.remainingCapacity();
+        int number2 = Q2.size()-Q2.remainingCapacity();
+        Log.d(TAG, "expected: " + total + " size1: " + Q1.size() + " size2: " + Q2.size());
         if((Q1.size() + Q2.size()) >= total){
             Log.d(TAG, "Upload completed!");
             result = true;

@@ -11,7 +11,7 @@ import java.io.OutputStream;
 public interface IService {
     public Task list(Object nextPage) throws MissingDriveClientException, Throwable;
 
-    public Task upload(InputStream ins) throws MissingDriveClientException, Throwable;
+    public Task upload(InputStream ins, String name, com.google.api.services.drive.model.File parent) throws MissingDriveClientException, Throwable;
 
     public Task<OutputStream> download(String id);
 }

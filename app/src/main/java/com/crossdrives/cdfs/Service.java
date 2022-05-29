@@ -187,8 +187,8 @@ public class Service implements IService{
     }
 
     @Override
-    public Task upload(InputStream ins) throws MissingDriveClientException, InvalidArgumentException {
-        Upload upload = new Upload(mCDFS, ins);
+    public Task upload(InputStream ins, String name, com.google.api.services.drive.model.File parent) throws MissingDriveClientException, InvalidArgumentException {
+        Upload upload = new Upload(mCDFS, ins, name, parent);
         Task task;
         final Throwable[] throwables = {null};
         final String[] cdfs_id = {null};

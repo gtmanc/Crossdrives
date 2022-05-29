@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -43,6 +45,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -85,7 +88,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private ActionMode mActionMode = null;
 
-	private Uri mUri;
+	private File currentFolder = new File();
 	/*
 	Next page handler. Use this handler to get file list of next page. It is available in response of
 	previous file list request
@@ -176,8 +179,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
 		mProgressBar.setVisibility(View.VISIBLE);
-
-
 
 		initialQuery();
 		queryFile(view);
@@ -407,6 +408,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		mNextPage = null;	//null to get first page of file list
 		mQSTATE = QSTATE_READY;
+		currentFolder.setName("Root");
 	}
 
 	private void setQStateInprogress(){
@@ -853,7 +855,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			new ActivityResultCallback<Uri>() {
 				@Override
 				public void onActivityResult(Uri result) {
-					URI javaUri = null;
+					java.io.File file;
 					InputStream in = null;
 
 					if(result != null) {
@@ -862,17 +864,63 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						} catch (FileNotFoundException e) {
 							e.printStackTrace();
 						}
-//
-						Log.d(TAG, "Opened document Uri: " + result.getPath());
-
+						file = UriToFile(result);
+						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
-							CDFS.getCDFSService(getActivity()).getService().upload(in);
+							CDFS.getCDFSService(getActivity()).getService().upload(in, file.getPath(), currentFolder);
 						} catch (MissingDriveClientException | InvalidArgumentException e) {
-							e.printStackTrace();
+							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+						}
+						if(in != null){
+							try {
+								in.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 						}
 					}
 				}
 			});
+
+	//https://www.jb51.net/article/112581.htm
+	private java.io.File UriToFile(final Uri uri){
+		if ( null == uri ) return null;
+		final String scheme = uri.getScheme();
+		Log.d(TAG, "document Uri: " + uri.getEncodedPath());
+		Log.d(TAG, "document scheme: " + scheme);
+
+		String data = null;
+		if ( scheme == null )
+			data = uri.getPath();
+		else if ( ContentResolver.SCHEME_FILE.equals( scheme ) ) {
+			data = uri.getPath();
+		}
+		else if ( ContentResolver.SCHEME_CONTENT.equals( scheme ) ) {
+			Cursor cursor = SnippetApp.getAppContext().getContentResolver().query(
+					uri, new String[] { MediaStore.Files.FileColumns.DISPLAY_NAME }, null, null, null );
+			if ( null != cursor ) {
+				if ( cursor.moveToFirst() ) {
+					int index = cursor.getColumnIndex( /*MediaStore.Video.Media.DISPLAY_NAME*/
+							MediaStore.Files.FileColumns.DISPLAY_NAME);
+					if ( index > -1 ) {
+						data = cursor.getString( index );
+						if(data == null) {Log.w(TAG, "query result is null");	}
+					}
+					else{
+						Log.w(TAG, "column doesnt exist");
+					}
+				}
+				else{
+					Log.w(TAG, "cursor is empty");
+				}
+				cursor.close();
+			}
+			else{
+				Log.w(TAG, "cursor is null");
+			}
+		}
+		return new java.io.File(data);
+	}
 
 	private void handleOptionFab(@NonNull Intent intent){
 		String option = intent.getStringExtra(FABOptionDialog.KEY_ACTION);
