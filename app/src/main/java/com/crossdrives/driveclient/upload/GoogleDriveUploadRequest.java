@@ -174,7 +174,8 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
                 create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
                 MediaHttpUploader uploader = create.getMediaHttpUploader();
                 uploader.setProgressListener(new CustomProgressListener());
-                create.setFields("id");
+                //The metadata for a file: https://developers.google.com/drive/api/v3/reference/files
+                create.setFields("id, name, originalFilename");
                 /*
                     The callback is called then execute funtion returns
                  */

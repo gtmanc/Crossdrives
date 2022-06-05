@@ -2,7 +2,6 @@ package com.crossdrives.cdfs.remote;
 
 import android.util.Log;
 
-import com.crossdrives.cdfs.allocation.ICallBackFetch;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
@@ -59,7 +58,11 @@ public class Fetcher {
 
         mDrives = drives; }
 
-
+    /*
+        Currently input parent is not used. Therefore, we even have not yet decided whether a ID or path should be assigned.
+        It is reserved for the change if the allocation map is changed to folder basis.
+        Currently, it is drive basis. (all items are in a single allocation map)
+    */
     public void fetchAll(String parent, ICallBackFetch<HashMap<String, OutputStream>> callback) {
 
         this.callback = callback;
@@ -114,7 +117,7 @@ public class Fetcher {
                             getFileID(state, name, client, id);
                         }
                         else{
-                            //There must be something wrong.
+                            //Known issue - #42
                             callback.onCompletedExceptionally(new Throwable("CDFS folder is missing"));
                         }
                         //future.complete(result);

@@ -5,6 +5,7 @@ import com.crossdrives.driveclient.create.ICreateRequestBuilder;
 import com.crossdrives.driveclient.delete.IDeleteRequestBuilder;
 import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
 import com.crossdrives.driveclient.list.IQueryRequestBuilder;
+import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 
 public interface IDriveClient {
@@ -37,7 +38,12 @@ public interface IDriveClient {
     IDeleteRequestBuilder delete();
 
     /*
-        About
+        About. (Information of user's drive)
      */
     IAboutRequestBuilder about();
+
+    /*
+        Update. Update metadata or content of a file/item
+     */
+    IUpdateRequestBuilder update();
 }

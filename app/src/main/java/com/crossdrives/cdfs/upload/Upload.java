@@ -7,12 +7,14 @@ import androidx.annotation.NonNull;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IConstant;
 import com.crossdrives.cdfs.allocation.Allocator;
-import com.crossdrives.cdfs.allocation.ISplitAllCallback;
+import com.crossdrives.cdfs.remote.ICallBackFetch;
+import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitCallback;
 import com.crossdrives.cdfs.allocation.Splitter;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -20,16 +22,15 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.FileList;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class Upload {
     final String TAG = "CD.Upload";
@@ -51,7 +53,15 @@ public class Upload {
     String name;
     final int MAX_CHUNK = 10;
     com.google.api.services.drive.model.File mParent;
-    HashMap<String, CompletableFuture<Collection<String>>> Futures= new HashMap<>();
+    HashMap<String, CompletableFuture<InterMediateResult>> Futures= new HashMap<>();
+    //The slice not uploaded
+    LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
+    String cdfsFolderID;
+
+    class InterMediateResult{
+        int totalSlice;
+        Collection<AllocationItem> items;
+    }
 
     public Upload(CDFS cdfs) {
         mCDFS = cdfs;
@@ -73,21 +83,29 @@ public class Upload {
             @Override
             public void onSuccess(HashMap<String, About.StorageQuota> quotaMap){
                 HashMap<String, Long> allocation;
-                final int[] totalSlice = {0};
-                final long[] size = {0};
+                HashMap<String, Collection<AllocationItem>> uploadedItems;
+                CompletableFuture<String> updateAllocationMapFuture = new CompletableFuture<>();
+                final long[] uploadSize = {0};
                 try {
-                    size[0] = (long)inputStream.available();
+                    uploadSize[0] = (long)inputStream.available();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    /*
+                        We have to catch the exception here because onSuccess doens't allow us to throw exception.
+                        Let's terminate te upload right here since there is no trustable upload length
+                     */
+                    Log.d(TAG, e.getMessage());
+                    return;
                 }
-                Log.d(TAG, "Size to upload: " + size[0]);
+
+                Log.d(TAG, "Size to upload: " + uploadSize[0]);
                 //Allocator allocator = new Allocator(quotaMap, file.length());
-                Allocator allocator = new Allocator(quotaMap, size[0]);
+                Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
                 allocation = allocator.getAllocationResult();
                 allocation.forEach((driveName, allocatedLen)->{
-                    HashMap<String, AllocationItem> items = new HashMap<>();
                     CompletableFuture<String> checkFolderFuture = new CompletableFuture<>();
+
                     sExecutor.submit(()->{
+                        Log.w(TAG, "Get CDFS folder...");
                         mCDFS.getDrives().get(driveName).getClient().list().buildRequest()
                                 .setNextPage(null)
                                 .setPageSize(0) //0 means no page size is applied
@@ -115,13 +133,14 @@ public class Upload {
                                 });
                     });
 
-                    CompletableFuture<Collection<String>> CommitAllocationMapFuture = checkFolderFuture.thenCompose((cdfsFolderId)->{
-                        CompletableFuture<Collection<String>> future = new CompletableFuture<>();
+                    CompletableFuture<InterMediateResult> CommitAllocationMapFuture = checkFolderFuture.thenComposeAsync((cdfsFolderId)->{
+                        CompletableFuture<InterMediateResult> future = new CompletableFuture<>();
+                        InterMediateResult result = new InterMediateResult();
+                        HashMap<String, AllocationItem> items = new HashMap<>();    //slice name, allocation item
+                        final int[] totalSlice = {0};
 
                         ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                         ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
-                        LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
-                        Collection<String> ids = new ArrayList<>();
                         final boolean[] isAllSplittd = {false};
                         final boolean[] SplitterminateExceptionally = {false};
 
@@ -129,19 +148,20 @@ public class Upload {
                             Log.w(TAG, "CDFS folder is missing!");
                             future.completeExceptionally(new Throwable("CDFS folder is missing"));
                         }
+                        cdfsFolderID = cdfsFolderId;
 
                         Splitter splitter = new Splitter(inputStream, allocatedLen, name, MAX_CHUNK);
                         splitter.split(new ISplitCallback() {
                             @Override
                             public void start(long total) {
-                                Log.d(TAG, "Split start. drive name: " + driveName +
-                                        " allocated length: " + total);
+                                Log.d(TAG, "Split start: Drive name: " + driveName +
+                                        ". allocated length: " + total);
                             }
 
                             @Override
                             public void progress(File slice, long len) {
                                 AllocationItem item = new AllocationItem();
-                                Log.d(TAG, "Split progress: Path: " + slice.getPath() + "Name: "
+                                Log.d(TAG, "Split progress: Path: " + slice.getPath() + ". Name: "
                                 + slice.getName());
                                 toUploadQueue.add(slice);
                                 totalSlice[0]++;
@@ -151,7 +171,7 @@ public class Upload {
                                 item.setSequence(totalSlice[0]);
                                 item.setPath(mParent.getName());
                                 item.setAttrFolder(false);
-                                item.setCDFSItemSize(size[0]);
+                                item.setCDFSItemSize(uploadSize[0]);
                                 items.put(slice.getName(), item);
                             }
 
@@ -175,7 +195,9 @@ public class Upload {
                             if(SplitterminateExceptionally[0]){
                                 break;
                             }
-
+                            /*
+                                TODO: deal blocked if splitter is going to output nothing. i.e. size is 0
+                             */
                             File localFile = takeFromQueue(toUploadQueue);
 //                            if(toUploadQueue.isEmpty()){Log.d(TAG, "To upload queue is empty!");}
 
@@ -190,7 +212,8 @@ public class Upload {
                                             @Override
                                             public void success(com.crossdrives.driveclient.model.File file) {
                                                 AllocationItem item;
-                                                Log.d(TAG, "slice uploaded. local name: " + file.getOriginalLocalFile().getName());
+                                                Log.d(TAG, "slice uploaded. name: " + file.getOriginalLocalFile().getName()
+                                                );
                                                 item = items.get(file.getOriginalLocalFile().getName());
                                                 if(item == null) {Log.w(TAG,"item mot found!");}
                                                 item.setItemId(file.getFile().getId());
@@ -202,67 +225,97 @@ public class Upload {
                                             public void failure(String ex, File originalFile) {
                                                 Log.w(TAG, ex);
                                                 remainingQueue.offer(originalFile);
+
+                                                //future.completeExceptionally(new Throwable(ex));
                                             }
                                         });
-                            //inUploadQueue.add(localFile);
-                            //moveBetweenQueues(toUploadQueue,inUploadQueue);
-                            //                           }
-//                            else{
-//                                Log.d(TAG, "no item available in upload list!");
-//                            }
                         }
 
-                        Log.d(TAG, "upload are scheduled but not yet completed!");
+                        Log.d(TAG, "uploads are scheduled but not yet completed!");
 
                         while(!isUploadCompleted(totalSlice[0], toFreeupQueue, remainingQueue));
+
+                        Log.d(TAG, "upload is completed!");
 
                         Collection<File> collection = new ArrayList<>();
                         toFreeupQueue.drainTo(collection);
                         splitter.cleanup(collection);
 
-                        future.complete(ids);
+                        result.totalSlice = totalSlice[0];
+                        result.items = items.values();
+                        future.complete(result);
 
                         return future;
                     });
 
                     //Put the future to the map for joined result later
                     Futures.put(driveName, CommitAllocationMapFuture);
-                    
-                    CommitAllocationMapFuture.thenAccept((ids)->{
-                        CompletableFuture<Collection<String>> future = new CompletableFuture<>();
 
-                        items.forEach((k, v)->{
-                            Log.d(TAG,
-                                        "Drive: " + v.getDrive() +
-                                        ". Name: " + v.getName() +
-                                        ". Seq: " + v.getSequence() +
-                                        ". Item id: " + v.getItemId() +
-                                        ". Parent: " + v.getPath() +
-                                        ". Size: " + v.getSize() +
-                                        ". CDFS Size: " + v.getCDFSItemSize() +
-                                        ". Total segs: " + v.getTotalSeg()
-                            );
-                        });
-                    });
+
+
+
                     /*
                     exception handling
                     */
                     checkFolderFuture.exceptionally(ex ->{
                         Log.w(TAG, "Completed with exception in folder check: " + ex.toString());
+
                         return null;
                     }).handle((s, t) ->{
                         Log.w(TAG, "Exception occurred in folder check: " + t.toString());
+
                         return null;
                     });
 
                     CommitAllocationMapFuture.exceptionally(ex ->{
                         Log.w(TAG, "Completed with exception in CommitAllocationMapFuture: " + ex.toString());
+
                         return null;
                     }).handle((s, t) ->{
                         Log.w(TAG, "Exception occurred in CommitAllocationMapFuture: " + t.toString());
+
                         return null;
                     });
+
                 });
+
+                uploadedItems=getJoinedResult(Futures);
+                closeStream(inputStream);
+
+                //Stop here if any of slice is not uploaded
+                if(uploadedItems == null){
+                    mCallback.onFailure(new Throwable("slice of the file may not be uploaded!"));
+                }
+                printItems(uploadedItems);
+
+                /*
+                    Try to locks all of the remote allocaton maps
+                 */
+
+                Fetcher fetcher = new Fetcher(drives);
+                fetcher.fetchAll(null, new ICallBackFetch<HashMap<String, OutputStream>>()
+                {
+                    @Override
+                    public void onCompleted(HashMap<String, OutputStream> allocationMap) {
+
+                        allocationMap.forEach((driveName, aMap)->{
+                           sExecutor.submit(()->{
+                           });
+                           updateAllocationMapFuture.thenCompose((alloctionMapId)->{
+                               CompletableFuture<Collection<String>> future = new CompletableFuture<>();
+                               return null;});
+
+                           updateAllocationMapFuture.exceptionally((ex)->{return null;});
+                        });
+                    }
+
+                    @Override
+                    public void onCompletedExceptionally(Throwable throwable) {
+                        mCallback.onFailure(throwable);
+                    }
+                });
+
+
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -289,13 +342,127 @@ public class Upload {
 //        });
     }
 
+    /*
+
+     */
+    HashMap<String, Collection<AllocationItem>> getJoinedResult( HashMap<String, CompletableFuture<Upload.InterMediateResult>> futures){
+        Log.d(TAG, "Awaiting joined result...");
+        Map<String, InterMediateResult> joined= futures.entrySet().stream().map((v)->{
+            Map.Entry<String, InterMediateResult> entry = new Map.Entry<String, InterMediateResult>() {
+                @Override
+                public String getKey() {
+                    return v.getKey();
+                }
+
+                @Override
+                public InterMediateResult getValue() {
+                    return v.getValue().join();
+                }
+
+                @Override
+                public InterMediateResult setValue(InterMediateResult o) {
+                    return null;
+                }
+            };
+            return entry;
+        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        //Terminate here if any of slice is not uploaed.
+        if(remainingQueue.size() != 0){
+            return null;
+        }
+
+        final int totalSeg = joined.values().stream().mapToInt(interMediateResult -> interMediateResult.totalSlice).sum();
+        final Collection<String> combinedID = joined.values().stream().map((interMediateResult)->{
+            Collection ids =
+            interMediateResult.items.stream().map((item)->{
+                //Log.d(TAG, "map to item id: " + item.getItemId());
+                return item.getItemId();
+            }).collect(Collectors.toCollection(ArrayList::new));
+            Log.d(TAG, "id list: " + ids);
+            return ids;
+        }).reduce(new ArrayList<String>(),(combined, current)-> {combined.addAll(current); return combined;});
+
+        Log.d(TAG, "combined id list: " + combinedID);
+
+        Map<String, Collection<AllocationItem>> remapped =
+        joined.entrySet().stream().map(pair-> { //drivename, intermediateResult
+            //Map<String, Collection<AllocationItem>> mapped = pair.getValue().items.stream().map((item) -> {
+            Collection<AllocationItem> mapped = pair.getValue().items.stream().map((item) -> {
+                        item.setCdfsId(IDProducer.deriveID(combinedID));
+                        item.setTotalSeg(totalSeg);
+                        return item;
+
+            }).collect(Collectors.toCollection(ArrayList::new));
+            Map.Entry<String, Collection<AllocationItem>> entry = new Map.Entry<String, Collection<AllocationItem>>() {
+                @Override
+                public String getKey() {
+                    return pair.getKey();
+                }
+
+                @Override
+                public Collection<AllocationItem> getValue() {
+                    return mapped;
+                }
+
+                @Override
+                public Collection<AllocationItem> setValue(Collection<AllocationItem> value) {
+                    return null;
+                }
+            };
+            return entry;
+        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+
+        //            p.getValue().items.stream().forEach((item)->{
+//                item.setTotalSeg(totalSeg);
+//                item.setCdfsId(calculateID(combinedID));
+//                remapped.put(p.getKey(), item);
+//            });
+//        });
+//        remapped = joined.entrySet().stream().forEach(p->{ //drivename, intermediateResult
+//            p.getValue().items.stream().forEach((item)->{
+//                item.setTotalSeg(totalSeg);
+//                item.setCdfsId(calculateID(combinedID));
+//                remapped.put(p.getKey(), item);
+//            });
+//        });
+        Log.d(TAG, "Items used to update the Allocation map" + remapped);
+        return new HashMap<String, Collection<AllocationItem>>(remapped);
+    }
+
+    String calculateID(Collection<String> ids){return "";};
+
+    HashMap<String, AllocationItem> Remap(String driveName, HashMap<String, AllocationItem> items){
+        Map<String, AllocationItem> remapped;
+        remapped = items.values().stream().map((v)->{
+            Map.Entry<String, AllocationItem> entry = new Map.Entry<String, AllocationItem>() {
+                @Override
+                public String getKey() {
+                    return driveName;
+                }
+
+                @Override
+                public AllocationItem getValue() {
+                    return v;
+                }
+
+                @Override
+                public AllocationItem setValue(AllocationItem o) {
+                    return null;
+                }
+            };
+            return entry;
+        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        return new HashMap<>(remapped);
+    }
+
     boolean isUploadCompleted(int total, ArrayBlockingQueue<File> Q1, LinkedBlockingQueue<File> Q2){
         boolean result = false;
         int number1 = Q1.size()-Q1.remainingCapacity();
         int number2 = Q2.size()-Q2.remainingCapacity();
-        Log.d(TAG, "expected: " + total + " size1: " + Q1.size() + " size2: " + Q2.size());
+        //Log.d(TAG, "expected: " + total + " size1: " + Q1.size() + " size2: " + Q2.size());
         if((Q1.size() + Q2.size()) >= total){
-            Log.d(TAG, "Upload completed!");
             result = true;
         }
         try {
@@ -324,9 +491,38 @@ public class Upload {
             dest.add(f);
             src.remove(f);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.w(TAG, e.getMessage());
         }
-
     }
 
+    //https://stackoverflow.com/questions/16369462/why-is-inputstream-close-declared-to-throw-ioexception
+    /*
+        We silence the exception when we are trying to close the stream because there is no way to handle it.
+     */
+    void closeStream(InputStream ins) {
+        try {
+            ins.close();
+        } catch (IOException e) {
+            Log.w(TAG, e.getMessage());
+        }
+    }
+
+    void printItems(HashMap<String, Collection<AllocationItem>> items) {
+        Log.d(TAG, "Printing uploaded items:");
+        items.forEach((k, v) -> {
+            v.forEach((item) -> {
+                Log.d(TAG,
+                        "Drive: " + item.getDrive() +
+                                ". Name: " + item.getName() +
+                                ". Seq: " + item.getSequence() +
+                                ". Item id: " + item.getItemId() +
+                                ". cdfs id: " + item.getCdfsId() +
+                                ". Parent: " + item.getPath() +
+                                ". Size: " + item.getSize() +
+                                ". CDFS Size: " + item.getCDFSItemSize() +
+                                ". Total segs: " + item.getTotalSeg()
+                );
+            });
+        });
+    }
 }

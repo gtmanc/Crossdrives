@@ -13,6 +13,8 @@ import com.crossdrives.driveclient.download.GoogleDriveDownloadRequestBuilder;
 import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
 import com.crossdrives.driveclient.list.GoogleDriveFileListRequestBuilder;
 import com.crossdrives.driveclient.list.IQueryRequestBuilder;
+import com.crossdrives.driveclient.update.GoogleDriveUpdateRequestBuilder;
+import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.GoogleDriveUploadRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.example.crossdrives.DriveServiceHelper;
@@ -158,6 +160,11 @@ public class GoogleDriveClient implements IDriveClient {
     @Override
     public IAboutRequestBuilder about() {
         return new GoogleDriveAboutRequestBuilder(this);
+    }
+
+    @Override
+    public IUpdateRequestBuilder update() {
+        return new GoogleDriveUpdateRequestBuilder(this);
     }
 
 

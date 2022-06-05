@@ -871,13 +871,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						} catch (MissingDriveClientException | InvalidArgumentException e) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
-						if(in != null){
-							try {
-								in.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
 					}
 				}
 			});

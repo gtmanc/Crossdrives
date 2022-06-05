@@ -229,6 +229,9 @@ public class Service implements IService{
                     public void onFailure(Throwable throwable) {
                         throwables[0] = throwable;
                         uploadLock.lock();
+                        /*
+                            Exception will raise if onFailure gets called before await is called
+                         */
                         uploadFinished.signal();
                         uploadLock.unlock();
                     }
