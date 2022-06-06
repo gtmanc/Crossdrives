@@ -7,14 +7,14 @@ import androidx.annotation.NonNull;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IConstant;
 import com.crossdrives.cdfs.allocation.Allocator;
-import com.crossdrives.cdfs.remote.ICallBackFetch;
+import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
 import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitCallback;
 import com.crossdrives.cdfs.allocation.Splitter;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.remote.Fetcher;
+import com.crossdrives.cdfs.allocation.MapFetch;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -292,8 +292,8 @@ public class Upload {
                     Try to locks all of the remote allocaton maps
                  */
 
-                Fetcher fetcher = new Fetcher(drives);
-                fetcher.fetchAll(null, new ICallBackFetch<HashMap<String, OutputStream>>()
+                MapFetch mapFetch = new MapFetch(drives);
+                mapFetch.fetchAll(null, new ICallBackMapFetch<HashMap<String, OutputStream>>()
                 {
                     @Override
                     public void onCompleted(HashMap<String, OutputStream> allocationMap) {

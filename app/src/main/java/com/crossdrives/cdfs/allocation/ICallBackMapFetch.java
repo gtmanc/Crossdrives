@@ -1,6 +1,6 @@
-package com.crossdrives.cdfs.remote;
+package com.crossdrives.cdfs.allocation;
 
-public interface ICallBackFetch<Result> {
+public interface ICallBackMapFetch<Result> {
     void onCompleted(Result result);
 
     void onCompletedExceptionally(Throwable throwable);

@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 public class Locker {
     final String TAG = "CD.Locker";
     ConcurrentHashMap<String, Drive> mDrives;
-    Drive mDrive;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     ICallBackLocker<HashMap<String, String>> mCallback;
 
@@ -34,10 +33,6 @@ public class Locker {
 
     public Locker(ConcurrentHashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
-    }
-
-    public Locker(Drive drive) {
-        mDrive = drive;
     }
 
     Task<HashMap<String, File>> lockAll(HashMap<String, String> fileIDs, ICallBackLocker<HashMap<String, String>> callback){
@@ -48,12 +43,11 @@ public class Locker {
         * */
         mDrives.forEach((name, drive)->{
             Log.d(TAG, "Lock files for drives: " + name);
-            mDrive = drive;
             CompletableFuture<File> future = new CompletableFuture<>();
 
 
             sExecutor.submit(()->{
-                lock(fileIDs.get(name), new ICallBackLocker<File>() {
+                lock(drive, fileIDs.get(name), new ICallBackLocker<File>() {
                     @Override
                     public void onCompleted(File file) {
                         future.complete(file);
@@ -103,9 +97,9 @@ public class Locker {
 
     }
 
-    void lock(String ID, ICallBackLocker<File> callback) {
+    void lock(Drive drive, String ID, ICallBackLocker<File> callback) {
         IUpdateRequest request;
-        request = mDrive.getClient().update().buildRequest(ID, IUpdateRequestBuilder.OP_LOCK);
+        request = drive.getClient().update().buildRequest(ID, IUpdateRequestBuilder.OP_LOCK);
         request.Reason("");
         request.run(new IUpdateCallBack<File>() {
             @Override

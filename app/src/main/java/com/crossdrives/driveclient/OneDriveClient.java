@@ -14,6 +14,7 @@ import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
 import com.crossdrives.driveclient.download.OneDriveDownloadRequestBuilder;
 import com.crossdrives.driveclient.list.IQueryRequestBuilder;
 import com.crossdrives.driveclient.list.OneDriveQueryRequestBuilder;
+import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.crossdrives.driveclient.upload.OneDriveUploadRequestBuilder;
 import com.microsoft.graph.authentication.IAuthenticationProvider;;
@@ -128,6 +129,11 @@ public class OneDriveClient implements IDriveClient {
     @Override
     public IAboutRequestBuilder about() {
         return new OneDriveAboutRequestBuilder(this);
+    }
+
+    @Override
+    public IUpdateRequestBuilder update() {
+        return null;
     }
 
     public static OneDriveClient fromConfig(String token){
