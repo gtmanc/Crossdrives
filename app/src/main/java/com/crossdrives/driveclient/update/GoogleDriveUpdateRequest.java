@@ -1,5 +1,7 @@
 package com.crossdrives.driveclient.update;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.crossdrives.driveclient.BaseRequest;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequest {
+    final String TAG = "CD.GoogleDriveUpdateRequest";
     GoogleDriveClient mClient;
     String mfileID;
     String mOperation;
@@ -60,6 +63,10 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
         }).addOnSuccessListener(new OnSuccessListener<com.google.api.services.drive.model.File>() {
                     @Override
                     public void onSuccess(com.google.api.services.drive.model.File file) {
+                        Log.d(TAG, "Lock file OK. ID: " + file.getId() + ". Name: " + file.getName()
+                        + ". readonly: " + file.getContentRestrictions().get(0).getReadOnly()
+                        + ". Reason: " + file.getContentRestrictions().get(0).getReason());
+
                         callback.success(file);
                     }
         }).addOnFailureListener(new OnFailureListener() {

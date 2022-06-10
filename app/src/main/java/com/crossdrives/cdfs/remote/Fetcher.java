@@ -3,67 +3,180 @@ package com.crossdrives.cdfs.remote;
 import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
+import com.crossdrives.driveclient.list.IFileListRequest;
 import com.google.android.gms.tasks.Task;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.google.common.collect.ForwardingMapEntry;
 
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class Fetcher {
-    final String TAG = "CD.Locker";
+    final String TAG = "CD.Fetcher";
     ConcurrentHashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
-    HashMap<String, CompletableFuture<File>> Futures= new HashMap<>();
+    HashMap<String, CompletableFuture<FileList>> fileListFutures = new HashMap<>();
+    HashMap<String, CompletableFuture<OutputStream>> ContentFutures = new HashMap<>();
+
     ICallBackLocker<HashMap<String, String>> mCallback;
 
     public Fetcher(ConcurrentHashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 
-    public Task<HashMap<String, File>> fetchAll(HashMap<String, String> parent){
-        Task<HashMap<String, File>> task;
-       /*
-            Start fetching one by one
-        */
-        mDrives.forEach((name, drive)->{
-            Log.d(TAG, "fetch file for drives: " + name);
-            CompletableFuture<File> future = new CompletableFuture<>();
+    public CompletableFuture<HashMap<String, FileList>> listForAll(HashMap<String, String> parent) throws ExecutionException, InterruptedException {
+        CompletableFuture<HashMap<String, FileList>> resultFuture =
+        CompletableFuture.supplyAsync(()->{
+            mDrives.forEach((name, drive) -> {
+                Log.d(TAG, "fetch list. Drive: " + name);
+                CompletableFuture<FileList> future = new CompletableFuture<>();
 
-            sExecutor.submit(()->{
-                fetch(drive, parent.get(name), new IFetcherCallBack<File>() {
+                //sExecutor.submit(()->{
+                helperFetchList(drive, parent.get(name), new IFetcherCallBack<FileList>() {
                     @Override
-                    public void onCompleted(File file) {
-                        future.complete(file);
+                    public void onCompleted(FileList files) {
+                        future.complete(files);
                     }
 
                     @Override
                     public void onCompletedExceptionally(Throwable throwable) {
                         future.completeExceptionally(throwable);
                     }
+                    //    });
                 });
+                fileListFutures.put(name, future);
             });
-            Futures.put(name, future);
+
+            //join
+            Map<String, FileList> joined
+            = fileListFutures.entrySet().stream().map((entrySet)->{
+                Map.Entry<String, FileList> entry = new Map.Entry<String, FileList>() {
+                    @Override
+                    public String getKey() {
+                        return entrySet.getKey();
+                    }
+
+                    @Override
+                    public FileList getValue() {
+                        return entrySet.getValue().join();
+                    }
+
+                    @Override
+                    public FileList setValue(FileList fileList) {
+                        return null;
+                    }
+                };
+                return entry;
+            }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+
+            return new HashMap<>(joined);
         });
+
+        return resultFuture;
     }
 
-    public Task<HashMap<String, OutputStream>> fetchAll(String parent){}
+    public CompletableFuture<HashMap<String, OutputStream>> pullForAll(HashMap<String, String> fileID){
+        CompletableFuture<HashMap<String, OutputStream>> resultFuture =
+                CompletableFuture.supplyAsync(()->{
+                    mDrives.forEach((name, drive) -> {
+                        Log.d(TAG, "fetch list. Drive: " + name);
+                        CompletableFuture<OutputStream> future = new CompletableFuture<>();
 
-    void fetch(Drive drive, String fileID, IFetcherCallBack<File> callback){
-        drive.getClient().list().buildRequest().run(new IFileListCallBack<FileList, Object>() {
+                        //sExecutor.submit(()->{
+                        helpertFetchContent(drive, fileID.get(name), new IFetcherCallBack<OutputStream>() {
+                            @Override
+                            public void onCompleted(OutputStream content) {
+                                future.complete(content);
+                            }
+
+                            @Override
+                            public void onCompletedExceptionally(Throwable throwable) {
+                                future.completeExceptionally(throwable);
+                            }
+                            //    });
+                        });
+                        ContentFutures.put(name, future);
+                    });
+
+                    //join
+                    Map<String, OutputStream> joined=
+                    ContentFutures.entrySet().stream().map((entrySet)->{
+                        Map.Entry<String, OutputStream> entry = new Map.Entry<String, OutputStream>() {
+                            @Override
+                            public String getKey() {
+                                return entrySet.getKey();
+                            }
+
+                            @Override
+                            public OutputStream getValue() {
+                                return entrySet.getValue().join();
+                            }
+
+                            @Override
+                            public OutputStream setValue(OutputStream stream) {
+                                return null;
+                            }
+                        };
+                        return entry;
+                    }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+
+                    return new HashMap<>(joined);
+                });
+
+        return resultFuture;
+    }
+
+    /*
+        Get file list
+     */
+    void helperFetchList(Drive drive, String parentID, IFetcherCallBack<FileList> callback){
+        String query = "'" + parentID + "' in parents";
+        IFileListRequest request;
+
+        request = drive.getClient().list().buildRequest().
+            setNextPage(null).
+            setPageSize(0); //0 means no page size is applied. The behavior depends on the drive vendor
+
+        //if parent is null, items in root is required. Simply let filter is empty.
+        if(parentID != null) {
+            request.filter(query);
+        }
+        request.run(new IFileListCallBack<FileList, Object>() {
             @Override
             public void success(FileList fileList, Object o) {
-
+                callback.onCompleted(fileList);
             }
 
             @Override
             public void failure(String ex) {
+                callback.onCompletedExceptionally(new Throwable(ex));
+            }
+        });
 
+    }
+    /*
+        Get content of a file
+     */
+    void helpertFetchContent(Drive drive, String fileID, IFetcherCallBack<OutputStream> callback){
+        drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<OutputStream>() {
+            @Override
+            public void success(OutputStream outputStream) {
+                callback.onCompleted(outputStream);
+            }
+
+            @Override
+            public void failure(String ex) {
+                callback.onCompletedExceptionally(new Throwable(ex));
             }
         });
 

@@ -3,6 +3,7 @@ package com.crossdrives.cdfs.allocation;
 import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -11,14 +12,18 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
-public class MapFetch {
+public class MapFetcher {
     private final String TAG = "CD.Fetcher";
     ConcurrentHashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
@@ -53,7 +58,7 @@ public class MapFetch {
 
     }
 
-    public MapFetch(ConcurrentHashMap<String, Drive> drives) {
+    public MapFetcher(ConcurrentHashMap<String, Drive> drives) {
         super();
 
         mDrives = drives; }
@@ -263,5 +268,90 @@ public class MapFetch {
         });
 
         return result.get();
+    }
+
+    public CompletableFuture<HashMap<String, File>> listAll() {
+        CompletableFuture<HashMap<String, File>> resultFuture;
+        Fetcher fetcher = new Fetcher(mDrives);
+
+        resultFuture = CompletableFuture.supplyAsync(()->{
+            Map<String, String> id = new HashMap<>();
+            id = mDrives.keySet().stream().map(k-> {
+                Map.Entry<String, String> entry = new Map.Entry<String, String>() {
+                    @Override
+                    public String getKey() {
+                    return k;
+                }
+
+                    @Override
+                    public String getValue() {
+                        return null;
+                    }   //null indicates root is specified
+
+                    @Override
+                    public String setValue(String s) {
+                        return null;
+                    }
+                };
+                return entry;
+            }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+
+            HashMap<String, File> result = null;
+            try {
+                Map<String, File> mapped;
+                CompletableFuture<HashMap<String, FileList>> list = fetcher.listForAll(new HashMap<>(id));
+                HashMap<String, FileList> resultListAll = list.get();
+                mapped = resultListAll.entrySet().stream().map((set)->{
+                    Map.Entry<String, File> entry = new Map.Entry<String, File>() {
+                        @Override
+                        public String getKey() {
+                            return set.getKey();
+                        }
+
+                        @Override
+                        public File getValue() {
+                            return getIDFromFiles(set.getValue());
+                        }
+
+                        @Override
+                        public File setValue(File o) {
+                            return null;
+                        }
+                    };
+                    return entry;
+                }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+                result = new HashMap(mapped);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return result;
+        });
+        return resultFuture;
+    }
+
+    CompletableFuture<HashMap<String, OutputStream>> contentForAll(){return null;}
+
+
+    File getIDFromFiles(FileList fileList){
+        Optional<File> files;
+        File result = null;
+        if(fileList.getFiles().size() > 0) {
+            files = fileList.getFiles().stream().filter((file) -> {
+                return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ? true : false;
+            }).findAny();
+
+            if (files.isPresent()) {
+                result = files.get();
+
+            } else {
+                Log.w(TAG, "No root allocation file presents!");
+            }
+        }else{
+            Log.w(TAG, "No files found in the specified folder");
+        }
+
+        return result;
     }
 }

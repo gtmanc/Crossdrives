@@ -10,11 +10,13 @@ import com.crossdrives.cdfs.allocation.Allocator;
 import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
 import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitCallback;
+import com.crossdrives.cdfs.allocation.MapLocker;
 import com.crossdrives.cdfs.allocation.Splitter;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.allocation.MapFetch;
+import com.crossdrives.cdfs.allocation.MapFetcher;
+import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -35,6 +37,7 @@ import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -289,31 +292,20 @@ public class Upload {
                 printItems(uploadedItems);
 
                 /*
-                    Try to locks all of the remote allocaton maps
+                    Try to locks all of the remote allocation maps
                  */
 
-                MapFetch mapFetch = new MapFetch(drives);
-                mapFetch.fetchAll(null, new ICallBackMapFetch<HashMap<String, OutputStream>>()
-                {
-                    @Override
-                    public void onCompleted(HashMap<String, OutputStream> allocationMap) {
-
-                        allocationMap.forEach((driveName, aMap)->{
-                           sExecutor.submit(()->{
-                           });
-                           updateAllocationMapFuture.thenCompose((alloctionMapId)->{
-                               CompletableFuture<Collection<String>> future = new CompletableFuture<>();
-                               return null;});
-
-                           updateAllocationMapFuture.exceptionally((ex)->{return null;});
-                        });
-                    }
-
-                    @Override
-                    public void onCompletedExceptionally(Throwable throwable) {
-                        mCallback.onFailure(throwable);
-                    }
-                });
+                MapFetcher mapFetcher = new MapFetcher(drives);
+                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> maps =
+                        mapFetcher.listAll();
+                MapLocker locker = new MapLocker(drives);
+                try {
+                    locker.lockAll(maps.get());
+                } catch (ExecutionException e) {
+                    Log.w(TAG, "ExecutionException: " + e.toString());
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "InterruptedException: " + e.toString());
+                }
 
 
             }

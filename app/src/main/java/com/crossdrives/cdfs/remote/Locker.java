@@ -27,7 +27,6 @@ public class Locker {
     final String TAG = "CD.Locker";
     ConcurrentHashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
-    ICallBackLocker<HashMap<String, String>> mCallback;
 
     HashMap<String, CompletableFuture<File>> Futures= new HashMap<>();
 
@@ -35,19 +34,16 @@ public class Locker {
         this.mDrives = mDrives;
     }
 
-    Task<HashMap<String, File>> lockAll(HashMap<String, String> fileIDs, ICallBackLocker<HashMap<String, String>> callback){
-        mCallback = callback;
-        Task<HashMap<String, File>> task;
-       /*
-            Start fetching one by one
-        * */
+    public CompletableFuture<HashMap<String, File>> lockAll(HashMap<String, File> files){
+
+
         mDrives.forEach((name, drive)->{
             Log.d(TAG, "Lock files for drives: " + name);
             CompletableFuture<File> future = new CompletableFuture<>();
 
 
-            sExecutor.submit(()->{
-                lock(drive, fileIDs.get(name), new ICallBackLocker<File>() {
+            //sExecutor.submit(()->{
+                lock(drive, files.get(name), new ICallBackLocker<File>() {
                     @Override
                     public void onCompleted(File file) {
                         future.complete(file);
@@ -58,48 +54,43 @@ public class Locker {
                         future.completeExceptionally(throwable);
                     }
                 });
-            });
+            //});
             Futures.put(name, future);
         });
 
-        task = Tasks.call(sExecutor, new Callable<HashMap<String, File>>() {
-            @Override
-            public HashMap<String, File> call() throws Exception {
-                Map<String, File> locked = Futures.entrySet().stream().map((entry)-> {
-                    Map.Entry<String, File> entry1 = new Map.Entry<String, File>() {
-                        @Override
-                        public String getKey() {
-                            return entry.getKey();
-                        }
+        CompletableFuture<HashMap<String, File>> resultFuture = CompletableFuture.supplyAsync(()->{
+            Map<String, File> locked = Futures.entrySet().stream().map((entry)-> {
+                Map.Entry<String, File> entry1 = new Map.Entry<String, File>() {
+                    @Override
+                    public String getKey() {
+                        return entry.getKey();
+                    }
 
-                        @Override
-                        public File getValue() {
+                    @Override
+                    public File getValue() {
                             /*
                                 join will block current thread
                              */
-                            return entry.getValue().join();
-                        }
+                        return entry.getValue().join();
+                    }
 
-                        @Override
-                        public File setValue(File value) {
-                            return null;
-                        }
-                    };
-                    return entry1;
-                }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-
-
-                return new HashMap<String, File>(locked);
-            }
+                    @Override
+                    public File setValue(File value) {
+                        return null;
+                    }
+                };
+                return entry1;
+            }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            return new HashMap<>(locked);
         });
 
-        return task;
+        return resultFuture;
 
     }
 
-    void lock(Drive drive, String ID, ICallBackLocker<File> callback) {
+    void lock(Drive drive, File file, ICallBackLocker<File> callback) {
         IUpdateRequest request;
-        request = drive.getClient().update().buildRequest(ID, IUpdateRequestBuilder.OP_LOCK);
+        request = drive.getClient().update().buildRequest(file.getId(), IUpdateRequestBuilder.OP_LOCK);
         request.Reason("");
         request.run(new IUpdateCallBack<File>() {
             @Override
