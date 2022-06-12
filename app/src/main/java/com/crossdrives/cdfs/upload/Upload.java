@@ -299,8 +299,13 @@ public class Upload {
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> maps =
                         mapFetcher.listAll();
                 MapLocker locker = new MapLocker(drives);
+                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> lockFuture;
                 try {
-                    locker.lockAll(maps.get());
+                    lockFuture = locker.lockAll(maps.get());
+                    lockFuture.exceptionally((ex)->{
+                        Log.w(TAG, "lock map failed: " + ex.toString());
+                        return null;
+                    });
                 } catch (ExecutionException e) {
                     Log.w(TAG, "ExecutionException: " + e.toString());
                 } catch (InterruptedException e) {

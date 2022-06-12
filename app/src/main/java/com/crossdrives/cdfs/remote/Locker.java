@@ -15,6 +15,7 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -29,13 +30,13 @@ public class Locker {
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
     HashMap<String, CompletableFuture<File>> Futures= new HashMap<>();
+    ContentRestriction mRestriction;
 
     public Locker(ConcurrentHashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 
-    public CompletableFuture<HashMap<String, File>> lockAll(HashMap<String, File> files){
-
+    public CompletableFuture<HashMap<String, File>> lockAll(HashMap<String, String> fileIDs){
 
         mDrives.forEach((name, drive)->{
             Log.d(TAG, "Lock files for drives: " + name);
@@ -43,7 +44,7 @@ public class Locker {
 
 
             //sExecutor.submit(()->{
-                lock(drive, files.get(name), new ICallBackLocker<File>() {
+                lock(drive, fileIDs.get(name), new ICallBackLocker<File>() {
                     @Override
                     public void onCompleted(File file) {
                         future.complete(file);
@@ -85,13 +86,27 @@ public class Locker {
         });
 
         return resultFuture;
-
     }
 
-    void lock(Drive drive, File file, ICallBackLocker<File> callback) {
+    Locker restriction(ContentRestriction restriction){
+        mRestriction = restriction;
+        return this;
+    }
+
+    void lock(Drive drive, String fileID, ICallBackLocker<File> callback) {
         IUpdateRequest request;
-        request = drive.getClient().update().buildRequest(file.getId(), IUpdateRequestBuilder.OP_LOCK);
-        request.Reason("");
+        com.crossdrives.driveclient.model.File metaData = new com.crossdrives.driveclient.model.File();
+        File file = new File();
+        ContentRestriction restriction = new ContentRestriction();
+
+        if(mRestriction != null){
+            file.setContentRestrictions(new List<ContentRestriction>() {
+            })
+        }
+
+        metaData.setFile();
+        Log.d(TAG, "Lock file. ID: " + fileID));
+        request = drive.getClient().update().buildRequest(fileID, metaData);
         request.run(new IUpdateCallBack<File>() {
             @Override
             public void success(File file) {

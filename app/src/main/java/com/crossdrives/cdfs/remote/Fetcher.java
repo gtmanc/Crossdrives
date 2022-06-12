@@ -34,7 +34,7 @@ public class Fetcher {
         this.mDrives = mDrives;
     }
 
-    public CompletableFuture<HashMap<String, FileList>> listForAll(HashMap<String, String> parent) throws ExecutionException, InterruptedException {
+    public CompletableFuture<HashMap<String, FileList>> listForAll(HashMap<String, File> parent) throws ExecutionException, InterruptedException {
         CompletableFuture<HashMap<String, FileList>> resultFuture =
         CompletableFuture.supplyAsync(()->{
             mDrives.forEach((name, drive) -> {
@@ -42,7 +42,7 @@ public class Fetcher {
                 CompletableFuture<FileList> future = new CompletableFuture<>();
 
                 //sExecutor.submit(()->{
-                helperFetchList(drive, parent.get(name), new IFetcherCallBack<FileList>() {
+                helperFetchList(drive, parent.get(name).getId(), new IFetcherCallBack<FileList>() {
                     @Override
                     public void onCompleted(FileList files) {
                         future.complete(files);
@@ -140,15 +140,17 @@ public class Fetcher {
         Get file list
      */
     void helperFetchList(Drive drive, String parentID, IFetcherCallBack<FileList> callback){
-        String query = "'" + parentID + "' in parents";
         IFileListRequest request;
 
         request = drive.getClient().list().buildRequest().
             setNextPage(null).
             setPageSize(0); //0 means no page size is applied. The behavior depends on the drive vendor
 
-        //if parent is null, items in root is required. Simply let filter is empty.
-        if(parentID != null) {
+        //Set filter only if parent i not an empty string. An empty string indicated that items in root is required.
+        //In this case, no filter is needed.
+        if(!parentID.equals("")) {
+            String query = "'" + parentID + "' in parents";
+            Log.d(TAG, "Set filter: " +query);
             request.filter(query);
         }
         request.run(new IFileListCallBack<FileList, Object>() {

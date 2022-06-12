@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.crossdrives.driveclient.BaseRequest;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.model.File;
+import com.crossdrives.driveclient.model.MetaData;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -21,41 +22,36 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
     final String TAG = "CD.GoogleDriveUpdateRequest";
     GoogleDriveClient mClient;
     String mfileID;
-    String mOperation;
-    String mReason;
+    File mMetaData;
+    ;
 
-    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, String op) {
+    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, File file) {
         this.mClient = mClient;
         mfileID = fileID;
-        mOperation = op;
-    }
-
-
-    @Override
-    public void Reason(String reason) {
-        mReason = reason;
+        mMetaData = file;
     }
 
     @Override
     public void run(IUpdateCallBack callback) {
         Task<File> task;
-        com.google.api.services.drive.model.File content = new com.google.api.services.drive.model.File();
-        List<ContentRestriction> restrictions = new ArrayList<>();
-
-        ContentRestriction restriction = new ContentRestriction();
-        restriction = restriction.setReadOnly(new Boolean(true));
-        if(mReason != null){
-            restriction = restriction.setReason(mReason);
-        }
-
-        restrictions.add(restriction);
-        content.setContentRestrictions(restrictions);
-
+//        com.google.api.services.drive.model.File content = new com.google.api.services.drive.model.File();
+//        List<ContentRestriction> restrictions = new ArrayList<>();
+//
+//        ContentRestriction restriction = new ContentRestriction();
+//        restriction = restriction.setReadOnly(new Boolean(true));
+//        if(mReason != null){
+//            restriction = restriction.setReason(mReason);
+//        }
+//
+//        restrictions.add(restriction);
+//        //content.setContentRestrictions(restrictions);
+//        content.setDescription("test description");
         Tasks.call(mClient.getExecutor(), new Callable<com.google.api.services.drive.model.File>() {
             @Override
             public com.google.api.services.drive.model.File call() throws Exception {
-                com.google.api.services.drive.model.File file = mClient.getGoogleDriveService().files().update(mfileID, content)
-                        .setFields("id, name, readOnly, reason")
+                com.google.api.services.drive.model.File file = mClient.getGoogleDriveService().files().update(mfileID, mMetaData.getFile())
+                        .setFields("id, name, contentRestrictions")
+                        //.setFields("id, name")
                         .execute();
                 //System.out.println("Folder ID: " + file.getId());
                 return file;
@@ -72,7 +68,8 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                callback.success(e.getMessage());
+                Log.w(TAG, e.getMessage());
+                callback.failure(e.getMessage());
             }
         });
     }

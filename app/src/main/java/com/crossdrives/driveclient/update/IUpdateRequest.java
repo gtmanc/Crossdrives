@@ -2,9 +2,6 @@ package com.crossdrives.driveclient.update;
 
 public interface IUpdateRequest {
 
-    public void Reason(String reason);
-
-
     /*
         Execute the request
 

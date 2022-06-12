@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class MapFetcher {
-    private final String TAG = "CD.Fetcher";
+    private final String TAG = "CD.MapFetcher";
     ConcurrentHashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
@@ -275,33 +275,38 @@ public class MapFetcher {
         Fetcher fetcher = new Fetcher(mDrives);
 
         resultFuture = CompletableFuture.supplyAsync(()->{
-            Map<String, String> id = new HashMap<>();
-            id = mDrives.keySet().stream().map(k-> {
-                Map.Entry<String, String> entry = new Map.Entry<String, String>() {
+            Map<String, File> rootIDs;
+            Map<String, File> folders = null;
+            Map<String, File> maps;
+            HashMap<String, File> result = null;
+            rootIDs = mDrives.keySet().stream().map(k-> {
+                Map.Entry<String, File> entry = new Map.Entry<String, File>() {
                     @Override
                     public String getKey() {
                     return k;
                 }
 
                     @Override
-                    public String getValue() {
-                        return null;
-                    }   //null indicates root is specified
+                    public File getValue() {
+                        File f = new File();
+                        f.setId(""); //empty string indicates root is specified
+                        return f;
+                    }
 
                     @Override
-                    public String setValue(String s) {
+                    public File setValue(File s) {
                         return null;
                     }
                 };
                 return entry;
             }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
 
-            HashMap<String, File> result = null;
+
             try {
-                Map<String, File> mapped;
-                CompletableFuture<HashMap<String, FileList>> list = fetcher.listForAll(new HashMap<>(id));
+                CompletableFuture<HashMap<String, FileList>> list = fetcher.listForAll(new HashMap<>(rootIDs));
                 HashMap<String, FileList> resultListAll = list.get();
-                mapped = resultListAll.entrySet().stream().map((set)->{
+
+                folders = resultListAll.entrySet().stream().map((set)->{
                     Map.Entry<String, File> entry = new Map.Entry<String, File>() {
                         @Override
                         public String getKey() {
@@ -310,7 +315,9 @@ public class MapFetcher {
 
                         @Override
                         public File getValue() {
-                            return getIDFromFiles(set.getValue());
+                            File f = getFromFiles(set.getValue(), NAME_CDFS_FOLDER);
+                            Log.d(TAG, "CDFS folder: " + f.getName());
+                            return f;
                         }
 
                         @Override
@@ -320,12 +327,49 @@ public class MapFetcher {
                     };
                     return entry;
                 }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
-                result = new HashMap(mapped);
+            } catch (ExecutionException e) {
+                Log.w(TAG, e.getMessage());
+
+            } catch (InterruptedException e) {
+                Log.w(TAG, e.getMessage());
+            }
+
+            //No CDFS folder found, exit.
+            if(folders == null){
+                return null;
+            }
+
+            try {
+                CompletableFuture<HashMap<String, FileList>> list = fetcher.listForAll(new HashMap<>(folders));
+                HashMap<String, FileList> files = list.get();
+                maps = files.entrySet().stream().map((set)->{
+                    Map.Entry<String, File> entry = new Map.Entry<String, File>() {
+                        @Override
+                        public String getKey() {
+                            return set.getKey();
+                        }
+
+                        @Override
+                        public File getValue() {
+                            File f = getFromFiles(set.getValue(), NAME_ALLOCATION_ROOT);
+                            Log.d(TAG, "Map file: " + f.getName());
+                            return f;
+                        }
+
+                        @Override
+                        public File setValue(File value) {
+                            return null;
+                        }
+                    };
+                    return entry;
+                }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+                result = new HashMap(maps);
             } catch (ExecutionException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             return result;
         });
         return resultFuture;
@@ -334,12 +378,12 @@ public class MapFetcher {
     CompletableFuture<HashMap<String, OutputStream>> contentForAll(){return null;}
 
 
-    File getIDFromFiles(FileList fileList){
+    File getFromFiles(FileList fileList, String name){
         Optional<File> files;
         File result = null;
         if(fileList.getFiles().size() > 0) {
             files = fileList.getFiles().stream().filter((file) -> {
-                return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ? true : false;
+                return file.getName().compareToIgnoreCase(name) == 0 ? true : false;
             }).findAny();
 
             if (files.isPresent()) {

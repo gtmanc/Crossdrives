@@ -2,6 +2,7 @@ package com.crossdrives.driveclient.update;
 
 import com.crossdrives.driveclient.BaseRequestBuilder;
 import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.model.File;
 
 public class GoogleDriveUpdateRequestBuilder extends BaseRequestBuilder implements IUpdateRequestBuilder {
     GoogleDriveClient mClient;
@@ -10,7 +11,7 @@ public class GoogleDriveUpdateRequestBuilder extends BaseRequestBuilder implemen
     }
 
     @Override
-    public IUpdateRequest buildRequest(String fileID, String op) {
-        return new GoogleDriveUpdateRequest(mClient, fileID, op);
+    public IUpdateRequest buildRequest(String fileID, File metaData) {
+        return new GoogleDriveUpdateRequest(mClient, fileID, metaData);
     }
 }
