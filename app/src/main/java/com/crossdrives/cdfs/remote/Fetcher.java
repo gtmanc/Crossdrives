@@ -85,7 +85,7 @@ public class Fetcher {
         return resultFuture;
     }
 
-    public CompletableFuture<HashMap<String, OutputStream>> pullForAll(HashMap<String, String> fileID){
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, String> fileID){
         CompletableFuture<HashMap<String, OutputStream>> resultFuture =
                 CompletableFuture.supplyAsync(()->{
                     mDrives.forEach((name, drive) -> {

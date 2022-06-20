@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.remote.Fetcher;
+import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -375,8 +376,19 @@ public class MapFetcher {
         return resultFuture;
     }
 
-    CompletableFuture<HashMap<String, OutputStream>> contentForAll(){return null;}
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, File> files){
 
+        pullAllByID(Mapper.reValue(files, (file)->{
+            return file.getId();
+        }));
+        return null;
+    }
+
+    CompletableFuture<HashMap<String, OutputStream>> pullAllByID(HashMap<String, String> fileIDs){
+        Fetcher fetcher = new Fetcher(mDrives);
+        fetcher.pullAll(fileIDs);
+        return null;
+    }
 
     File getFromFiles(FileList fileList, String name){
         Optional<File> files;

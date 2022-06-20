@@ -2,7 +2,7 @@ package com.crossdrives.driveclient.get;
 
 import com.crossdrives.driveclient.update.IUpdateCallBack;
 
-public interface IGoogleDriveGetRequest {
+public interface IGetRequest {
 
     /*
         Execute the request

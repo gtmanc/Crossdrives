@@ -1,6 +1,7 @@
 package com.crossdrives.cdfs.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class AllocContainer {
@@ -11,6 +12,6 @@ public class AllocContainer {
     public void setVersion(int version){this.version = version;};
 
     public List<AllocationItem> getAllocItem(){return items;}
-    public void setAllocItem(AllocationItem item){this.items.add(item);}
-    public void setAllocItem(List<AllocationItem> item){this.items = item;}
+    public void addItem(AllocationItem item){this.items.add(item);}
+    public void addItems(Collection<AllocationItem> items){this.items.addAll(items);}
 }

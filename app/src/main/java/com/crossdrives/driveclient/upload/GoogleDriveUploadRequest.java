@@ -113,7 +113,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
                     Log.d(TAG, "Initiation is complete!");
                     break;
                 case MEDIA_IN_PROGRESS:
-                    //System.out.println(uploader.getProgress());
+                    //System.out.println(updater.getProgress());
                     Log.d(TAG, "Upload progress: " +uploader.getProgress());
                     break;
                 case MEDIA_COMPLETE:
@@ -148,7 +148,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
         Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
         Log.d(TAG, "Upload InitiationRequestMethod: " + uploader.getInitiationRequestMethod());
         Log.d(TAG, "Upload InitiationHeaders: " + uploader.getInitiationHeaders());
-        //Log.d(TAG, "Upload MediaContent: " + uploader.getMediaContent().toString());
+        //Log.d(TAG, "Upload MediaContent: " + updater.getMediaContent().toString());
         Log.d(TAG, "Upload MediaMetaData: " + uploader.getMetadata());
 
         response = uploader.upload(requestUrl);
@@ -186,7 +186,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
                 uploadFuture.completeExceptionally(new Exception(e.getMessage()));
             }
 
-            //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+            //Log.d(TAG, "Upload chunk size: " + updater.getChunkSize());
             //return file;
 
         });
@@ -220,12 +220,12 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
 //                Log.d(TAG, "name: " + mMetadata.getName());
 //                    //file = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent)
 //                    create = mClient.getGoogleDriveService().files().create(mMetadata, mediaContent);
-//                    MediaHttpUploader uploader = create.getMediaHttpUploader();
-//                    uploader.setProgressListener(new CustomProgressListener());
+//                    MediaHttpUploader updater = create.getMediaHttpUploader();
+//                    updater.setProgressListener(new CustomProgressListener());
 //                    create.setFields("id");
 //                    file = create.execute();
 //
-//                //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+//                //Log.d(TAG, "Upload chunk size: " + updater.getChunkSize());
 //                return file;
 //            }
 //        });
@@ -273,7 +273,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
                 uploader.setProgressListener(new CustomProgressListener());
                 create.setFields("id");
                 file = create.execute();
-                //Log.d(TAG, "Upload chunk size: " + uploader.getChunkSize());
+                //Log.d(TAG, "Upload chunk size: " + updater.getChunkSize());
                 return file;
             }
         });

@@ -12,6 +12,7 @@ import com.crossdrives.driveclient.delete.IDeleteRequestBuilder;
 import com.crossdrives.driveclient.delete.OneDriveDeleteRequestBuilder;
 import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
 import com.crossdrives.driveclient.download.OneDriveDownloadRequestBuilder;
+import com.crossdrives.driveclient.get.IGetRequestBuilder;
 import com.crossdrives.driveclient.list.IQueryRequestBuilder;
 import com.crossdrives.driveclient.list.OneDriveQueryRequestBuilder;
 import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
@@ -134,6 +135,11 @@ public class OneDriveClient implements IDriveClient {
     @Override
     public IUpdateRequestBuilder update() {
         return null;
+    }
+
+    @Override
+    public IGetRequestBuilder get() {
+        return null;    //TODO: not yet implemented
     }
 
     public static OneDriveClient fromConfig(String token){

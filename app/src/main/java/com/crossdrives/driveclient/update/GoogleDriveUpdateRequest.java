@@ -12,6 +12,9 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.api.client.http.AbstractInputStreamContent;
+import com.google.api.client.http.FileContent;
+import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.ContentRestriction;
 
 import java.util.ArrayList;
@@ -22,13 +25,21 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
     final String TAG = "CD.GoogleDriveUpdateRequest";
     GoogleDriveClient mClient;
     String mfileID;
-    File mMetaData;
-    ;
+    com.google.api.services.drive.model.File mMetaData;
+    AbstractInputStreamContent mMediaContent;
 
-    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, File file) {
+    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, com.google.api.services.drive.model.File file) {
         this.mClient = mClient;
         mfileID = fileID;
         mMetaData = file;
+    }
+
+    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, com.google.api.services.drive.model.File file,
+                                    AbstractInputStreamContent mediaContent) {
+        this.mClient = mClient;
+        mfileID = fileID;
+        mMetaData = file;
+        mMediaContent = mediaContent;
     }
 
     @Override
@@ -49,10 +60,19 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
         Tasks.call(mClient.getExecutor(), new Callable<com.google.api.services.drive.model.File>() {
             @Override
             public com.google.api.services.drive.model.File call() throws Exception {
-                com.google.api.services.drive.model.File file = mClient.getGoogleDriveService().files().update(mfileID, mMetaData.getFile())
-                        .setFields("id, name, contentRestrictions")
-                        //.setFields("id, name")
-                        .execute();
+                Drive.Files files;
+                Drive.Files.Update update;
+                com.google.api.services.drive.model.File file;
+
+                files = mClient.getGoogleDriveService().files();
+                if(mMediaContent != null){
+                    update = files.update(mfileID, mMetaData, mMediaContent);
+                }else{
+                    update = files.update(mfileID, mMetaData);
+                }
+                file = update.setFields("id, name, contentRestrictions")
+                //.setFields("id, name")
+                .execute();
                 //System.out.println("Folder ID: " + file.getId());
                 return file;
             }

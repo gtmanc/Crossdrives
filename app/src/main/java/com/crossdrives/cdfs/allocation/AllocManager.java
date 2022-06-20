@@ -47,6 +47,7 @@ public class AllocManager implements IAllocManager {
         Drive drive;
 
         container = gson.fromJson(stream.toString(), AllocContainer.class);
+
         return container;
     }
 
@@ -418,7 +419,7 @@ public class AllocManager implements IAllocManager {
         item.setSize(32);
         item.setCDFSItemSize(64);
         item.setAttrFolder(false);
-        container.setAllocItem(item);
+        container.addItem(item);
 
         item2.setDrive("Google");
         item2.setName("Test1.txt");
@@ -430,7 +431,7 @@ public class AllocManager implements IAllocManager {
         item2.setSize(32);
         item2.setCDFSItemSize(64);
         item2.setAttrFolder(false);
-        container.setAllocItem(item2);
+        container.addItem(item2);
     }
     private void addTestContentMicrosoft(AllocContainer container){
         AllocationItem item = new AllocationItem();
@@ -445,7 +446,7 @@ public class AllocManager implements IAllocManager {
         item.setSize(32);
         item.setCDFSItemSize(64);
         item.setAttrFolder(false);
-        container.setAllocItem(item);
+        container.addItem(item);
 
         item2.setDrive("Microsoft");
         item2.setName("Test1.txt");
@@ -457,7 +458,7 @@ public class AllocManager implements IAllocManager {
         item2.setSize(32);
         item2.setCDFSItemSize(64);
         item2.setAttrFolder(false);
-        container.setAllocItem(item2);
+        container.addItem(item2);
     }
 
     public void saveItem(AllocationItem item, String drive)

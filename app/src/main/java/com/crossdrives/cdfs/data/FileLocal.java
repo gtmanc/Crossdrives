@@ -35,15 +35,23 @@ public class FileLocal implements IFileCreation {
 
     /*
         Create file in app's directory "/"
-        name: the file to create
+        name: the name of file to create. exclude separator "\".
         content: String to write
+
+        return: absolute path of the created file. Could be null.
      */
-    public void create(String name, String content){
+    public java.io.File create(String name, String content){
         //String s = path + "/" + name;
         //Log.d(TAG, "Create local file. Path: " + s);
-        //java.io.File filePath = new java.io.File(s);
-        createTextFile(name, content);
-        //return filePath;
+        java.io.File filePath = null;
+        try {
+            createTextFile(name, content);
+            filePath = new java.io.File(mCDFS.getContext().getFilesDir() + name);
+        } catch (IOException e) {
+            Log.w(TAG, e.getMessage());
+        }
+
+        return filePath;
     }
 
     /*
@@ -60,7 +68,7 @@ public class FileLocal implements IFileCreation {
     /*
      * Files with Activity Output/input: https://stackoverflow.com/questions/1239026/how-to-create-a-file-in-android
      * */
-    private void createTextFile(String path, String content){
+    private void createTextFile(String path, String content) throws IOException {
         // catches IOException below
         //final String TESTSTRING = new String("Hello Android");
 
@@ -71,7 +79,7 @@ public class FileLocal implements IFileCreation {
          * We chose MODE_WORLD_READABLE, because
          *  we have nothing to hide in our file */
         FileOutputStream fOut = null;
-        try {
+
             fOut = mCDFS.getContext().openFileOutput(path, Activity.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             // Write the string to the file
@@ -81,11 +89,7 @@ public class FileLocal implements IFileCreation {
             osw.flush();
             osw.close();
 
-        } catch (FileNotFoundException e) {
-            Log.w(TAG, "File not found! " + e.getMessage());
-        }catch (IOException e){
-            Log.w(TAG, "IOException! " + e.getMessage());
-        }
+
     }
 
     private String readFile(String path) {

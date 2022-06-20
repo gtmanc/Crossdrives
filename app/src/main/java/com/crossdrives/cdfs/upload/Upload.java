@@ -6,23 +6,28 @@ import androidx.annotation.NonNull;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IConstant;
+import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
-import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
 import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitCallback;
-import com.crossdrives.cdfs.allocation.MapLocker;
+import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.Splitter;
+import com.crossdrives.cdfs.data.FileLocal;
+import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.updateContent;
+import com.crossdrives.cdfs.model.updateFile;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
-import com.crossdrives.cdfs.remote.Fetcher;
+import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.FileList;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +42,6 @@ import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -292,25 +296,64 @@ public class Upload {
                 printItems(uploadedItems);
 
                 /*
-                    Try to locks all of the remote allocation maps
+                    Lock remote allocation maps?
+                    A signed in app still can edit a locked file although it's locked. It means that locking a file
+                    doesn't actually protect the content from being modified of a file as we expcted.
+                    This also makes sense becuase lock/unclok as well known check out/in is not the modern
+                    concept. Instead, edit a file with merge would be the best solution. i.e. Google Doc
                  */
-
                 MapFetcher mapFetcher = new MapFetcher(drives);
-                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> maps =
+                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture =
                         mapFetcher.listAll();
-                MapLocker locker = new MapLocker(drives);
-                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> lockFuture;
-                try {
-                    lockFuture = locker.lockAll(maps.get());
-                    lockFuture.exceptionally((ex)->{
-                        Log.w(TAG, "lock map failed: " + ex.toString());
-                        return null;
-                    });
-                } catch (ExecutionException e) {
-                    Log.w(TAG, "ExecutionException: " + e.toString());
-                } catch (InterruptedException e) {
-                    Log.w(TAG, "InterruptedException: " + e.toString());
-                }
+                CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(mapIDFuture.join());
+                AllocManager am = new AllocManager(mCDFS);
+                HashMap<String, AllocContainer> containers = Mapper.reValue(mapStreamFuture.join(), (in)->{
+                    return am.toContainer(in);
+                });
+
+                /*
+                    add the uploaded items to the container
+                 */
+                containers.forEach((k, v)->{
+                    v.addItems(uploadedItems.get(k));
+                });
+
+                HashMap<String, updateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
+                    Gson gson = new Gson();
+                    FileLocal creator = new FileLocal(mCDFS);
+                    updateContent content = new updateContent();
+                    content.setID(mapIDFuture.join().get(driveName).getId());
+                    content.setMediaContent(creator.create(driveName + "_map.txt", gson.toJson(container)));
+                    return content;
+                });
+
+                MapUpdater updater = new MapUpdater(drives);
+                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
+                        = updater.updateAll(localMaps);
+                updateFuture.join();
+//                MapLocker locker = new MapLocker(drives);
+//                CompletableFuture<HashMap<String, ContentRestriction>> lockStatusFuture;
+//
+//
+//                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> lockFuture;
+//                try {
+//                    lockStatusFuture = locker.getStatus(maps.get());
+//
+//                    lockFuture = locker.lockAll(maps.get());
+//
+//                    lockStatusFuture.exceptionally(ex->{
+//                        Log.w(TAG, "get lock status failed: " + ex.toString());
+//                        return null;
+//                    });
+//                    lockFuture.exceptionally((ex)->{
+//                        Log.w(TAG, "lock map failed: " + ex.toString());
+//                        return null;
+//                    });
+//                } catch (ExecutionException e) {
+//                    Log.w(TAG, "ExecutionException: " + e.toString());
+//                } catch (InterruptedException e) {
+//                    Log.w(TAG, "InterruptedException: " + e.toString());
+//                }
 
 
             }
