@@ -88,7 +88,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private ActionMode mActionMode = null;
 
-	private File currentFolder = new File();
+	private String currentFolder;
 	/*
 	Next page handler. Use this handler to get file list of next page. It is available in response of
 	previous file list request
@@ -408,7 +408,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		mNextPage = null;	//null to get first page of file list
 		mQSTATE = QSTATE_READY;
-		currentFolder.setName("Root");
+		currentFolder = "Root";
 	}
 
 	private void setQStateInprogress(){

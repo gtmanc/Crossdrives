@@ -3,6 +3,7 @@ package com.crossdrives.cdfs.remote;
 import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.list.IFileListRequest;
@@ -34,103 +35,44 @@ public class Fetcher {
         this.mDrives = mDrives;
     }
 
-    public CompletableFuture<HashMap<String, FileList>> listForAll(HashMap<String, File> parent) throws ExecutionException, InterruptedException {
-        CompletableFuture<HashMap<String, FileList>> resultFuture =
-        CompletableFuture.supplyAsync(()->{
-            mDrives.forEach((name, drive) -> {
-                Log.d(TAG, "fetch list. Drive: " + name);
-                CompletableFuture<FileList> future = new CompletableFuture<>();
+    public CompletableFuture<HashMap<String, FileList>> listAll(HashMap<String, File> parent) {
+        CompletableFuture<HashMap<String, FileList>> resultFuture;
 
-                //sExecutor.submit(()->{
-                helperFetchList(drive, parent.get(name).getId(), new IFetcherCallBack<FileList>() {
-                    @Override
-                    public void onCompleted(FileList files) {
-                        future.complete(files);
-                    }
+        mDrives.forEach((name, drive) -> {
+            Log.d(TAG, "fetch list. Drive: " + name);
+            CompletableFuture<FileList> future
+                                = helperFetchList(drive, parent.get(name).getId());
+            fileListFutures.put(name, future);
+        });
 
-                    @Override
-                    public void onCompletedExceptionally(Throwable throwable) {
-                        future.completeExceptionally(throwable);
-                    }
-                    //    });
-                });
-                fileListFutures.put(name, future);
+        resultFuture = CompletableFuture.supplyAsync(()->{
+            return Mapper.reValue(fileListFutures, (future)->{
+                return future.join();
             });
-
-            //join
-            Map<String, FileList> joined
-            = fileListFutures.entrySet().stream().map((entrySet)->{
-                Map.Entry<String, FileList> entry = new Map.Entry<String, FileList>() {
-                    @Override
-                    public String getKey() {
-                        return entrySet.getKey();
-                    }
-
-                    @Override
-                    public FileList getValue() {
-                        return entrySet.getValue().join();
-                    }
-
-                    @Override
-                    public FileList setValue(FileList fileList) {
-                        return null;
-                    }
-                };
-                return entry;
-            }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
-
-            return new HashMap<>(joined);
         });
 
         return resultFuture;
+    }
+
+    public CompletableFuture<FileList> list(String driveName, String parent) {
+
+        return helperFetchList(mDrives.get(driveName), parent);
     }
 
     public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, String> fileID){
         CompletableFuture<HashMap<String, OutputStream>> resultFuture =
                 CompletableFuture.supplyAsync(()->{
                     mDrives.forEach((name, drive) -> {
-                        Log.d(TAG, "fetch list. Drive: " + name);
-                        CompletableFuture<OutputStream> future = new CompletableFuture<>();
+                        Log.d(TAG, "fetch Content. Drive: " + name);
 
                         //sExecutor.submit(()->{
-                        helpertFetchContent(drive, fileID.get(name), new IFetcherCallBack<OutputStream>() {
-                            @Override
-                            public void onCompleted(OutputStream content) {
-                                future.complete(content);
-                            }
-
-                            @Override
-                            public void onCompletedExceptionally(Throwable throwable) {
-                                future.completeExceptionally(throwable);
-                            }
-                            //    });
-                        });
+                        CompletableFuture<OutputStream> future = helpertFetchContent(drive, fileID.get(name));
                         ContentFutures.put(name, future);
                     });
 
-                    //join
-                    Map<String, OutputStream> joined=
-                    ContentFutures.entrySet().stream().map((entrySet)->{
-                        Map.Entry<String, OutputStream> entry = new Map.Entry<String, OutputStream>() {
-                            @Override
-                            public String getKey() {
-                                return entrySet.getKey();
-                            }
-
-                            @Override
-                            public OutputStream getValue() {
-                                return entrySet.getValue().join();
-                            }
-
-                            @Override
-                            public OutputStream setValue(OutputStream stream) {
-                                return null;
-                            }
-                        };
-                        return entry;
-                    }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
-
-                    return new HashMap<>(joined);
+                    return Mapper.reValue(ContentFutures, (future)->{
+                        return future.join();
+                    });
                 });
 
         return resultFuture;
@@ -139,8 +81,9 @@ public class Fetcher {
     /*
         Get file list
      */
-    void helperFetchList(Drive drive, String parentID, IFetcherCallBack<FileList> callback){
+    CompletableFuture<FileList> helperFetchList(Drive drive, String parentID){
         IFileListRequest request;
+        CompletableFuture<FileList> resultFuture = new CompletableFuture<>();
 
         request = drive.getClient().list().buildRequest().
             setNextPage(null).
@@ -153,35 +96,39 @@ public class Fetcher {
             Log.d(TAG, "Set filter: " +query);
             request.filter(query);
         }
-        request.run(new IFileListCallBack<FileList, Object>() {
-            @Override
-            public void success(FileList fileList, Object o) {
-                callback.onCompleted(fileList);
-            }
 
-            @Override
-            public void failure(String ex) {
-                callback.onCompletedExceptionally(new Throwable(ex));
-            }
+        request.run(new IFileListCallBack<FileList, Object>() {
+                @Override
+                public void success(FileList fileList, Object o) {
+                    resultFuture.complete(fileList);
+                }
+
+                @Override
+                public void failure(String ex) {
+                    resultFuture.completeExceptionally(new Throwable(ex));
+                }
         });
 
+        return resultFuture;
     }
     /*
         Get content of a file
      */
-    void helpertFetchContent(Drive drive, String fileID, IFetcherCallBack<OutputStream> callback){
+    CompletableFuture<OutputStream> helpertFetchContent(Drive drive, String fileID){
+        CompletableFuture<OutputStream> resultFuture = new CompletableFuture<>();
         drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<OutputStream>() {
             @Override
             public void success(OutputStream outputStream) {
-                callback.onCompleted(outputStream);
+                resultFuture.complete(outputStream);
             }
 
             @Override
             public void failure(String ex) {
-                callback.onCompletedExceptionally(new Throwable(ex));
+                resultFuture.completeExceptionally(new Throwable(ex));
             }
         });
 
+        return resultFuture;
     }
 
 }

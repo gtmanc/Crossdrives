@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,6 +32,8 @@ public class MapFetcher {
         Query strings
      */
     private final String NAME_CDFS_FOLDER = "CDFS";
+    final String PREFIX_ALLOCATION = "Allocation_";
+    final String EXT_ALLOCATION = ".cdfs";
     private final String NAME_ALLOCATION_ROOT = "Allocation_root.cdfs";
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
@@ -271,21 +272,56 @@ public class MapFetcher {
         return result.get();
     }
 
-    public CompletableFuture<HashMap<String, File>> listAll() {
+    /*
+        Get specified map in CDFS folder for each drive
+     */
+    public CompletableFuture<HashMap<String, File>> listAll(String parent) {
         CompletableFuture<HashMap<String, File>> resultFuture;
         Fetcher fetcher = new Fetcher(mDrives);
 
-        resultFuture = CompletableFuture.supplyAsync(()->{
+
+        resultFuture = CompletableFuture.supplyAsync(()-> {
+            HashMap<String, File> folders;
+            CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll();
+
+            //if any is null. exit
+            folders = foldersFuture.join();
+            if(folders.values().stream().anyMatch(((v)-> v == null))){
+                Log.w(TAG, "CDFS folder is missing!");
+                return null;
+            }
+
+            CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(folders);
+            HashMap<String, File> maps = Mapper.reValue(list.join(), (fileList)->{
+                File f = getFromFiles(fileList, PREFIX_ALLOCATION + parent + EXT_ALLOCATION);
+                if(f ==null){
+                    Log.d(TAG, "Map file is missing! ");
+                }
+                return f;
+            });
+
+            return maps;
+        });
+        return resultFuture;
+    }
+
+    /*
+        Get CDFS folder for each drive
+     */
+    public CompletableFuture<HashMap<String, File>> getFolderAll(){
+        Fetcher fetcher = new Fetcher(mDrives);
+        CompletableFuture<HashMap<String, File>> resultFuture;
+        resultFuture = CompletableFuture.supplyAsync(()-> {
             Map<String, File> rootIDs;
             Map<String, File> folders = null;
-            Map<String, File> maps;
+
             HashMap<String, File> result = null;
-            rootIDs = mDrives.keySet().stream().map(k-> {
+            rootIDs = mDrives.keySet().stream().map(k -> {
                 Map.Entry<String, File> entry = new Map.Entry<String, File>() {
                     @Override
                     public String getKey() {
-                    return k;
-                }
+                        return k;
+                    }
 
                     @Override
                     public File getValue() {
@@ -300,94 +336,52 @@ public class MapFetcher {
                     }
                 };
                 return entry;
-            }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+            }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
 
-            try {
-                CompletableFuture<HashMap<String, FileList>> list = fetcher.listForAll(new HashMap<>(rootIDs));
-                HashMap<String, FileList> resultListAll = list.get();
+            CompletableFuture<HashMap<String, FileList>> list = null;
+            list = fetcher.listAll(new HashMap<>(rootIDs));
 
-                folders = resultListAll.entrySet().stream().map((set)->{
-                    Map.Entry<String, File> entry = new Map.Entry<String, File>() {
-                        @Override
-                        public String getKey() {
-                            return set.getKey();
-                        }
+            HashMap<String, FileList> resultListAll = list.join();
 
-                        @Override
-                        public File getValue() {
-                            File f = getFromFiles(set.getValue(), NAME_CDFS_FOLDER);
-                            Log.d(TAG, "CDFS folder: " + f.getName());
-                            return f;
-                        }
+            folders = Mapper.reValue(list.join(), (files)->{
+                File f = getFromFiles(files, NAME_CDFS_FOLDER);
+                Log.d(TAG, "CDFS folder: " + f.getName());
+                return f;
+            });
 
-                        @Override
-                        public File setValue(File o) {
-                            return null;
-                        }
-                    };
-                    return entry;
-                }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
-            } catch (ExecutionException e) {
-                Log.w(TAG, e.getMessage());
-
-            } catch (InterruptedException e) {
-                Log.w(TAG, e.getMessage());
-            }
-
-            //No CDFS folder found, exit.
-            if(folders == null){
-                return null;
-            }
-
-            try {
-                CompletableFuture<HashMap<String, FileList>> list = fetcher.listForAll(new HashMap<>(folders));
-                HashMap<String, FileList> files = list.get();
-                maps = files.entrySet().stream().map((set)->{
-                    Map.Entry<String, File> entry = new Map.Entry<String, File>() {
-                        @Override
-                        public String getKey() {
-                            return set.getKey();
-                        }
-
-                        @Override
-                        public File getValue() {
-                            File f = getFromFiles(set.getValue(), NAME_ALLOCATION_ROOT);
-                            Log.d(TAG, "Map file: " + f.getName());
-                            return f;
-                        }
-
-                        @Override
-                        public File setValue(File value) {
-                            return null;
-                        }
-                    };
-                    return entry;
-                }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
-                result = new HashMap(maps);
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            return result;
+            return new HashMap<>(folders);
         });
         return resultFuture;
     }
 
-    public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, File> files){
+    public CompletableFuture<File> getfolder(String driveName){
+        Fetcher fetcher= new Fetcher(mDrives);
+        CompletableFuture<FileList> fileListFuture;
 
-        pullAllByID(Mapper.reValue(files, (file)->{
+        fileListFuture =  fetcher.list(driveName, "");
+
+        CompletableFuture<File> folder =
+        CompletableFuture.supplyAsync(()->{
+            File f = getFromFiles(fileListFuture.join(), NAME_CDFS_FOLDER);
+            Log.d(TAG, "CDFS folder: " + f.getName());
+            return f;
+        });
+
+        return folder;
+    }
+
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(String parent){
+        CompletableFuture <HashMap<String, File>> mapIDsFuture =
+        listAll(parent);
+        return pullAllByID(Mapper.reValue(mapIDsFuture.join(), (file)->{
             return file.getId();
         }));
-        return null;
     }
 
     CompletableFuture<HashMap<String, OutputStream>> pullAllByID(HashMap<String, String> fileIDs){
         Fetcher fetcher = new Fetcher(mDrives);
-        fetcher.pullAll(fileIDs);
-        return null;
+        return fetcher.pullAll(fileIDs);
     }
 
     File getFromFiles(FileList fileList, String name){

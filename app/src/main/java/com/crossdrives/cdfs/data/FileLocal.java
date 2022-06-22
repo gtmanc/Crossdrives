@@ -46,7 +46,7 @@ public class FileLocal implements IFileCreation {
         java.io.File filePath = null;
         try {
             createTextFile(name, content);
-            filePath = new java.io.File(mCDFS.getContext().getFilesDir() + name);
+            filePath = new java.io.File(mCDFS.getContext().getFilesDir() + "/" + name);
         } catch (IOException e) {
             Log.w(TAG, e.getMessage());
         }

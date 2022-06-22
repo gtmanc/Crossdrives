@@ -10,23 +10,22 @@ import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
 import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitCallback;
+import com.crossdrives.cdfs.allocation.MapLocker;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.Splitter;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.updateContent;
-import com.crossdrives.cdfs.model.updateFile;
 import com.crossdrives.cdfs.remote.DriveQuota;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.util.Mapper;
-import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.services.drive.model.About;
-import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.ContentRestriction;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -38,7 +37,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,7 +57,7 @@ public class Upload {
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     String name;
     final int MAX_CHUNK = 10;
-    com.google.api.services.drive.model.File mParent;
+    String mParent;
     HashMap<String, CompletableFuture<InterMediateResult>> Futures= new HashMap<>();
     //The slice not uploaded
     LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
@@ -74,7 +72,7 @@ public class Upload {
         mCDFS = cdfs;
     }
 
-    public Upload(CDFS cdfs, InputStream ins, String name, com.google.api.services.drive.model.File parent) {
+    public Upload(CDFS cdfs, InputStream ins, String name, String parent) {
         mCDFS = cdfs;
         inputStream = ins;
         this.name = name;
@@ -109,38 +107,12 @@ public class Upload {
                 Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
                 allocation = allocator.getAllocationResult();
                 allocation.forEach((driveName, allocatedLen)->{
-                    CompletableFuture<String> checkFolderFuture = new CompletableFuture<>();
+                    MapFetcher mapFetcher = new MapFetcher(drives);
+                    Log.w(TAG, "Get CDFS folder...");
+                    CompletableFuture<com.google.api.services.drive.model.File> checkFolderFuture =
+                        mapFetcher.getfolder(driveName);
 
-                    sExecutor.submit(()->{
-                        Log.w(TAG, "Get CDFS folder...");
-                        mCDFS.getDrives().get(driveName).getClient().list().buildRequest()
-                                .setNextPage(null)
-                                .setPageSize(0) //0 means no page size is applied
-                                .filter(FILTERCLAUSE_CDFS_FOLDER)
-                                //.filter("mimeType = 'application/vnd.google-apps.folder'")
-                                //.filter(null)   //null means no filter will be applied
-                                .run(new IFileListCallBack<FileList, Object>() {
-                                    //As we specified the folder name, suppose only cdfs folder in the list.
-                                    @Override
-                                    public void success(FileList fileList, Object o) {
-                                        String cdfsFolderId = null;
-                                        Optional<com.google.api.services.drive.model.File> optional =
-                                        fileList.getFiles().stream().
-                                                filter((f)-> f.getName().equals(NAME_CDFS_FOLDER)).findAny();
-                                        if(optional != null){
-                                            cdfsFolderId = optional.get().getId();
-                                        }
-                                        checkFolderFuture.complete(cdfsFolderId);
-                                    }
-
-                                    @Override
-                                    public void failure(String ex) {
-                                        checkFolderFuture.completeExceptionally(new Throwable(ex));
-                                    }
-                                });
-                    });
-
-                    CompletableFuture<InterMediateResult> CommitAllocationMapFuture = checkFolderFuture.thenComposeAsync((cdfsFolderId)->{
+                    CompletableFuture<InterMediateResult> CommitAllocationMapFuture = checkFolderFuture.thenComposeAsync((cdfsFolder)->{
                         CompletableFuture<InterMediateResult> future = new CompletableFuture<>();
                         InterMediateResult result = new InterMediateResult();
                         HashMap<String, AllocationItem> items = new HashMap<>();    //slice name, allocation item
@@ -151,11 +123,11 @@ public class Upload {
                         final boolean[] isAllSplittd = {false};
                         final boolean[] SplitterminateExceptionally = {false};
 
-                        if(cdfsFolderId == null){
+                        if(cdfsFolder == null){
                             Log.w(TAG, "CDFS folder is missing!");
                             future.completeExceptionally(new Throwable("CDFS folder is missing"));
                         }
-                        cdfsFolderID = cdfsFolderId;
+                        cdfsFolderID = cdfsFolder.getId();
 
                         Splitter splitter = new Splitter(inputStream, allocatedLen, name, MAX_CHUNK);
                         splitter.split(new ISplitCallback() {
@@ -176,7 +148,7 @@ public class Upload {
                                 item.setName(slice.getName());
                                 item.setDrive(driveName);
                                 item.setSequence(totalSlice[0]);
-                                item.setPath(mParent.getName());
+                                item.setPath(mParent);
                                 item.setAttrFolder(false);
                                 item.setCDFSItemSize(uploadSize[0]);
                                 items.put(slice.getName(), item);
@@ -211,7 +183,7 @@ public class Upload {
 //                            if(localFileOptional.isPresent()){
 //                                File localFile = localFileOptional.get();
                                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                                fileMetadata.setParents(Collections.singletonList(cdfsFolderId));
+                                fileMetadata.setParents(Collections.singletonList(cdfsFolder.getId()));
                                 fileMetadata.setName(localFile.getName());
                                 //Log.d(TAG, "local file to upload: " + localFile.getName());
                                 mCDFS.getDrives().get(driveName).getClient().upload().
@@ -297,15 +269,22 @@ public class Upload {
 
                 /*
                     Lock remote allocation maps?
-                    A signed in app still can edit a locked file although it's locked. It means that locking a file
-                    doesn't actually protect the content from being modified of a file as we expcted.
-                    This also makes sense becuase lock/unclok as well known check out/in is not the modern
-                    concept. Instead, edit a file with merge would be the best solution. i.e. Google Doc
+                    A signed in app still can edit a locked file although it has been locked. It means
+                    that locking a file doesn't actually protect the content from being modified of a file
+                    as we expcted.
+                    This also makes sense becuase lock/unlcok as well known check out/in is not the modern
+                    concept. Instead, update a file from multiple source would be the best solution. i.e. Google/MS Word Doc
                  */
                 MapFetcher mapFetcher = new MapFetcher(drives);
-                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture =
-                        mapFetcher.listAll();
-                CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(mapIDFuture.join());
+
+                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(mParent);
+                HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
+                if(mapIDs.values().stream().anyMatch((v)->v==null)){
+                    callback.onFailure(new Throwable("map is missing!"));
+                    return;
+                }
+
+                CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(mParent);
                 AllocManager am = new AllocManager(mCDFS);
                 HashMap<String, AllocContainer> containers = Mapper.reValue(mapStreamFuture.join(), (in)->{
                     return am.toContainer(in);
@@ -318,19 +297,25 @@ public class Upload {
                     v.addItems(uploadedItems.get(k));
                 });
 
+                MapLocker locker = new MapLocker(drives);
+                CompletableFuture<HashMap<String, ContentRestriction>> lockStatusFuture = locker.getStatus(mapIDs);
+                lockStatusFuture.join().entrySet().stream().forEach((set)->
+                        Log.d(TAG,"Drive: " + set.getKey() + " read only? " + set.getValue().getReadOnly()));
+
+
                 HashMap<String, updateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
                     Gson gson = new Gson();
                     FileLocal creator = new FileLocal(mCDFS);
                     updateContent content = new updateContent();
                     content.setID(mapIDFuture.join().get(driveName).getId());
-                    content.setMediaContent(creator.create(driveName + "_map.txt", gson.toJson(container)));
+                    String localMapName = driveName + "_map.txt";
+                    content.setMediaContent(creator.create(localMapName, gson.toJson(container)));
                     return content;
                 });
 
                 MapUpdater updater = new MapUpdater(drives);
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
                         = updater.updateAll(localMaps);
-                updateFuture.join();
 //                MapLocker locker = new MapLocker(drives);
 //                CompletableFuture<HashMap<String, ContentRestriction>> lockStatusFuture;
 //
