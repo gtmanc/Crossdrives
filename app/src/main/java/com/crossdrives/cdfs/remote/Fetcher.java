@@ -119,11 +119,13 @@ public class Fetcher {
         drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<OutputStream>() {
             @Override
             public void success(OutputStream outputStream) {
+                Log.d(TAG, "OK!. Content is downloaded.");
                 resultFuture.complete(outputStream);
             }
 
             @Override
             public void failure(String ex) {
+                Log.w(TAG, "fetch content failed: " + ex);
                 resultFuture.completeExceptionally(new Throwable(ex));
             }
         });

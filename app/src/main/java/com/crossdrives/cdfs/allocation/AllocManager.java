@@ -74,17 +74,18 @@ public class AllocManager implements IAllocManager {
         String json;
         container.setVersion(mVersion);
         /*
-            Add test content
+            Only for test: Add test content
          */
-        if(mDriveName.contains("Google")) {
-            Log.d(TAG, "Add test allocation item: Google, seq = 1");
-            addTestContentGoogle(container);
+        if(mDriveName != null) {
+            if (mDriveName.contains("Google")) {
+                Log.d(TAG, "Add test allocation item: Google, seq = 1");
+                addTestContentGoogle(container);
+            }
+            if (mDriveName.contains("Microsoft")) {
+                Log.d(TAG, "Add test allocation item: Microsoft, seq = 2");
+                addTestContentMicrosoft(container);
+            }
         }
-        if(mDriveName.contains("Microsoft")) {
-            Log.d(TAG, "Add test allocation item: Microsoft, seq = 2");
-            addTestContentMicrosoft(container);
-        }
-
         json = gson.toJson(container);
         return json;
     }

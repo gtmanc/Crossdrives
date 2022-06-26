@@ -1,5 +1,7 @@
 package com.crossdrives.cdfs.allocation;
 
+import android.util.Log;
+
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -10,11 +12,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
 public class IDProducer {
+    final static String TAG = "CD.IDProducer";
 
     public static String deriveID(Collection<String> ids){
         StringBuffer hexString = new StringBuffer();
         String concatenated = ids.stream().reduce(new String(), (prev, curr)->{
+            Log.d(TAG, "Concatenating string... ");
             prev = prev.concat(curr);
+            Log.d(TAG, "Concatenated string: " + prev);
             return prev;
         });
 

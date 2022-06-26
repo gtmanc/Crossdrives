@@ -42,12 +42,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crossdrives.activity.FABOptionDialog;
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -857,6 +859,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				public void onActivityResult(Uri result) {
 					java.io.File file;
 					InputStream in = null;
+					Task task;
 
 					if(result != null) {
 						try {
@@ -867,8 +870,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						file = UriToFile(result);
 						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
-							CDFS.getCDFSService(getActivity()).getService().upload(in, file.getPath(), currentFolder);
-						} catch (MissingDriveClientException | InvalidArgumentException e) {
+							task = CDFS.getCDFSService(getActivity()).getService().upload(in, file.getPath(), currentFolder);
+							task.addOnFailureListener(new OnFailureListener() {
+								@Override
+								public void onFailure(@NonNull Exception e) {
+									Log.d(TAG, "upload failed: " + e.getMessage() + e.getCause());
+								}
+							});
+						} catch (Exception e ) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
 					}

@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.crossdrives.cdfs.allocation.Result;
+import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
@@ -27,6 +28,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
@@ -128,34 +131,39 @@ public class Service implements IService{
         task = Tasks.call(mExecutor, new Callable<Object>() {
             @Override
             public com.crossdrives.cdfs.Result call() throws Exception {
-                listLock.lock();
+//                listLock.lock();
+                CompletableFuture<FileList> future = new CompletableFuture<>();
                 list.list(null, new ICallbackList<FileList>() {
                     @Override
                     public void onSuccess(FileList files) {
                         fileList[0] = files;
-                        listLock.lock();
-                        queryFinished.signal();
-                        listLock.unlock();
+//                        listLock.lock();
+//                        queryFinished.signal();
+//                        listLock.unlock();
+                        future.complete(files);
                     }
                     @Override
                     public void onCompleteExceptionally(FileList files, java.util.List<Result> results) {
                         fileList[0] = files;
                         allocCheckResults[0] = results;
-                        listLock.lock();
-                        queryFinished.signal();
-                        listLock.unlock();
+//                        listLock.lock();
+//                        queryFinished.signal();
+//                        listLock.unlock();
+                        future.complete(files);
                     }
                     @Override
                     public void onFailure(Throwable throwable) {
                         throwables[0] = throwable;
-                        listLock.lock();
-                        queryFinished.signal();
-                        listLock.unlock();
+//                        listLock.lock();
+//                        queryFinished.signal();
+//                        listLock.unlock();
+                        future.completeExceptionally(throwable);
                     }
                 });
 
-                queryFinished.await();
-                listLock.unlock();
+//                queryFinished.await();
+//                listLock.unlock();
+                future.join();
 
                 if(throwables[0] != null){
                     throw new GeneralServiceException("", throwables[0]);
@@ -192,11 +200,10 @@ public class Service implements IService{
         name: the name in CDFS space
         parent: the target folder name of the upload
      */
-    public Task upload(InputStream ins, String name, String parent) throws MissingDriveClientException, InvalidArgumentException {
-        Upload upload = new Upload(mCDFS, ins, name, parent);
+    public Task upload(InputStream ins, String name, String parent) throws Exception {
+        Upload upload = new Upload(mCDFS);
         Task task;
         final Throwable[] throwables = {null};
-        final String[] cdfs_id = {null};
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(SnippetApp.getAppContext(), NOTIFICATION_CH_ID)
                 .setSmallIcon(R.drawable.ic_baseline_cloud_circle_24)
@@ -217,38 +224,29 @@ public class Service implements IService{
         if(ins == null){throw new InvalidArgumentException("input stream for the file to pload is null"
                 , new Throwable(""));}
 
-        task = Tasks.call(mExecutor, new Callable<String>() {
+        task = Tasks.call(mExecutor, new Callable<File>() {
 
             @Override
-            public String call() throws Exception {
-                upload.upload(null, new IUploadCallbck<String>() {
-                    @Override
-                    public void onSuccess(String id) {
-                        cdfs_id[0] = id;
-                        uploadLock.lock();
-                        uploadFinished.signal();
-                        uploadLock.unlock();
-                    }
+            public File call() throws CompletionException, GeneralServiceException {
+                CompletableFuture<File> future =
+                upload.upload(ins, name, parent);
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        throwables[0] = throwable;
-                        uploadLock.lock();
-                        /*
-                            Exception will raise if onFailure gets called before await is called
-                         */
-                        uploadFinished.signal();
-                        uploadLock.unlock();
-                    }
+                future.exceptionally((ex)->{
+                    Log.w(TAG, "Upload completed exceptionally " + ex.getMessage());
+                    throwables[0] = new Throwable(ex);
+                    return null;
                 });
 
-                uploadFinished.await();
+                /*
+                    Here we use join() instead of get() because we don't need to take care interrupt
+                    or timeout
+                 */
+                File f = future.join();
 
                 if(throwables[0] != null){
                     throw new GeneralServiceException("", throwables[0]);
                 }
-
-                return cdfs_id[0];
+                return f;
             }
         });
 

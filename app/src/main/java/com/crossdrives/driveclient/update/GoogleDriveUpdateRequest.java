@@ -79,10 +79,6 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
         }).addOnSuccessListener(new OnSuccessListener<com.google.api.services.drive.model.File>() {
                     @Override
                     public void onSuccess(com.google.api.services.drive.model.File file) {
-                        Log.d(TAG, "Lock file OK. ID: " + file.getId() + ". Name: " + file.getName()
-                        + ". readonly: " + file.getContentRestrictions().get(0).getReadOnly()
-                        + ". Reason: " + file.getContentRestrictions().get(0).getReason());
-
                         callback.success(file);
                     }
         }).addOnFailureListener(new OnFailureListener() {

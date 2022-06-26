@@ -77,10 +77,12 @@ public class Checker {
 
             if( seq == 0){
                 result.setErr(ResultCode.ERR_SEQ_OVER_SEG);
+                Log.w(TAG, "Sequence number(SEQ) = " + seq + "An invalid Seq.");
                 result.setReason("Sequence number(SEQ) = " + seq + "An invalid Seq.");
             }
             if (seq > totalSeg) {
                 result.setErr(ResultCode.ERR_SEQ_OVER_SEG);
+                Log.w(TAG, "Sequence number(SEQ) = " + seq + ". However total segment(totalSeg) is " + totalSeg);
                 result.setReason("Sequence number(SEQ) = " + seq + ". However total segment(totalSeg) is " + totalSeg );
             }
             return result;
@@ -95,8 +97,9 @@ public class Checker {
             long maxSize = item.getCDFSItemSize();
             Result result = new Result(ResultCode.SUCCESS, "");
 
-            if (size >= maxSize) {
+            if (size > maxSize) {
                 result.setErr(ResultCode.ERR_SIZE_OVER_MAX);
+                Log.w(TAG, "size of item (SIZE) = " + size + ". However maximum size(CDFSitemSize) is " +  maxSize);
                 result.setReason("size of item (SIZE) = " + size + ". However maximum size(CDFSitemSize) is " +  maxSize);
             }
             return result;
@@ -147,6 +150,7 @@ public class Checker {
         public Result check(final List<AllocationItem> items) {
             Result result = new Result(ResultCode.SUCCESS, "");
             final int totalSeg = items.get(0).getTotalSeg();
+            Stream<Integer> sorted;
 
             /*
                 Here we dont check whether all of the items have the same totSegment or not because it is
@@ -154,15 +158,20 @@ public class Checker {
                 Check whether the number of items equals to totSegment
              */
             if(items.size() != totalSeg) {
-                Log.w(TAG, " Number of items check unsuccessful. Item may be missing. " +
-                        "Number of item:" + items.size() + "TotalSeg: " + totalSeg);
+                Log.w(TAG, "Number of items check unsuccessful. Item may be missing. " +
+                        "Number of item: " + items.size() + " TotalSeg: " + totalSeg);
                 result.setErr(ResultCode.ERR_MISSING_ITEM);
             }
 
-            if(items.stream().map((item)-> item.getSequence()).
-                    sorted().skip(1).reduce(items.get(0).getSequence(),(prev, seq)-> {
+//            Log.d(TAG, "Sorted elements:");
+            sorted = items.stream().map((item)-> item.getSequence()).sorted();
+//            sorted.forEach((seq)->
+//                    Log.d(TAG, "seq:" + seq));
+            Integer identity = sorted.findFirst().get();
+            sorted = items.stream().map((item)-> item.getSequence()).sorted();
+            if(sorted.skip(1).reduce(identity,(prev, seq)-> {
                 int newSeq = 0;
-                Log.d(TAG, "Reduce");
+                Log.d(TAG, "Prev seq:" + prev + " current:" + seq);
                 if(prev == seq-1) {
                     newSeq = seq;}
                 return newSeq; }) != totalSeg){
