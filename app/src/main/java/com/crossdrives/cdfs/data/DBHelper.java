@@ -10,6 +10,7 @@ import android.util.Log;
 import com.crossdrives.data.DBConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DBHelper{
@@ -158,22 +159,32 @@ public class DBHelper{
     }
 
     /*
-        expresion: clause for th rows to be deleted. Note "\" must be added in front of the value if
-        te value is in type of string
+        expression: clause for the rows to delete. Note "\" must be added in front of the value if
+        the value is in type of string. To delete whole table, set expression to null.
      */
     public int delete(String ... expression){
         SQLiteDatabase db = null;
         int number_row = 0;
         ContentValues cv = new ContentValues();
+        String clause = null;
 
         Log.d(TAG, "DB operation Delete");
         /*
         So far, only one conditions and AND operator are supported
          */
-        if(expression.length > 2)
+        if(expression != null && expression.length > 2)
         {
             Log.w(TAG, "Too many conditions are required!");
             return number_row;
+        }
+        /*
+            Delete whole table or select
+        */
+        if(expression != null){
+            Log.d(TAG, "Delete specified rows...");
+            clause = expression[0] + "=" + expression[1];
+        }else{
+            Log.d(TAG, "Delete whole table...");
         }
 
         try{
@@ -185,17 +196,14 @@ public class DBHelper{
         }
 
         if(db != null){
-            Log.d(TAG, "Clause: " + expression[0] + "=" + expression[1]);
+            Log.d(TAG, "Clause: " + clause);
             number_row = db.delete(TABLE_ALLOCITEM_LIST,
-                    expression[0] + "=" + expression[1]
+                    clause
 //                            + "AND" +
 //                            expression[2] + "=" + expression[3] + "AND" +
 //                            expression[4] + "=" + expression[5]
                     ,
                     null);
-            if(number_row == 0){
-                Log.w(TAG, "db delete failed");
-            }
             db.close();
         }
 

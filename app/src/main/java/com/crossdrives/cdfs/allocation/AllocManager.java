@@ -104,11 +104,12 @@ public class AllocManager implements IAllocManager {
         mCDFS.getDrives().forEach((key, value)->{
             ac.set(toContainer(allocations.get(key)));
             /*
-                Each time new allocation fetched, we have to delete the old rows and then insert the new items
+                Clear whole table upon new allocation maps are fetched.
                 so that the duplicated rows can be removed.
-                TODO: this may not be the best way.
+                TODO: if the fetched allocation items are faulty, then we lost the old local items still
             */
-            deleteAllExistingByDrive(key);
+            Log.d(TAG, "Delete all items in local database....");
+            deleteAll();
             /*
                 Check allocation item traversely and save to database if the item is valid
                 Here we will lost the cause because it could consume large amount of memory.
@@ -482,12 +483,21 @@ public class AllocManager implements IAllocManager {
         dh.insert();
     }
 
-    public int deleteAllExistingByDrive(String drive){
+    int deleteAllExistingByDrive(String drive){
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         int deleted;
 
         deleted = dh.delete(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME, "\"" + drive + "\"");
         Log.d(TAG, "Drive " + drive + " items have been deleted: " + deleted);
+        return deleted;
+    }
+
+    int deleteAll(){
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        int deleted;
+
+        deleted = dh.delete(null);
+        Log.d(TAG, "items have been deleted: " + deleted);
         return deleted;
     }
 

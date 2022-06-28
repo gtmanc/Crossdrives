@@ -1,5 +1,7 @@
 package com.crossdrives.driveclient.update;
 
+import java.io.IOException;
+
 public interface IUpdateRequest {
 
     /*
@@ -9,5 +11,5 @@ public interface IUpdateRequest {
      */
 
 
-    public void run(IUpdateCallBack callback);
+    public void run(IUpdateCallBack callback) throws IOException;
 }

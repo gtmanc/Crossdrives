@@ -16,6 +16,7 @@ import com.crossdrives.driveclient.get.IGetRequestBuilder;
 import com.crossdrives.driveclient.list.IQueryRequestBuilder;
 import com.crossdrives.driveclient.list.OneDriveQueryRequestBuilder;
 import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
+import com.crossdrives.driveclient.update.OneDriveUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.crossdrives.driveclient.upload.OneDriveUploadRequestBuilder;
 import com.microsoft.graph.authentication.IAuthenticationProvider;;
@@ -134,7 +135,7 @@ public class OneDriveClient implements IDriveClient {
 
     @Override
     public IUpdateRequestBuilder update() {
-        return null;
+        return new OneDriveUpdateRequestBuilder(this);
     }
 
     @Override
