@@ -6,7 +6,7 @@ public interface IUploadRequest {
     /*
         Media type
      */
-    public void meidaType(String type);
+    public void mediaType(String type);
 
     /*
         Upload type

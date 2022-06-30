@@ -9,6 +9,7 @@ import com.crossdrives.driveclient.update.IUpdateRequest;
 import com.google.api.services.drive.model.ContentRestriction;
 import com.google.api.services.drive.model.File;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,17 +100,21 @@ public class Locker {
 
 
             //sExecutor.submit(()->{
-            changeLock(drive, fileIDs.get(name), operation, new ICallBackLocker<File>() {
-                @Override
-                public void onCompleted(File file) {
-                    future.complete(file);
-                }
+            try {
+                changeLock(drive, fileIDs.get(name), operation, new ICallBackLocker<File>() {
+                    @Override
+                    public void onCompleted(File file) {
+                        future.complete(file);
+                    }
 
-                @Override
-                public void onCompletedExceptionally(Throwable throwable) {
-                    future.completeExceptionally(throwable);
-                }
-            });
+                    @Override
+                    public void onCompletedExceptionally(Throwable throwable) {
+                        future.completeExceptionally(throwable);
+                    }
+                });
+            } catch (IOException e) {
+                future.completeExceptionally(e);
+            }
             //});
             Futures.put(name, future);
         });
@@ -142,7 +147,7 @@ public class Locker {
         return resultFuture;
     }
 
-    void changeLock(final Drive drive, final String fileID, final String operation, ICallBackLocker<File> callback) {
+    void changeLock(final Drive drive, final String fileID, final String operation, ICallBackLocker<File> callback) throws IOException {
         IUpdateRequest request;
         File file = new File();
         List<ContentRestriction> restrictions = new ArrayList<>();

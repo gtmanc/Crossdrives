@@ -4,9 +4,8 @@ import android.util.Log;
 
 import com.crossdrives.driveclient.BaseRequest;
 import com.crossdrives.driveclient.OneDriveClient;
-import com.crossdrives.driveclient.upload.IUploadCallBack;
-import com.crossdrives.driveclient.upload.IUploadRequest;
 import com.google.api.services.drive.model.File;
+import com.google.gson.JsonPrimitive;
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
@@ -22,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest {
     final String TAG = "CD.OneDriveUploadRequest";
@@ -36,7 +36,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
     }
 
     @Override
-    public void meidaType(String type) {
+    public void mediaType(String type) {
 
     }
 
@@ -47,22 +47,37 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
 
     @Override
     public void run (IUploadCallBack callback) {
-        File f;
+
         com.crossdrives.driveclient.model.File fileToClient = new com.crossdrives.driveclient.model.File();
 
+        /*
+            Use completable future to wrap the blocking call doUploadBlocked.
+            We don't care the result of the completable future, The upload result is propagated
+            to the initiator through callback.
+        */
+        CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
+            File f = null;
+            try {
+                f = doUploadBlocked();
+                fileToClient.setFile(f);
+                fileToClient.setOriginalLocalFile(mPath);
+                callback.success(fileToClient);
+            } catch (Exception e){
+                Log.w(TAG, e.toString());
+                callback.failure(e.getMessage(), mPath);
+            }
+            return f;
+        });
 
-        try {
-            f = submitRequest();
-            fileToClient.setFile(f);
-            fileToClient.setOriginalLocalFile(mPath);
-            callback.success(fileToClient);
-        } catch (Exception e){
+        workingFuture.exceptionally(e->{
             Log.w(TAG, e.toString());
             callback.failure(e.getMessage(), mPath);
-        }
+            return null;
+        });
+
     }
 
-    private File submitRequest() throws IOException, FileNotFoundException {
+    private File doUploadBlocked() throws IOException, FileNotFoundException {
         // Get an input stream for the file
         //File file = new File(path);
         InputStream fileStream = null;
@@ -88,10 +103,12 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 Log.d(TAG, "Uploaded %" + current + "bytes of % " + max + " total bytes");
             }
         };
-
+        //https://github.com/microsoftgraph/msgraph-sdk-java/blob/dev/src/test/java/com/microsoft/graph/functional/OneDriveTests.java#L92
+        DriveItemUploadableProperties property = new DriveItemUploadableProperties();
+        property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
         DriveItemCreateUploadSessionParameterSet uploadParams =
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
-                        .withItem(new DriveItemUploadableProperties()).build();
+                        .withItem(property).build();
 
         //build ItemRequestBuilder according to the given parent
         rb = mClient.getGraphServiceClient().me().drive();
@@ -122,10 +139,13 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 new LargeFileUploadTask<DriveItem>
                         (uploadSession, mClient.getGraphServiceClient(), fileStream, streamSize, DriveItem.class);
 
-// Do the upload
+        // Do the upload
         Log.d(TAG, "do the upload");
+        /*
+            upload will get blocked util upload is completed.
+        */
         result = largeFileUploadTask.upload(0, null, Progress_callback);
-
+        //Log.d(TAG, "returned result: " + result.responseBody.name + " ID: " + result.responseBody.id);
         f.setName(result.responseBody.name);
         f.setId(result.responseBody.id);
         return f;

@@ -44,7 +44,7 @@ public class GoogleDriveUploadRequest extends BaseRequest implements IUploadRequ
     }
 
     @Override
-    public void meidaType(String type) {
+    public void mediaType(String type) {
         //check valid? "image/jpeg"
         mMediaType = type;
     }

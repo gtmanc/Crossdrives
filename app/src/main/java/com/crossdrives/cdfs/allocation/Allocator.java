@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.api.services.drive.model.About;
 
 import java.util.HashMap;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /*
@@ -31,17 +32,10 @@ public class Allocator {
         mQuotas.keySet().stream().forEach((k)->
         {allocation.put(k, (long)0);});
 
-        remoteFree = mQuotas.values().stream().mapToLong((q)->
-        {return (q.getLimit()- q.getUsage());})
-                .sum();
-
-        if(sizeUpload == 0 ){return allocation;}
+        remoteFree = totalRemoteFree(mQuotas);
 
         if(sizeUpload > remoteFree){
-            /* available space is not enough */
-            mQuotas.keySet().stream().forEach((k)->
-            {allocation.replace(k, (long)-1);});
-            return allocation;
+            throw new CompletionException("available remote space is not enough for allocation", new Throwable(""));
         }
 
         /*
@@ -71,5 +65,50 @@ public class Allocator {
         if(notYetAllocated[0] > 0) {
             Log.e(TAG, "Something wrong in allocation strategy");}
         return allocation;
+    }
+
+
+    interface Method{
+
+        HashMap<String, Long> allocate(long size, HashMap<String, About.StorageQuota> quota);
+    }
+
+    class MethodFullFill implements Method{
+
+        @Override
+        public HashMap<String, Long> allocate(long size, HashMap<String, About.StorageQuota> quota) {
+            HashMap<String, Long> result = new HashMap<>();
+
+
+            final long[] notYetAllocated = {size};
+
+            mQuotas.entrySet().stream().forEach((quotaEntry)->
+            {
+                final String drive = quotaEntry.getKey();
+                final long used = quotaEntry.getValue().getUsage();
+                final long limit = quotaEntry.getValue().getLimit();
+                final long available = limit - used;
+                long allocated = notYetAllocated[0];
+                if (notYetAllocated[0] > available) {
+                    allocated = available;
+                }
+                result.replace(drive, allocated);
+                notYetAllocated[0] -= allocated;
+            });
+
+            /*
+                If not yet allocated is no zero. it must be something wrong
+            */
+            if(notYetAllocated[0] > 0) {
+                Log.e(TAG, "Something wrong in allocation strategy");}
+
+            return result;
+        }
+    }
+
+    long totalRemoteFree(HashMap<String, About.StorageQuota> quota){
+        return quota.values().stream().mapToLong((q)->
+                {return (q.getLimit()- q.getUsage());})
+                .sum();
     }
 }

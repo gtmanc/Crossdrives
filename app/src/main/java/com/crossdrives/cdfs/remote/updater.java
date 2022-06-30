@@ -10,6 +10,7 @@ import com.google.api.client.http.InputStreamContent;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -34,7 +35,13 @@ public class updater {
 
         files.forEach((driveName, file)->{
             CompletableFuture<com.google.api.services.drive.model.File> future =
-            update(driveName, file.getID(), file.getMetadata(), file.getMediaContent());
+                    null;
+            try {
+                future = update(driveName, file.getID(), file.getMetadata(), file.getMediaContent());
+            } catch (IOException e) {
+                future = new CompletableFuture<>();
+                future.completeExceptionally(e);
+            }
             Futures.put(driveName, future);
         });
 
@@ -51,8 +58,7 @@ public class updater {
             String driveName,
              String fileID,
              com.google.api.services.drive.model.File metaData,
-             FileContent mediaContent)
-    {
+             FileContent mediaContent) throws IOException {
         CompletableFuture<com.google.api.services.drive.model.File> future = new CompletableFuture<>();
         //Log.d(TAG, "local file to upload: " + localFile.getName());
 
