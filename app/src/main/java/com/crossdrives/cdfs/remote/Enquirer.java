@@ -43,7 +43,7 @@ public class Enquirer {
         mDrives.get(driveName).getClient().about().buildRequest().run(new IAboutCallBack() {
             @Override
             public void success(About about) {
-                Log.d(TAG, "about got! ");
+                //Log.d(TAG, "about got! ");
                 future.complete(about);
             }
 

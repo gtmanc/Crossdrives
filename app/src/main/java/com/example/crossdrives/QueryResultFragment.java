@@ -47,6 +47,7 @@ import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.msgraph.SnippetApp;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -871,15 +872,30 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
 							task = CDFS.getCDFSService(getActivity()).getService().upload(in, file.getPath(), currentFolder);
-							task.addOnFailureListener(new OnFailureListener() {
+							InputStream finalIn = in;
+							task.addOnCompleteListener(new OnCompleteListener() {
+								@Override
+								public void onComplete(@NonNull Task task) {
+									Log.w(TAG, "upload completed");
+									//https://stackoverflow.com/questions/16369462/why-is-inputstream-close-declared-to-throw-ioexception
+									try {
+										finalIn.close();
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
+							}).addOnFailureListener(new OnFailureListener() {
 								@Override
 								public void onFailure(@NonNull Exception e) {
-									Log.d(TAG, "upload failed: " + e.getMessage() + e.getCause());
+									Log.w(TAG, "upload failed: " + e.getMessage() + e.getCause());
+
 								}
 							});
 						} catch (Exception e ) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
+
+
 					}
 				}
 			});

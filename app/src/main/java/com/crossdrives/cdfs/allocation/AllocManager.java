@@ -98,18 +98,19 @@ public class AllocManager implements IAllocManager {
         AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
 
         /*
+            Clear whole table upon new allocation maps are fetched.
+            so that the duplicated rows can be removed.
+            TODO: if the fetched allocation items are faulty, then we lost the old local items still
+        */
+        Log.d(TAG, "Delete all items in local database....");
+        deleteAll();
+
+        /*
             Update the fetched allocation content to database. We will query local database
             for the file list requested by caller.
         */
         mCDFS.getDrives().forEach((key, value)->{
             ac.set(toContainer(allocations.get(key)));
-            /*
-                Clear whole table upon new allocation maps are fetched.
-                so that the duplicated rows can be removed.
-                TODO: if the fetched allocation items are faulty, then we lost the old local items still
-            */
-            Log.d(TAG, "Delete all items in local database....");
-            deleteAll();
             /*
                 Check allocation item traversely and save to database if the item is valid
                 Here we will lost the cause because it could consume large amount of memory.

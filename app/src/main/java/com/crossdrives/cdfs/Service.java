@@ -15,7 +15,7 @@ import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
-import com.crossdrives.cdfs.upload.IUploadCallbck;
+import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.msgraph.SnippetApp;
@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
@@ -70,6 +69,8 @@ public class Service implements IService{
     May use the thread synchronize object (e.g. condition variable) instead of the flag
      */
     private boolean msTaskfinished = false;
+
+    IUploadProgressListener uploadProgressListener;
 
     /*
         Operation: get file list
@@ -228,11 +229,16 @@ public class Service implements IService{
 
             @Override
             public File call() throws CompletionException, GeneralServiceException {
+                IUploadProgressListener listener = defaultUploadProgressListener;
+                if(uploadProgressListener != null)
+                    listener = uploadProgressListener;
+
                 CompletableFuture<File> future =
-                upload.upload(ins, name, parent);
+                upload.upload(ins, name, parent, listener);
 
                 future.exceptionally((ex)->{
-                    Log.w(TAG, "Upload completed exceptionally " + ex.getMessage());
+                    Log.w(TAG, "Upload completed exceptionally. " + ex.getMessage());
+                    ex.printStackTrace();
                     throwables[0] = new Throwable(ex);
                     return null;
                 });
@@ -253,6 +259,16 @@ public class Service implements IService{
         return task;
     }
 
+    public void setUploadProgressLisetener(IUploadProgressListener listener){
+        uploadProgressListener = listener;
+    }
+
+    IUploadProgressListener defaultUploadProgressListener = new IUploadProgressListener() {
+        @Override
+        public void progressChanged(Upload uploader) {
+            Log.d(TAG, "Upload progress " + uploader.getState());
+        }
+    };
     /*
         Download content of a file
      */
