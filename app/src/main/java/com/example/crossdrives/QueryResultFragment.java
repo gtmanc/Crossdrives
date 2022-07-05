@@ -1,11 +1,14 @@
 package com.example.crossdrives;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.SearchManager;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -28,6 +31,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -940,19 +945,5 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		return new java.io.File(data);
 	}
 
-	private void handleOptionFab(@NonNull Intent intent){
-		String option = intent.getStringExtra(FABOptionDialog.KEY_ACTION);
-		String uri = intent.getStringExtra(FABOptionDialog.KEY_DATA_URI);
 
-		if(option == null){
-			Log.w(TAG, "Option is null!");
-		}
-
-		if(option.equals(FABOptionDialog.ACTION_UPLOAD)){
-			Log.d(TAG, "User action: Upload. Uri: " + uri);
-		}
-		else{
-			Log.w(TAG, "Unknown option!");
-		}
-	}
 }

@@ -39,4 +39,9 @@
     <!-- Option dialog floating action button -->
     <string name="title_fab_option">Add</string>
     <string name="button_fab_option_upload">Upload file</string>
+
+
+    <!-- Notifications -->
+    <string name="notification_title_default">Cross drives</string>
+    <string name="notification_content_default">In progress</string>
 </resources>

@@ -46,8 +46,6 @@ public class Service implements IService{
     private FileList mFileList;
     private OutputStream mStream;
 
-    final String NOTIFICATION_CH_ID = "0" ;
-
     public Service(CDFS cdfs) {
         mCDFS = cdfs;
     }
@@ -179,22 +177,6 @@ public class Service implements IService{
         return task;
     }
 
-    private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Channel 0";//getString(R.string.channel_name);
-            String description = "This is channel 0";//(R.string.channel_description);
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CH_ID, name, importance);
-            channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = SnippetApp.getAppContext().getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
-
     @Override
     /*
         ins: input stream for the content to upload
@@ -206,17 +188,7 @@ public class Service implements IService{
         Task task;
         final Throwable[] throwables = {null};
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(SnippetApp.getAppContext(), NOTIFICATION_CH_ID)
-                .setSmallIcon(R.drawable.ic_baseline_cloud_circle_24)
-                .setContentTitle("CDS-upload")
-                .setContentText("Upload is in progress")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-        createNotificationChannel();
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(SnippetApp.getAppContext());
-        // notificationId is a unique int for each notification that you must define
-        notificationManager.notify(0, builder.build());
 
         Log.d(TAG, "CDFS Service: Upload");
 

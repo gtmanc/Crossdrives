@@ -51,13 +51,13 @@ public class Upload {
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
-    String name;
     final int MAX_CHUNK = 10;
     HashMap<String, CompletableFuture<InterMediateResult>> Futures= new HashMap<>();
     String cdfsFolderID;
     State mState;
     IUploadProgressListener mListener;
-    final int[] totalSeg = {0}; //number of total segments of a CDFS item.
+    int progressTotalSegment;
+    int progressTotalUploaded;
 
     /*
         Result for splitting file and slice upload
@@ -77,8 +77,10 @@ public class Upload {
         Progress states
      */
     enum State{
-        INITIATION_STARTED,
-        INITIATION_COMPLETE,
+        GET_REMOTE_QUOTA_STARTED,
+        GET_REMOTE_QUOTA_COMPLETE,
+        PREPARE_LOCAL_FILES_STARTED,
+        PREPARE_LOCAL_FILES_COMPLETE,
         MEDIA_IN_PROGRESS,
         MEDIA_COMPLETE,
         MAP_UPDATE_STARTED,
@@ -101,10 +103,9 @@ public class Upload {
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
-            CompletableFuture<Integer> splitCompleteFuture = new CompletableFuture<>();
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
 
-            callback(State.INITIATION_STARTED);
+            callback(State.GET_REMOTE_QUOTA_STARTED);
 
             try {
                 quotaMap  = Tasks.await(enquirer.getAll());
@@ -113,9 +114,13 @@ public class Upload {
                 resultFuture.completeExceptionally(e);
                 return null;
             }
+
+            callback(State.GET_REMOTE_QUOTA_COMPLETE);
+
             HashMap<String, Long> allocation;
             HashMap<String, Collection<AllocationItem>> uploadedItems;
             final long[] uploadSize = {0};
+            final int[] totalSeg = {0};
             try {
                 uploadSize[0] = (long)ins.available();
             } catch (IOException e) {
@@ -127,12 +132,10 @@ public class Upload {
             //Allocator allocator = new Allocator(quotaMap, file.length());
             Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
             allocation = allocator.getAllocationResult();
-            mState = State.INITIATION_COMPLETE;
-            listener.progressChanged(this);
-            mState = State.MEDIA_IN_PROGRESS;
             listener.progressChanged(this);
             allocation.entrySet().stream().filter((e)->e.getValue()>0).forEach((set)->{
                 String driveName = set.getKey();
+                CompletableFuture<Integer> splitCompleteFuture = new CompletableFuture<>();
                 long allocatedLen = set.getValue();
                 MapFetcher mapFetcher = new MapFetcher(drives);
                 CompletableFuture<com.google.api.services.drive.model.File> checkFolderFuture =
@@ -156,6 +159,7 @@ public class Upload {
                     }
                     cdfsFolderID = cdfsFolder.getId();
 
+                    callback(State.PREPARE_LOCAL_FILES_STARTED);
                     Splitter splitter = new Splitter(ins, allocatedLen, name, MAX_CHUNK);
                     splitter.split(new ISplitCallback() {
                         @Override
@@ -171,7 +175,12 @@ public class Upload {
                                     + slice.getName());
                             toUploadQueue.add(slice);
                             totalSlice[0]++;
-                            totalSeg[0]++;
+                            /*
+                                We have to assign the sequence number right here because the sequence
+                                carries the order of the slices. It is used in compose of downloaded
+                                slices in CDFS download.
+                             */
+                            totalSeg[0]++;  //TODO: do we have concurrent issue?
                             item.setSize(len);
                             item.setName(slice.getName());
                             item.setDrive(driveName);
@@ -198,6 +207,7 @@ public class Upload {
                         }
                     });
 
+                    callback(State.MEDIA_IN_PROGRESS);
                     while(!isAllSplittd[0]){
 
                         if(isSplitTerminateExceptionally[0]){
@@ -225,7 +235,7 @@ public class Upload {
                                         item = items.get(file.getOriginalLocalFile().getName());
                                         if(item == null) {Log.w(TAG,"item mot found! Drive: " + driveName);}
                                         item.setItemId(file.getFile().getId());
-
+                                        progressTotalUploaded++;
                                         toFreeupQueue.add(file.getOriginalLocalFile());
                                     }
 
@@ -259,13 +269,11 @@ public class Upload {
                 //Put the future to the map for joined result later
                 splitCompleteFutures.put(driveName, splitCompleteFuture);
                 Futures.put(driveName, CommitAllocationMapFuture);
-                mState = State.MEDIA_COMPLETE;
-                listener.progressChanged(this);
-                mState = State.MAP_UPDATE_STARTED;
-                listener.progressChanged(this);
-                    /*
+                callback(State.MEDIA_COMPLETE);
+
+                /*
                     exception handling
-                    */
+                */
                 checkFolderFuture.exceptionally(ex ->{
                     Log.w(TAG, "Completed with exception in folder check: " + ex.toString());
 
@@ -288,8 +296,17 @@ public class Upload {
 
             });
 
-            //let's wait here until upload is completed
+            /*
+                Wait joined results.
+                1. Wait for all of the split slices are available because we want to callback to UI
+                as soon as the splitter finishes.
+                2. Wait for intermedia results are available.
+            */
+            progressTotalSegment =
             splitCompleteFutures.values().stream().mapToInt((future)->{return future.join();}).sum();
+            callback(State.PREPARE_LOCAL_FILES_COMPLETE);
+            if(progressTotalSegment != totalSeg[0]){Log.w(TAG, "total seg may not correct!");}
+            Log.d(TAG, "Total segment: " + totalSeg[0]);
             HashMap<String, InterMediateResult> joined = getJoinedResult(Futures);
 
             //Terminate here if any of slice is not uploaded or any error occurred during split.
@@ -337,12 +354,13 @@ public class Upload {
             Log.d(TAG, "reduced drive list: " + reducedDriveList);
             MapFetcher mapFetcher = new MapFetcher(reducedDriveList);
 
+            callback(State.MAP_UPDATE_STARTED);
             CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
             HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
             if(mapIDs.values().stream().anyMatch((v)->v==null)){
                 Log.w(TAG, "map is missing!");
                 resultFuture.completeExceptionally(new Throwable("map is missing!"));
-                //TODO: cleanp orphan files
+                //TODO: clean up orphan files
                 return null;
             }
 
@@ -376,13 +394,13 @@ public class Upload {
             Log.d(TAG, "update local map files...");
             MapUpdater updater = new MapUpdater(reducedDriveList);
 
+            //TODO: what will happen if two source update the same file in remote?
             CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
                     = updater.updateAll(localMaps);
 
             updateFuture.join();
 
-            mState = State.MAP_UPDATE_COMPLETE;
-            listener.progressChanged(this);
+            callback(State.MAP_UPDATE_COMPLETE);
 
             Log.d(TAG, "update is completed successfully.");
             resultFuture.complete(null);
@@ -402,9 +420,9 @@ public class Upload {
 
     public State getState(){return mState;}
 
-    public int getProgressMax(){return mState;}
+    public int getProgressMax(){return progressTotalSegment;}
 
-    public int getProgressCurrent(){}
+    public int getProgressCurrent(){return progressTotalUploaded;}
 
     HashMap<String, InterMediateResult> getJoinedResult( HashMap<String, CompletableFuture<Upload.InterMediateResult>> futures){
         Log.d(TAG, "Awaiting joined result...");
