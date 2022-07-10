@@ -44,4 +44,12 @@
     <!-- Notifications -->
     <string name="notification_title_default">Cross drives</string>
     <string name="notification_content_default">In progress</string>
+    <string name="notification_title_uploading">Upload in progress</string>
+    <string name="notification_title_complete">Upload Completed</string>
+    <string name="notification_content_upload_start_get_quota">Get quotas</string>
+    <string name="notification_content_upload_start_prepare_data">Preparing</string>
+    <string name="notification_content_upload_uploading_file">Uploading file</string>
+    <string name="notification_content_upload_start_update_maps">Almost done</string>
+    <string name="notification_content_upload_complete">Uploaded successfully</string>
+    <string name="notification_content_upload_complete_exceptionally">Oops... Something wrong during upload</string>
 </resources>

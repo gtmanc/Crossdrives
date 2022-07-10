@@ -53,7 +53,7 @@
         <activity android:name=".SignOutDialog"
             android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
         </activity>
-        <activity android:name="com.crossdrives.activity.FABOptionDialog"
+        <activity android:name="com.crossdrives.ui.FABOptionDialog"
             android:theme="@style/Theme.Custom.Option.MaterialComponents.Dialog.MinWidth"
             android:excludeFromRecents="true">
         </activity>

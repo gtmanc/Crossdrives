@@ -1,4 +1,4 @@
-package com.crossdrives.activity;
+package com.crossdrives.ui;
 
 import android.app.Dialog;
 import android.content.DialogInterface;

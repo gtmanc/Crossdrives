@@ -76,7 +76,7 @@ public class Upload {
     /*
         Progress states
      */
-    enum State{
+    public enum State{
         GET_REMOTE_QUOTA_STARTED,
         GET_REMOTE_QUOTA_COMPLETE,
         PREPARE_LOCAL_FILES_STARTED,
@@ -132,7 +132,7 @@ public class Upload {
             //Allocator allocator = new Allocator(quotaMap, file.length());
             Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
             allocation = allocator.getAllocationResult();
-            listener.progressChanged(this);
+            callback(State.PREPARE_LOCAL_FILES_STARTED);
             allocation.entrySet().stream().filter((e)->e.getValue()>0).forEach((set)->{
                 String driveName = set.getKey();
                 CompletableFuture<Integer> splitCompleteFuture = new CompletableFuture<>();
@@ -159,7 +159,6 @@ public class Upload {
                     }
                     cdfsFolderID = cdfsFolder.getId();
 
-                    callback(State.PREPARE_LOCAL_FILES_STARTED);
                     Splitter splitter = new Splitter(ins, allocatedLen, name, MAX_CHUNK);
                     splitter.split(new ISplitCallback() {
                         @Override
@@ -207,7 +206,7 @@ public class Upload {
                         }
                     });
 
-                    callback(State.MEDIA_IN_PROGRESS);
+
                     while(!isAllSplittd[0]){
 
                         if(isSplitTerminateExceptionally[0]){
@@ -236,6 +235,7 @@ public class Upload {
                                         if(item == null) {Log.w(TAG,"item mot found! Drive: " + driveName);}
                                         item.setItemId(file.getFile().getId());
                                         progressTotalUploaded++;
+                                        callback(State.MEDIA_IN_PROGRESS);
                                         toFreeupQueue.add(file.getOriginalLocalFile());
                                     }
 
@@ -269,7 +269,6 @@ public class Upload {
                 //Put the future to the map for joined result later
                 splitCompleteFutures.put(driveName, splitCompleteFuture);
                 Futures.put(driveName, CommitAllocationMapFuture);
-                callback(State.MEDIA_COMPLETE);
 
                 /*
                     exception handling
@@ -305,9 +304,11 @@ public class Upload {
             progressTotalSegment =
             splitCompleteFutures.values().stream().mapToInt((future)->{return future.join();}).sum();
             callback(State.PREPARE_LOCAL_FILES_COMPLETE);
+            callback(State.MEDIA_IN_PROGRESS);  //callback to UI to start the update of progress. i.e. progress 0%
             if(progressTotalSegment != totalSeg[0]){Log.w(TAG, "total seg may not correct!");}
             Log.d(TAG, "Total segment: " + totalSeg[0]);
             HashMap<String, InterMediateResult> joined = getJoinedResult(Futures);
+            callback(State.MEDIA_COMPLETE);
 
             //Terminate here if any of slice is not uploaded or any error occurred during split.
             if(!checkResult(joined)){
@@ -477,76 +478,8 @@ public class Upload {
             }).collect(Collectors.toCollection(ArrayList::new));
         });
 
-//        Map<String, Collection<AllocationItem>> remapped =
-//        joined.entrySet().stream().map(pair-> { //drivename, intermediateResult
-//            //Map<String, Collection<AllocationItem>> mapped = pair.getValue().items.stream().map((item) -> {
-//            Collection<AllocationItem> mapped = pair.getValue().items.stream().map((item) -> {
-//                        item.setCdfsId(IDProducer.deriveID(combinedID));
-//                        item.setTotalSeg(totalSeg);
-//                        return item;
-//
-//            }).collect(Collectors.toCollection(ArrayList::new));
-//            //build up the result in HashMap
-//            Map.Entry<String, Collection<AllocationItem>> entry = new Map.Entry<String, Collection<AllocationItem>>() {
-//                @Override
-//                public String getKey() {
-//                    return pair.getKey();
-//                }
-//
-//                @Override
-//                public Collection<AllocationItem> getValue() {
-//                    return mapped;
-//                }
-//
-//                @Override
-//                public Collection<AllocationItem> setValue(Collection<AllocationItem> value) {
-//                    return null;
-//                }
-//            };
-//            return entry;
-//        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
-
-        //            p.getValue().items.stream().forEach((item)->{
-//                item.setTotalSeg(totalSeg);
-//                item.setCdfsId(calculateID(combinedID));
-//                remapped.put(p.getKey(), item);
-//            });
-//        });
-//        remapped = joined.entrySet().stream().forEach(p->{ //drivename, intermediateResult
-//            p.getValue().items.stream().forEach((item)->{
-//                item.setTotalSeg(totalSeg);
-//                item.setCdfsId(calculateID(combinedID));
-//                remapped.put(p.getKey(), item);
-//            });
-//        });
-//        return new HashMap<String, Collection<AllocationItem>>(remapped);
         Log.d(TAG, "Items used to update the Allocation map" + remapped);
         return remapped;
-    }
-
-    HashMap<String, AllocationItem> Remap(String driveName, HashMap<String, AllocationItem> items){
-        Map<String, AllocationItem> remapped;
-        remapped = items.values().stream().map((v)->{
-            Map.Entry<String, AllocationItem> entry = new Map.Entry<String, AllocationItem>() {
-                @Override
-                public String getKey() {
-                    return driveName;
-                }
-
-                @Override
-                public AllocationItem getValue() {
-                    return v;
-                }
-
-                @Override
-                public AllocationItem setValue(AllocationItem o) {
-                    return null;
-                }
-            };
-            return entry;
-        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-
-        return new HashMap<>(remapped);
     }
 
     boolean isUploadCompleted(int total, ArrayBlockingQueue<File> Q1, LinkedBlockingQueue<File> Q2){

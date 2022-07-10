@@ -1,14 +1,10 @@
 package com.example.crossdrives;
 
-import android.app.Activity;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.SearchManager;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -23,7 +19,6 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 import android.widget.SearchView;
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -31,8 +26,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -45,12 +38,13 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.crossdrives.activity.FABOptionDialog;
+import com.crossdrives.ui.Notification;
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.exception.CompletionException;
+import com.crossdrives.cdfs.Service;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
-import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
+import com.crossdrives.cdfs.upload.IUploadProgressListener;
+import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -61,14 +55,12 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -184,7 +176,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
-		view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
+		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
 		mProgressBar.setVisibility(View.VISIBLE);
 
@@ -396,7 +388,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
-			//Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
+			Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
 			//fetch next page if last item is already shown to the user
 			if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
 				//bottom of list!
@@ -507,6 +499,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			mItems.set(position, item);
 			//mAdapter.notifyItemChanged(position);
 			mAdapter.notifyDataSetChanged();
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
 		@Override
@@ -551,11 +544,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//now update adapter
 			mItems.set(position, item);
 			mAdapter.notifyDataSetChanged();
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
 		@Override
 		public void onImageItemClick(View view, int position) {
 			Log.i(TAG, "onImageItemClick:" + position);
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_context, popup.getMenu());
@@ -599,6 +594,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			NavDirections a = QueryResultFragmentDirections.navigateToSystemTest();
 			NavHostFragment.findNavController(f).navigate(a);
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 	}};
 
 	View.OnClickListener onFabClick = new View.OnClickListener(){
@@ -691,6 +687,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			//close drawer right here. Otherwise, the drawer is still there if screen is switched back from next one
 			mDrawer.closeDrawers();
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
 			//The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
 			//drawer is closed exactly before screen proceed to next one
@@ -859,6 +856,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
+	HashMap<IUploadProgressListener, Notification> mNotificationsByUploadListener = new HashMap<>();
+	HashMap<OnSuccessListener, Notification> mNotificationsByUploadSuccessListener = new HashMap<>();
+	HashMap<OnFailureListener, Notification> mNotificationsByUpFailedListener = new HashMap<>();
 	private ActivityResultLauncher<String[]> mStartOpenDocument = registerForActivityResult(new ActivityResultContracts.OpenDocument(),
 			new ActivityResultCallback<Uri>() {
 				@Override
@@ -866,8 +866,17 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					java.io.File file;
 					InputStream in = null;
 					Task task;
+					Service service;
+					IUploadProgressListener uploafListener;
+					OnSuccessListener<File> successListener;
+					OnFailureListener failureListener;
+					Notification notification;
 
 					if(result != null) {
+						notification = new Notification(Notification.Category.NOTIFY_UPLOAD, R.drawable.ic_baseline_cloud_circle_24);
+						notification.setContentTitle(getString(R.string.notification_title_uploading));
+						notification.setContentText(getString(R.string.notification_content_default));
+						notification.build();
 						try {
 							in = getActivity().getContentResolver().openInputStream(result);
 						} catch (FileNotFoundException e) {
@@ -876,8 +885,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						file = UriToFile(result);
 						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
-							task = CDFS.getCDFSService(getActivity()).getService().upload(in, file.getPath(), currentFolder);
+							service = CDFS.getCDFSService(getActivity()).getService();
+							uploafListener = createUploadListener();
+							mNotificationsByUploadListener.put(uploafListener, notification);
+							service.setUploadProgressLisetener(uploafListener);
+							task = service.upload(in, file.getPath(), currentFolder);
 							InputStream finalIn = in;
+							successListener = createUploadSuccessListner();
+							failureListener = createUploadFailureListner();
+							mNotificationsByUpFailedListener.put(failureListener, notification);
+							mNotificationsByUploadSuccessListener.put(successListener, notification);
 							task.addOnCompleteListener(new OnCompleteListener() {
 								@Override
 								public void onComplete(@NonNull Task task) {
@@ -886,24 +903,78 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 									try {
 										finalIn.close();
 									} catch (IOException e) {
-										e.printStackTrace();
+										Toast.makeText(SnippetApp.getAppContext(), "Upload Completed with error: "
+												+ e.getMessage(), Toast.LENGTH_SHORT).show();
 									}
 								}
-							}).addOnFailureListener(new OnFailureListener() {
-								@Override
-								public void onFailure(@NonNull Exception e) {
-									Log.w(TAG, "upload failed: " + e.getMessage() + e.getCause());
-
-								}
-							});
+							}).addOnFailureListener(failureListener)
+							.addOnSuccessListener(successListener);
 						} catch (Exception e ) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
-
-
 					}
 				}
 			});
+
+	IUploadProgressListener createUploadListener(){
+		IUploadProgressListener uploadListener = new IUploadProgressListener() {
+			@Override
+			public void progressChanged(Upload uploader) {
+				Notification notification;
+				Upload.State state = uploader.getState();
+				notification = mNotificationsByUploadListener.get(this);
+				if (state == Upload.State.GET_REMOTE_QUOTA_STARTED) {
+					Log.d(TAG, "[Notification]:fetching remote maps...");
+					notification.updateContentText(getString(R.string.notification_content_upload_start_get_quota));
+				}
+				else if(state == Upload.State.PREPARE_LOCAL_FILES_STARTED){
+					Log.d(TAG, "[Notification]:split file...");
+					notification.updateContentText(getString(R.string.notification_content_upload_start_prepare_data));
+				}
+				else if(state == Upload.State.MEDIA_IN_PROGRESS) {
+					int current = uploader.getProgressCurrent();
+					int max = uploader.getProgressMax();
+					Log.d(TAG, "[Notification]:update progress. Current " + current + " Max: " + max);
+					notification.updateContentText(getString(R.string.notification_content_upload_uploading_file));
+					notification.updateProgress(current, max);
+				}
+				else if(state == Upload.State.MAP_UPDATE_STARTED){
+					Log.d(TAG, "update remote maps...");
+					notification.updateContentText(getString(R.string.notification_content_upload_start_update_maps));
+				}
+			}
+		};
+		return uploadListener;
+	}
+
+	<T> OnSuccessListener<T> createUploadSuccessListner(){
+		OnSuccessListener<T> listener = new OnSuccessListener<T>() {
+			@Override
+			public void onSuccess(T t) {
+				Notification notification = mNotificationsByUploadSuccessListener.get(this);
+				notification.removeProgressBar();
+				notification.updateContentTitle(getString(R.string.notification_title_complete));
+				notification.updateContentText(getString(R.string.notification_content_upload_complete));
+			}
+		};
+		return listener;
+	}
+
+	OnFailureListener createUploadFailureListner() {
+		OnFailureListener listener = new OnFailureListener() {
+			@Override
+			public void onFailure(@NonNull Exception e) {
+				Notification notification = mNotificationsByUpFailedListener.get(this);
+				Log.w(TAG, "upload failed: " + e.getMessage() + e.getCause());
+				Toast.makeText(SnippetApp.getAppContext(), "Upload Failed: "
+						+ e.getMessage(), Toast.LENGTH_SHORT).show();
+				notification.removeProgressBar();
+				notification.updateContentTitle(getString(R.string.notification_title_complete));
+				notification.updateContentText(getString(R.string.notification_content_upload_complete_exceptionally));
+			}
+		};
+		return listener;
+	}
 
 	//https://www.jb51.net/article/112581.htm
 	private java.io.File UriToFile(final Uri uri){
