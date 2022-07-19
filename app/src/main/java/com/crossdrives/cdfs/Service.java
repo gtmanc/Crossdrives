@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.crossdrives.cdfs.allocation.Result;
+import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
@@ -244,42 +245,15 @@ public class Service implements IService{
     /*
         Download content of a file
      */
-    public Task<OutputStream> download(String id) {
-        Task task;
-        Log.d(TAG, "Operation: download " + id);
-        task = Tasks.call(mExecutor, new Callable<Object>() {
-            @Override
-            public OutputStream call() throws Exception {
-                msTaskfinished = false;
-                mCDFS.getDrives().values().iterator().next().getClient().download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
-                    //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
-                    @Override
-                    //public void success(InputStream inputStream){
-                    public void success(OutputStream os){
-                        exitWait();
-                        mStream = os;
+    public Task<OutputStream> download(String fileID, String parent) throws MissingDriveClientException {
+        Download download = new Download(mCDFS, fileID, parent);
+        final Throwable[] throwables = {null};
 
-                        Log.d(TAG, "download finished.");
-//                        try {
-//                            os.close();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-                    }
+        Log.d(TAG, "CDFS Service: Download");
 
-                    @Override
-                    public void failure(String ex) {
-                        exitWait();
-                        Log.w(TAG, "download failed" + ex.toString());
-                    }
-                });
-                waitUntilFinished();
-                if(mStream == null){ Log.w(TAG, "stream is null" );}
-                return mStream;
-            }
-        });
+        mCDFS.requiresDriveClientNonNull();
 
-        return task;
+        return download.execute();
     }
 
     private void exitWait(){

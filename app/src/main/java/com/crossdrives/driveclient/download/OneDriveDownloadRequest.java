@@ -6,6 +6,7 @@ import com.crossdrives.driveclient.BaseRequest;
 import com.crossdrives.driveclient.OneDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.download.IDownloadRequest;
+import com.crossdrives.driveclient.model.MediaData;
 
 import org.apache.commons.io.IOUtils;
 
@@ -20,41 +21,9 @@ public class OneDriveDownloadRequest extends BaseRequest implements IDownloadReq
     String mID;
     String mUrl = "/me/drive/items/{item-id}/content";
     //String mUrl = "/me/drive/root/children/Allocation.txt/content";
-    public OneDriveDownloadRequest(OneDriveClient client, String id) { mClient = client; mID = id;   }
+    int additionInt;
 
-    @Override
-    //public void run(IDownloadCallBack<InputStream> callback) {
-    public void run(IDownloadCallBack<OutputStream> callback) {
-        mUrl = mUrl.replace("{item-id}", mID);
-        Log.d(TAG, "Request Url: " + mUrl);
-        /*
-            TODO: clarification
-            null is received if OutputStream.class is specified. Not yet clear whether
-            Graph support responseType OutputStream. i.e. Changing permission scope to Files.ReadWrite.All
-            doesn't help
-         */
-        mClient.getGraphServiceClient().customRequest(mUrl, InputStream.class)
-        //mClient.getGraphServiceClient().customRequest(mUrl, OutputStream.class)
-                .buildRequest()
-                .getAsync().thenAccept(in -> {
-                    OutputStream out = null;
-                    if(in != null) {
-                        out = toOutputStream((InputStream) in);
-                        CloseInStream((InputStream) in);
-                    }
-                    if(out != null){
-                        //Log.d(TAG, "Content:" + out.toString());
-                        callback.success(out);
-                    }else{
-                        Log.w(TAG, "In stream is null" );
-                        callback.failure("Content is not available.");
-                    }
-        })
-                .exceptionally(ex->{
-                    Log.w(TAG, "download failed: " + ex.toString());
-                    return null;
-                });
-    }
+    public OneDriveDownloadRequest(OneDriveClient client, String id) { mClient = client; mID = id;   }
 
 
     private OutputStream toOutputStream(InputStream in){
@@ -76,5 +45,47 @@ public class OneDriveDownloadRequest extends BaseRequest implements IDownloadReq
             Log.w(TAG, "Close stream failed during download!");
         }
 
+    }
+
+    @Override
+    public IDownloadRequest setAdditionInt(int i) {
+        additionInt = i;
+        return this;
+    }
+
+    @Override
+    public void run(IDownloadCallBack<MediaData> callback) {
+        mUrl = mUrl.replace("{item-id}", mID);
+        Log.d(TAG, "Request Url: " + mUrl);
+        /*
+            TODO: clarification
+            null is received if OutputStream.class is specified. Not yet clear whether
+            Graph support responseType OutputStream. i.e. Changing permission scope to Files.ReadWrite.All
+            doesn't help
+         */
+        mClient.getGraphServiceClient().customRequest(mUrl, InputStream.class)
+                //mClient.getGraphServiceClient().customRequest(mUrl, OutputStream.class)
+                .buildRequest()
+                .getAsync().thenAccept(in -> {
+                    OutputStream out = null;
+                    MediaData mediaData = new MediaData();
+                    if(in != null) {
+                        out = toOutputStream((InputStream) in);
+                        CloseInStream((InputStream) in);
+                    }
+                    if(out != null){
+                        //Log.d(TAG, "Content:" + out.toString());
+                        mediaData.setOs(out);
+                        mediaData.setAdditionInteger(additionInt);
+                        callback.success(mediaData);
+                    }else{
+                        Log.w(TAG, "In stream is null" );
+                        callback.failure("Content is not available.");
+                    }
+                })
+                .exceptionally(ex->{
+                    Log.w(TAG, "download failed: " + ex.toString());
+                    return null;
+                });
     }
 }

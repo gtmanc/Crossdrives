@@ -41,7 +41,7 @@ public class AllocManager implements IAllocManager {
 
     public AllocManager(CDFS cdfs) { mCDFS = cdfs;}
 
-    public AllocContainer toContainer(OutputStream stream){
+    static public AllocContainer toContainer(OutputStream stream){
         AllocContainer container;
         Gson gson = new Gson();
         Drive drive;

@@ -13,5 +13,5 @@ public interface IService {
 
     public Task upload(InputStream ins, String name, String parent) throws MissingDriveClientException, Throwable;
 
-    public Task<OutputStream> download(String id);
+    public Task<OutputStream> download(String fileID, String parent) throws MissingDriveClientException;
 }

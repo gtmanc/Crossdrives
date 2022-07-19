@@ -8,6 +8,7 @@ import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
+import com.crossdrives.driveclient.model.MediaData;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -226,13 +227,13 @@ public class MapFetcher {
 
         Log.d(TAG, "Download allocation file. Query");
         client.download().buildRequest(fileid)
-                .run(new IDownloadCallBack<OutputStream>() {
+                .run(new IDownloadCallBack<MediaData>() {
 
                     @Override
-                    public void success(OutputStream outputStream) {
+                    public void success(MediaData mediaData) {
                         Log.d(TAG, "Download allocation file OK");
                         boolean joinResult;
-                        output.put(name, outputStream);
+                        output.put(name, mediaData.getOs());
                         //future.complete(result);
                         state.setState(State.STATE_FINISHED);
                         joinResult = joinResult();

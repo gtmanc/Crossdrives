@@ -9,6 +9,7 @@ import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.create.ICreateCallBack;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
+import com.crossdrives.driveclient.model.MediaData;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -144,11 +145,11 @@ public class Infrastructure{
             if(result.file != null){
                 Log.d(TAG, "download root allocation file");
                 mClient.download().buildRequest(result.file)
-                        .run(new IDownloadCallBack<OutputStream>() {
+                        .run(new IDownloadCallBack<MediaData>() {
 
                             @Override
-                            public void success(OutputStream outputStream) {
-                                result.valid = handleResultDownload(outputStream);
+                            public void success(MediaData mediaData) {
+                                result.valid = handleResultDownload(mediaData.getOs());
                                 future.complete(result);
                             }
 

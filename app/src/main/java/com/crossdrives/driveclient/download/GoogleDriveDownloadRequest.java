@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.crossdrives.driveclient.BaseRequest;
 import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.model.MediaData;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -18,31 +19,41 @@ public class GoogleDriveDownloadRequest extends BaseRequest implements IDownload
     final String TAG = "GDC.GoogleDriveDownloadRequest";
     GoogleDriveClient mClient;
     String mID;
+    int additionInt;
     public GoogleDriveDownloadRequest(GoogleDriveClient client, String id) { mClient = client; mID = id;
     }
 
     @Override
-    //public void run(IDownloadCallBack<InputStream> callback) {
-    public void run(IDownloadCallBack<OutputStream> callback) {
-        Task<OutputStream> task;
+    public IDownloadRequest setAdditionInt(int i) {
+        additionInt = i;
+        return this;
+    }
 
-        task = Tasks.call(mClient.getExecutor(), new Callable<OutputStream>() {
+    @Override
+    public void run(IDownloadCallBack<MediaData> callback) {
+        Task<MediaData> task;
+
+
+        task = Tasks.call(mClient.getExecutor(), new Callable<MediaData>() {
             @Override
-            public OutputStream call() throws Exception {
+            public MediaData call() throws Exception {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 OutputStream outputStream = bos;
+                MediaData mediaData = new MediaData();
 
                 //Log.d(TAG, "download: " + mID);
                 String ex = null;
                 mClient.getGoogleDriveService().files().get(mID)
-                            .executeMediaAndDownloadTo(bos);
-                return bos;
+                        .executeMediaAndDownloadTo(bos);
+                mediaData.setOs(bos);
+                mediaData.setAdditionInteger(additionInt);
+                return mediaData;
             }
         });
-        task.addOnSuccessListener(new OnSuccessListener<OutputStream>() {
+        task.addOnSuccessListener(new OnSuccessListener<MediaData>() {
             @Override
-            public void onSuccess(OutputStream outputStream) {
-                callback.success(outputStream);
+            public void onSuccess(MediaData mediaData) {
+                callback.success(mediaData);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override

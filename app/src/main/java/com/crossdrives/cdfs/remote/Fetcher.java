@@ -7,6 +7,7 @@ import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.list.IFileListRequest;
+import com.crossdrives.driveclient.model.MediaData;
 import com.google.android.gms.tasks.Task;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -116,11 +117,11 @@ public class Fetcher {
      */
     CompletableFuture<OutputStream> helpertFetchContent(Drive drive, String fileID){
         CompletableFuture<OutputStream> resultFuture = new CompletableFuture<>();
-        drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<OutputStream>() {
+        drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<MediaData>() {
             @Override
-            public void success(OutputStream outputStream) {
+            public void success(MediaData mediaData) {
                 Log.d(TAG, "OK!. Content is downloaded.");
-                resultFuture.complete(outputStream);
+                resultFuture.complete(mediaData.getOs());
             }
 
             @Override
