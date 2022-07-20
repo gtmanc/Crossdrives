@@ -17,6 +17,7 @@ import com.crossdrives.cdfs.model.updateContent;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
+import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.Tasks;
@@ -491,11 +492,7 @@ public class Upload {
         if((Q1.size() + Q2.size()) >= total){
             result = true;
         }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Delay.delay(1000);
         return result;
     }
 

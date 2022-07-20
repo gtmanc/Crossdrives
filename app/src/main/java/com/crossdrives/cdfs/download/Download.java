@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Download {
-    static private final String TAG = "CD.Downloadj";
+    static final String TAG = "CD.Download";
     CDFS mCDFS;
     String mFileID;
     String mParent;
