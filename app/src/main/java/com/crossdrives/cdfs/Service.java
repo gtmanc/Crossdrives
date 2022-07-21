@@ -245,7 +245,7 @@ public class Service implements IService{
     /*
         Download content of a file
      */
-    public Task<OutputStream> download(String fileID, String parent) throws MissingDriveClientException {
+    public Task<String> download(String fileID, String parent) throws MissingDriveClientException {
         Download download = new Download(mCDFS, fileID, parent);
         final Throwable[] throwables = {null};
 

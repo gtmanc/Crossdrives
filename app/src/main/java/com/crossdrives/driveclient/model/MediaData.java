@@ -14,8 +14,8 @@ public class MediaData {
         return os;
     }
 
-    public Addition getAddition() {
-        return addition;
+    public int getAdditionInt() {
+        return addition.integer;
     }
 
     public void setOs(OutputStream os) {

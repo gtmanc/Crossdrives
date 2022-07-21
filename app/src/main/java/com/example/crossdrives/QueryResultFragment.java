@@ -456,25 +456,24 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				Log.d(TAG, "Start to download file: " + item.mName);
 				//Log.d(TAG, "File ID: " + item.mId);
 				//TODO: open detail of file
-				CDFS.getCDFSService(getActivity().getApplicationContext()).getService().download(item.getID()).addOnSuccessListener(new OnSuccessListener<OutputStream>() {
-					@Override
-					public void onSuccess(OutputStream stream) {
-						Log.d(TAG, "Content of file downloaded: " + stream.toString());
-						Toast.makeText(getContext(), "stream.toString()", Toast.LENGTH_LONG).show();
-						try {
-							stream.close();
-						} catch (IOException e) {
-							Log.w(TAG, "Cant close output stream!");
-							Toast.makeText(getContext(), "Cant close output stream!", Toast.LENGTH_LONG).show();
+				try {
+					CDFS.getCDFSService(getActivity().getApplicationContext()).getService().download(item.getID(), currentFolder).addOnSuccessListener(new OnSuccessListener<String>() {
+						@Override
+						public void onSuccess(String file) {
+							Log.d(TAG, "file downloaded: " + file);
+							Toast.makeText(getContext(), "file downloaded: " + file, Toast.LENGTH_LONG).show();
+
 						}
-					}
-				}).addOnFailureListener(new OnFailureListener() {
-					@Override
-					public void onFailure(@NonNull Exception e) {
-						Log.w(TAG, "file download failed: " + e.toString());
-						Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
-					}
-				});
+					}).addOnFailureListener(new OnFailureListener() {
+						@Override
+						public void onFailure(@NonNull Exception e) {
+							Log.w(TAG, "file download failed: " + e.toString());
+							Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
+						}
+					});
+				} catch (MissingDriveClientException e) {
+					e.printStackTrace();
+				}
 			} else {
 				if (item.isSelected()) {
                     /*

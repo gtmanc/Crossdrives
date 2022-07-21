@@ -88,7 +88,7 @@ public class Compositor {
 
 
     /*
-        fill media content (slice of file) in outputStream. Usually this shoud be called on another thread
+        fill media content (slice of file) in outputStream. Usually this should be called on a different thread
      */
     public boolean fillSliceContent(int seq, OutputStream mediaStream) throws Throwable {
         boolean result = true;
