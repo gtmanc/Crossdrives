@@ -472,7 +472,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						}
 					});
 				} catch (MissingDriveClientException e) {
-					e.printStackTrace();
+					Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
 				}
 			} else {
 				if (item.isSelected()) {

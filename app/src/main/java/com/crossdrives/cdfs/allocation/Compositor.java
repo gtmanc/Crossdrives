@@ -2,6 +2,7 @@ package com.crossdrives.cdfs.allocation;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -12,9 +13,6 @@ import com.crossdrives.msgraph.SnippetApp;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -23,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,10 +33,21 @@ public class Compositor {
     final int BUF_SIZE = 1024;
     long compositeOffset = 0;
     OutputStream compositeOut;
+    int mMaxChunkSize;
 
+    /*
+        maps:
+            the map files corresponding the folder that the item exists
+        fileID:
+            the ID of the item to download
+        maxChunkBuffered:
+            the allowed maximum number of the local slice of the item can be stored
+            during compositing.
+     */
     public Compositor(HashMap<String, OutputStream> maps, String fileID, int maxChunkBuffered) {
         this.maps = maps;
         mfileID = fileID;
+        mMaxChunkSize = maxChunkBuffered;
     }
 
     public long run(ICompositeCallback callback) throws IOException {
@@ -53,6 +63,7 @@ public class Compositor {
 
         CompletableFuture<String> future = CompletableFuture.supplyAsync(()->{
             int seq = 0;
+            String compositedFile = "context.getFilesDir().getPath() + \"/\" + name";
             while(seq < toDownload.size()){
                 String driveName = toDownload.get(seq).getKey();
                 String id = toDownload.get(seq).getValue().getItemId();
@@ -60,27 +71,34 @@ public class Compositor {
                 callback.onSliceRequested(driveName, id, seq);
 
                 OutputStream slice = toComposite.get(seq);
-                if(slice != null){
+                if(slice != null && toComposite.size() < (mMaxChunkSize+1)){
                     try {
                         composite(slice, size);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        throw new CompletionException(e);
                     }
+                    toComposite.remove(seq);
                     seq++;
 
                     try {
                         slice.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        throw new CompletionException(e);
                     }
                 }
 
                 Delay.delay(1000);
             }
 
-            callback.onComplete(context.getFilesDir().getPath() + "/" + name);
+            callback.onCompleted(compositedFile);
+            return compositedFile;
+        });
+
+        future.exceptionally((e)->{
+            callback.OnExceptionally(e);
             return null;
         });
+
         compositeOut.close();
 
         return toDownload.get(0).getValue().getCDFSItemSize();
@@ -192,5 +210,14 @@ public class Compositor {
         os.close();
 
         return true;
+    }
+
+    void printList(List<Map.Entry<String, AllocationItem>> list){
+        while(list.iterator().hasNext()){
+            String key = list.iterator().next().getKey();
+            AllocationItem value = list.iterator().next().getValue();
+            Log.d(TAG, "Item: " + key + " " + value.getSequence());
+        }
+
     }
 }

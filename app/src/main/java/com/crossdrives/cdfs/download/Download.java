@@ -73,7 +73,7 @@ public class Download {
                         }
 
                         @Override
-                        public void onComplete(String CompositedFile) {
+                        public void onCompleted(String CompositedFile) {
                             isComposited[0] = true;
                             result[0] = CompositedFile;
                         }
@@ -124,13 +124,11 @@ public class Download {
         return future;
     }
 
-    AllocationItem takeFromQueue(ArrayBlockingQueue<AllocationItem> q){
+    AllocationItem takeFromQueue(ArrayBlockingQueue<AllocationItem> q) throws InterruptedException {
         AllocationItem item = null;
-        try {
-            item = q.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
+        item = q.take();
+
         return item;
     }
 }

@@ -6,7 +6,7 @@ public interface ICompositeCallback {
 
     public void onSliceRequested(String driveName, String id, int seq);
 
-    public void onComplete(String CompositedfFile);
+    public void onCompleted(String CompositedfFile);
 
     public void OnExceptionally(Throwable throwable);
 }
