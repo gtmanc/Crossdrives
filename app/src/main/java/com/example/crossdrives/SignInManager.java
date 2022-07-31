@@ -29,7 +29,7 @@ public abstract class SignInManager{
          */
         void onFinished(Profile profile, String token);
 
-        void onFailure(String err);
+        void onFailure(String brand, String err);
     }
 
     interface OnSignOutFinished {

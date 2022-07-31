@@ -7,6 +7,7 @@ import com.crossdrives.cdfs.IConstant;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
 import com.crossdrives.cdfs.allocation.IDProducer;
+import com.crossdrives.cdfs.allocation.ISplitAllCallback;
 import com.crossdrives.cdfs.allocation.ISplitCallback;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.Splitter;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Upload {
     final String TAG = "CD.Upload";
@@ -59,19 +62,20 @@ public class Upload {
     IUploadProgressListener mListener;
     int progressTotalSegment;
     int progressTotalUploaded;
+    final String POISON_PILL = "PoisonPill";
 
     /*
-        Result for splitting file and slice upload
+        Result of splitting file and slice upload for each drive
      */
     class InterMediateResult{
-        int totalSlice;
         Collection<AllocationItem> items;
         Collection<Integer> errors = new ArrayList<>();
     }
 
     interface Error{
-        int ERR_SPLIT = 1;          //error occurred in splitting file
-        int ERR_UPLOAD_CONTENT = 2; //error occurred during upload slice of file
+        int ERR_UPLOAD_CONTENT = 1; //error occurred during upload slice of file
+        int ERR_QUEUE_TAKE = 2;     //blocking take is interrupted
+        int ERR_SPLIT = 3;     //error occurred during splitting
     }
 
     /*
@@ -97,7 +101,7 @@ public class Upload {
         return upload(ins, name, parent, listener);
     }
 
-    public CompletableFuture<File> upload(InputStream ins, String name, String parent, IUploadProgressListener listener)  {
+    public CompletableFuture<File> upload(InputStream ins, String CdfsName, String parent, IUploadProgressListener listener)  {
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
         mListener = listener;
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
@@ -105,6 +109,11 @@ public class Upload {
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
+            HashMap<String, ArrayBlockingQueue<File>> toUploadQueueMap = new HashMap<>();
+            ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
+            drives.keySet().forEach((driveName)->{
+                toUploadQueueMap.put(driveName, toUploadQueue);
+            });
 
             callback(State.GET_REMOTE_QUOTA_STARTED);
 
@@ -121,7 +130,15 @@ public class Upload {
             HashMap<String, Long> allocation;
             HashMap<String, Collection<AllocationItem>> uploadedItems;
             final long[] uploadSize = {0};
-            final int[] totalSeg = {0};
+
+            //number of slice produced by splitter. i.e. equivalent to totalSeg in CDFS item
+            final int[] totalSlice = {0};
+
+            //number of slice produced by splitter for each drive. Only used for check whether all scheduled
+            //upload are completed so that we can close the upload thread for each drive.
+            HashMap<String, Integer> totalSlicePerDrive = new HashMap<>();
+            final boolean[] isSplitCompleted = {false};
+            HashMap<String, Boolean> isSplitExceptionally = new HashMap<>();
             try {
                 uploadSize[0] = (long)ins.available();
             } catch (IOException e) {
@@ -134,97 +151,132 @@ public class Upload {
             Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
             allocation = allocator.getAllocationResult();
             callback(State.PREPARE_LOCAL_FILES_STARTED);
+
+            HashMap<String, AllocationItem> items = new HashMap<>();    //slice name, allocation item
+            Splitter splitter = new Splitter(ins, allocation, CdfsName, MAX_CHUNK);
+            splitter.splitAll(new ISplitAllCallback() {
+                @Override
+                public void start(String driveName, long total) {
+                    Log.d(TAG, "Split start. Drive name: " + driveName +
+                            ". allocated length: " + total);
+                    //Should be fine that we initialize it here because the map will be read when 1st
+                    //slice has been uploaded. Usually, upload is slower than the start callback of splitter
+                    //even if upload is failed.
+                    totalSlicePerDrive.putIfAbsent(driveName, 0);
+                }
+
+                @Override
+                public void progress(String driveName, File slice, long len) {
+                    AllocationItem item = new AllocationItem();
+                    Log.d(TAG, "Split in progress. Path: " + slice.getPath() + ". Name: "
+                            + slice.getName());
+                    toUploadQueueMap.get(driveName).add(slice);
+                    /*
+                        We have to assign the sequence number right here because the sequence
+                        carries the order of the slices. It is used in compose of downloaded
+                        slices in CDFS download.
+                    */
+                    totalSlice[0]++;  //TODO: do we have concurrent issue?
+                    int slicePerDrive = totalSlicePerDrive.get(driveName);
+                    slicePerDrive++;
+                    totalSlicePerDrive.replace(driveName, slicePerDrive);
+
+                    item.setSize(len);
+                    item.setName(CdfsName);
+                    item.setDrive(driveName);
+                    item.setSequence(totalSlice[0]);
+                    item.setPath(parent);
+                    item.setAttrFolder(false);
+                    item.setCDFSItemSize(uploadSize[0]);
+                    items.put(slice.getName(), item);
+                }
+
+                @Override
+                public void finish(String driveName, long remaining) {
+                    File file = new File(POISON_PILL);
+                    Log.d(TAG, "split finished. Drive: " + driveName +
+                            " len of remaining data: " + remaining);
+                    //add poisonPill to inform the upload threads for each drive that the splitter is no longer to produce
+                    //slice of file
+                    toUploadQueueMap.get(driveName).add(file);
+                }
+
+                public void onFailurePerDrive(String driveName, String ex) {
+                    Log.w(TAG, "Split file failed! Drive: " + driveName + " " + ex);
+                    isSplitExceptionally.put(driveName, true);
+                    resultFuture.completeExceptionally(new Throwable(ex));
+                }
+
+                @Override
+                public void completedAll(){
+                    Log.d(TAG, "split all completed.");
+                    isSplitCompleted[0] = true;
+                }
+                @Override
+                public void onFailure(String ex){
+                    Log.w(TAG, "Split file failed!" + ex);
+                }
+            });
+
+
             allocation.entrySet().stream().filter((e)->e.getValue()>0).forEach((set)->{
                 String driveName = set.getKey();
-                CompletableFuture<Integer> splitCompleteFuture = new CompletableFuture<>();
+                isSplitExceptionally.put(driveName, false);
                 long allocatedLen = set.getValue();
                 MapFetcher mapFetcher = new MapFetcher(drives);
                 CompletableFuture<com.google.api.services.drive.model.File> checkFolderFuture =
                         mapFetcher.getfolder(driveName);
 
+                /*
+                    Upload process for each drive. There could be number of threads run in parallel
+                    1. Main working - CommitAllocationMapFuture
+                    2. Splitter
+                    3. Multiple drive client uploads
+                 */
                 CompletableFuture<InterMediateResult> CommitAllocationMapFuture = checkFolderFuture.thenComposeAsync((cdfsFolder)->{
                     CompletableFuture<InterMediateResult> future = new CompletableFuture<>();
+                    // callback of splitter and drive client write error
+                    // Main working thread writes totalSlice and items
                     InterMediateResult result = new InterMediateResult();
-                    HashMap<String, AllocationItem> items = new HashMap<>();    //slice name, allocation item
-                    final int[] totalSlice = {0};   //number of split slice
 
-                    ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                     ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                     LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
-                    final boolean[] isAllSplittd = {false};
-                    final boolean[] isSplitTerminateExceptionally = {false};
-
                     if(cdfsFolder == null){
                         Log.w(TAG, "CDFS folder is missing!");
                         future.completeExceptionally(new Throwable("CDFS folder is missing"));
                     }
                     cdfsFolderID = cdfsFolder.getId();
 
-                    Splitter splitter = new Splitter(ins, allocatedLen, name, MAX_CHUNK);
-                    splitter.split(new ISplitCallback() {
-                        @Override
-                        public void start(long total) {
-                            Log.d(TAG, "Split start. Drive name: " + driveName +
-                                    ". allocated length: " + total);
-                        }
-
-                        @Override
-                        public void progress(File slice, long len) {
-                            AllocationItem item = new AllocationItem();
-                            Log.d(TAG, "Split in progress. Path: " + slice.getPath() + ". Name: "
-                                    + slice.getName());
-                            toUploadQueue.add(slice);
-                            totalSlice[0]++;
-                            /*
-                                We have to assign the sequence number right here because the sequence
-                                carries the order of the slices. It is used in compose of downloaded
-                                slices in CDFS download.
-                             */
-                            totalSeg[0]++;  //TODO: do we have concurrent issue?
-                            item.setSize(len);
-                            item.setName(slice.getName());
-                            item.setDrive(driveName);
-                            item.setSequence(totalSeg[0]);
-                            item.setPath(parent);
-                            item.setAttrFolder(false);
-                            item.setCDFSItemSize(uploadSize[0]);
-                            items.put(slice.getName(), item);
-                        }
-
-                        @Override
-                        public void finish(long remaining) {
-                            Log.d(TAG, "split finished. Drive: " + driveName +
-                                    " len of remaining data: " + remaining);
-                            isAllSplittd[0] = true;
-                            splitCompleteFuture.complete(totalSlice[0]);
-                        }
-
-                        @Override
-                        public void onFailure(String ex) {
-                            Log.w(TAG, "Split file failed! Drive: " + driveName + " " + ex);
-                            isSplitTerminateExceptionally[0] = true;
+                    /*
+                        Wait all upload works of the slice are committed to drive clients
+                     */
+                    while(true) {
+                        //Error occurred or exception throw by splitter?
+                        if(isSplitExceptionally.get(driveName)){
                             result.errors.add(Error.ERR_SPLIT);
-                        }
-                    });
-
-
-                    while(!isAllSplittd[0]){
-
-                        if(isSplitTerminateExceptionally[0]){
                             break;
                         }
-                            /*
-                                TODO: deal blocked if splitter is going to output nothing. i.e. size is 0
-                             */
-                        File localFile = takeFromQueue(toUploadQueue);
-//                            if(toUploadQueue.isEmpty()){Log.d(TAG, "To upload queue is empty!");}
 
-//                            if(localFileOptional.isPresent()){
-//                                File localFile = localFileOptional.get();
+                        File localFile = null;
+                        try {
+                            localFile = toUploadQueueMap.get(driveName).take();
+                        } catch (InterruptedException e) {
+                            result.errors.add(Error.ERR_QUEUE_TAKE);
+                        }
+                        //takeFromQueue(toUploadQueueMap.get(driveName));
+                        //if(toUploadQueue.isEmpty()){Log.d(TAG, "To upload queue is empty!");}
+
+                        //No more slice of file can be produced by splitter?
+                        if (localFile.getName().equals(POISON_PILL)){
+                            break;
+                        }
+
+//                      if(localFileOptional.isPresent()){
+//                      File localFile = localFileOptional.get();
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                         fileMetadata.setParents(Collections.singletonList(cdfsFolder.getId()));
                         fileMetadata.setName(localFile.getName());
-                        //Log.d(TAG, "local file to upload: " + localFile.getName());
+                        Log.d(TAG, "local file to upload: " + localFile.getName());
                         mCDFS.getDrives().get(driveName).getClient().upload().
                                 buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {
                                     @Override
@@ -252,7 +304,7 @@ public class Upload {
 
                     Log.d(TAG, "Drive:" + driveName + " slice upload is scheduled but not yet completed!");
 
-                    while(!isUploadCompleted(totalSlice[0], toFreeupQueue, remainingQueue));
+                    while(!isUploadCompleted(totalSlicePerDrive.get(driveName), toFreeupQueue, remainingQueue));
 
                     Log.d(TAG, "Drive: " + driveName + " slice upload is completed!");
 
@@ -260,15 +312,15 @@ public class Upload {
                     toFreeupQueue.drainTo(collection);
                     splitter.cleanup(collection);
 
-                    result.totalSlice = totalSlice[0];
-                    result.items = items.values();
+                    //extract the items for the drive
+                    Stream<AllocationItem> s = items.values().stream().filter((item)->item.getDrive().equals(driveName));
+                    result.items = s.collect(Collectors.toCollection(ArrayList::new));
                     future.complete(result);
 
                     return future;
                 });
 
                 //Put the future to the map for joined result later
-                splitCompleteFutures.put(driveName, splitCompleteFuture);
                 Futures.put(driveName, CommitAllocationMapFuture);
 
                 /*
@@ -290,24 +342,28 @@ public class Upload {
                     return null;
                 }).handle((s, t) ->{
                     Log.w(TAG, "Exception occurred in CommitAllocationMapFuture: " + t.toString());
-
                     return null;
                 });
 
             });
 
             /*
-                Wait joined results.
+                Wait joined intermediate result.
                 1. Wait for all of the split slices are available because we want to callback to UI
                 as soon as the splitter finishes.
-                2. Wait for intermedia results are available.
+                2. Wait for intermediate results are available.
             */
-            progressTotalSegment =
-            splitCompleteFutures.values().stream().mapToInt((future)->{return future.join();}).sum();
+            while(!isSplitCompleted[0]){
+                Log.d(TAG, "isSplitCompleted: " + isSplitCompleted[0]);
+                Delay.delay(2000);
+            };
+
+            progressTotalSegment = totalSlicePerDrive.values().stream().mapToInt((Integer::intValue)).sum();
             callback(State.PREPARE_LOCAL_FILES_COMPLETE);
+            Log.d(TAG, "Callback to UI fr progress. Total segment: " + progressTotalSegment);
             callback(State.MEDIA_IN_PROGRESS);  //callback to UI to start the update of progress. i.e. progress 0%
-            if(progressTotalSegment != totalSeg[0]){Log.w(TAG, "total seg may not correct!");}
-            Log.d(TAG, "Total segment: " + totalSeg[0]);
+            if(progressTotalSegment != totalSlice[0]){Log.w(TAG, "total seg may not correct!");}
+            Log.d(TAG, "Total segment: " + totalSlice[0]);
             HashMap<String, InterMediateResult> joined = getJoinedResult(Futures);
             callback(State.MEDIA_COMPLETE);
 
@@ -334,7 +390,7 @@ public class Upload {
 //                return null;
 //            }
 
-            uploadedItems = completeItems(joined);
+            uploadedItems = completeItems(totalSlice[0], joined);
             printItems(uploadedItems);
 
             /*
@@ -412,9 +468,11 @@ public class Upload {
 
         /*
             exceptionally is called no matter what kind type of exception is thrown.
-            i.e. checked or run time exeption.
+            i.e. checked or run time exception.
          */
         workingFuture.exceptionally((ex)->{
+            Log.w(TAG, "work future exceptionally: " + ex.getMessage());
+            Log.w(TAG, Arrays.stream(ex.getStackTrace()).findFirst().toString());
             resultFuture.completeExceptionally(ex);
             return null;
         });
@@ -454,8 +512,7 @@ public class Upload {
         The CDFSID and totalSeg are added to the joined result in this method
      */
 
-    HashMap<String, Collection<AllocationItem>> completeItems(HashMap<String, InterMediateResult> joined){
-        final int totalSeg = joined.values().stream().mapToInt(interMediateResult -> interMediateResult.totalSlice).sum();
+    HashMap<String, Collection<AllocationItem>> completeItems(int totalSeg, HashMap<String, InterMediateResult> joined){
         final Collection<String> combinedID = joined.values().stream().map((interMediateResult)->{
             Collection ids =
                     interMediateResult.items.stream().map((item)->{

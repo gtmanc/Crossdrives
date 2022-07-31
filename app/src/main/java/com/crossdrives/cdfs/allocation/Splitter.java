@@ -11,9 +11,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,11 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Splitter {
     final String TAG = "CD.Splitter";
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
-    File file;
     Integer chunkCount = 0;
     byte[] bf = new byte[1024];
-    ISplitAllCallback mSplitAllCallback;
-    ISplitCallback mSplitCallback;
     InputStream fIn = null;
     final int chunkSize = 10 * 1024 * 1024; //10 Mega Byes
     HashMap<String, Long> Allocation;
@@ -58,26 +57,13 @@ public class Splitter {
 
     public void splitAll(ISplitAllCallback callback){
         Context context = SnippetApp.getAppContext();
-        mSplitAllCallback = callback;
-        AtomicReference<String> ex = new AtomicReference<>();
 
-//        try {
-//            fIn = new FileInputStream(file);
-//                    //context.openFileInput(file.getPath());
-//
-//        } catch (FileNotFoundException e) {
-//            ex.set(e.getMessage());
-//        } catch (IOException e) {
-//            ex.set(e.getMessage());
-//        }
-
-//        if(ex.get() == null) {
-
-        sExecutor.submit(()->{
+        CompletableFuture<Integer> thread = CompletableFuture.supplyAsync(()->{
             Allocation.entrySet().forEach((entry)->{
+                String driveName = entry.getKey();
                 long remaining = entry.getValue();
                 File file = null;
-                mSplitAllCallback.start(entry.getKey(), remaining);
+                callback.start(driveName, remaining);
                 while (remaining > 0) {
                     FileOutputStream fOut = null;
                     String name = sliceName + "_" + chunkCount.toString();
@@ -86,10 +72,10 @@ public class Splitter {
                         fOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
                         rd_len = chunkCopy(fIn, fOut, remaining);
                     } catch (FileNotFoundException e) {
-                        ex.set(e.getMessage());
+                        callback.onFailurePerDrive(driveName, e.getMessage());
                         break;
                     } catch (IOException e) {
-                        ex.set(e.getMessage());
+                        callback.onFailurePerDrive(driveName, e.getMessage());
                         break;
                     }
                     //Log.d(TAG, "Read length: " + rd_len + "remaining: " + remaining);
@@ -97,28 +83,34 @@ public class Splitter {
                     chunkCount++;
                     file = new File(context.getFilesDir().getPath() + "/" + name);
                     BlockingAdd(file);
-                    mSplitAllCallback.progress(file, rd_len);
+                    callback.progress(driveName, file, rd_len);
                 }
-                mSplitAllCallback.finish(entry.getKey(), remaining);
+                callback.finish(driveName, remaining);
             });
-            //});
+            callback.completedAll();
+            return 0;
+        });
+        thread.exceptionally(ex->{
+            Log.w(TAG, "failed: " + ex.getMessage());
+            ex.printStackTrace();
+            callback.onFailure(ex.getMessage());
+            return null;
         });
 
-        if(ex.get() != null) {
-            mSplitAllCallback.onFailure(ex.get());
-        }
+
     }
 
     public void split(ISplitCallback callback) {
         Context context = SnippetApp.getAppContext();
-        mSplitCallback = callback;
+        //mSplitCallback = callback;
         AtomicReference<String> ex = new AtomicReference<>();
-        long skipped;
 
+        //TODO: use CompletableFuture instead of submission of executor. Run time exception is suppressed
+        //in such a thread.
         sExecutor.submit(()->{
                 long remaining = mAllocatedSize;
                 File file = null;
-                mSplitCallback.start(remaining);
+            callback.start(remaining);
                 while (remaining > 0) {
                     FileOutputStream fOut = null;
                     String name = sliceName + "_" + chunkCount.toString();
@@ -138,13 +130,13 @@ public class Splitter {
                     chunkCount++;
                     file = new File(context.getFilesDir().getPath() + "/" + name);
                     BlockingAdd(file);
-                    mSplitCallback.progress(file, rd_len);
+                    callback.progress(file, rd_len);
                 }
-            mSplitCallback.finish(remaining);
+            callback.finish(remaining);
         });
 
         if(ex.get() != null) {
-            mSplitCallback.onFailure(ex.get());
+            callback.onFailure(ex.get());
         }
     }
 

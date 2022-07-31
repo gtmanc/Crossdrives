@@ -5,18 +5,22 @@ import java.util.Collection;
 
 public interface ISplitAllCallback {
 
-    //Called when file is split to chunks for each allocation
-    public void start(String name, long total);
+    //called upon the split has stated for each drive
+    public void start(String driveName, long totalRemainng);
 
     /*
-        Called after each slice (chunk) of the file will be uploaded is ready
-        The slice file will be delete after the callabck returns to split
+        Called after each slice (chunk) of the file is ready in local storage as a file
+        The slice file should be deleted after the slice is uploaded to remote drive
     */
-    public void progress(File slice, long length);
+    public void progress(String driveName, File slice, long length);
 
     //called after splitting for each allocation is finished no matter error occurred or not
     public void finish(String name, long remaining);
 
-    public void onFailure(String ex);
+    //called when all of the planned are split without error
+    public void completedAll();
 
+    public void onFailurePerDrive(String driveName, String ex);
+
+    public void onFailure(String ex);
 }

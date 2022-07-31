@@ -87,9 +87,14 @@ public class OneDriveClient implements IDriveClient {
         }
     }
 
+    @Override
+    public IDriveClient build(String token) {
+        return OneDriveClient.fromConfig(mToken);
+    }
+
     /*
-        Get Query Request Builder
-     */
+            Get Query Request Builder
+         */
     @Override
     public IQueryRequestBuilder list() {
 

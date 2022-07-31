@@ -70,7 +70,7 @@ public class SignInMS extends SignInManager{
                     @Override
                     public void onError(MsalException exception) {
                         Log.w(TAG, "signInResult:failed! " + exception.toString());
-                        callback.onFailure(exception.toString());
+                        callback.onFailure(SignInManager.BRAND_MS, exception.toString());
                     }
                 });
 
@@ -92,7 +92,7 @@ public class SignInMS extends SignInManager{
                     @Override
                     public void onError(MsalException exception) {
                         Log.w(TAG, "signInResult:failed! " + exception.toString());
-                        mOnSignInfinished.onFailure(exception.toString());
+                        mOnSignInfinished.onFailure(SignInManager.BRAND_MS, exception.toString());
                     }
                 });
 
@@ -179,7 +179,7 @@ public class SignInMS extends SignInManager{
     private void loadAccount(){
         if (mSingleAccountApp == null) {
             Log.w(TAG, "mSingleAccountApp is null!");
-            mOnSignInfinished.onFailure("Unknown failure!");
+            mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "Unknown failure!");
             return;
         }
 
@@ -199,7 +199,7 @@ public class SignInMS extends SignInManager{
                     // Perform a cleanup task as the signed-in account changed.
                     //performOperationOnSignOut();
                     Log.d(TAG, "onAccountChanged");
-                    mOnSignInfinished.onFailure("Account has changed. Not yet implemented.");
+                    mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "Account has changed. Not yet implemented.");
                 }
             }
 
@@ -208,7 +208,7 @@ public class SignInMS extends SignInManager{
                 //displayError(exception);
                 Log.w(TAG, "signInResult:failed! Code=" + exception.toString());
                 Log.w(TAG, " + exception.getMessage())");
-                mOnSignInfinished.onFailure(exception.getMessage());
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, exception.getMessage());
             }
         });
     }
@@ -253,13 +253,13 @@ public class SignInMS extends SignInManager{
                 /* Failed to acquireToken */
                 Log.w(TAG, "Authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSignInfinished.onFailure(exception.toString());
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, exception.toString());
             }
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
                 Log.w(TAG, "User cancelled login.");
-                mOnSignInfinished.onFailure("User cancelled the sign in");
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "User cancelled the sign in");
             }
         };
     }
@@ -278,7 +278,7 @@ public class SignInMS extends SignInManager{
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSignInfinished.onFailure("Silence authentication failed: " + exception.toString());
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "Silence authentication failed: " + exception.toString());
             }
         };
     }

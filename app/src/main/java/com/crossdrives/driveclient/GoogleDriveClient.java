@@ -133,6 +133,11 @@ public class GoogleDriveClient implements IDriveClient {
     }
 
     @Override
+    public IDriveClient build(String token) {
+        return GoogleDriveClient.fromConfig();
+    }
+
+    @Override
     public IQueryRequestBuilder list() {
 
         return new GoogleDriveFileListRequestBuilder(this);

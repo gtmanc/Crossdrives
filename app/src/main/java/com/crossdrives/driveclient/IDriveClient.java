@@ -10,7 +10,10 @@ import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 
 public interface IDriveClient {
-
+    /*
+        build client
+     */
+    IDriveClient build(String token);
 
     /*
         List files(items) in a folder.

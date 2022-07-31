@@ -119,7 +119,7 @@ public class SignInGoogle extends SignInManager{
                     exchangeToken.execute(Authcode);
                 }
             }else{
-                mCallback.onFailure("Encountered problem in sign in!");
+                mCallback.onFailure(SignInManager.BRAND_GOOGLE, "Encountered problem in sign in!");
             }
 
 //            NavDirections a = GoogleSignInFragmentDirections.backToAddAccountFragment();
@@ -385,7 +385,7 @@ public class SignInGoogle extends SignInManager{
                         // e.g. GoogleSignInStatusCodes.SIGN_IN_REQUIRED means user needs to take
                         // explicit action to finish sign-in;
                         // Please refer to GoogleSignInStatusCodes Javadoc for detail
-                        mCallback.onFailure("Sign in failed! Error code: " + apiException.getStatusCode() +
+                        mCallback.onFailure(SignInManager.BRAND_GOOGLE, "Sign in failed! Error code: " + apiException.getStatusCode() +
                                 apiException.getMessage());
                     }
                 }

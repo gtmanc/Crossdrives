@@ -298,7 +298,7 @@ public class AddAccountFragment extends BaseFragment{
         }
 
         @Override
-        public void onFailure(String err) {
+        public void onFailure(String brand, String err) {
             Toast.makeText(getContext(), err, Toast.LENGTH_LONG).show();
         }
     };

@@ -1,11 +1,16 @@
 package com.example.crossdrives;
 
+import static com.example.crossdrives.GlobalConstants.supporttedDriveClient;
+import static com.example.crossdrives.GlobalConstants.supporttedSignin;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.GoogleDriveClient;
+import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
 import com.crossdrives.msgraph.SnippetApp;
 
@@ -16,9 +21,13 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 
 public class MainActivity extends AppCompatActivity{
@@ -32,6 +41,9 @@ public class MainActivity extends AppCompatActivity{
     private List<String> mBrands = GlobalConstants.BrandList;
     private HashMap<String, Boolean> mSignInState = new HashMap<>(); //0: Google, 1: Microsoft
 
+    CompletableFuture<String> GoogleFuture = new CompletableFuture<>();
+    CompletableFuture<String> MicrosoftFuture = new CompletableFuture<>();
+    HashMap<String, CompletableFuture<String>> Futures = new HashMap<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,27 +68,65 @@ public class MainActivity extends AppCompatActivity{
         TODO: Ticket #14
      */
     private void silenceSignin() {
-        SignInManager.Profile p = null;
-
         //Clean the sign in state
-        for(String b: mBrands){ mSignInState.put(b, false);}
+        //for(String b: mBrands){ mSignInState.put(b, false);}
 
         mProgressBar = findViewById(R.id.main_activity_progressBar);
         mProgressBar.setVisibility(View.VISIBLE);
 
-        SignInGoogle google = SignInGoogle.getInstance();
-        google.silenceSignIn(this, onSigninFinishedGdrive);
+        supporttedSignin.entrySet().stream().forEach((entry)->{
+            Futures.put(entry.getKey(), CompletableFuture.supplyAsync(()->{
+                entry.getValue().silenceSignIn(this, onSigninFinished);
+                return null;
+            }));
 
-        SignInMS onedrive = SignInMS.getInstance();
-        onedrive.silenceSignIn(this, onSigninFinishedOnedrive);
+        });
+//        SignInGoogle google = SignInGoogle.getInstance();
+//        google.silenceSignIn(this, onSigninFinishedGdrive);
+//        Futures.put(BRAND_GOOGLE, GoogleFuture);
+//
+//        SignInMS onedrive = SignInMS.getInstance();
+//        onedrive.silenceSignIn(this, onSigninFinishedOnedrive);
+//        Futures.put(BRAND_MS, MicrosoftFuture);
+        Log.d(TAG, "Wait for silence results...");
+        HashMap<String, String> tokenMap = Mapper.reValue(Futures, (f)->{
+            return f.join();
+        });
+        Log.d(TAG, "Result got!");
 
+        Collection<String> failed;
+        failed = mBrands.stream().filter((brand)->{
+            String token;
+            token = tokenMap.get(brand);
+            return token == null ? true : false;
+        }).collect(Collectors.toCollection(ArrayList::new));
+
+        Toast.makeText(getApplicationContext(),
+                "Sign in failed! Drive " + String.join(" ,",failed), Toast.LENGTH_LONG).show();
+
+        mProgressBar.setVisibility(View.GONE);
+        //Ready to go to the result list
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this, QueryResultActivity.class);
+//                bundle.putStringArrayList("ResultList", mQueryFileName);
+//                intent.putExtras(bundle);
+        startActivity(intent);
+
+        GoogleFuture.exceptionally((ex)->{
+            Log.w(TAG, "Google silence sign in failed!");
+            return null;
+        });
+        MicrosoftFuture.exceptionally(ex->{
+            Log.w(TAG, "Microsoft silence sign in failed!");
+            return null;
+        });
     }
 
     SignInManager.OnSignInfinished onSigninFinishedGdrive = new SignInManager.OnSignInfinished(){
 
         @Override
         public void onFinished(SignInManager.Profile profile, String token) {
-            mSignInState.put(BRAND_GOOGLE, true);
+            //mSignInState.put(BRAND_GOOGLE, true);
 
                 //Write user profile to database?
 
@@ -84,37 +134,69 @@ public class MainActivity extends AppCompatActivity{
                 Log.d(TAG, "Google silence sign in OK. Create google drive client...");
                 //GoogleDriveClient google_drive = GoogleDriveClient.create(getApplicationContext(), object);
                 addGoogleDriveClient(token);
+                Futures.get(profile.Brand).complete(token);
+                //GoogleFuture.complete(token);
 
-            ProceedNextScreen();
+            //ProceedNextScreen();
         }
 
         @Override
-        public void onFailure(String err) {
-            mSignInState.put(BRAND_GOOGLE, true);
+        public void onFailure(String brand, String err) {
+            //mSignInState.put(BRAND_GOOGLE, true);
             //A short term workaround is used here. Show a toast message to prompt user that he has to be signed in.
-            Log.w(TAG, "Google silence sign in failed!");
-            Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
-            ProceedNextScreen();
+            //Log.w(TAG, "Google silence sign in failed!");
+            //Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
+            //GoogleFuture.completeExceptionally(new Throwable(err));
+            Futures.get(brand).completeExceptionally(new Throwable(err));
+            //ProceedNextScreen();
         }
     };
+
+    SignInManager.OnSignInfinished onSigninFinished = new SignInManager.OnSignInfinished(){
+
+        @Override
+        public void onFinished(SignInManager.Profile profile, String token) {
+            String brand = profile.Brand;
+            Log.d(TAG, "Signin successfully: " + brand);
+            IDriveClient dc = (IDriveClient)supporttedDriveClient.get(brand);
+            dc = dc.build(token);
+            Futures.get(profile.Brand).complete(token);
+        }
+
+        @Override
+        public void onFailure(String brand, String err) {
+            Futures.get(brand).completeExceptionally(new Throwable(err));
+        }
+    };
+
     SignInManager.OnSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSignInfinished(){
         @Override
         public void onFinished(SignInManager.Profile profile, String token) {
-            mSignInState.put(BRAND_MS, true);
+            String brand = profile.Brand;
+            //mSignInState.put(BRAND_MS, true);
                 //Write user profile to database
-
+            IDriveClient dc = (IDriveClient)supporttedDriveClient.get(brand);
+            dc = dc.build(token);
+            CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
+//            GoogleDriveClient gdc
+//                    (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
+            CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
                 //GraphDriveClient onedrive = new GraphDriveClient();
-                addOneDriveClient(token);
-                Log.d(TAG, "Onedrive silence sign in works");
-            ProceedNextScreen();
+                //addOneDriveClient(token);
+                //Log.d(TAG, "Onedrive silence sign in works");
+                Futures.get(profile.Brand).complete(token);
+                //MicrosoftFuture.complete(token);
+            //ProceedNextScreen();
         }
 
         @Override
-        public void onFailure(String err) {
-            mSignInState.put(BRAND_MS, true);
-            Log.w(TAG, "Onedrive silence sign in failed");
+        public void onFailure(String brand, String err) {
+            //mSignInState.put(BRAND_MS, true);
+            //Log.w(TAG, "Onedrive silence sign in failed");
         //Toast.makeText(getApplicationContext(), "Not yet signed in. Go to Master Account screen to perform the sign in process", Toast.LENGTH_LONG).show();
-            ProceedNextScreen();
+            Futures.get(brand).completeExceptionally(new Throwable(err));
+            //MicrosoftFuture.completeExceptionally(new Throwable(err));
+            //ProceedNextScreen();
         }
     };
 
