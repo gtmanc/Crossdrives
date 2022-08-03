@@ -269,10 +269,15 @@ public class SignInMS extends SignInManager{
             @Override
             public void onSuccess(IAuthenticationResult authenticationResult) {
                 Log.d(TAG, "Successfully silence authenticated");
+                SignInManager.Profile profile = new Profile();
+                profile.Name = authenticationResult.getAccount().getUsername();
+                profile.Mail = "";
+                profile.PhotoUri = null;
+                profile.Brand = SignInManager.BRAND_MS;
 
                 //callGraphAPI(authenticationResult);
                 mToken = authenticationResult.getAccessToken();
-                mOnSignInfinished.onFinished(null, mToken);
+                mOnSignInfinished.onFinished(profile, mToken);
             }
             @Override
             public void onError(MsalException exception) {

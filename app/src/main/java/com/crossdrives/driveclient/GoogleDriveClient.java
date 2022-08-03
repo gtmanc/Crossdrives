@@ -100,6 +100,7 @@ public class GoogleDriveClient implements IDriveClient {
     }
     public static IDriveClient fromConfig(){
         GoogleDriveClient gClient = new GoogleDriveClient();
+
         if(mAccessToken != null) {
 //            GoogleAccountCredential credential =
 //                    GoogleAccountCredential.usingOAuth2(
@@ -112,6 +113,7 @@ public class GoogleDriveClient implements IDriveClient {
 //                            credential)
 //                            .setApplicationName("Cross Drive")
 //                            .build();
+
 
             GoogleCredential credential = new GoogleCredential().setAccessToken((String)mAccessToken);
             setCredential(credential);
@@ -134,6 +136,7 @@ public class GoogleDriveClient implements IDriveClient {
 
     @Override
     public IDriveClient build(String token) {
+        mAccessToken = token;
         return GoogleDriveClient.fromConfig();
     }
 

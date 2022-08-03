@@ -83,13 +83,14 @@ public class OneDriveClient implements IDriveClient {
     public static class Builder{
         public IDriveClient buildClient(){
 
-            return OneDriveClient.fromConfig(mToken);
+            return OneDriveClient.fromConfig();
         }
     }
 
     @Override
     public IDriveClient build(String token) {
-        return OneDriveClient.fromConfig(mToken);
+        mToken = token;
+        return OneDriveClient.fromConfig();
     }
 
     /*
@@ -148,7 +149,7 @@ public class OneDriveClient implements IDriveClient {
         return null;    //TODO: not yet implemented
     }
 
-    public static OneDriveClient fromConfig(String token){
+    public static OneDriveClient fromConfig(){
         OneDriveClient oClient  = new OneDriveClient();
         GraphServiceClient gClient =
                 GraphServiceClient

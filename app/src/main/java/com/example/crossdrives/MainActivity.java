@@ -41,9 +41,10 @@ public class MainActivity extends AppCompatActivity{
     private List<String> mBrands = GlobalConstants.BrandList;
     private HashMap<String, Boolean> mSignInState = new HashMap<>(); //0: Google, 1: Microsoft
 
-    CompletableFuture<String> GoogleFuture = new CompletableFuture<>();
-    CompletableFuture<String> MicrosoftFuture = new CompletableFuture<>();
+//    CompletableFuture<String> GoogleFuture = new CompletableFuture<>();
+//    CompletableFuture<String> MicrosoftFuture = new CompletableFuture<>();
     HashMap<String, CompletableFuture<String>> Futures = new HashMap<>();
+    final String IVALID_TOKEN = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity{
         TODO: Ticket #14
      */
     private void silenceSignin() {
+
         //Clean the sign in state
         //for(String b: mBrands){ mSignInState.put(b, false);}
 
@@ -75,11 +77,8 @@ public class MainActivity extends AppCompatActivity{
         mProgressBar.setVisibility(View.VISIBLE);
 
         supporttedSignin.entrySet().stream().forEach((entry)->{
-            Futures.put(entry.getKey(), CompletableFuture.supplyAsync(()->{
-                entry.getValue().silenceSignIn(this, onSigninFinished);
-                return null;
-            }));
-
+            entry.getValue().silenceSignIn(this, onSigninFinished);
+            Futures.put(entry.getKey(), new CompletableFuture<String>());
         });
 //        SignInGoogle google = SignInGoogle.getInstance();
 //        google.silenceSignIn(this, onSigninFinishedGdrive);
@@ -88,39 +87,73 @@ public class MainActivity extends AppCompatActivity{
 //        SignInMS onedrive = SignInMS.getInstance();
 //        onedrive.silenceSignIn(this, onSigninFinishedOnedrive);
 //        Futures.put(BRAND_MS, MicrosoftFuture);
-        Log.d(TAG, "Wait for silence results...");
-        HashMap<String, String> tokenMap = Mapper.reValue(Futures, (f)->{
-            return f.join();
-        });
-        Log.d(TAG, "Result got!");
+        CompletableFuture<String> joinFuture = CompletableFuture.supplyAsync(()->{
+            Log.d(TAG, "Wait for silence results...");
+            HashMap<String, String> tokenMap = Mapper.reValue(Futures, (f)->{
+                return f.join();});
 
-        Collection<String> failed;
-        failed = mBrands.stream().filter((brand)->{
+            Log.d(TAG, "result: " + tokenMap);
+            Collection<String> failedBrands;
+            failedBrands = mBrands.stream().filter((brand)->{
             String token;
             token = tokenMap.get(brand);
-            return token == null ? true : false;
-        }).collect(Collectors.toCollection(ArrayList::new));
+                return token.equals(IVALID_TOKEN) ? true : false;
+            }).collect(Collectors.toCollection(ArrayList::new));
 
-        Toast.makeText(getApplicationContext(),
-                "Sign in failed! Drive " + String.join(" ,",failed), Toast.LENGTH_LONG).show();
+            Log.d(TAG, "Sign in completed. Failed: " + String.join(", ",failedBrands));
+            //https://stackoverflow.com/questions/3875184/cant-create-handler-inside-thread-that-has-not-called-looper-prepare
+            this.runOnUiThread(()->{
+                Toast.makeText(getApplicationContext(),
+                        "Sign in failed! Drive " + String.join(" ,",failedBrands), Toast.LENGTH_LONG).show();
 
-        mProgressBar.setVisibility(View.GONE);
-        //Ready to go to the result list
-        Intent intent = new Intent();
-        intent.setClass(MainActivity.this, QueryResultActivity.class);
-//                bundle.putStringArrayList("ResultList", mQueryFileName);
-//                intent.putExtras(bundle);
-        startActivity(intent);
+                mProgressBar.setVisibility(View.GONE);
+                //Ready to go to the result list
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this, QueryResultActivity.class);
+                //          bundle.putStringArrayList("ResultList", mQueryFileName);
+//          intent.putExtras(bundle);
+                startActivity(intent);
+            });
 
-        GoogleFuture.exceptionally((ex)->{
-            Log.w(TAG, "Google silence sign in failed!");
             return null;
         });
-        MicrosoftFuture.exceptionally(ex->{
-            Log.w(TAG, "Microsoft silence sign in failed!");
+
+        joinFuture.exceptionally((e)->{
+            Log.d(TAG, "Exception in join sign in result thread: " + e.getMessage());
             return null;
         });
+
+
+//        GoogleFuture.exceptionally((ex)->{
+//            Log.w(TAG, "Google silence sign in failed!");
+//            return null;
+//        });
+//        MicrosoftFuture.exceptionally(ex->{
+//            Log.w(TAG, "Microsoft silence sign in failed!");
+//            return null;
+//        });
     }
+
+    SignInManager.OnSignInfinished onSigninFinished = new SignInManager.OnSignInfinished(){
+
+        @Override
+        public void onFinished(SignInManager.Profile profile, String token) {
+            String brand = profile.Brand;
+            Log.d(TAG, "Sign in successfully: " + brand);
+
+            IDriveClient dc = supporttedDriveClient.get(brand).build(token);
+
+            CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
+            Futures.get(brand).complete(token);
+
+        }
+
+        @Override
+        public void onFailure(String brand, String err) {
+            Log.w(TAG, "Sign in failed. Drive: " + brand + ". " + err);
+            Futures.get(brand).complete(IVALID_TOKEN);
+        }
+    };
 
     SignInManager.OnSignInfinished onSigninFinishedGdrive = new SignInManager.OnSignInfinished(){
 
@@ -152,22 +185,7 @@ public class MainActivity extends AppCompatActivity{
         }
     };
 
-    SignInManager.OnSignInfinished onSigninFinished = new SignInManager.OnSignInfinished(){
 
-        @Override
-        public void onFinished(SignInManager.Profile profile, String token) {
-            String brand = profile.Brand;
-            Log.d(TAG, "Signin successfully: " + brand);
-            IDriveClient dc = (IDriveClient)supporttedDriveClient.get(brand);
-            dc = dc.build(token);
-            Futures.get(profile.Brand).complete(token);
-        }
-
-        @Override
-        public void onFailure(String brand, String err) {
-            Futures.get(brand).completeExceptionally(new Throwable(err));
-        }
-    };
 
     SignInManager.OnSignInfinished onSigninFinishedOnedrive = new SignInManager.OnSignInfinished(){
         @Override
