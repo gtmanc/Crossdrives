@@ -3,6 +3,7 @@ package com.crossdrives.cdfs.remote;
 import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -16,11 +17,14 @@ import com.google.common.collect.ForwardingMapEntry;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class Fetcher {
@@ -35,12 +39,11 @@ public class Fetcher {
     public Fetcher(ConcurrentHashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
-
+    CompletableFuture<FileList> blockedFuture;
     public CompletableFuture<HashMap<String, FileList>> listAll(HashMap<String, File> parent) {
         CompletableFuture<HashMap<String, FileList>> resultFuture;
 
         mDrives.forEach((name, drive) -> {
-            Log.d(TAG, "fetch list. Drive: " + name);
             CompletableFuture<FileList> future
                                 = helperFetchList(drive, parent.get(name).getId());
             fileListFutures.put(name, future);
@@ -48,7 +51,8 @@ public class Fetcher {
 
         resultFuture = CompletableFuture.supplyAsync(()->{
             return Mapper.reValue(fileListFutures, (future)->{
-                return future.join();
+                FileList fl = future.join();
+                return fl;
             });
         });
 

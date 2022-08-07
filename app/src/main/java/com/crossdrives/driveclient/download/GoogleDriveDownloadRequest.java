@@ -50,7 +50,7 @@ public class GoogleDriveDownloadRequest extends BaseRequest implements IDownload
                 return mediaData;
             }
         });
-        task.addOnSuccessListener(new OnSuccessListener<MediaData>() {
+        task.addOnSuccessListener(mClient.getExecutor(), new OnSuccessListener<MediaData>() {
             @Override
             public void onSuccess(MediaData mediaData) {
                 callback.success(mediaData);

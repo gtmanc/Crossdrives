@@ -111,7 +111,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
             }
         });
 
-        task.addOnSuccessListener(new OnSuccessListener<FileList>() {
+        task.addOnSuccessListener(mClient.getExecutor(), new OnSuccessListener<FileList>() {
             @Override
             public void onSuccess(FileList fileList) {
                 List<File> f = fileList.getFiles();
@@ -119,7 +119,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
 
                 callback.success(fileList, fileList.getNextPageToken());
             }
-        }).addOnFailureListener(new OnFailureListener() {
+        }).addOnFailureListener(mClient.getExecutor(), new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.d(TAG, "Get root item failed: " + e.toString());

@@ -78,7 +78,8 @@ public class MainActivity extends AppCompatActivity{
 
         supporttedSignin.entrySet().stream().forEach((entry)->{
             entry.getValue().silenceSignIn(this, onSigninFinished);
-            Futures.put(entry.getKey(), new CompletableFuture<String>());
+            CompletableFuture<String> future = new CompletableFuture<>();
+            Futures.put(entry.getKey(), future);
         });
 //        SignInGoogle google = SignInGoogle.getInstance();
 //        google.silenceSignIn(this, onSigninFinishedGdrive);
@@ -90,9 +91,10 @@ public class MainActivity extends AppCompatActivity{
         CompletableFuture<String> joinFuture = CompletableFuture.supplyAsync(()->{
             Log.d(TAG, "Wait for silence results...");
             HashMap<String, String> tokenMap = Mapper.reValue(Futures, (f)->{
-                return f.join();});
+                String r = f.join();
+                return r;});
 
-            Log.d(TAG, "result: " + tokenMap);
+            //Log.d(TAG, "result: " + tokenMap);
             Collection<String> failedBrands;
             failedBrands = mBrands.stream().filter((brand)->{
             String token;
@@ -100,12 +102,13 @@ public class MainActivity extends AppCompatActivity{
                 return token.equals(IVALID_TOKEN) ? true : false;
             }).collect(Collectors.toCollection(ArrayList::new));
 
-            Log.d(TAG, "Sign in completed. Failed: " + String.join(", ",failedBrands));
             //https://stackoverflow.com/questions/3875184/cant-create-handler-inside-thread-that-has-not-called-looper-prepare
             this.runOnUiThread(()->{
-                Toast.makeText(getApplicationContext(),
-                        "Sign in failed! Drive " + String.join(" ,",failedBrands), Toast.LENGTH_LONG).show();
-
+                if(!failedBrands.isEmpty()) {
+                    Log.d(TAG, "Sign in completed. Failed: " + String.join(", ",failedBrands));
+                    Toast.makeText(getApplicationContext(),
+                            "Sign in failed! Drive " + String.join(" ,", failedBrands), Toast.LENGTH_LONG).show();
+                }
                 mProgressBar.setVisibility(View.GONE);
                 //Ready to go to the result list
                 Intent intent = new Intent();
@@ -144,15 +147,16 @@ public class MainActivity extends AppCompatActivity{
             IDriveClient dc = supporttedDriveClient.get(brand).build(token);
 
             CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
-            Futures.get(brand).complete(token);
-
+            CompletableFuture<String> future = Futures.get(brand);
+            future.complete(token);
         }
 
         @Override
         public void onFailure(String brand, String err) {
             Log.w(TAG, "Sign in failed. Drive: " + brand + ". " + err);
-            Futures.get(brand).complete(IVALID_TOKEN);
-        }
+            CompletableFuture<String> future = Futures.get(brand);
+            future.complete(IVALID_TOKEN);
+         }
     };
 
     SignInManager.OnSignInfinished onSigninFinishedGdrive = new SignInManager.OnSignInfinished(){

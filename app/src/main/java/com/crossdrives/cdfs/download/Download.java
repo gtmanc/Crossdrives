@@ -37,6 +37,7 @@ public class Download {
     String mFileID;
     String mParent;
     final int MAX_CHUNK = 10;
+    final int POISON_PILL = 0;
 
     public Download(CDFS mCDFS, String fileID, String parent) {
         this.mCDFS = mCDFS;
@@ -53,18 +54,21 @@ public class Download {
             public String call() throws Exception {
                 final String[] result = new String[1];
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
+
                 CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
 
+                Log.d(TAG, "map fectched");
                 Compositor compositor = new Compositor(maps, mFileID, MAX_CHUNK);
 
-                final boolean[] isComposited = {false};
                 ArrayBlockingQueue<AllocationItem> toDownloadQ = new ArrayBlockingQueue<>(MAX_CHUNK);
                 AllocationItem itemToDownload = new AllocationItem();
-                while(!isComposited[0]){
-                    compositor.run(new ICompositeCallback() {
+
+                Collection<Throwable> exceptions = new ArrayList<>();
+                compositor.run(new ICompositeCallback() {
                         @Override
                         public void onSliceRequested(String driveName, String id, int seq) {
+                            Log.d(TAG, "slice requested: drive: " + driveName + " seq: " + seq);
                             AllocationItem ai = new AllocationItem();
                             ai.setDrive(driveName);
                             ai.setItemId(id);
@@ -73,28 +77,54 @@ public class Download {
                         }
 
                         @Override
+                        public void onSliceCompleted(String driveName, int seq) {
+
+                        }
+
+                        @Override
                         public void onCompleted(String CompositedFile) {
-                            isComposited[0] = true;
+                            Log.d(TAG, "composition done: " + CompositedFile);
+                            addPoisonPill(toDownloadQ);
                             result[0] = CompositedFile;
                         }
 
                         @Override
                         public void OnExceptionally(Throwable throwable) {
-                            isComposited[0] = true;
+                            Log.w(TAG, "composition failed!");
+                            addPoisonPill(toDownloadQ);
+                            exceptions.add(throwable);
                         }
                     });
 
+                while(true){
                     itemToDownload = takeFromQueue(toDownloadQ);   //will block if no elements exists
+                    Log.d(TAG, "Seq of item from Q: " + itemToDownload.getSequence());
+                    //exit the loop if any of error occurred
+                    if(itemToDownload.getSequence() == POISON_PILL){
+                        Log.d(TAG, "Poison pill got. exit the loop.");
+                        break;
+                    }
+                    if(!exceptions.isEmpty()){
+                        throw new CompletionException("",exceptions.stream().findAny().get());
+                    }
+
                     CompletableFuture<MediaData> sliceFuture = download(itemToDownload.getDrive(), itemToDownload.getItemId(), itemToDownload.getSequence());
 
                     sliceFuture.thenAccept((mediaData)->{
                         try {
                             compositor.fillSliceContent(mediaData.getAdditionInt(), mediaData.getOs());
                         } catch (Throwable e) {
-                            e.printStackTrace();
+                            Log.w(TAG, "fill slice content failed! " + e.getMessage());
+                            exceptions.add(e);
                         }
-                    });
+                    }).exceptionally(e->{
+                        Log.w(TAG, "download slice failed! " + e.getMessage());
+                        exceptions.add(e);
+                        return null;});
                 };
+
+                Log.d(TAG, "Download process finished. Composited file: " + result[0] );
+
 
                 return result[0];
             }
@@ -130,5 +160,13 @@ public class Download {
         item = q.take();
 
         return item;
+    }
+
+    void addPoisonPill(ArrayBlockingQueue<AllocationItem> q){
+        AllocationItem ai = new AllocationItem();
+        //We use total segment and sequence number zero as a poison pill
+        ai.setTotalSeg(POISON_PILL);
+        ai.setSequence(POISON_PILL);
+        q.add(ai);
     }
 }

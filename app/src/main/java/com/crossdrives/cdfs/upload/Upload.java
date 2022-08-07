@@ -132,7 +132,7 @@ public class Upload {
             final long[] uploadSize = {0};
 
             //number of slice produced by splitter. i.e. equivalent to totalSeg in CDFS item
-            final int[] totalSlice = {0};
+            final int[] totalSlice = {AllocationItem.SEQ_INITIAL};
 
             //number of slice produced by splitter for each drive. Only used for check whether all scheduled
             //upload are completed so that we can close the upload thread for each drive.
@@ -171,20 +171,20 @@ public class Upload {
                     Log.d(TAG, "Split in progress. Path: " + slice.getPath() + ". Name: "
                             + slice.getName());
                     toUploadQueueMap.get(driveName).add(slice);
-                    /*
-                        We have to assign the sequence number right here because the sequence
-                        carries the order of the slices. It is used in compose of downloaded
-                        slices in CDFS download.
-                    */
-                    totalSlice[0]++;  //TODO: do we have concurrent issue?
+
                     int slicePerDrive = totalSlicePerDrive.get(driveName);
                     slicePerDrive++;
                     totalSlicePerDrive.replace(driveName, slicePerDrive);
-
                     item.setSize(len);
                     item.setName(CdfsName);
                     item.setDrive(driveName);
+                    /*
+                        We have to assign the sequence number right here because the sequence
+                        carries the order of the slices. It is used in compose of downloaded
+                        slices in CDFS download. Note sequence starts with 1 rather than 0.
+                    */
                     item.setSequence(totalSlice[0]);
+                    totalSlice[0]++;  //TODO: do we have concurrent issue?
                     item.setPath(parent);
                     item.setAttrFolder(false);
                     item.setCDFSItemSize(uploadSize[0]);

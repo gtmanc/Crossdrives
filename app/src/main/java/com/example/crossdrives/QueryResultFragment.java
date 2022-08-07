@@ -468,6 +468,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						@Override
 						public void onFailure(@NonNull Exception e) {
 							Log.w(TAG, "file download failed: " + e.toString());
+							e.printStackTrace();
 							Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
 						}
 					});

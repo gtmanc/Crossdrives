@@ -1,6 +1,7 @@
 package com.crossdrives.cdfs.model;
 
 public class AllocationItem {
+    static public final int SEQ_INITIAL = 1;// sequence number starts with 1
     /*
         Item name shown in CDFS
      */

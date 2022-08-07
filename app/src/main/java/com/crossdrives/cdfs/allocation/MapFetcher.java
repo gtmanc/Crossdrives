@@ -286,17 +286,20 @@ public class MapFetcher {
             CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll();
 
             //if any is null. exit
+            Log.d(TAG, "Check CDFS folders... ");
             folders = foldersFuture.join();
+
             if(folders.values().stream().anyMatch(((v)-> v == null))){
                 Log.w(TAG, "CDFS folder is missing!");
                 return null;
             }
 
             CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(folders);
+
             HashMap<String, File> maps = Mapper.reValue(list.join(), (fileList)->{
                 File f = getFromFiles(fileList, PREFIX_ALLOCATION + parent + EXT_ALLOCATION);
                 if(f ==null){
-                    Log.d(TAG, "Map file is missing! ");
+                    Log.w(TAG, "Map file is missing! ");
                 }
                 return f;
             });
@@ -339,7 +342,6 @@ public class MapFetcher {
                 return entry;
             }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-
             CompletableFuture<HashMap<String, FileList>> list = null;
             list = fetcher.listAll(new HashMap<>(rootIDs));
 
@@ -347,9 +349,10 @@ public class MapFetcher {
 
             folders = Mapper.reValue(list.join(), (files)->{
                 File f = getFromFiles(files, NAME_CDFS_FOLDER);
-                Log.d(TAG, "CDFS folder: " + f.getName());
+                Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
                 return f;
             });
+
 
             return new HashMap<>(folders);
         });
@@ -365,7 +368,7 @@ public class MapFetcher {
         CompletableFuture<File> folder =
         CompletableFuture.supplyAsync(()->{
             File f = getFromFiles(fileListFuture.join(), NAME_CDFS_FOLDER);
-            Log.d(TAG, "CDFS folder: " + f.getName());
+            Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
             return f;
         });
 
