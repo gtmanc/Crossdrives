@@ -28,6 +28,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,6 +40,7 @@ public class Download {
     String mParent;
     final int MAX_CHUNK = 10;
     final int POISON_PILL = 0;
+    private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
     public Download(CDFS mCDFS, String fileID, String parent) {
         this.mCDFS = mCDFS;
@@ -48,7 +51,7 @@ public class Download {
     public Task<String> execute(){
         Task task;
 
-        task = Tasks.call(new Callable<String>() {
+        task = Tasks.call(mExecutor, new Callable<String>() {
 
             @Override
             public String call() throws Exception {
@@ -112,6 +115,7 @@ public class Download {
 
                     sliceFuture.thenAccept((mediaData)->{
                         try {
+                            Log.w(TAG, "filling content. Seq: " + mediaData.getAdditionInt());
                             compositor.fillSliceContent(mediaData.getAdditionInt(), mediaData.getOs());
                         } catch (Throwable e) {
                             Log.w(TAG, "fill slice content failed! " + e.getMessage());
@@ -140,7 +144,7 @@ public class Download {
             //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
             @Override
             public void success(MediaData mediaData) {
-                Log.d(TAG, "download finished.");
+                Log.d(TAG, "download finished. Seq: " + mediaData.getAdditionInt());
                 future.complete(mediaData);
 
             }

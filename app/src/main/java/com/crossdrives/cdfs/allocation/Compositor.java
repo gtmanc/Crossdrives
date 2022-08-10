@@ -2,7 +2,6 @@ package com.crossdrives.cdfs.allocation;
 
 import android.app.Activity;
 import android.content.Context;
-import android.icu.text.Edits;
 import android.util.Log;
 
 import com.crossdrives.cdfs.model.AllocContainer;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -27,7 +25,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Compositor {
     static String TAG = "CD.Compositor";
@@ -64,34 +61,41 @@ public class Compositor {
 //            Log.d(TAG, "Items matched. In drive " + set.getKey());
 //            set.getValue().forEach(v->Log.d(TAG, " seq: " + v.getSequence()));
 //        });
-        List<Map.Entry<String, AllocationItem>> toDownload = mergeMapsThenSort(filtered);
+        List<Map.Entry<String, AllocationItem>> toRequest = mergeMapsThenSort(filtered);
         //Do a check to ensure there is nothing wrong in merge and sort we did.
-        if(!checkExist(toDownload, mfileID)){
+        if(!checkExist(toRequest, mfileID)){
             Log.d(TAG, "file to composite doesn't exit in the map files");
             callback.OnExceptionally(new Throwable("Compositor: file to composite doesn't exit in the map files"));
             return 0;
         }
         Context context = SnippetApp.getAppContext();
         //Simply get name from any of the items because they are supposed to be the same
-        String name = toDownload.get(0).getValue().getName();
+        String name = toRequest.get(0).getValue().getName();
         compositeOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
+
 
         CompletableFuture<String> future = CompletableFuture.supplyAsync(()->{
             int seq = AllocationItem.SEQ_INITIAL;
-            int i = 0;
-            String compositedFile = "context.getFilesDir().getPath() + \"/\" + name";
-            while(i < toDownload.size()){
-                String driveName = toDownload.get(i).getKey();
-                String id = toDownload.get(i).getValue().getItemId();
-                long size = toDownload.get(i).getValue().getSize();
-                //make sure we don't exceed the allowed chunk size.
-                if(toComposite.size() <= (mMaxChunkSize)){
+            int reqIndex=0, compositeIndex = 0, totalSegment = toRequest.size();
+            String compositedFile = context.getFilesDir().getPath() + "\\" + name;
+            while(compositeIndex < totalSegment){
+                /*
+                    Request slice whenever there is slice is needed. But we have to mke sure
+                    we don't request too many slice at the same time because will take too much resource.
+                */
+                if(reqIndex < totalSegment && toComposite.size() <= (mMaxChunkSize)){
+                    String driveName = toRequest.get(reqIndex).getKey();
+                    String id = toRequest.get(reqIndex).getValue().getItemId();
                     callback.onSliceRequested(driveName, id, seq);
+                    reqIndex++;
+                    seq++;
                 }
 
-                OutputStream slice = toComposite.get(i);
+                OutputStream slice = toComposite.get(compositeIndex);
                 if(slice != null){
-                    Log.d(TAG, "Composite slice: index in queue:" + i);
+                    Log.d(TAG, "Composite slice. queue index: " + compositeIndex);
+                    String driveName = toRequest.get(compositeIndex).getKey();
+                    long size = toRequest.get(compositeIndex).getValue().getSize();
                     try {
                         composite(slice, size);
                     } catch (IOException e) {
@@ -100,24 +104,20 @@ public class Compositor {
                         throw new CompletionException(e);
                     }
                     callback.onSliceCompleted(driveName, seq);
-                    toComposite.remove(i);
-                    seq++;
-                    i++;
+                    //toComposite.remove(compositeIndex);
+                    compositeIndex++;
 
-                    try {
-                        slice.close();
-                    } catch (IOException e) {
-                        Log.w(TAG, "Close output stream failed!" + e.getMessage());
-                        e.printStackTrace();
-                        throw new CompletionException(e);
-                    }
+                    if(!StreamHandler.closeOutputStream(slice)){Log.w(TAG, "Close output stream (slice) failed!");}
                 }
 
                 Delay.delay(1000);
             }
 
+            if(!StreamHandler.closeOutputStream(compositeOut)){Log.w(TAG, "Close output stream (compositeOut) failed!");}
+
             callback.onCompleted(compositedFile);
             return compositedFile;
+
         });
 
         future.exceptionally((e)->{
@@ -127,9 +127,9 @@ public class Compositor {
             return null;
         });
 
-        compositeOut.close();
 
-        return toDownload.get(0).getValue().getCDFSItemSize();
+
+        return toRequest.get(0).getValue().getCDFSItemSize();
     }
 
 
@@ -140,11 +140,12 @@ public class Compositor {
         boolean result = true;
         int i = seq - AllocationItem.SEQ_INITIAL;
         if(toComposite.get(i) != null){
-            Log.w(TAG, "duplicated seq found");
-            throw new Throwable("Compositor: duplicated seq found when filling content to compositor");
+            Log.w(TAG, "duplicated seq found! Input Seq: " + seq);
+            throw new Throwable("Compositor: duplicated seq found when filling content to compositor. Input Seq: " + seq);
         }
 
-        toComposite.put(seq, mediaStream);
+        Log.d(TAG, "Put slice. Seq: " + seq);
+        toComposite.put(i, mediaStream);
         return result;
     }
 
@@ -165,7 +166,7 @@ public class Compositor {
             {return item.getCdfsId().equals(mfileID);}).collect(Collectors.toCollection(ArrayList::new));
         });
 
-        StreamHandler.closeOutputStream(maps);
+        StreamHandler.closeOutputStreamAll(maps);
         return itemStream;
     }
 
@@ -212,7 +213,7 @@ public class Compositor {
 
         sorted.forEach((entry)->Log.d(TAG, "Sorted item: " + entry.getValue().getSequence()));
         result = sorted.stream().collect(Collectors.toList());
-        printList(result);
+        //printList(result);
 
         return result;
     }
