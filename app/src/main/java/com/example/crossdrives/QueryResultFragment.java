@@ -38,6 +38,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.cdfs.util.TestFileGenerator;
 import com.crossdrives.ui.Notification;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
@@ -883,13 +884,21 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 							e.printStackTrace();
 						}
 						file = UriToFile(result);
+						String name = file.getPath();	//Note name is stored in path returned from UriToFile
 						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
 							service = CDFS.getCDFSService(getActivity()).getService();
 							uploafListener = createUploadListener();
 							mNotificationsByUploadListener.put(uploafListener, notification);
 							service.setUploadProgressLisetener(uploafListener);
-							task = service.upload(in, file.getPath(), currentFolder);
+							//Next few lines of code are used only if you want to use test file for upload
+							name = "TestFile";
+							//in = new TestFileGenerator("TestFile", 8*1024*1024).run();
+							in = getContext().openFileInput(name);
+							Log.d(TAG, "Test file used. file: " + name +
+									" Length:" + in.available());
+
+							task = service.upload(in, name, currentFolder);
 							InputStream finalIn = in;
 							successListener = createUploadSuccessListner();
 							failureListener = createUploadFailureListner();

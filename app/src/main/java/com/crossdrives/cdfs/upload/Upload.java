@@ -132,7 +132,7 @@ public class Upload {
             final long[] uploadSize = {0};
 
             //number of slice produced by splitter. i.e. equivalent to totalSeg in CDFS item
-            final int[] totalSlice = {AllocationItem.SEQ_INITIAL};
+            final int[] SeqNum = {AllocationItem.SEQ_INITIAL};
 
             //number of slice produced by splitter for each drive. Only used for check whether all scheduled
             //upload are completed so that we can close the upload thread for each drive.
@@ -183,8 +183,8 @@ public class Upload {
                         carries the order of the slices. It is used in compose of downloaded
                         slices in CDFS download. Note sequence starts with 1 rather than 0.
                     */
-                    item.setSequence(totalSlice[0]);
-                    totalSlice[0]++;  //TODO: do we have concurrent issue?
+                    item.setSequence(SeqNum[0]);
+                    SeqNum[0]++;  //TODO: do we have concurrent issue?
                     item.setPath(parent);
                     item.setAttrFolder(false);
                     item.setCDFSItemSize(uploadSize[0]);
@@ -362,8 +362,10 @@ public class Upload {
             callback(State.PREPARE_LOCAL_FILES_COMPLETE);
             Log.d(TAG, "Callback to UI fr progress. Total segment: " + progressTotalSegment);
             callback(State.MEDIA_IN_PROGRESS);  //callback to UI to start the update of progress. i.e. progress 0%
-            if(progressTotalSegment != totalSlice[0]){Log.w(TAG, "total seg may not correct!");}
-            Log.d(TAG, "Total segment: " + totalSlice[0]);
+            if(progressTotalSegment != SeqNum[0]-1){
+                Log.w(TAG, "Number of total slice or sequence number may not be correct! Total slice: " +
+                        progressTotalSegment + " SeqNum: " + SeqNum[0]);
+            }
             HashMap<String, InterMediateResult> joined = getJoinedResult(Futures);
             callback(State.MEDIA_COMPLETE);
 
@@ -390,7 +392,7 @@ public class Upload {
 //                return null;
 //            }
 
-            uploadedItems = completeItems(totalSlice[0], joined);
+            uploadedItems = completeItems(SeqNum[0], joined);
             printItems(uploadedItems);
 
             /*

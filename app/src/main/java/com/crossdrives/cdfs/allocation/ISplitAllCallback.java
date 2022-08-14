@@ -17,7 +17,7 @@ public interface ISplitAllCallback {
     //called after splitting for each allocation is finished no matter error occurred or not
     public void finish(String name, long remaining);
 
-    //called when all of the planned are split without error
+    //called when all of the planned are split with or without error
     public void completedAll();
 
     public void onFailurePerDrive(String driveName, String ex);
