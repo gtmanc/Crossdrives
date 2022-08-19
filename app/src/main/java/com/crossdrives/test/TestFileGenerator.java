@@ -1,4 +1,4 @@
-package com.crossdrives.cdfs.util;
+package com.crossdrives.test;
 
 import android.app.Activity;
 import android.content.Context;
@@ -22,9 +22,9 @@ public class TestFileGenerator {
 
     /*
         maxSeq      Outcome
-        128*1024    KB
-        1024*1024   6.93MB
-        8*1024*1024 62.9
+        128*1024    787.5KB
+        1024*1024   6.9MB
+        8*1024*1024 62.9MB
     */
     public TestFileGenerator(String name, long maxSeq) {
         this.name = name;

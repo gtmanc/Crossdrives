@@ -38,7 +38,6 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.crossdrives.cdfs.util.TestFileGenerator;
 import com.crossdrives.ui.Notification;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
@@ -59,7 +58,6 @@ import com.google.api.services.drive.model.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -891,12 +889,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 							uploafListener = createUploadListener();
 							mNotificationsByUploadListener.put(uploafListener, notification);
 							service.setUploadProgressLisetener(uploafListener);
-							//Next few lines of code are used only if you want to use test file for upload
+							/*
+								Next few lines of code are used only if you want to use test file for upload
+							 */
 							name = "TestFile";
 							//in = new TestFileGenerator("TestFile", 8*1024*1024).run();
 							in = getContext().openFileInput(name);
-							Log.d(TAG, "Test file used. file: " + name +
-									" Length:" + in.available());
+//							Log.d(TAG, "Test file used. file: " + name +
+//									" Length:" + in.available());
 
 							task = service.upload(in, name, currentFolder);
 							InputStream finalIn = in;

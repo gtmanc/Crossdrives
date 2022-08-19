@@ -110,8 +110,8 @@ public class Upload {
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
             HashMap<String, ArrayBlockingQueue<File>> toUploadQueueMap = new HashMap<>();
-            ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
             drives.keySet().forEach((driveName)->{
+                ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                 toUploadQueueMap.put(driveName, toUploadQueue);
             });
 
@@ -157,8 +157,7 @@ public class Upload {
             splitter.splitAll(new ISplitAllCallback() {
                 @Override
                 public void start(String driveName, long total) {
-                    Log.d(TAG, "Split start. Drive name: " + driveName +
-                            ". allocated length: " + total);
+                    Log.d(TAG, "Split start. Drive: " + driveName + ". allocated length: " + total);
                     //Should be fine that we initialize it here because the map will be read when 1st
                     //slice has been uploaded. Usually, upload is slower than the start callback of splitter
                     //even if upload is failed.
@@ -168,8 +167,7 @@ public class Upload {
                 @Override
                 public void progress(String driveName, File slice, long len) {
                     AllocationItem item = new AllocationItem();
-                    Log.d(TAG, "Split in progress. Path: " + slice.getPath() + ". Name: "
-                            + slice.getName());
+                    Log.d(TAG, "Split progress. Drive: " + driveName + ". Name: " + slice.getName());
                     toUploadQueueMap.get(driveName).add(slice);
 
                     int slicePerDrive = totalSlicePerDrive.get(driveName);
@@ -194,22 +192,22 @@ public class Upload {
                 @Override
                 public void finish(String driveName, long remaining) {
                     File file = new File(POISON_PILL);
-                    Log.d(TAG, "split finished. Drive: " + driveName +
-                            " len of remaining data: " + remaining);
+                    Log.d(TAG, "split for a drive done. Drive: " + driveName);
+                    if(remaining!=0){Log.w(TAG, "split may completed with something wrong. remaining: " + remaining);};
                     //add poisonPill to inform the upload threads for each drive that the splitter is no longer to produce
                     //slice of file
                     toUploadQueueMap.get(driveName).add(file);
                 }
 
                 public void onFailurePerDrive(String driveName, String ex) {
-                    Log.w(TAG, "Split file failed! Drive: " + driveName + " " + ex);
+                    Log.w(TAG, "Split file failed! Drive: " + driveName + ". " + ex);
                     isSplitExceptionally.put(driveName, true);
                     resultFuture.completeExceptionally(new Throwable(ex));
                 }
 
                 @Override
                 public void completedAll(){
-                    Log.d(TAG, "split all completed.");
+                    Log.d(TAG, "split for all drives completed.");
                     isSplitCompleted[0] = true;
                 }
                 @Override
@@ -221,6 +219,7 @@ public class Upload {
 
             allocation.entrySet().stream().filter((e)->e.getValue()>0).forEach((set)->{
                 String driveName = set.getKey();
+                Log.d(TAG, "Upload process ["  + driveName + "] starts");
                 isSplitExceptionally.put(driveName, false);
                 long allocatedLen = set.getValue();
                 MapFetcher mapFetcher = new MapFetcher(drives);
@@ -242,8 +241,8 @@ public class Upload {
                     ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                     LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
                     if(cdfsFolder == null){
-                        Log.w(TAG, "CDFS folder is missing!");
-                        future.completeExceptionally(new Throwable("CDFS folder is missing"));
+                        Log.w(TAG, "CDFS folder is missing! Drive: " + driveName);
+                        future.completeExceptionally(new Throwable("CDFS folder is missing. Drive: " + driveName));
                     }
                     cdfsFolderID = cdfsFolder.getId();
 
@@ -262,6 +261,7 @@ public class Upload {
                             localFile = toUploadQueueMap.get(driveName).take();
                         } catch (InterruptedException e) {
                             result.errors.add(Error.ERR_QUEUE_TAKE);
+                            break;
                         }
                         //takeFromQueue(toUploadQueueMap.get(driveName));
                         //if(toUploadQueue.isEmpty()){Log.d(TAG, "To upload queue is empty!");}
@@ -276,13 +276,13 @@ public class Upload {
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                         fileMetadata.setParents(Collections.singletonList(cdfsFolder.getId()));
                         fileMetadata.setName(localFile.getName());
-                        Log.d(TAG, "local file to upload: " + localFile.getName());
+                        Log.d(TAG, "Drive: " + driveName + ". local file to upload: " + localFile.getName());
                         mCDFS.getDrives().get(driveName).getClient().upload().
                                 buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {
                                     @Override
                                     public void success(com.crossdrives.driveclient.model.File file) {
                                         AllocationItem item;
-                                        Log.d(TAG, "slice uploaded. Drive: " + driveName + " name: " + file.getOriginalLocalFile().getName()
+                                        Log.d(TAG, "slice uploaded. Drive: " + driveName + ". name: " + file.getOriginalLocalFile().getName()
                                         );
                                         item = items.get(file.getOriginalLocalFile().getName());
                                         if(item == null) {Log.w(TAG,"item mot found! Drive: " + driveName);}
@@ -294,7 +294,7 @@ public class Upload {
 
                                     @Override
                                     public void failure(String ex, File originalFile) {
-                                        Log.w(TAG, "Slice upload failed! Drive: " + driveName + " local file: " + originalFile.getName()
+                                        Log.w(TAG, "Slice upload failed! Drive: " + driveName + ". local file: " + originalFile.getName()
                                         + " " + ex);
                                         remainingQueue.offer(originalFile);
                                         result.errors.add(Error.ERR_UPLOAD_CONTENT);
@@ -302,14 +302,18 @@ public class Upload {
                                 });
                     }
 
-                    Log.d(TAG, "Drive:" + driveName + " slice upload is scheduled but not yet completed!");
+                    Log.d(TAG, "Drive: " + driveName + ". slice upload is scheduled but not yet completed!");
 
                     while(!isUploadCompleted(totalSlicePerDrive.get(driveName), toFreeupQueue, remainingQueue));
 
-                    Log.d(TAG, "Drive: " + driveName + " slice upload is completed!");
+                    Log.d(TAG, "Drive: " + driveName + ". slice upload is completed!");
 
                     Collection<File> collection = new ArrayList<>();
                     toFreeupQueue.drainTo(collection);
+                    //It's okay to give a empty collection if there is no item in the queue. i.e. upload
+                    //is terminated at the beginning.
+                    splitter.cleanup(collection);
+                    remainingQueue.drainTo(collection);
                     splitter.cleanup(collection);
 
                     //extract the items for the drive
@@ -362,7 +366,8 @@ public class Upload {
             callback(State.PREPARE_LOCAL_FILES_COMPLETE);
             Log.d(TAG, "Callback to UI fr progress. Total segment: " + progressTotalSegment);
             callback(State.MEDIA_IN_PROGRESS);  //callback to UI to start the update of progress. i.e. progress 0%
-            if(progressTotalSegment != SeqNum[0]-1){
+            int totalSeg = SeqNum[0]-1;
+            if(progressTotalSegment != totalSeg){
                 Log.w(TAG, "Number of total slice or sequence number may not be correct! Total slice: " +
                         progressTotalSegment + " SeqNum: " + SeqNum[0]);
             }
@@ -392,7 +397,7 @@ public class Upload {
 //                return null;
 //            }
 
-            uploadedItems = completeItems(SeqNum[0], joined);
+            uploadedItems = completeItems(totalSeg, joined);
             printItems(uploadedItems);
 
             /*

@@ -162,6 +162,11 @@ public class Splitter {
     public void cleanup(Collection<File> toDelete){
         Context context = SnippetApp.getAppContext();
 
+        if(toDelete.isEmpty()){
+            Log.w(TAG, "No items to delete!");
+            return;
+        }
+
         toDelete.stream().forEach((item)-> {
             boolean result;
             Log.d(TAG, "delete slice: " + item.getPath());
@@ -181,13 +186,15 @@ public class Splitter {
 
     void remove(Collection<File> file){
         boolean result;
+
         if(chunkQueue != null){
             if(chunkQueue.size() == 0) {
                 Log.w(TAG, "Something wrong. Chunk queue size is empty before removal!");
             }
             result = chunkQueue.removeAll(file);
             if(!result) {
-                Log.w(TAG, "The items to remove dont exist! The items: ");
+                Log.w(TAG, "The items to remove don't exist in the queue! The items: ");
+                file.stream().forEach((f)->{Log.w(TAG,f.getName());});
                 file.forEach((item)->{
                     Log.w(TAG, item.getName());
                 });
@@ -223,19 +230,19 @@ public class Splitter {
                     Log.d(TAG, "Copy the tail... len: " + rd_len);
                 }
                 rd_len = fIn.read(bf, 0, rd_len);
-                if(firstTime){
-                    Log.d(TAG, "First block at head: " + rd_len);
-                    Log.d(TAG, "Available len: " + fIn.available());
-                    //for(int i = 0 ; i < 10 ; i ++){Log.d(TAG, " " + bf[i]);}
-                    Log.d(TAG, "data: " + new String(bf));
-                    firstTime = false;
-                }
-                if (remaining < bf.length) {
-                    Log.d(TAG, "last block at tail: " + rd_len);
-                    //for(int i = 0 ; i < 10 ; i ++){Log.d(TAG, " " + bf[i]);}
-                    Log.d(TAG, "data: " + new String(bf));
-                }
-                fOut.write(bf);
+//                if(firstTime){
+//                    Log.d(TAG, "First block at head: " + rd_len);
+//                    Log.d(TAG, "Available len: " + fIn.available());
+//                    //for(int i = 0 ; i < 10 ; i ++){Log.d(TAG, " " + bf[i]);}
+//                    Log.d(TAG, "data: " + new String(bf));
+//                    firstTime = false;
+//                }
+//                if (remaining < bf.length) {
+//                    Log.d(TAG, "last block at tail: " + rd_len);
+//                    //for(int i = 0 ; i < 10 ; i ++){Log.d(TAG, " " + bf[i]);}
+//                    Log.d(TAG, "data: " + new String(bf));
+//                }
+                fOut.write(bf, 0, rd_len);
                 remaining -= rd_len;
                 totalCopied += rd_len;
             };
