@@ -38,6 +38,8 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.test.TestFileGenerator;
+import com.crossdrives.test.TestFileIntegrityChecker;
 import com.crossdrives.ui.Notification;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
@@ -55,6 +57,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -461,18 +464,40 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						public void onSuccess(String file) {
 							Log.d(TAG, "file downloaded: " + file);
 							Toast.makeText(getContext(), "file downloaded: " + file, Toast.LENGTH_LONG).show();
-
+							TestFileIntegrityChecker checker;
+							FileInputStream fis = null;
+							int result = 0;
+							try {
+								fis = SnippetApp.getAppContext().openFileInput(item.mName);
+								checker = new TestFileIntegrityChecker(file.length(), fis);
+								result = checker.execute(0, TestFileIntegrityChecker.Pattern.PATTERN_SERIAL_NUM);
+							} catch (IOException e) {
+								e.printStackTrace();
+								Toast.makeText(getContext(), "Error occurred in integrity check: "
+										+ e.getMessage(), Toast.LENGTH_LONG).show();
+							}
+							if(fis != null){
+								try {
+									fis.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+							if(result >= 0){
+								Toast.makeText(getContext(), "Integrity check failed. Position: "
+										+ result, Toast.LENGTH_LONG).show();
+							}
 						}
 					}).addOnFailureListener(new OnFailureListener() {
 						@Override
 						public void onFailure(@NonNull Exception e) {
-							Log.w(TAG, "file download failed: " + e.toString());
+							Log.w(TAG, "file download failed: " + e.getMessage());
 							e.printStackTrace();
-							Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
+							Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
 						}
 					});
 				} catch (MissingDriveClientException e) {
-					Toast.makeText(getContext(), "file download failed" + e.toString(), Toast.LENGTH_LONG).show();
+					Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
 				}
 			} else {
 				if (item.isSelected()) {
@@ -893,8 +918,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 								Next few lines of code are used only if you want to use test file for upload
 							 */
 							name = "TestFile";
-							//in = new TestFileGenerator("TestFile", 8*1024*1024).run();
-							in = getContext().openFileInput(name);
+							in = new TestFileGenerator(name, 8*1024*1024).run();
+							//in = getContext().openFileInput(name);
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());
 

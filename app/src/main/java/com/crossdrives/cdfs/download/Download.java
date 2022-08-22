@@ -1,5 +1,6 @@
 package com.crossdrives.cdfs.download;
 
+import android.app.Activity;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
@@ -9,11 +10,15 @@ import com.crossdrives.cdfs.allocation.ICompositeCallback;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.upload.IUploadProgressListener;
+import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.cdfs.util.EntryCreator;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.StreamHandler;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.model.MediaData;
+import com.crossdrives.msgraph.SnippetApp;
+import com.crossdrives.test.TestFileIntegrityChecker;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
@@ -42,6 +47,21 @@ public class Download {
     final int POISON_PILL = 0;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
+    /*
+        Progress states
+     */
+    public enum State{
+        GET_REMOTE_MAP_STARTED,
+        GET_REMOTE_MAP_COMPLETE,
+        MEDIA_IN_PROGRESS,
+        MEDIA_COMPLETE,
+    }
+
+    Upload.State mState;
+    IDownloadProgressListener mListener;
+    int progressTotalSegment;
+    int progressTotalDownloaded;
+
     public Download(CDFS mCDFS, String fileID, String parent) {
         this.mCDFS = mCDFS;
         mFileID = fileID;
@@ -61,7 +81,7 @@ public class Download {
                 CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
 
-                Log.d(TAG, "map fectched");
+                Log.d(TAG, "map fetched");
                 Compositor compositor = new Compositor(maps, mFileID, MAX_CHUNK);
 
                 ArrayBlockingQueue<AllocationItem> toDownloadQ = new ArrayBlockingQueue<>(MAX_CHUNK);
@@ -117,6 +137,7 @@ public class Download {
                         try {
                             Log.w(TAG, "filling content. Seq: " + mediaData.getAdditionInt());
                             compositor.fillSliceContent(mediaData.getAdditionInt(), mediaData.getOs());
+                            progressTotalDownloaded++;
                         } catch (Throwable e) {
                             Log.w(TAG, "fill slice content failed! " + e.getMessage());
                             exceptions.add(e);
@@ -128,7 +149,6 @@ public class Download {
                 };
 
                 Log.d(TAG, "Download process finished. Composited file: " + result[0] );
-
 
                 return result[0];
             }
@@ -173,4 +193,15 @@ public class Download {
         ai.setSequence(POISON_PILL);
         q.add(ai);
     }
+
+    void callback(Upload.State state){
+        mState = state;
+        mListener.progressChanged(this);
+    }
+
+    public Upload.State getState(){return mState;}
+
+    public int getProgressMax(){return progressTotalSegment;}
+
+    public int getProgressCurrent(){return progressTotalDownloaded;}
 }

@@ -24,7 +24,7 @@ public class TestFileGenerator {
         maxSeq      Outcome
         128*1024    787.5KB
         1024*1024   6.9MB
-        8*1024*1024 62.9MB
+        8*1024*1024 62.9MB (End at 8388607)
     */
     public TestFileGenerator(String name, long maxSeq) {
         this.name = name;
@@ -37,8 +37,6 @@ public class TestFileGenerator {
         int seq = 0;
         FileOutputStream out = context.openFileOutput(name, Activity.MODE_PRIVATE);
         OutputStreamWriter writer = new OutputStreamWriter(out);
-
-        char[] hi = new char[]{'h', 'i'};
 
         while(seq < maxSeq) {
             String concatenated = "";

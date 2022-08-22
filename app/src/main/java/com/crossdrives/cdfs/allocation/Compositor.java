@@ -149,21 +149,15 @@ public class Compositor {
         return result;
     }
 
-    //HashMap<String, Stream<AllocationItem>> filter(HashMap<String, OutputStream> maps, String id){
+    //
     HashMap<String, Collection<AllocationItem>> filter(HashMap<String, OutputStream> maps, String id){
-        //HashMap<String, Stream<AllocationItem>> itemStream = Mapper.reValue(maps, (stream)->{
+
         HashMap<String, Collection<AllocationItem>> itemStream = Mapper.reValue(maps, (stream)->{
             AllocContainer container = AllocManager.toContainer(stream);
 
-            //The CDFS item exists?
-//            if(container.getAllocItem().stream().filter((item)->
-//            {return item.getCdfsId()==mFileID;}).count() == 0){
-//                throw new CompletionException("Item not found in the map!", new Throwable(""));
-//            }
-
             return container.getAllocItem().stream().filter((item)->
                     //Log.d(TAG, "")
-            {return item.getCdfsId().equals(mfileID);}).collect(Collectors.toCollection(ArrayList::new));
+            {return item.getCdfsId().equals(id);}).collect(Collectors.toCollection(ArrayList::new));
         });
 
         StreamHandler.closeOutputStreamAll(maps);
@@ -218,7 +212,7 @@ public class Compositor {
         return result;
     }
 
-    //
+    // Here we make sure at least a item
     boolean checkExist(Collection<Map.Entry<String, AllocationItem>> items, String fileID){
         boolean result = true;
         //The CDFS item exists?
