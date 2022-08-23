@@ -31,14 +31,14 @@ public class TestFileIntegrityChecker {
 
     HashMap<String, Rule> rules = new HashMap<>();
 
-    public TestFileIntegrityChecker(long length, FileInputStream fis) {
+    public TestFileIntegrityChecker(FileInputStream fis) {
         this.length = length;
         this.fis = new InputStreamReader(fis);
         scanner = new Scanner(fis);
         rules.put(Pattern.PATTERN_SERIAL_NUM.getName(), SerialNumberCheck);
     }
 
-    public int execute(int chunkSize, Pattern pattern) throws IOException {
+    public int execute(Pattern pattern) throws IOException {
 
         return rules.get(pattern.getName()).check();
     }

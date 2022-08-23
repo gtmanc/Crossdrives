@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.download.Download;
+import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
@@ -44,6 +45,7 @@ public class Service implements IService {
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
     IUploadProgressListener uploadProgressListener;
+    IDownloadProgressListener downloadProgressListener;
 
     @Override
     public Task<com.crossdrives.cdfs.Result> list(Object nextPage) throws MissingDriveClientException, GeneralServiceException {
@@ -182,7 +184,12 @@ public class Service implements IService {
         parent:   CDFS folder where the item exists in
      */
     public Task<String> download(String fileID, String parent) throws MissingDriveClientException {
-        Download download = new Download(mCDFS, fileID, parent);
+
+        IDownloadProgressListener listener = defaultDownloadProgressListener;
+        if (downloadProgressListener != null)
+            listener = downloadProgressListener;
+
+        Download download = new Download(mCDFS, fileID, parent, listener);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: Download");
@@ -191,4 +198,16 @@ public class Service implements IService {
 
         return download.execute();
     }
+
+    public void setDownloadProgressLisetener(IDownloadProgressListener listener) {
+        downloadProgressListener = listener;
+    }
+
+    IDownloadProgressListener defaultDownloadProgressListener = new IDownloadProgressListener() {
+        @Override
+        public void progressChanged(Download downloader) {
+            Log.d(TAG, "Download progress " + downloader.getState());
+        }
+
+    };
 }

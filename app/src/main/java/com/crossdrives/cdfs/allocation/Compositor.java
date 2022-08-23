@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,18 +63,24 @@ public class Compositor {
 //            set.getValue().forEach(v->Log.d(TAG, " seq: " + v.getSequence()));
 //        });
         List<Map.Entry<String, AllocationItem>> toRequest = mergeMapsThenSort(filtered);
-        //Do a check to ensure there is nothing wrong in merge and sort we did.
+        //Do checks to ensure the fetched map files are valid
         if(!checkExist(toRequest, mfileID)){
-            Log.d(TAG, "file to composite doesn't exit in the map files");
+            Log.d(TAG, "file to composite doesn't exit in the map files! Abort...");
             callback.OnExceptionally(new Throwable("Compositor: file to composite doesn't exit in the map files"));
             return 0;
         }
+        if(checkCount(toRequest) < 0){
+            Log.d(TAG, "The could be missing map items! Abort...");
+            callback.OnExceptionally(new Throwable("Compositor: The could be missing map items!"));
+            return 0;
+        }
+
         Context context = SnippetApp.getAppContext();
         //Simply get name from any of the items because they are supposed to be the same
         String name = toRequest.get(0).getValue().getName();
         compositeOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
 
-
+        callback.onStart(toRequest.size());
         CompletableFuture<String> future = CompletableFuture.supplyAsync(()->{
             int seq = AllocationItem.SEQ_INITIAL;
             int reqIndex=0, compositeIndex = 0, totalSegment = toRequest.size();
@@ -212,7 +219,7 @@ public class Compositor {
         return result;
     }
 
-    // Here we make sure at least a item
+    // The collection must contain at least a item which the CDFS ID matches up
     boolean checkExist(Collection<Map.Entry<String, AllocationItem>> items, String fileID){
         boolean result = true;
         //The CDFS item exists?
@@ -222,6 +229,27 @@ public class Compositor {
         }
 
         return result;
+    }
+
+    // The number of items in the collection must equal to totalSeg
+    int checkCount(Collection<Map.Entry<String, AllocationItem>> items){
+        int count = 0;
+        Optional<Map.Entry<String, AllocationItem>> optional = items.stream().findAny();
+        int totalSeg = 0;
+
+        //if collection is empty, exit with error.
+        if(!optional.isPresent()){
+            return count;
+        }
+
+        totalSeg = optional.get().getValue().getTotalSeg();
+
+        count = totalSeg;
+        if(items.stream().count() != totalSeg ){
+            count = 0;
+        }
+
+        return count;
     }
 
     boolean composite(OutputStream os, long length) throws IOException {

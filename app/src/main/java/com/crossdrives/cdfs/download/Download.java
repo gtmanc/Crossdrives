@@ -16,6 +16,7 @@ import com.crossdrives.cdfs.util.EntryCreator;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.StreamHandler;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
+import com.crossdrives.driveclient.download.IDownloadRequest;
 import com.crossdrives.driveclient.model.MediaData;
 import com.crossdrives.msgraph.SnippetApp;
 import com.crossdrives.test.TestFileIntegrityChecker;
@@ -57,15 +58,16 @@ public class Download {
         MEDIA_COMPLETE,
     }
 
-    Upload.State mState;
+    Download.State mState;
     IDownloadProgressListener mListener;
-    int progressTotalSegment;
-    int progressTotalDownloaded;
+    int progressTotalSegment = 0;
+    int progressTotalDownloaded = 0;
 
-    public Download(CDFS mCDFS, String fileID, String parent) {
+    public Download(CDFS mCDFS, String fileID, String parent, IDownloadProgressListener listener) {
         this.mCDFS = mCDFS;
         mFileID = fileID;
         mParent = parent;
+        mListener = listener;
     }
 
     public Task<String> execute(){
@@ -78,10 +80,12 @@ public class Download {
                 final String[] result = new String[1];
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
 
+                callback(State.GET_REMOTE_MAP_STARTED);
                 CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
 
                 Log.d(TAG, "map fetched");
+                callback(State.GET_REMOTE_MAP_COMPLETE);
                 Compositor compositor = new Compositor(maps, mFileID, MAX_CHUNK);
 
                 ArrayBlockingQueue<AllocationItem> toDownloadQ = new ArrayBlockingQueue<>(MAX_CHUNK);
@@ -89,7 +93,13 @@ public class Download {
 
                 Collection<Throwable> exceptions = new ArrayList<>();
                 compositor.run(new ICompositeCallback() {
-                        @Override
+                    @Override
+                    public void onStart(int totalSlice) {
+                        progressTotalSegment = totalSlice;
+                        callback(State.GET_REMOTE_MAP_COMPLETE);
+                    }
+
+                    @Override
                         public void onSliceRequested(String driveName, String id, int seq) {
                             Log.d(TAG, "slice requested: drive: " + driveName + " seq: " + seq);
                             AllocationItem ai = new AllocationItem();
@@ -194,12 +204,12 @@ public class Download {
         q.add(ai);
     }
 
-    void callback(Upload.State state){
+    void callback(Download.State state){
         mState = state;
         mListener.progressChanged(this);
     }
 
-    public Upload.State getState(){return mState;}
+    public Download.State getState(){return mState;}
 
     public int getProgressMax(){return progressTotalSegment;}
 

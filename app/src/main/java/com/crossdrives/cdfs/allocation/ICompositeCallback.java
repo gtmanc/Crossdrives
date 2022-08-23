@@ -5,6 +5,11 @@ import com.crossdrives.driveclient.model.MediaData;
 public interface ICompositeCallback {
 
     /*
+        gets called when the composition process will get started
+     */
+    public void onStart(int totalSlice);
+
+    /*
         gets called when compositor requests a slice to composite.
         driveName:  name of the user drive
         id:         item ID in a user drive

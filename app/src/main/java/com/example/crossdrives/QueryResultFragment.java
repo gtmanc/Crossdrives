@@ -38,6 +38,8 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.cdfs.download.Download;
+import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.test.TestFileGenerator;
 import com.crossdrives.test.TestFileIntegrityChecker;
 import com.crossdrives.ui.Notification;
@@ -441,6 +443,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
     2.1 Long press on the selected item, exit exit the selection state
     2.2 Long press on the others, select the item. (change the checkbox in the item to "checked")
      */
+	HashMap<IDownloadProgressListener, Notification> mNotificationsByDownloadListener = new HashMap<>();
+	HashMap<OnSuccessListener, Notification> mNotificationsByDownloadSuccessListener = new HashMap<>();
+	HashMap<OnFailureListener, Notification> mNotificationsByDownloadFailedListener = new HashMap<>();
 	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(View view, int position){
@@ -458,47 +463,28 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				Log.d(TAG, "Start to download file: " + item.mName);
 				//Log.d(TAG, "File ID: " + item.mId);
 				//TODO: open detail of file
+				Service service = null;
 				try {
-					CDFS.getCDFSService(getActivity().getApplicationContext()).getService().download(item.getID(), currentFolder).addOnSuccessListener(new OnSuccessListener<String>() {
-						@Override
-						public void onSuccess(String file) {
-							Log.d(TAG, "file downloaded: " + file);
-							Toast.makeText(getContext(), "file downloaded: " + file, Toast.LENGTH_LONG).show();
-							TestFileIntegrityChecker checker;
-							FileInputStream fis = null;
-							int result = 0;
-							try {
-								fis = SnippetApp.getAppContext().openFileInput(item.mName);
-								checker = new TestFileIntegrityChecker(file.length(), fis);
-								result = checker.execute(0, TestFileIntegrityChecker.Pattern.PATTERN_SERIAL_NUM);
-							} catch (IOException e) {
-								e.printStackTrace();
-								Toast.makeText(getContext(), "Error occurred in integrity check: "
-										+ e.getMessage(), Toast.LENGTH_LONG).show();
-							}
-							if(fis != null){
-								try {
-									fis.close();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							if(result >= 0){
-								Toast.makeText(getContext(), "Integrity check failed. Position: "
-										+ result, Toast.LENGTH_LONG).show();
-							}
-						}
-					}).addOnFailureListener(new OnFailureListener() {
-						@Override
-						public void onFailure(@NonNull Exception e) {
-							Log.w(TAG, "file download failed: " + e.getMessage());
-							e.printStackTrace();
-							Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
-						}
-					});
+					service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
+					service.download(item.getID(), currentFolder).addOnSuccessListener(createDownloadSuccessListener())
+					.addOnFailureListener(createDownloadFailureListener());
 				} catch (MissingDriveClientException e) {
 					Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
 				}
+
+				IDownloadProgressListener downloadProgressListener;
+				Notification notification;
+				notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
+				notification.setContentTitle(getString(R.string.notification_title_downloading));
+				notification.setContentText(getString(R.string.notification_content_default));
+				notification.build();
+				downloadProgressListener = createDownloadListener();
+				mNotificationsByDownloadListener.put(downloadProgressListener, notification);
+				if (service != null) {
+					service.setDownloadProgressLisetener(downloadProgressListener);
+				}
+
+
 			} else {
 				if (item.isSelected()) {
                     /*
@@ -524,6 +510,87 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//mAdapter.notifyItemChanged(position);
 			mAdapter.notifyDataSetChanged();
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+		}
+
+		IDownloadProgressListener createDownloadListener(){
+			IDownloadProgressListener listener = new IDownloadProgressListener() {
+				@Override
+				public void progressChanged(Download downloader) {
+					Notification notification;
+					Download.State state = downloader.getState();
+					notification = mNotificationsByDownloadListener.get(this);
+					if (state == Download.State.GET_REMOTE_MAP_STARTED) {
+						Log.d(TAG, "[Notification]:fetching remote maps...");
+						notification.updateContentText(getString(R.string.notification_content_download_start_fetch_maps));
+					}
+					else if(state == Download.State.MEDIA_IN_PROGRESS){
+						int current = downloader.getProgressCurrent();
+						int max = downloader.getProgressMax();
+						Log.d(TAG, "[Notification]:download progress. Current " + current + " Max: " + max);
+						notification.updateContentText(getString(R.string.notification_content_download_uploading_file));
+						notification.updateProgress(current, max);
+					}
+				}
+			};
+			return listener;
+		}
+
+		OnSuccessListener<String> createDownloadSuccessListener(){
+			OnSuccessListener<String> listener = new OnSuccessListener<String>() {
+				@Override
+				public void onSuccess(String file) {
+					Notification notification = mNotificationsByDownloadSuccessListener.get(this);
+					notification.removeProgressBar();
+					notification.updateContentTitle(getString(R.string.notification_title_download_completed));
+					notification.updateContentText(getString(R.string.notification_content_download_complete));
+					Log.d(TAG, "file downloaded: " + file);
+					Toast.makeText(getContext(), "file downloaded: " + file, Toast.LENGTH_LONG).show();
+					//downloadIntegrityCheck();
+				}
+			};
+			return listener;
+		}
+
+		OnFailureListener createDownloadFailureListener() {
+			OnFailureListener listener = new OnFailureListener() {
+				@Override
+				public void onFailure(@NonNull Exception e) {
+					Notification notification = mNotificationsByUpFailedListener.get(this);
+					Log.w(TAG, "download failed: " + e.getMessage() + e.getCause());
+					Toast.makeText(SnippetApp.getAppContext(), "download Failed: "
+							+ e.getMessage(), Toast.LENGTH_SHORT).show();
+					notification.removeProgressBar();
+					notification.updateContentTitle(getString(R.string.notification_title_download_completed));
+					notification.updateContentText(getString(R.string.notification_content_download_complete_exceptionally));
+				}
+			};
+			return listener;
+		}
+
+		void downloadIntegrityCheck(String name){
+			TestFileIntegrityChecker checker;
+			FileInputStream fis = null;
+			int result = 0;
+			try {
+				fis = SnippetApp.getAppContext().openFileInput(name);
+				checker = new TestFileIntegrityChecker(fis);
+				result = checker.execute(TestFileIntegrityChecker.Pattern.PATTERN_SERIAL_NUM);
+			} catch (IOException e) {
+				e.printStackTrace();
+				Toast.makeText(getContext(), "Error occurred in integrity check: "
+						+ e.getMessage(), Toast.LENGTH_LONG).show();
+			}
+			if(fis != null){
+				try {
+					fis.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if(result >= 0){
+				Toast.makeText(getContext(), "Integrity check failed. Position: "
+						+ result, Toast.LENGTH_LONG).show();
+			}
 		}
 
 		@Override
@@ -987,7 +1054,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			public void onSuccess(T t) {
 				Notification notification = mNotificationsByUploadSuccessListener.get(this);
 				notification.removeProgressBar();
-				notification.updateContentTitle(getString(R.string.notification_title_complete));
+				notification.updateContentTitle(getString(R.string.notification_title_upload_completed));
 				notification.updateContentText(getString(R.string.notification_content_upload_complete));
 			}
 		};
@@ -1003,7 +1070,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				Toast.makeText(SnippetApp.getAppContext(), "Upload Failed: "
 						+ e.getMessage(), Toast.LENGTH_SHORT).show();
 				notification.removeProgressBar();
-				notification.updateContentTitle(getString(R.string.notification_title_complete));
+				notification.updateContentTitle(getString(R.string.notification_title_upload_completed));
 				notification.updateContentText(getString(R.string.notification_content_upload_complete_exceptionally));
 			}
 		};
