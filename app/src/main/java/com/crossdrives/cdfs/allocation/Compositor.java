@@ -2,6 +2,7 @@ package com.crossdrives.cdfs.allocation;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
 import com.crossdrives.cdfs.model.AllocContainer;
@@ -13,6 +14,8 @@ import com.crossdrives.msgraph.SnippetApp;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -76,15 +79,20 @@ public class Compositor {
         }
 
         Context context = SnippetApp.getAppContext();
+
         //Simply get name from any of the items because they are supposed to be the same
         String name = toRequest.get(0).getValue().getName();
-        compositeOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
+        //String compositedFile = context.getFilesDir().getPath() + "\\" + name;
+        //String compositedFile = context.getExternalFilesDir(null) + "\\" + name;
+        String compositedFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/" + name;
+        //compositeOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
+        compositeOut = new FileOutputStream(new File(compositedFile));
 
         callback.onStart(toRequest.size());
         CompletableFuture<String> future = CompletableFuture.supplyAsync(()->{
             int seq = AllocationItem.SEQ_INITIAL;
             int reqIndex=0, compositeIndex = 0, totalSegment = toRequest.size();
-            String compositedFile = context.getFilesDir().getPath() + "\\" + name;
+
             while(compositeIndex < totalSegment){
                 /*
                     Request slice whenever there is slice is needed. But we have to mke sure

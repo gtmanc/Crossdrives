@@ -1,6 +1,10 @@
 package com.crossdrives.cdfs;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.util.Log;
+
+import androidx.core.content.ContextCompat;
 
 import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.download.Download;
@@ -13,6 +17,7 @@ import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
@@ -183,11 +188,17 @@ public class Service implements IService {
         fileID:   CDFS item ID
         parent:   CDFS folder where the item exists in
      */
-    public Task<String> download(String fileID, String parent) throws MissingDriveClientException {
+    public Task<String> download(String fileID, String parent) throws MissingDriveClientException, CompletionException {
 
         IDownloadProgressListener listener = defaultDownloadProgressListener;
         if (downloadProgressListener != null)
             listener = downloadProgressListener;
+        int StatusChecked =
+        ContextCompat.checkSelfPermission(SnippetApp.getAppContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if(StatusChecked == PackageManager.PERMISSION_DENIED){
+            Log.d(TAG, "Permission for accessing download folder has not yet granted!");
+            throw new CompletionException("Permission for accessing download folder has not yet granted!", new Throwable(""));
+        }
 
         Download download = new Download(mCDFS, fileID, parent, listener);
         final Throwable[] throwables = {null};
@@ -199,7 +210,7 @@ public class Service implements IService {
         return download.execute();
     }
 
-    public void setDownloadProgressLisetener(IDownloadProgressListener listener) {
+    public void setDownloadProgressListener(IDownloadProgressListener listener) {
         downloadProgressListener = listener;
     }
 

@@ -148,6 +148,7 @@ public class Download {
                             Log.w(TAG, "filling content. Seq: " + mediaData.getAdditionInt());
                             compositor.fillSliceContent(mediaData.getAdditionInt(), mediaData.getOs());
                             progressTotalDownloaded++;
+                            callback(State.MEDIA_IN_PROGRESS);
                         } catch (Throwable e) {
                             Log.w(TAG, "fill slice content failed! " + e.getMessage());
                             exceptions.add(e);
@@ -159,7 +160,7 @@ public class Download {
                 };
 
                 Log.d(TAG, "Download process finished. Composited file: " + result[0] );
-
+                callback(State.MEDIA_COMPLETE);
                 return result[0];
             }
         });

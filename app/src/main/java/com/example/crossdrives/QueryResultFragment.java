@@ -1,5 +1,6 @@
 package com.example.crossdrives;
 
+import android.Manifest;
 import android.app.SearchManager;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -40,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
+import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.test.TestFileGenerator;
 import com.crossdrives.test.TestFileIntegrityChecker;
 import com.crossdrives.ui.Notification;
@@ -50,6 +52,7 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
+import com.crossdrives.ui.Permission;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -444,8 +447,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
     2.2 Long press on the others, select the item. (change the checkbox in the item to "checked")
      */
 	HashMap<IDownloadProgressListener, Notification> mNotificationsByDownloadListener = new HashMap<>();
-	HashMap<OnSuccessListener, Notification> mNotificationsByDownloadSuccessListener = new HashMap<>();
-	HashMap<OnFailureListener, Notification> mNotificationsByDownloadFailedListener = new HashMap<>();
+	HashMap<OnSuccessListener, Notification> mDownloadSuccessListener = new HashMap<>();
+	HashMap<OnFailureListener, Notification> mDownloadFailedListener = new HashMap<>();
 	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(View view, int position){
@@ -463,15 +466,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				Log.d(TAG, "Start to download file: " + item.mName);
 				//Log.d(TAG, "File ID: " + item.mId);
 				//TODO: open detail of file
-				Service service = null;
-				try {
-					service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
-					service.download(item.getID(), currentFolder).addOnSuccessListener(createDownloadSuccessListener())
-					.addOnFailureListener(createDownloadFailureListener());
-				} catch (MissingDriveClientException e) {
-					Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
-				}
-
+				OnSuccessListener<String> successListener = createDownloadSuccessListener();
+				OnFailureListener failureListener = createDownloadFailureListener();
 				IDownloadProgressListener downloadProgressListener;
 				Notification notification;
 				notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
@@ -480,11 +476,26 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				notification.build();
 				downloadProgressListener = createDownloadListener();
 				mNotificationsByDownloadListener.put(downloadProgressListener, notification);
+				mDownloadSuccessListener.put(successListener, notification);
+				mDownloadFailedListener.put(failureListener, notification);
+				//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
+				Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
 				if (service != null) {
-					service.setDownloadProgressLisetener(downloadProgressListener);
+					service.setDownloadProgressListener(downloadProgressListener);
 				}
 
+				Permission permission = new Permission(getActivity(), requestPermissionLauncher);
+				boolean permissionGranted = permission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+				if(permissionGranted == false){
 
+					return;
+				}
+				try {
+					service.download(item.getID(), currentFolder).addOnSuccessListener(successListener)
+					.addOnFailureListener(failureListener);
+				} catch (MissingDriveClientException | CompletionException e) {
+					Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
+				}
 			} else {
 				if (item.isSelected()) {
                     /*
@@ -516,6 +527,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			IDownloadProgressListener listener = new IDownloadProgressListener() {
 				@Override
 				public void progressChanged(Download downloader) {
+					Log.d(TAG, "progressChanged!");
 					Notification notification;
 					Download.State state = downloader.getState();
 					notification = mNotificationsByDownloadListener.get(this);
@@ -539,7 +551,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			OnSuccessListener<String> listener = new OnSuccessListener<String>() {
 				@Override
 				public void onSuccess(String file) {
-					Notification notification = mNotificationsByDownloadSuccessListener.get(this);
+					Notification notification = mDownloadSuccessListener.get(this);
 					notification.removeProgressBar();
 					notification.updateContentTitle(getString(R.string.notification_title_download_completed));
 					notification.updateContentText(getString(R.string.notification_content_download_complete));
@@ -555,7 +567,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			OnFailureListener listener = new OnFailureListener() {
 				@Override
 				public void onFailure(@NonNull Exception e) {
-					Notification notification = mNotificationsByUpFailedListener.get(this);
+					Notification notification = mDownloadFailedListener.get(this);
 					Log.w(TAG, "download failed: " + e.getMessage() + e.getCause());
 					Toast.makeText(SnippetApp.getAppContext(), "download Failed: "
 							+ e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -592,6 +604,25 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						+ result, Toast.LENGTH_LONG).show();
 			}
 		}
+		/*
+			Once user selected "never ask again" checkbox, nothing is shown if requestPermissionLauncher.launch
+            is called.
+        */
+		private ActivityResultLauncher<String> requestPermissionLauncher =
+				registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                    if (isGranted) {
+                        // Permission is granted. Continue the action or workflow in your
+                        // app.
+                        Log.d(TAG, "User granted permission.");
+                    } else {
+                        // Explain to the user that the feature is unavailable because the
+                        // features requires a permission that the user has denied. At the
+                        // same time, respect the user's decision. Don't link to system
+                        // settings in an effort to convince the user to change their
+                        // decision.
+                        Log.d(TAG, "Show the implication.");
+                    }
+                });
 
 		@Override
 		public void onItemLongClick(View view, int position) {
