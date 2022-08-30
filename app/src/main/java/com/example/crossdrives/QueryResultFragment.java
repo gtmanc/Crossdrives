@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.CompletionException;
+import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.test.TestFileGenerator;
 import com.crossdrives.test.TestFileIntegrityChecker;
 import com.crossdrives.ui.Notification;
@@ -71,6 +72,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
 	private String TAG = "CD.QueryResultFragment";
@@ -449,6 +451,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	HashMap<IDownloadProgressListener, Notification> mNotificationsByDownloadListener = new HashMap<>();
 	HashMap<OnSuccessListener, Notification> mDownloadSuccessListener = new HashMap<>();
 	HashMap<OnFailureListener, Notification> mDownloadFailedListener = new HashMap<>();
+	CompletableFuture<Boolean> requestPermissionFuture = new CompletableFuture<>();
 	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(View view, int position){
@@ -483,19 +486,23 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				if (service != null) {
 					service.setDownloadProgressListener(downloadProgressListener);
 				}
+				requestPermissionFuture.thenAccept((isGranted)->{
+					try {
+						service.download(item.getID(), currentFolder).addOnSuccessListener(successListener)
+								.addOnFailureListener(failureListener);
+					} catch (MissingDriveClientException | PermissionException e) {
+						Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
+					}
+				});
 
-				Permission permission = new Permission(getActivity(), requestPermissionLauncher);
-				boolean permissionGranted = permission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+				Permission permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher);
+				boolean permissionGranted = permission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE
+				, "Download may not work expectedly if the permission is not granted!");
 				if(permissionGranted == false){
-
+					requestPermissionFuture.complete(true);
 					return;
 				}
-				try {
-					service.download(item.getID(), currentFolder).addOnSuccessListener(successListener)
-					.addOnFailureListener(failureListener);
-				} catch (MissingDriveClientException | CompletionException e) {
-					Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
-				}
+
 			} else {
 				if (item.isSelected()) {
                     /*
@@ -621,7 +628,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
                         // settings in an effort to convince the user to change their
                         // decision.
                         Log.d(TAG, "Show the implication.");
+
                     }
+					requestPermissionFuture.complete(isGranted);
                 });
 
 		@Override

@@ -36,9 +36,14 @@
     <string name="signout_dialog_action_signout">Sign out</string>
     <string name="signout_dialog_action_cancel">Cancel</string>
 
-    <!-- Option dialog floating action button -->
+    <!-- no longer used! Option dialog floating action button -->
     <string name="title_fab_option">Add</string>
     <string name="button_fab_option_upload">Upload file</string>
+
+    <!-- Dialog permission request education -->
+    <string name="message_permission_education">Grant the permission so that download can work as expectly</string>
+    <string name="left_button_permision_education">Deny</string>
+    <string name="right_button_permission_education">Go ahead</string>
 
 
     <!-- Notifications -->

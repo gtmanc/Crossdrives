@@ -13,6 +13,7 @@ import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
+import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
@@ -188,7 +189,7 @@ public class Service implements IService {
         fileID:   CDFS item ID
         parent:   CDFS folder where the item exists in
      */
-    public Task<String> download(String fileID, String parent) throws MissingDriveClientException, CompletionException {
+    public Task<String> download(String fileID, String parent) throws MissingDriveClientException, PermissionException {
 
         IDownloadProgressListener listener = defaultDownloadProgressListener;
         if (downloadProgressListener != null)
@@ -197,7 +198,7 @@ public class Service implements IService {
         ContextCompat.checkSelfPermission(SnippetApp.getAppContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if(StatusChecked == PackageManager.PERMISSION_DENIED){
             Log.d(TAG, "Permission for accessing download folder has not yet granted!");
-            throw new CompletionException("Permission for accessing download folder has not yet granted!", new Throwable(""));
+            throw new PermissionException("Permission for accessing download folder has not yet granted!", new Throwable(""));
         }
 
         Download download = new Download(mCDFS, fileID, parent, listener);
