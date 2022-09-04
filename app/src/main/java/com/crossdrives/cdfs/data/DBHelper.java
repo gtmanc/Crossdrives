@@ -180,11 +180,13 @@ public class DBHelper{
         /*
             Delete whole table or select
         */
-        if(expression != null){
+        if(expression.length != 0){
+            Log.d(TAG, "expression.length: " +expression.length);
             Log.d(TAG, "Delete specified rows...");
             clause = expression[0] + "=" + expression[1];
         }else{
             Log.d(TAG, "Delete whole table...");
+            //db.execSQL("DROP TABLE IF EXISTS "+CONTACTS_TABLE_NAME);
         }
 
         try{
@@ -211,7 +213,7 @@ public class DBHelper{
     }
 
     /*
-     * expresion: filter clause for the rows to be read. Note "\" must be added in front of the value if
+     * expression: filter clause for the rows to be read. Note "\" must be added in front of the value if
         the value is in type of string. e.g. parent = "Root".
      * If no expression is giving, all rows are read out from database.
      * The input expression is a string which contains a pair of column name and value. Max is 2 strings.

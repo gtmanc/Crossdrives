@@ -98,13 +98,13 @@ public class AllocManager implements IAllocManager {
         AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
 
         /*
-            Clear whole table upon new allocation maps are fetched.
+            Clear whole table when new allocation maps are fetched.
             so that the duplicated rows can be removed.
             TODO: if the fetched allocation items are faulty, then we lost the old local items still
         */
         Log.d(TAG, "Delete all items in local database....");
-        deleteAll();
 
+        deleteAll();
         /*
             Update the fetched allocation content to database. We will query local database
             for the file list requested by caller.
@@ -497,7 +497,7 @@ public class AllocManager implements IAllocManager {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         int deleted;
 
-        deleted = dh.delete(null);
+        deleted = dh.delete();
         Log.d(TAG, "items have been deleted: " + deleted);
         return deleted;
     }

@@ -41,7 +41,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
-import com.crossdrives.cdfs.exception.CompletionException;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.test.TestFileGenerator;
 import com.crossdrives.test.TestFileIntegrityChecker;
@@ -254,6 +253,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
 			mProgressBar.setVisibility(View.INVISIBLE);
+			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 		} catch (GeneralServiceException e){
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
@@ -451,7 +451,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	HashMap<IDownloadProgressListener, Notification> mNotificationsByDownloadListener = new HashMap<>();
 	HashMap<OnSuccessListener, Notification> mDownloadSuccessListener = new HashMap<>();
 	HashMap<OnFailureListener, Notification> mDownloadFailedListener = new HashMap<>();
-	CompletableFuture<Boolean> requestPermissionFuture = new CompletableFuture<>();
+	CompletableFuture<Boolean> requestPermissionFuture;
+	Permission permission;
 	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(View view, int position){
@@ -466,43 +467,53 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 
 			if (mState == STATE_NORMAL) {
-				Log.d(TAG, "Start to download file: " + item.mName);
-				//Log.d(TAG, "File ID: " + item.mId);
-				//TODO: open detail of file
-				OnSuccessListener<String> successListener = createDownloadSuccessListener();
-				OnFailureListener failureListener = createDownloadFailureListener();
-				IDownloadProgressListener downloadProgressListener;
-				Notification notification;
-				notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
-				notification.setContentTitle(getString(R.string.notification_title_downloading));
-				notification.setContentText(getString(R.string.notification_content_default));
-				notification.build();
-				downloadProgressListener = createDownloadListener();
-				mNotificationsByDownloadListener.put(downloadProgressListener, notification);
-				mDownloadSuccessListener.put(successListener, notification);
-				mDownloadFailedListener.put(failureListener, notification);
-				//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
-				Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
-				if (service != null) {
-					service.setDownloadProgressListener(downloadProgressListener);
-				}
+				requestPermissionFuture = new CompletableFuture<>();
 				requestPermissionFuture.thenAccept((isGranted)->{
+					if(!isGranted){
+						Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
+						return;
+					}
+					Log.d(TAG, "Start to download file: " + item.mName);
+					//Log.d(TAG, "File ID: " + item.mId);
+					//TODO: open detail of file
+					OnSuccessListener<String> successListener = createDownloadSuccessListener();
+					OnFailureListener failureListener = createDownloadFailureListener();
+					IDownloadProgressListener downloadProgressListener;
+					Notification notification;
+					notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
+					notification.setContentTitle(getString(R.string.notification_title_downloading));
+					notification.setContentText(getString(R.string.notification_content_default));
+					notification.build();
+					downloadProgressListener = createDownloadListener();
+					mNotificationsByDownloadListener.put(downloadProgressListener, notification);
+					mDownloadSuccessListener.put(successListener, notification);
+					mDownloadFailedListener.put(failureListener, notification);
+					//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
+					Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
+					if (service != null) {
+						service.setDownloadProgressListener(downloadProgressListener);
+					}
+
+
 					try {
 						service.download(item.getID(), currentFolder).addOnSuccessListener(successListener)
 								.addOnFailureListener(failureListener);
 					} catch (MissingDriveClientException | PermissionException e) {
-						Toast.makeText(getContext(), "file download failed" + e.getMessage(), Toast.LENGTH_LONG).show();
+						Toast.makeText(getContext(), "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
 					}
 				});
 
-				Permission permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher);
-				boolean permissionGranted = permission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE
-				, "Download may not work expectedly if the permission is not granted!");
-				if(permissionGranted == false){
+				permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
+						Manifest.permission.WRITE_EXTERNAL_STORAGE).
+						setEducationMessage(getString(R.string.message_permission_education)).
+						setImplicationMessage(getString(R.string.implication_deny_grant_permission_external_storage));
+				boolean permissionGranted = permission.request();
+				//if result is false, requested permission has not yet or user response with "never ask again"
+				//
+				if(permissionGranted == true){
 					requestPermissionFuture.complete(true);
 					return;
 				}
-
 			} else {
 				if (item.isSelected()) {
                     /*
@@ -611,9 +622,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						+ result, Toast.LENGTH_LONG).show();
 			}
 		}
+
 		/*
-			Once user selected "never ask again" checkbox, nothing is shown if requestPermissionLauncher.launch
-            is called.
+			Once user selected "never ask again" checkbox, nothing is shown even the requestPermissionLauncher.launch
+            is called. Besides, the callback is called with negative isGranted (false).
         */
 		private ActivityResultLauncher<String> requestPermissionLauncher =
 				registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -628,7 +640,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
                         // settings in an effort to convince the user to change their
                         // decision.
                         Log.d(TAG, "Show the implication.");
-
+						String message = getString(R.string.implication_deny_grant_permission_external_storage);
+						if(permission.neverAskAgainSelected()){
+							message = getString(R.string.implication_permission_external_storage_denied_never_ask);
+						}
+						Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
                     }
 					requestPermissionFuture.complete(isGranted);
                 });
@@ -688,6 +704,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			popup.show();
 		}
 	};
+
 	private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
 
 		if(checked == false && mSelectedItemCount <= 0) {
