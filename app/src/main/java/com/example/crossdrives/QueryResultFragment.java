@@ -61,16 +61,19 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
+import com.microsoft.graph.models.SearchResult;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
@@ -92,6 +95,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	final String STATE_ITEM_SELECTION = "state_selection";
 	private String mState = STATE_NORMAL;
 	private int mSelectedItemCount = 0;
+
 	private int mCountPressDrawerHeader = 0;
 
 	private ActionMode mActionMode = null;
@@ -955,7 +959,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			// items in menu. But it doesnt work.
 			menu.findItem(R.id.miDetail).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 			menu.findItem(R.id.miCopy).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-			MenuItem copy = menu.findItem(R.id.miDetail).setOnMenuItemClickListener(OnMenuItemClickListener);
+			menu.findItem(R.id.miDelete).setOnMenuItemClickListener(OnMenuItemDeleteClickListener);
+			menu.findItem(R.id.miDetail).setOnMenuItemClickListener(OnMenuItemClickListener);
 
 			return true;
 		}
@@ -986,6 +991,44 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
+	//Action bar icon: delete
+	private MenuItem.OnMenuItemClickListener OnMenuItemDeleteClickListener = new MenuItem.OnMenuItemClickListener(){
+
+		@Override
+		public boolean onMenuItemClick(MenuItem item) {
+			Task task = null;
+			Service service = CDFS.getCDFSService(getActivity()).getService();
+			SerachResultItemModel selectedItem = mItems.stream().findAny().get();
+			Log.d(TAG, "Delete item: " + selectedItem.getName());
+			try {
+				task = service.delete(selectedItem.getID(),currentFolder);
+			} catch (MissingDriveClientException | PermissionException e) {
+				Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG);
+				Log.w(TAG, e.getMessage());
+				e.printStackTrace();
+				return true;
+			}
+			task.addOnSuccessListener(deleteSuccessListner).
+			addOnFailureListener(deleteFailureListener);
+			return false;
+		}
+	};
+
+	OnSuccessListener<File> deleteSuccessListner = new OnSuccessListener<File>() {
+		@Override
+		public void onSuccess(File file) {
+			Toast.makeText(getContext(), file.getName() + " is deleted successfully.", Toast.LENGTH_LONG);
+		}
+	};
+
+	OnFailureListener deleteFailureListener = new OnFailureListener() {
+		@Override
+		public void onFailure(@NonNull Exception e) {
+			Toast.makeText(getContext(), " something wrong during deleting the file. " + e.getMessage(), Toast.LENGTH_LONG);
+		}
+	};
+
+	//Action bar: overflow menu items
 	private MenuItem.OnMenuItemClickListener OnMenuItemClickListener = new MenuItem.OnMenuItemClickListener(){
 		@Override
 		public boolean onMenuItemClick(MenuItem item) {
@@ -993,6 +1036,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.d(TAG, "Top app bar menu item action pressed!!");
 			return true;
 		}
+
+
 	};
 
 	private Toolbar.OnMenuItemClickListener onBottomAppBarMenuItemClickListener = new Toolbar.OnMenuItemClickListener() {
@@ -1039,10 +1084,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 							mNotificationsByUploadListener.put(uploafListener, notification);
 							service.setUploadProgressLisetener(uploafListener);
 							/*
-								Next few lines of code are used only if you want to use test file for upload
+								Next 3 lines of code are used only if you want to use test file for upload
 							 */
-							name = "TestFile";
-							in = new TestFileGenerator(name, 8*1024*1024).run();
+							//name = "TestFile";
+							//in = new TestFileGenerator(name, 8*1024*1024).run();
 							//in = getContext().openFileInput(name);
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());

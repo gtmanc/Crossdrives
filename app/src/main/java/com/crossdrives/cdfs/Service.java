@@ -7,6 +7,8 @@ import android.util.Log;
 import androidx.core.content.ContextCompat;
 
 import com.crossdrives.cdfs.allocation.Result;
+import com.crossdrives.cdfs.delete.Delete;
+import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.CompletionException;
@@ -222,4 +224,29 @@ public class Service implements IService {
         }
 
     };
+
+    public Task<com.google.api.services.drive.model.File> delete(String fileID, String parent) throws MissingDriveClientException, PermissionException {
+
+        IDeleteProgressListener listener = defaultDeleteProgressListener;
+        if (defaultDeleteProgressListener != null)
+            listener = defaultDeleteProgressListener;
+
+        Delete deleter = new Delete(mCDFS, fileID, parent, listener);
+        final Throwable[] throwables = {null};
+
+        Log.d(TAG, "CDFS Service: Delete");
+
+        mCDFS.requiresDriveClientNonNull();
+
+        return deleter.execute();
+    }
+
+    IDeleteProgressListener defaultDeleteProgressListener = new IDeleteProgressListener() {
+        @Override
+        public void progressChanged(Delete deleter) {
+            //Log.d(TAG, "Download progress " + deleter.getState());
+        }
+
+    };
+
 }

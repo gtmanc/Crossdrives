@@ -1,6 +1,7 @@
 package com.crossdrives.cdfs.data;
 
 import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
@@ -20,7 +21,7 @@ public class FileLocal implements IFileCreation {
     private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;
-    CDFS mCDFS;
+    Context mContext;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     /*
@@ -30,8 +31,7 @@ public class FileLocal implements IFileCreation {
      */
     private boolean msTaskfinished = false;
 
-
-    public FileLocal(CDFS cdfs) { mCDFS = cdfs;    }
+    public FileLocal(Context context) { mContext = context;}
 
     /*
         Create file in app's directory "/"
@@ -46,7 +46,7 @@ public class FileLocal implements IFileCreation {
         java.io.File filePath = null;
         try {
             createTextFile(name, content);
-            filePath = new java.io.File(mCDFS.getContext().getFilesDir() + "/" + name);
+            filePath = new java.io.File(mContext.getFilesDir() + "/" + name);
         } catch (IOException e) {
             Log.w(TAG, e.getMessage());
         }
@@ -80,7 +80,7 @@ public class FileLocal implements IFileCreation {
          *  we have nothing to hide in our file */
         FileOutputStream fOut = null;
 
-            fOut = mCDFS.getContext().openFileOutput(path, Activity.MODE_PRIVATE);
+            fOut = mContext.openFileOutput(path, Activity.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             // Write the string to the file
             osw.write(content);
@@ -103,7 +103,7 @@ public class FileLocal implements IFileCreation {
         String s;
 
         try {
-            fIn = mCDFS.getContext().openFileInput(path);
+            fIn = mContext.openFileInput(path);
             InputStreamReader isr = new InputStreamReader(fIn);
             BufferedReader inputReader = new BufferedReader(isr);
             /* Prepare a char-Array that will

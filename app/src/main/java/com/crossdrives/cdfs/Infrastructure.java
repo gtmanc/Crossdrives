@@ -11,6 +11,7 @@ import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
 import com.crossdrives.driveclient.model.MediaData;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -226,7 +227,7 @@ public class Infrastructure{
             if(result.file == null){
                 String json;
                 File fileMetadata = new File();
-                FileLocal fc = new FileLocal(mCDFS);
+                FileLocal fc = new FileLocal(SnippetApp.getAppContext());
                 AllocManager am = new AllocManager(mCDFS);
                 /*
                     Generate local allocation file in the folder create at previous stage.

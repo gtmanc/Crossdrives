@@ -8,13 +8,12 @@ import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
 import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitAllCallback;
-import com.crossdrives.cdfs.allocation.ISplitCallback;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.Splitter;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
-import com.crossdrives.cdfs.model.updateContent;
+import com.crossdrives.cdfs.model.UpdateContent;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
@@ -36,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -447,10 +445,10 @@ public class Upload {
 
 
             Log.d(TAG, "generate local map files...");
-            HashMap<String, updateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
+            HashMap<String, UpdateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
                 Gson gson = new Gson();
-                FileLocal creator = new FileLocal(mCDFS);
-                updateContent content = new updateContent();
+                FileLocal creator = new FileLocal(mCDFS.getContext());
+                UpdateContent content = new UpdateContent();
                 content.setID(mapIDFuture.join().get(driveName).getId());
                 String localMapName = driveName + "_map.txt";
                 content.setMediaContent(creator.create(localMapName, gson.toJson(container)));

@@ -4,7 +4,7 @@ import com.google.api.client.http.FileContent;
 
 import java.io.File;
 
-public class updateContent {
+public class UpdateContent {
     String ID;
     java.io.File mediaContent;
 

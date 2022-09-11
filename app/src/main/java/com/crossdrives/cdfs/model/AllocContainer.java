@@ -14,4 +14,6 @@ public class AllocContainer {
     public List<AllocationItem> getAllocItem(){return items;}
     public void addItem(AllocationItem item){this.items.add(item);}
     public void addItems(Collection<AllocationItem> items){this.items.addAll(items);}
+    public void removeItem(AllocationItem item){this.items.remove(item);}
+    public void removeItems(Collection<AllocationItem> items){this.items.removeAll(items);}
 }
