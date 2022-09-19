@@ -1086,9 +1086,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 							/*
 								Next 3 lines of code are used only if you want to use test file for upload
 							 */
-							//name = "TestFile";
-							//in = new TestFileGenerator(name, 8*1024*1024).run();
-							//in = getContext().openFileInput(name);
+							name = "TestFile";
+							in = new TestFileGenerator(name, 8*1024*1024).run();
+							in = getContext().openFileInput(name);
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());
 

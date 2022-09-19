@@ -6,7 +6,6 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
-import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Delay;
@@ -67,9 +66,12 @@ public class Delete {
 
                 result.setId(mFileID);
                 HashMap<String, AllocContainer> updatedMaps = removeNotMatched(maps, mFileID);
-                HashMap<String, Collection<String>> toDeleteList = toList(maps, mFileID);
+                Log.d(TAG, "Not matched removed: " + updatedMaps);
+                printListContainer(updatedMaps);
+                HashMap<String, Collection<AllocationItem>> toDeleteList = toList(maps, mFileID);
 
-                printDeleteList(updatedMaps, toDeleteList);
+                //printCollectionString(toDeleteList);
+                //printDeleteList(updatedMaps, toDeleteList);
 
                 //Update the allocation map files
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
@@ -84,11 +86,11 @@ public class Delete {
                     String driveName = set.getKey();
                     CompletableFuture<String> deletionThread = CompletableFuture.supplyAsync(()->{
                         AtomicInteger runningDeletion = new AtomicInteger();
-                        ArrayList<String> list = new ArrayList<>(set.getValue());
-                        LinkedBlockingDeque<String> toDeleteQ = new LinkedBlockingDeque<>();
+                        ArrayList<AllocationItem> list = new ArrayList<>(set.getValue());
+                        LinkedBlockingDeque<AllocationItem> toDeleteQ = new LinkedBlockingDeque<>();
                         //to deal with the case that number of element is more than size of queue.
                         toDeleteQ.addAll(set.getValue());
-                        toDeleteQ.add(POISON_PILL);
+                        toDeleteQ.add(null);
                         //iterate until all of the deletion threads have been submitted
                         while(!toDeleteQ.isEmpty()) {
                             if(runningDeletion.get() > MAX_CHUNK){
@@ -97,13 +99,22 @@ public class Delete {
                             }
 
                             CompletableFuture<File> future;
+                            AllocationItem item = null;
                             try {
-                                future = delete(set.getKey(), toDeleteQ.take());
+                                item = toDeleteQ.take();
                             } catch (InterruptedException e) {
                                 exceptions.add(e);
                                 Log.w(TAG, e.getMessage());
                                 return null;
                             }
+                            if(item == null){
+                                Log.d(TAG, "End of list.");
+                                if(!toDeleteQ.isEmpty()) {
+                                    Log.w(TAG, "Warning! Queue is not empty.");
+                                }
+                                return null;
+                            }
+                            future = delete(set.getKey(), item);
                             runningDeletion.getAndIncrement();
                             future.thenAccept((file) -> {
                                 Log.d(TAG, "Item deleted. Drive: " + driveName + ". Item: " + file.getName());
@@ -138,25 +149,30 @@ public class Delete {
         return task;
     }
 
-    //remove the items which matches the specified ID
-    //If there is no item matched in a drive, the entry set is removed
     HashMap<String, AllocContainer> removeNotMatched(HashMap<String, OutputStream> maps, String id){
-        Map<String, OutputStream> reduced = maps.entrySet().stream().filter((set)->{
-            AllocContainer container = AllocManager.toContainer(set.getValue());
-            return container.getAllocItem().stream().anyMatch((item)->{return item.equals(id);});
-        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+        //Remove the entry set which contains no item matched.
+//        Log.d(TAG, "ID to remove: " + id);
+//        Map<String, OutputStream> reduced = maps.entrySet().stream().filter((set)->{
+//            AllocContainer container = AllocManager.toContainer(set.getValue());
+//            return container.getAllocItem().stream().anyMatch((item)->{
+//                Log.d(TAG, "Item matched. CDFS ID: " + item.getCdfsId());
+//                return !item.getCdfsId().equals(id);});
+//        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+//        Log.d(TAG, "Reduced: " + reduced);
 
-        HashMap<String, OutputStream> reducedMaps = new HashMap<>(reduced);
-        HashMap<String, AllocContainer> mapped = Mapper.reValue(reducedMaps, (stream)->{
+//        HashMap<String, OutputStream> reducedMaps = new HashMap<>(reduced);
+        HashMap<String, AllocContainer> mapped = Mapper.reValue(maps, (stream)->{
             return AllocManager.toContainer(stream);
         });
 
+        //Remove the entry which is not matched
         HashMap<String, AllocContainer> containers = Mapper.reValue(mapped, (container)->{
             List<AllocationItem> list =
                     container.getAllocItem().stream().filter((item)->{
-                        return !item.getCdfsId().equals(mFileID);
+                        return !item.getCdfsId().equals(id);
                     }).collect(Collectors.toList());
-            AllocContainer newContainer = new AllocContainer();
+
+            AllocContainer newContainer = AllocManager.newAllocContainer();
             newContainer.addItems(list);
             return newContainer;
         });
@@ -164,26 +180,29 @@ public class Delete {
         return containers;
     }
 
-    HashMap<String, Collection<String>> toList(HashMap<String, OutputStream> maps, String id){
+    HashMap<String, Collection<AllocationItem>> toList(HashMap<String, OutputStream> maps, String id){
         Log.d(TAG, "Produce delete list...");
-        HashMap<String, Collection<String>> containers = Mapper.reValue(maps, (stream)->{
+        HashMap<String, Collection<AllocationItem>> containers = Mapper.reValue(maps, (stream)->{
             AllocContainer oldContainer = AllocManager.toContainer(stream);
-            Collection<String> list =
+            Collection<AllocationItem> list =
                     oldContainer.getAllocItem().stream().filter((item)->{
                         return item.getCdfsId().equals(mFileID);
-                    }).map((allocationItem)->{
-                        Log.d(TAG, "item to filter: " + allocationItem.getName());
-                        return allocationItem.getItemId();
-                    }).collect(Collectors.toCollection(ArrayList::new));
+                    })
+//                            .map((allocationItem)->{
+//                        Log.d(TAG, "item to remove: " + allocationItem.getSequence());
+//                        return allocationItem.getItemId();
+//                    })
+                .collect(Collectors.toCollection(ArrayList::new));
             return list;
         });
         return containers;
     }
 
-    CompletableFuture<File> delete(String driveName, String id){
+    CompletableFuture<File> delete(String driveName, AllocationItem item){
         CompletableFuture<File> future = new CompletableFuture<>();
         com.google.api.services.drive.model.File file = new File();
-        file.setId(id);
+        file.setId(item.getItemId());
+        file.se
         mCDFS.getDrives().get(driveName).getClient().delete().buildRequest(file).run(new IDeleteCallBack<File>() {
             @Override
             public void success(File file) {
@@ -196,6 +215,31 @@ public class Delete {
             }
         });
         return future;
+    }
+
+    void printListContainer(HashMap<String, AllocContainer> maps){
+        maps.entrySet().stream().forEach((set)->{
+            String[] allItems = {""};
+            Log.d(TAG, "Drive: " + set.getKey() + ". Size of list:" + set.getValue().getAllocItem().size());
+            set.getValue().getAllocItem().stream().forEach((item)->{
+                allItems[0] = allItems[0].concat(Integer.toString(item.getSequence()));
+                allItems[0] = allItems[0].concat(" ");
+            });
+            Log.d(TAG,  "Seq of items: " + allItems[0]);
+        });
+
+    }
+    void printCollectionString(HashMap<String, Collection<String>> map){
+
+        map.entrySet().stream().forEach((set)->{
+            Log.d(TAG, "Drive: " + set.getKey() + ". Size of collection:" + set.getValue().size());
+            String[] concatenated = {""};
+            set.getValue().stream().forEach((s)->{
+                concatenated[0] = concatenated[0].concat(s);
+                concatenated[0] = concatenated[0].concat(" ");
+            });
+            Log.d(TAG, "IDs: " + concatenated[0]);
+        });
     }
 
     void printDeleteList(HashMap<String, AllocContainer> maps, HashMap<String, Collection<String>> list){

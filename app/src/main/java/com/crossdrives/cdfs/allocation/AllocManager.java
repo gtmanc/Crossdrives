@@ -65,6 +65,8 @@ public class AllocManager implements IAllocManager {
         return result;
     }
 
+    static public int getVersion(){return mVersion;}
+
     /*
         Create a new allocation file
      */
@@ -88,6 +90,12 @@ public class AllocManager implements IAllocManager {
         }
         json = gson.toJson(container);
         return json;
+    }
+
+    static public AllocContainer newAllocContainer(){
+        AllocContainer container = new AllocContainer();
+        container.setVersion(mVersion);
+        return container;
     }
 
     public boolean CheckThenUpdateLocalCopy(String parent, HashMap<String, OutputStream> allocations){
