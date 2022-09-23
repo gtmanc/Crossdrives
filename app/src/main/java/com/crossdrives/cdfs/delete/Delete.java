@@ -84,8 +84,12 @@ public class Delete {
                 //Start to delete the items
                 toDeleteList.entrySet().forEach((set)->{
                     String driveName = set.getKey();
+                    /*
+                        Start deletion threads(futures). The number of threads depends on how many drives registered
+                        Note the threads end when the necessary delete requests are submitted only.
+                     */
                     CompletableFuture<String> deletionThread = CompletableFuture.supplyAsync(()->{
-                        AtomicInteger runningDeletion = new AtomicInteger();
+                        AtomicInteger NumDeletionFutures = new AtomicInteger();
                         ArrayList<AllocationItem> list = new ArrayList<>(set.getValue());
                         LinkedBlockingDeque<AllocationItem> toDeleteQ = new LinkedBlockingDeque<>();
                         //to deal with the case that number of element is more than size of queue.
@@ -93,12 +97,12 @@ public class Delete {
                         toDeleteQ.add(null);
                         //iterate until all of the deletion threads have been submitted
                         while(!toDeleteQ.isEmpty()) {
-                            if(runningDeletion.get() > MAX_CHUNK){
+                            if(NumDeletionFutures.get() > MAX_CHUNK){
                                 Delay.delay(1000);
                                 continue;
                             }
 
-                            CompletableFuture<File> future;
+                            CompletableFuture<com.crossdrives.driveclient.model.File> future;
                             AllocationItem item = null;
                             try {
                                 item = toDeleteQ.take();
@@ -115,10 +119,10 @@ public class Delete {
                                 return null;
                             }
                             future = delete(set.getKey(), item);
-                            runningDeletion.getAndIncrement();
+                            NumDeletionFutures.getAndIncrement();
                             future.thenAccept((file) -> {
-                                Log.d(TAG, "Item deleted. Drive: " + driveName + ". Item: " + file.getName());
-                                runningDeletion.getAndDecrement();
+                                Log.d(TAG, "Item deleted. Drive: " + driveName + ". Item: " + file.getFile().getName());
+                                NumDeletionFutures.getAndDecrement();
                             }).exceptionally(ex->{
                                 exceptions.add(new Throwable(ex));
                                 Log.w(TAG, ex);
@@ -131,17 +135,18 @@ public class Delete {
                     futures.put(driveName, deletionThread);
                 });
 
-                if(!exceptions.isEmpty()){
-                    throw new CompletionException("",exceptions.stream().findAny().get());
-                }
-
                 futures.entrySet().stream().forEach((set)->{
                     set.getValue().join();
                 });
 
+                /*
+                    Wait until all the delete requests are done
+                */
+
                 if(!exceptions.isEmpty()){
                     throw new CompletionException("",exceptions.stream().findAny().get());
                 }
+
                 return result;
             }
         });
@@ -198,14 +203,15 @@ public class Delete {
         return containers;
     }
 
-    CompletableFuture<File> delete(String driveName, AllocationItem item){
-        CompletableFuture<File> future = new CompletableFuture<>();
-        com.google.api.services.drive.model.File file = new File();
-        file.setId(item.getItemId());
-        file.se
-        mCDFS.getDrives().get(driveName).getClient().delete().buildRequest(file).run(new IDeleteCallBack<File>() {
+    CompletableFuture<com.crossdrives.driveclient.model.File> delete(String driveName, AllocationItem item){
+        CompletableFuture<com.crossdrives.driveclient.model.File> future = new CompletableFuture<>();
+        //com.google.api.services.drive.model.File file = new File();
+        com.crossdrives.driveclient.model.File file = new com.crossdrives.driveclient.model.File();
+        file.getFile().setId(item.getItemId());
+        file.setInteger(item.getSequence());
+        mCDFS.getDrives().get(driveName).getClient().delete().buildRequest(file).run(new IDeleteCallBack<com.crossdrives.driveclient.model.File>() {
             @Override
-            public void success(File file) {
+            public void success(com.crossdrives.driveclient.model.File file) {
                 future.complete(file);
             }
 

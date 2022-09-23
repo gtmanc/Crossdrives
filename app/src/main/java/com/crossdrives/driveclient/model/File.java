@@ -10,6 +10,12 @@ public class File {
      */
     java.io.File originalLocalFile;
 
+    /*
+        Addtional user data
+     */
+    Integer integer;
+    String string;
+
     public com.google.api.services.drive.model.File getFile() {
         return file;
     }
@@ -24,6 +30,22 @@ public class File {
 
     public void setOriginalLocalFile(java.io.File originalLocalFile) {
         this.originalLocalFile = originalLocalFile;
+    }
+
+    public Integer getInteger() {
+        return integer;
+    }
+
+    public String getString() {
+        return string;
+    }
+
+    public void setInteger(Integer integer) {
+        this.integer = integer;
+    }
+
+    public void setString(String string) {
+        this.string = string;
     }
 }
 

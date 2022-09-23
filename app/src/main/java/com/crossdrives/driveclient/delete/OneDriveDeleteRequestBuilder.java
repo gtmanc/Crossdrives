@@ -2,7 +2,7 @@ package com.crossdrives.driveclient.delete;
 
 import com.crossdrives.driveclient.BaseRequestBuilder;
 import com.crossdrives.driveclient.OneDriveClient;
-import com.google.api.services.drive.model.File;
+import com.crossdrives.driveclient.model.File;
 
 public class OneDriveDeleteRequestBuilder extends BaseRequestBuilder implements IDeleteRequestBuilder{
     OneDriveClient mClient;

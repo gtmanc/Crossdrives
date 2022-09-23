@@ -1,6 +1,6 @@
 package com.crossdrives.driveclient.delete;
 
-import com.google.api.services.drive.model.File;
+import com.crossdrives.driveclient.model.File;
 
 public interface IDeleteRequestBuilder {
 
