@@ -370,10 +370,13 @@ public class Infrastructure{
 //                Log.w(TAG, "No root allocation file in cdfs folder!");
 //            }
 //        }
-        if(fileList.getFiles().size() > 0) {Log.d(TAG, "Files found in CDFS folder.");}
+        int num = fileList.getFiles().size();
+        if(num > 0) {Log.d(TAG, "Files found in CDFS folder. Number of file: " + num);}
 
         files = fileList.getFiles().stream().filter((file)->{
-            return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ?  true : false;
+            String name = file.getName();
+            Log.d(TAG, "File found: " + name);
+            return name.compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ?  true : false;
         }).findAny();
         if(!files.isPresent()){Log.w(TAG, "No root allocation file presents!");}
         files.ifPresent((file) -> {
