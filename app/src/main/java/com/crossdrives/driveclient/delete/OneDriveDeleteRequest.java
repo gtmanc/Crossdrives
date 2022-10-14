@@ -24,10 +24,12 @@ public class OneDriveDeleteRequest extends BaseRequest implements IDeleteRequest
                 .buildRequest()
                 .delete();
 
+        f.setString(mMetaData.getString());
+        f.setInteger(mMetaData.getInteger());
+
         //Some fields in the returned item could be null. e.g. name, id and so on.
         if(item != null){
-            f.setString(mMetaData.getString());
-            f.setInteger(mMetaData.getInteger());
+
             //f.getFile().setId(item.id);
             Log.d(TAG, "Resulting response. name: " + item.name + " id: " + item.id);
             callback.success(f);

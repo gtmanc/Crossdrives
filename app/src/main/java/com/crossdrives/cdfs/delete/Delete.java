@@ -47,6 +47,11 @@ public class Delete {
         mListener = listener;
     }
 
+    class Response{
+        com.crossdrives.driveclient.model.File file;
+        Throwable throwable;
+    }
+
     public Task<File> execute(){
         Task<File> task;
 
@@ -71,6 +76,7 @@ public class Delete {
                 HashMap<String, Collection<AllocationItem>> toDeleteList = toList(maps, mFileID);
                 //we allocate the queue in the main working thread because it could be used for retry.
                 HashMap<String, LinkedBlockingDeque<AllocationItem>> remainingQ = new HashMap<>();
+                HashMap<String, Collection<AllocationItem>> remainingListMap = new HashMap<>();
                 //printCollectionString(toDeleteList);
                 //printDeleteList(updatedMaps, toDeleteList);
 
@@ -86,7 +92,7 @@ public class Delete {
                 toDeleteList.entrySet().forEach((set)->{
                     String driveName = set.getKey();
                     Log.d(TAG, "Start to delete items in drive[" + driveName + "]. Number of item to delete: " + set.getValue().size());
-                    int[] countSucceed = {0};
+                    int[] countSucceed = {0}, countFailed = {0};
                     /*
                         Start deletion threads(futures). The number of threads depends on how many drives registered
                         Note the threads end when the necessary delete requests are submitted only.
@@ -97,6 +103,8 @@ public class Delete {
                         LinkedBlockingDeque<AllocationItem> toDeleteQ = new LinkedBlockingDeque<>();
                         //to deal with the case that number of element is more than size of queue.
                         toDeleteQ.addAll(set.getValue());
+                        Collection<AllocationItem> remainingList = set.getValue().stream().collect(Collectors.toCollection(ArrayList::new));
+                        remainingListMap.put(driveName, remainingList);
                         toDeleteQ.add(PoisonPill());
                         //iterate until all of the deletion threads have been submitted
                         while(!toDeleteQ.isEmpty()) {
@@ -104,9 +112,10 @@ public class Delete {
                                 Log.d(TAG, "Running deletion futures overs the max[" + MAX_CHUNK + "]");
                                 Delay.delay(1000);
                                 continue;
-                            }else{
-                                Log.d(TAG, "Running deletion futures: " + NumRunningDeletionFutures.get());
                             }
+//                            else{
+//                                Log.d(TAG, "Running deletion futures: " + NumRunningDeletionFutures.get());
+//                            }
 
                             CompletableFuture<com.crossdrives.driveclient.model.File> future;
                             AllocationItem item = null;
@@ -126,34 +135,49 @@ public class Delete {
                             }
                             NumRunningDeletionFutures.incrementAndGet();
                             future = delete(set.getKey(), item);
+                            //Log.d(TAG, "Returned from delete().");
                             future.thenAccept((file) -> {
                                 Log.d(TAG, "Item deleted OK. Drive: " + driveName + ". Seq: " + file.getInteger());
-                                NumRunningDeletionFutures.getAndDecrement();
+                                AllocationItem found = remainingList.stream().filter((r)->
+                                {return (r.getSequence() == file.getInteger());}).findAny().get();
+                                if(!remainingList.remove(found)){
+                                    Log.w(TAG, "Item may not removed from remaining list as expctedly!");
+                                }
+
                                 countSucceed[0]++;
+                            })
+                            .exceptionally(ex->{
+                                exceptions.add(new Throwable(ex));
+                                Log.w(TAG, ex);
+                                countFailed[0]++;
+                                return null;
+                            }).whenComplete((r,e)->{
+                                //Log.d(TAG, "whenCompleted. deletion futures: " + NumRunningDeletionFutures.get());
+                                NumRunningDeletionFutures.getAndDecrement();
                             });
-//                            .exceptionally(ex->{
-//                                exceptions.add(new Throwable(ex));
-//                                Log.w(TAG, ex);
+                            //Log.d(TAG, "set future callback OK.");
+//                            future.handle((file, t)->{
+//                                Log.d(TAG, "Failed to delete item. Drive: " + driveName + ". Item: " + file.getFile().getName());
+//                                NumRunningDeletionFutures.getAndDecrement();
+//                                AllocationItem ai = getAiFromFile(file);
+//                                remainingQ.get(driveName).add(ai);
 //                                return null;
 //                            });
-                            future.handle((file, t)->{
-                                Log.d(TAG, "Failed to delete item. Drive: " + driveName + ". Item: " + file.getFile().getName());
-                                NumRunningDeletionFutures.getAndDecrement();
-                                AllocationItem ai = getAiFromFile(file);
-                                remainingQ.get(driveName).add(ai);
-                                return null;
-                            });
                         }
                         /*
                             Wait until all the delete requests are done
                         */
                         int expected = set.getValue().size();
                         Wait wait = new Wait(expected);
-                        while(!wait.isCompleted(countSucceed[0], remainingQ.size()));
+                        while(!wait.isCompleted(countSucceed[0], countFailed[0]));
                         Log.d(TAG, "Deletion completed. Drive[ " + set.getKey() + "]");
                         return null;    //Just a placeholder for the result
                     });
-
+                    /*
+                        TODO: deal with the two cases that orphen drive items are left:
+                        1. The deletion thread completes with error
+                        2. Terminated with excpetionally of Deletion thread
+                     */
                     deletionThread.exceptionally(ex->{
                         exceptions.add(ex);
                         Log.w(TAG, "Deletion thread: " + ex.getMessage());
@@ -166,8 +190,6 @@ public class Delete {
                 futures.entrySet().stream().forEach((set)->{
                     set.getValue().join();
                 });
-
-
 
                 if(!exceptions.isEmpty()){
                     throw new CompletionException("",exceptions.stream().findAny().get());
@@ -250,12 +272,12 @@ public class Delete {
     }
 
     CompletableFuture<com.crossdrives.driveclient.model.File> delete(String driveName, AllocationItem item){
+        Log.d(TAG, "Submit request to drive client. drive:" + driveName + ". Seq:" + item.getSequence() + ".");
         CompletableFuture<com.crossdrives.driveclient.model.File> future = new CompletableFuture<>();
         //com.google.api.services.drive.model.File file = new File();
         com.crossdrives.driveclient.model.File file;
-//        file.getFile().setId(item.getItemId());
-//        file.setInteger(item.getSequence());
-        Log.d(TAG, "Submit request to drive client. drive:" + driveName + ". Seq:" + item.getSequence() + ".");
+
+        Log.d(TAG, "future created.");
         file = setAiToFile(item);
         mCDFS.getDrives().get(driveName).getClient().delete().buildRequest(file).run(new IDeleteCallBack<com.crossdrives.driveclient.model.File>() {
             @Override

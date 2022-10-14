@@ -16,11 +16,11 @@ public class GoogleDriveDeleteRequest extends BaseRequest implements IDeleteRequ
 
     @Override
     public void run(IDeleteCallBack<com.crossdrives.driveclient.model.File> callback) {
+        com.crossdrives.driveclient.model.File f = new com.crossdrives.driveclient.model.File();
+        f.setString(mMetaData.getString());
+        f.setInteger(mMetaData.getInteger());
         try {
             mClient.getGoogleDriveService().files().delete(mMetaData.getFile().getId()).execute();
-            com.crossdrives.driveclient.model.File f = new com.crossdrives.driveclient.model.File();
-            f.setString(mMetaData.getString());
-            f.setInteger(mMetaData.getInteger());
             callback.success(f);
         } catch (IOException e) {
             //e.printStackTrace();

@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -238,6 +239,8 @@ public class Upload {
 
                     ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
                     LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
+                    List list = Arrays.asList(toUploadQueueMap.get(driveName).toArray());
+                    remainingQueue.addAll(new ArrayList<File>(list));
                     if(cdfsFolder == null){
                         Log.w(TAG, "CDFS folder is missing! Drive: " + driveName);
                         future.completeExceptionally(new Throwable("CDFS folder is missing. Drive: " + driveName));
@@ -288,13 +291,16 @@ public class Upload {
                                         progressTotalUploaded++;
                                         callback(State.MEDIA_IN_PROGRESS);
                                         toFreeupQueue.add(file.getOriginalLocalFile());
+                                        List l = Arrays.asList(remainingQueue.toArray());
+                                        Collection<File> collection = new ArrayList<File>(l);
+                                        remainingQueue.remove(collection.stream().filter((e)->{return e.getName().equals(item.getName());}).findAny().get());
                                     }
 
                                     @Override
                                     public void failure(String ex, File originalFile) {
                                         Log.w(TAG, "Slice upload failed! Drive: " + driveName + ". local file: " + originalFile.getName()
                                         + " " + ex);
-                                        remainingQueue.offer(originalFile);
+                                        //remainingQueue.offer(originalFile);
                                         result.errors.add(Error.ERR_UPLOAD_CONTENT);
                                     }
                                 });
