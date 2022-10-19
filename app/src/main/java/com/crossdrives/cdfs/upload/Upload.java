@@ -19,6 +19,7 @@ import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
+import com.crossdrives.cdfs.util.Wait;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.About;
@@ -108,10 +109,14 @@ public class Upload {
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
+            //Both queues need to be global as splitter will use
             HashMap<String, ArrayBlockingQueue<File>> toUploadQueueMap = new HashMap<>();
+            HashMap<String, LinkedBlockingQueue<File>> remainingQueueMap = new HashMap<>();
             drives.keySet().forEach((driveName)->{
                 ArrayBlockingQueue<File> toUploadQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
+                LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
                 toUploadQueueMap.put(driveName, toUploadQueue);
+                remainingQueueMap.put(driveName, remainingQueue);
             });
 
             callback(State.GET_REMOTE_QUOTA_STARTED);
@@ -168,6 +173,7 @@ public class Upload {
                     AllocationItem item = new AllocationItem();
                     Log.d(TAG, "Split progress. Drive: " + driveName + ". Name: " + slice.getName());
                     toUploadQueueMap.get(driveName).add(slice);
+                    remainingQueueMap.get(driveName).add(slice);    //the added item will be removed once upload successes
 
                     int slicePerDrive = totalSlicePerDrive.get(driveName);
                     slicePerDrive++;
@@ -238,9 +244,7 @@ public class Upload {
                     InterMediateResult result = new InterMediateResult();
 
                     ArrayBlockingQueue<File> toFreeupQueue = new ArrayBlockingQueue<>(MAX_CHUNK);
-                    LinkedBlockingQueue<File> remainingQueue = new LinkedBlockingQueue<>();
-                    List list = Arrays.asList(toUploadQueueMap.get(driveName).toArray());
-                    remainingQueue.addAll(new ArrayList<File>(list));
+                    int[] cntFailed = {0};
                     if(cdfsFolder == null){
                         Log.w(TAG, "CDFS folder is missing! Drive: " + driveName);
                         future.completeExceptionally(new Throwable("CDFS folder is missing. Drive: " + driveName));
@@ -260,7 +264,7 @@ public class Upload {
                         File localFile = null;
                         try {
                             localFile = toUploadQueueMap.get(driveName).take();
-                        } catch (InterruptedException e) {
+                        }catch (InterruptedException e) {
                             result.errors.add(Error.ERR_QUEUE_TAKE);
                             break;
                         }
@@ -291,9 +295,14 @@ public class Upload {
                                         progressTotalUploaded++;
                                         callback(State.MEDIA_IN_PROGRESS);
                                         toFreeupQueue.add(file.getOriginalLocalFile());
-                                        List l = Arrays.asList(remainingQueue.toArray());
-                                        Collection<File> collection = new ArrayList<File>(l);
-                                        remainingQueue.remove(collection.stream().filter((e)->{return e.getName().equals(item.getName());}).findAny().get());
+                                        LinkedBlockingQueue<File> remainingQueue = remainingQueueMap.get(driveName);
+//                                        List l = Arrays.asList(remainingQueue.toArray());
+//                                        Collection<File> collection = new ArrayList<File>(l);
+//                                        remainingQueue.remove(collection.stream().filter((e)->{
+//                                            return e.getName().equals(file.getOriginalLocalFile().getName());}).findAny().get());
+                                        if(!com.crossdrives.cdfs.util.Collection.removeByName(remainingQueue, file.getOriginalLocalFile().getName())){
+                                            Log.w(TAG, "Item may not removed from remaining list as expectedly!");
+                                        }
                                     }
 
                                     @Override
@@ -301,6 +310,7 @@ public class Upload {
                                         Log.w(TAG, "Slice upload failed! Drive: " + driveName + ". local file: " + originalFile.getName()
                                         + " " + ex);
                                         //remainingQueue.offer(originalFile);
+                                        cntFailed[0]++;
                                         result.errors.add(Error.ERR_UPLOAD_CONTENT);
                                     }
                                 });
@@ -308,7 +318,10 @@ public class Upload {
 
                     Log.d(TAG, "Drive: " + driveName + ". slice upload is scheduled but not yet completed!");
 
-                    while(!isUploadCompleted(totalSlicePerDrive.get(driveName), toFreeupQueue, remainingQueue));
+                    Wait wait = new Wait(totalSlicePerDrive.get(driveName));
+                    while(!wait.isCompleted(toFreeupQueue.size(), cntFailed[0]));
+
+                    //while(!isUploadCompleted(totalSlicePerDrive.get(driveName), toFreeupQueue, cntFailed[0]));
 
                     Log.d(TAG, "Drive: " + driveName + ". slice upload is completed!");
 
@@ -317,7 +330,7 @@ public class Upload {
                     //It's okay to give a empty collection if there is no item in the queue. i.e. upload
                     //is terminated at the beginning.
                     splitter.cleanup(collection);
-                    remainingQueue.drainTo(collection);
+                    remainingQueueMap.get(driveName).drainTo(collection);
                     splitter.cleanup(collection);
 
                     //extract the items for the drive
@@ -338,18 +351,11 @@ public class Upload {
                     Log.w(TAG, "Completed with exception in folder check: " + ex.toString());
 
                     return null;
-                }).handle((s, t) ->{
-                    Log.w(TAG, "Exception occurred in folder check: " + t.toString());
-
-                    return null;
                 });
 
                 CommitAllocationMapFuture.exceptionally(ex ->{
                     Log.w(TAG, "Completed with exception in CommitAllocationMapFuture: " + ex.toString());
 
-                    return null;
-                }).handle((s, t) ->{
-                    Log.w(TAG, "Exception occurred in CommitAllocationMapFuture: " + t.toString());
                     return null;
                 });
 
