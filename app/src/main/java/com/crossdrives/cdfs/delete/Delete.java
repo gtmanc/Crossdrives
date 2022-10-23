@@ -6,6 +6,8 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
+import com.crossdrives.cdfs.download.Download;
+import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Delay;
@@ -38,7 +40,22 @@ public class Delete {
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
     final int MAX_CHUNK = 10;
 
+    /*
+        Progress states
+     */
+    public enum State{
+        GET_MAP_STARTED,
+        GET_MAP_COMPLETE,
+        MAP_UPDATE_STARTED,
+        MAP_UPDATE_COMPLETE,
+        DELETION_IN_PROGRESS,
+        DELETION_COMPLETE,
+    }
+
+    Delete.State mState;
     IDeleteProgressListener mListener;
+    int progressTotalSegment = 0;
+    int progressTotalDeleted = 0;
 
     public Delete(CDFS cdfs, String id, String parent, IDeleteProgressListener listener) {
         this.mCDFS = cdfs;
@@ -63,10 +80,12 @@ public class Delete {
                 Collection<Throwable> exceptions = new ArrayList<>();
                 HashMap<String, CompletableFuture<String>> futures = new HashMap<>();
                 Log.d(TAG, "Fetch map...");
+                callback(State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
                 CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
+                callback(State.GET_MAP_COMPLETE);
 
                 result.setId(mFileID);
                 HashMap<String, AllocContainer> updatedMaps = removeNotMatched(maps, mFileID);
@@ -80,15 +99,18 @@ public class Delete {
                 //printCollectionString(toDeleteList);
                 //printDeleteList(updatedMaps, toDeleteList);
 
+                callback(State.MAP_UPDATE_STARTED);
                 //Update the allocation map files
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
                         = updater.updateAll(updatedMaps, mParent);
                 updateFuture.join();
+                callback(State.MAP_UPDATE_COMPLETE);
 
                 //TODO: deal with once error occurs from now on. i.e. Orphen content file in remote drives.
                 //Start to delete the items
+                callback(State.DELETION_IN_PROGRESS);
                 toDeleteList.entrySet().forEach((set)->{
                     String driveName = set.getKey();
                     Log.d(TAG, "Start to delete items in drive[" + driveName + "]. Number of item to delete: " + set.getValue().size());
@@ -190,6 +212,7 @@ public class Delete {
                 futures.entrySet().stream().forEach((set)->{
                     set.getValue().join();
                 });
+                callback(State.DELETION_COMPLETE);
 
                 if(!exceptions.isEmpty()){
                     throw new CompletionException("",exceptions.stream().findAny().get());
@@ -336,4 +359,14 @@ public class Delete {
         return ai;
     }
 
+
+    void callback(Delete.State state){
+        mState = state;
+        mListener.progressChanged(this);
+    }
+    public Delete.State getState(){return mState;}
+
+    public int getProgressMax(){return progressTotalSegment;}
+
+    public int getProgressCurrent(){return progressTotalDeleted;}
 }

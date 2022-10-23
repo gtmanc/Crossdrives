@@ -1,4 +1,4 @@
-package com.crossdrives.ui;
+package com.crossdrives.ui.notification;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -23,7 +23,8 @@ public class Notification {
     public enum Category {
         NOTIFY_UPLOAD (0),
         NOTIFY_DOWNLOAD(1),
-        NOTIFY_MESSAGE(2);
+        NOTIFY_DELETE(2),
+        NOTIFY_MESSAGE(3);
 
         int mChannelID;
 

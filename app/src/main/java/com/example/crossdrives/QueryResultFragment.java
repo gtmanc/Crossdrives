@@ -44,7 +44,7 @@ import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.test.TestFileGenerator;
 import com.crossdrives.test.TestFileIntegrityChecker;
-import com.crossdrives.ui.Notification;
+import com.crossdrives.ui.notification.Notification;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
@@ -61,19 +61,16 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
-import com.microsoft.graph.models.SearchResult;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
