@@ -11,7 +11,7 @@ public class File {
     java.io.File originalLocalFile;
 
     /*
-        Addtional user data
+        Additional user data
      */
     Integer integer;
     String string;

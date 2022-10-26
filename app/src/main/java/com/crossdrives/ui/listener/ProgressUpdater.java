@@ -1,4 +1,4 @@
-package com.crossdrives.ui.notification;
+package com.crossdrives.ui.listener;
 
 import android.content.Context;
 import android.util.Log;
@@ -16,25 +16,21 @@ import com.example.crossdrives.R;
 import java.util.HashMap;
 
 public class ProgressUpdater {
-    final String TAG = "ProgressUpdater";
+    final String TAG = "CD.ProgressUpdater";
 
     HashMap<IUploadProgressListener, Notification> mNotificationsByUploadListener = new HashMap<>();
     HashMap<IDownloadProgressListener, Notification> mNotificationsByDownloadListener = new HashMap<>();
     Context context = SnippetApp.getAppContext();
 
-    IUploadProgressListener createUploadListener(){
-        Notification notification
-                = new Notification(Notification.Category.NOTIFY_UPLOAD, R.drawable.ic_baseline_cloud_circle_24);
-        notification.setContentTitle(context.getString(R.string.notification_title_uploading));
-        notification.setContentText(context.getString(R.string.notification_content_default));
-        notification.build();
+    public IUploadProgressListener createUploadListener(Notification notification){
 
         IUploadProgressListener uploadListener = new IUploadProgressListener() {
             @Override
             public void progressChanged(Upload uploader) {
-                Notification notification;
+                //Notification notification;
                 Upload.State state = uploader.getState();
-                notification = mNotificationsByUploadListener.get(this);
+                //notification = mNotificationsByUploadListener.get(this);
+                //Log.d(TAG, "[Upload Notification]: called");
                 if (state == Upload.State.GET_REMOTE_QUOTA_STARTED) {
                     Log.d(TAG, "[Notification]:fetching remote maps...");
                     notification.updateContentText(context.getString(R.string.notification_content_upload_start_get_quota));
@@ -58,25 +54,20 @@ public class ProgressUpdater {
 
         };
 
-        mNotificationsByUploadListener.put(uploadListener, notification);
+        //mNotificationsByUploadListener.put(uploadListener, notification);
         return uploadListener;
     }
 
 
-    IDownloadProgressListener createDownloadListener(){
-        Notification notification;
-        notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
-        notification.setContentTitle(context.getString(R.string.notification_title_downloading));
-        notification.setContentText(context.getString(R.string.notification_content_default));
-        notification.build();
+    public IDownloadProgressListener createDownloadListener(Notification notification){
 
         IDownloadProgressListener listener = new IDownloadProgressListener() {
             @Override
             public void progressChanged(Download downloader) {
-                Log.d(TAG, "progressChanged!");
-                Notification notification;
+                Log.d(TAG, "Download progressChanged!");
+                //Notification notification;
                 Download.State state = downloader.getState();
-                notification = mNotificationsByDownloadListener.get(this);
+                //notification = mNotificationsByDownloadListener.get(this);
                 if (state == Download.State.GET_REMOTE_MAP_STARTED) {
                     Log.d(TAG, "[Notification]:fetching remote maps...");
                     notification.updateContentText(context.getString(R.string.notification_content_download_start_fetch_maps));
@@ -85,24 +76,36 @@ public class ProgressUpdater {
                     int current = downloader.getProgressCurrent();
                     int max = downloader.getProgressMax();
                     Log.d(TAG, "[Notification]:download progress. Current " + current + " Max: " + max);
-                    notification.updateContentText(context.getString(R.string.notification_content_download_uploading_file));
+                    notification.updateContentText(context.getString(R.string.notification_content_downloading_file));
                     notification.updateProgress(current, max);
                 }
             }
         };
-        mNotificationsByDownloadListener.put(listener, notification);
+        //mNotificationsByDownloadListener.put(listener, notification);
 
         return listener;
     }
 
-    IDeleteProgressListener createDeleteListener(){
-        Notification notification;
-        notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
+    public IDeleteProgressListener createDeleteListener(Notification notification){
 
         IDeleteProgressListener lisener = new IDeleteProgressListener() {
             @Override
             public void progressChanged(Delete deleter) {
-
+                //Log.d(TAG, "delete progressChanged!");
+                //Notification notification;
+                Delete.State state = deleter.getState();
+                //notification = mNotificationsByDownloadListener.get(this);
+                if (state == Delete.State.GET_MAP_STARTED) {
+                    Log.d(TAG, "[Notification]:fetching remote maps...");
+                    notification.updateContentText(context.getString(R.string.notification_content_delete_start_fetch_maps));
+                }
+                else if(state == Delete.State.DELETION_IN_PROGRESS){
+                    int current = deleter.getProgressCurrent();
+                    int max = deleter.getProgressMax();
+                    Log.d(TAG, "[Notification]:delete in progress. Current " + current + " Max: " + max);
+                    notification.updateContentText(context.getString(R.string.notification_content_deleting_file));
+                    notification.updateProgress(current, max);
+                }
             }
         };
         return lisener;

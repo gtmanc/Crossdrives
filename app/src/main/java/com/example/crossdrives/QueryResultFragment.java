@@ -39,11 +39,13 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.test.TestFileGenerator;
-import com.crossdrives.test.TestFileIntegrityChecker;
+import com.crossdrives.ui.listener.ProgressUpdater;
+import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
@@ -62,9 +64,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -457,7 +457,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(View view, int position){
-			InputStream stream;
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
 			Log.d(TAG, "Short press item:" + position);
 			Log.d(TAG, "Count of selected:" + mSelectedItemCount);
@@ -477,25 +476,23 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					Log.d(TAG, "Start to download file: " + item.mName);
 					//Log.d(TAG, "File ID: " + item.mId);
 					//TODO: open detail of file
-					OnSuccessListener<String> successListener = createDownloadSuccessListener();
-					OnFailureListener failureListener = createDownloadFailureListener();
-					IDownloadProgressListener downloadProgressListener;
-					Notification notification;
-					notification = new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
+					Notification notification
+					= new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
 					notification.setContentTitle(getString(R.string.notification_title_downloading));
 					notification.setContentText(getString(R.string.notification_content_default));
 					notification.build();
-					downloadProgressListener = createDownloadListener();
-					mNotificationsByDownloadListener.put(downloadProgressListener, notification);
-					mDownloadSuccessListener.put(successListener, notification);
-					mDownloadFailedListener.put(failureListener, notification);
+					ResultUpdater resultUpdater = new ResultUpdater();
+					OnSuccessListener<String> successListener = resultUpdater.createDownloadSuccessListener(notification);//createDownloadSuccessListener();
+					OnFailureListener failureListener = resultUpdater.createDownloadFailureListener(notification);
+					IDownloadProgressListener downloadProgressListener = new ProgressUpdater().createDownloadListener(notification);
+//					mNotificationsByDownloadListener.put(downloadProgressListener, notification);
+//					mDownloadSuccessListener.put(successListener, notification);
+//					mDownloadFailedListener.put(failureListener, notification);
 					//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
 					Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
 					if (service != null) {
 						service.setDownloadProgressListener(downloadProgressListener);
 					}
-
-
 					try {
 						service.download(item.getID(), currentFolder).addOnSuccessListener(successListener)
 								.addOnFailureListener(failureListener);
@@ -558,7 +555,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						int current = downloader.getProgressCurrent();
 						int max = downloader.getProgressMax();
 						Log.d(TAG, "[Notification]:download progress. Current " + current + " Max: " + max);
-						notification.updateContentText(getString(R.string.notification_content_download_uploading_file));
+						notification.updateContentText(getString(R.string.notification_content_downloading_file));
 						notification.updateProgress(current, max);
 					}
 				}
@@ -596,32 +593,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				}
 			};
 			return listener;
-		}
-
-		void downloadIntegrityCheck(String name){
-			TestFileIntegrityChecker checker;
-			FileInputStream fis = null;
-			int result = 0;
-			try {
-				fis = SnippetApp.getAppContext().openFileInput(name);
-				checker = new TestFileIntegrityChecker(fis);
-				result = checker.execute(TestFileIntegrityChecker.Pattern.PATTERN_SERIAL_NUM);
-			} catch (IOException e) {
-				e.printStackTrace();
-				Toast.makeText(getContext(), "Error occurred in integrity check: "
-						+ e.getMessage(), Toast.LENGTH_LONG).show();
-			}
-			if(fis != null){
-				try {
-					fis.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			if(result >= 0){
-				Toast.makeText(getContext(), "Integrity check failed. Position: "
-						+ result, Toast.LENGTH_LONG).show();
-			}
 		}
 
 		/*
@@ -994,7 +965,20 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public boolean onMenuItemClick(MenuItem item) {
 			Task task = null;
+			OnSuccessListener<com.crossdrives.driveclient.model.File> deleteSuccessListener;
+			OnFailureListener deleteFailureListener;
+			IDeleteProgressListener progressListener;
+
+			Notification notification
+					= new Notification(Notification.Category.NOTIFY_DELETE, R.drawable.ic_baseline_cloud_circle_24);
+			notification.setContentTitle(getString(R.string.notification_title_deleting));
+			notification.setContentText(getString(R.string.notification_content_default));
+			notification.build();
+			progressListener = new ProgressUpdater().createDeleteListener(notification);
+
 			Service service = CDFS.getCDFSService(getActivity()).getService();
+			service.setDeleteProgressListener(progressListener);
+
 			SerachResultItemModel selectedItem = mItems.stream().findAny().get();
 			Log.d(TAG, "Delete item: " + selectedItem.getName());
 			try {
@@ -1005,7 +989,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				e.printStackTrace();
 				return true;
 			}
-			task.addOnSuccessListener(deleteSuccessListner).
+
+			ResultUpdater resultUpdater = new ResultUpdater();
+			deleteSuccessListener = resultUpdater.createDeleteSuccessListener(notification);
+			deleteFailureListener = resultUpdater.createDeleteFailureListener(notification);
+			task.addOnSuccessListener(deleteSuccessListener).
 			addOnFailureListener(deleteFailureListener);
 			return false;
 		}
@@ -1057,29 +1045,30 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					InputStream in = null;
 					Task task;
 					Service service;
-					IUploadProgressListener uploafListener;
-					OnSuccessListener<File> successListener;
+					IUploadProgressListener uploadListener;
+					OnSuccessListener<com.crossdrives.driveclient.model.File> successListener;
+					OnCompleteListener<Task> completeListener;
 					OnFailureListener failureListener;
 					Notification notification;
 
 					if(result != null) {
-						notification = new Notification(Notification.Category.NOTIFY_UPLOAD, R.drawable.ic_baseline_cloud_circle_24);
-						notification.setContentTitle(getString(R.string.notification_title_uploading));
-						notification.setContentText(getString(R.string.notification_content_default));
-						notification.build();
 						try {
 							in = getActivity().getContentResolver().openInputStream(result);
 						} catch (FileNotFoundException e) {
-							e.printStackTrace();
+							Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+							return;
 						}
+						notification
+								= new Notification(Notification.Category.NOTIFY_UPLOAD, R.drawable.ic_baseline_cloud_circle_24);
+						notification.setContentTitle(getString(R.string.notification_title_uploading));
+						notification.setContentText(getString(R.string.notification_content_default));
+						notification.build();
+
 						file = UriToFile(result);
 						String name = file.getPath();	//Note name is stored in path returned from UriToFile
 						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
 							service = CDFS.getCDFSService(getActivity()).getService();
-							uploafListener = createUploadListener();
-							mNotificationsByUploadListener.put(uploafListener, notification);
-							service.setUploadProgressLisetener(uploafListener);
 							/*
 								Next 3 lines of code are used only if you want to use test file for upload
 							 */
@@ -1091,24 +1080,21 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 							task = service.upload(in, name, currentFolder);
 							InputStream finalIn = in;
-							successListener = createUploadSuccessListner();
-							failureListener = createUploadFailureListner();
-							mNotificationsByUpFailedListener.put(failureListener, notification);
-							mNotificationsByUploadSuccessListener.put(successListener, notification);
-							task.addOnCompleteListener(new OnCompleteListener() {
-								@Override
-								public void onComplete(@NonNull Task task) {
-									Log.w(TAG, "upload completed");
-									//https://stackoverflow.com/questions/16369462/why-is-inputstream-close-declared-to-throw-ioexception
-									try {
-										finalIn.close();
-									} catch (IOException e) {
-										Toast.makeText(SnippetApp.getAppContext(), "Upload Completed with error: "
-												+ e.getMessage(), Toast.LENGTH_SHORT).show();
-									}
-								}
-							}).addOnFailureListener(failureListener)
-							.addOnSuccessListener(successListener);
+							/*
+							* Setup listeners
+							* */
+							uploadListener = new ProgressUpdater().createUploadListener(notification);
+							//mNotificationsByUploadListener.put(uploadListener, notification);
+							service.setUploadProgressLisetener(uploadListener);
+							ResultUpdater resultUpdater = new ResultUpdater();
+							successListener = resultUpdater.createUploadSuccessListener(notification);
+							failureListener = resultUpdater.createUploadFailureListener(notification);
+							completeListener = resultUpdater.createUploadCompleteListener(finalIn);
+//							mNotificationsByUpFailedListener.put(failureListener, notification);
+//							mNotificationsByUploadSuccessListener.put(successListener, notification);
+							task.addOnCompleteListener(completeListener)
+									.addOnFailureListener(failureListener)
+									.addOnSuccessListener(successListener);
 						} catch (Exception e ) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
@@ -1215,6 +1201,4 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 		return new java.io.File(data);
 	}
-
-
 }

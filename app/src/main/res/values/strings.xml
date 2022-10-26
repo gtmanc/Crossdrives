@@ -62,9 +62,17 @@
 
     <string name="notification_title_downloading">Download in progress</string>
     <string name="notification_title_download_completed">Download Completed</string>
-    <string name="notification_content_download_uploading_file">Downloading file</string>
+    <string name="notification_content_downloading_file">Downloading file</string>
     <string name="notification_content_download_start_fetch_maps">Check...</string>
     <string name="notification_content_download_fetch_maps_done">Check OK!</string>
     <string name="notification_content_download_complete">Downloaded successfully</string>
     <string name="notification_content_download_complete_exceptionally">Oops... Something wrong during Download</string>
+
+    <string name="notification_title_deleting">Delete in progress</string>
+    <string name="notification_title_delete_completed">Delete Completed</string>
+    <string name="notification_content_deleting_file">Deleting file</string>
+    <string name="notification_content_delete_start_fetch_maps">Check...</string>
+    <string name="notification_content_delete_fetch_maps_done">Check OK!</string>
+    <string name="notification_content_delete_complete">Delete successfully</string>
+    <string name="notification_content_delete_complete_exceptionally">Oops... Something wrong during Delete</string>
 </resources>

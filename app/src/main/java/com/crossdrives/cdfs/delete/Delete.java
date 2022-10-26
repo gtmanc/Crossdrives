@@ -69,14 +69,14 @@ public class Delete {
         Throwable throwable;
     }
 
-    public Task<File> execute(){
-        Task<File> task;
+    public Task<com.crossdrives.driveclient.model.File> execute(){
+        Task<com.crossdrives.driveclient.model.File> task;
 
-        task = task = Tasks.call(mExecutor, new Callable<File>() {
+        task = Tasks.call(mExecutor, new Callable<com.crossdrives.driveclient.model.File>() {
 
             @Override
-            public File call() throws Exception {
-                File result = new File();
+            public com.crossdrives.driveclient.model.File call() throws Exception {
+                com.crossdrives.driveclient.model.File result = new com.crossdrives.driveclient.model.File();
                 Collection<Throwable> exceptions = new ArrayList<>();
                 HashMap<String, CompletableFuture<String>> futures = new HashMap<>();
                 Log.d(TAG, "Fetch map...");
@@ -87,7 +87,8 @@ public class Delete {
                 Log.d(TAG, "map fetched");
                 callback(State.GET_MAP_COMPLETE);
 
-                result.setId(mFileID);
+                result.setFile(new File());
+                result.getFile().setId(mFileID);
                 HashMap<String, AllocContainer> updatedMaps = removeNotMatched(maps, mFileID);
                 Log.d(TAG, "Not matched items removed. Maps ready to update: " + updatedMaps);
                 Log.d(TAG, "Summary of the map files to update:");

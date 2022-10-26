@@ -54,6 +54,7 @@ public class Service implements IService {
 
     IUploadProgressListener uploadProgressListener;
     IDownloadProgressListener downloadProgressListener;
+    IDeleteProgressListener deleteProgressListener;
 
     @Override
     public Task<com.crossdrives.cdfs.Result> list(Object nextPage) throws MissingDriveClientException, GeneralServiceException {
@@ -225,11 +226,11 @@ public class Service implements IService {
 
     };
 
-    public Task<com.google.api.services.drive.model.File> delete(String fileID, String parent) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> delete(String fileID, String parent) throws MissingDriveClientException, PermissionException {
 
         IDeleteProgressListener listener = defaultDeleteProgressListener;
-        if (defaultDeleteProgressListener != null)
-            listener = defaultDeleteProgressListener;
+        if (deleteProgressListener != null)
+            listener = deleteProgressListener;
 
         Delete deleter = new Delete(mCDFS, fileID, parent, listener);
         final Throwable[] throwables = {null};
@@ -244,9 +245,12 @@ public class Service implements IService {
     IDeleteProgressListener defaultDeleteProgressListener = new IDeleteProgressListener() {
         @Override
         public void progressChanged(Delete deleter) {
-            //Log.d(TAG, "Download progress " + deleter.getState());
+            Log.d(TAG, "Delete in progress " + deleter.getState());
         }
-
     };
+
+    public void setDeleteProgressListener(IDeleteProgressListener listener) {
+        deleteProgressListener = listener;
+    }
 
 }
