@@ -75,4 +75,10 @@
     <string name="notification_content_delete_fetch_maps_done">Check OK!</string>
     <string name="notification_content_delete_complete">Delete successfully</string>
     <string name="notification_content_delete_complete_exceptionally">Oops... Something wrong during Delete</string>
+
+    <!-- Toast messages -->
+    <!-- Action taken -->
+    <string name="toast_action_taken_delete_start">The file is being deleting</string>
+    <string name="toast_action_taken_download_start">The file is being downloading</string>
+    <string name="toast_action_taken_upload_start">The file is being uploading</string>
 </resources>

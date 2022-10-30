@@ -474,6 +474,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						return;
 					}
 					Log.d(TAG, "Start to download file: " + item.mName);
+					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
 					//Log.d(TAG, "File ID: " + item.mId);
 					//TODO: open detail of file
 					Notification notification
@@ -537,62 +538,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//mAdapter.notifyItemChanged(position);
 			mAdapter.notifyDataSetChanged();
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-		}
-
-		IDownloadProgressListener createDownloadListener(){
-			IDownloadProgressListener listener = new IDownloadProgressListener() {
-				@Override
-				public void progressChanged(Download downloader) {
-					Log.d(TAG, "progressChanged!");
-					Notification notification;
-					Download.State state = downloader.getState();
-					notification = mNotificationsByDownloadListener.get(this);
-					if (state == Download.State.GET_REMOTE_MAP_STARTED) {
-						Log.d(TAG, "[Notification]:fetching remote maps...");
-						notification.updateContentText(getString(R.string.notification_content_download_start_fetch_maps));
-					}
-					else if(state == Download.State.MEDIA_IN_PROGRESS){
-						int current = downloader.getProgressCurrent();
-						int max = downloader.getProgressMax();
-						Log.d(TAG, "[Notification]:download progress. Current " + current + " Max: " + max);
-						notification.updateContentText(getString(R.string.notification_content_downloading_file));
-						notification.updateProgress(current, max);
-					}
-				}
-			};
-			return listener;
-		}
-
-		OnSuccessListener<String> createDownloadSuccessListener(){
-			OnSuccessListener<String> listener = new OnSuccessListener<String>() {
-				@Override
-				public void onSuccess(String file) {
-					Notification notification = mDownloadSuccessListener.get(this);
-					notification.removeProgressBar();
-					notification.updateContentTitle(getString(R.string.notification_title_download_completed));
-					notification.updateContentText(getString(R.string.notification_content_download_complete));
-					Log.d(TAG, "file downloaded: " + file);
-					Toast.makeText(getContext(), "file downloaded: " + file, Toast.LENGTH_LONG).show();
-					//downloadIntegrityCheck();
-				}
-			};
-			return listener;
-		}
-
-		OnFailureListener createDownloadFailureListener() {
-			OnFailureListener listener = new OnFailureListener() {
-				@Override
-				public void onFailure(@NonNull Exception e) {
-					Notification notification = mDownloadFailedListener.get(this);
-					Log.w(TAG, "download failed: " + e.getMessage() + e.getCause());
-					Toast.makeText(SnippetApp.getAppContext(), "download Failed: "
-							+ e.getMessage(), Toast.LENGTH_SHORT).show();
-					notification.removeProgressBar();
-					notification.updateContentTitle(getString(R.string.notification_title_download_completed));
-					notification.updateContentText(getString(R.string.notification_content_download_complete_exceptionally));
-				}
-			};
-			return listener;
 		}
 
 		/*
@@ -969,6 +914,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			OnFailureListener deleteFailureListener;
 			IDeleteProgressListener progressListener;
 
+			Toast.makeText(getContext(), getString(R.string.toast_action_taken_delete_start), Toast.LENGTH_LONG).show();
+
 			Notification notification
 					= new Notification(Notification.Category.NOTIFY_DELETE, R.drawable.ic_baseline_cloud_circle_24);
 			notification.setContentTitle(getString(R.string.notification_title_deleting));
@@ -979,7 +926,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Service service = CDFS.getCDFSService(getActivity()).getService();
 			service.setDeleteProgressListener(progressListener);
 
-			SerachResultItemModel selectedItem = mItems.stream().findAny().get();
+			//get the item checked
+			SerachResultItemModel selectedItem = mItems.stream().filter((i)->{
+				return i.isSelected();
+			}).findFirst().get();
+			selectedItem.setSelected(false);
+			if(!mItems.remove(selectedItem)){
+				Log.d(TAG, "Failed to remove item from list!");
+			}
+			mAdapter.notifyDataSetChanged();
+
 			Log.d(TAG, "Delete item: " + selectedItem.getName());
 			try {
 				task = service.delete(selectedItem.getID(),currentFolder);
@@ -995,6 +951,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			deleteFailureListener = resultUpdater.createDeleteFailureListener(notification);
 			task.addOnSuccessListener(deleteSuccessListener).
 			addOnFailureListener(deleteFailureListener);
+
+			mAdapter.setOverflowIconVisible(true);
+			mState = STATE_NORMAL;
+			exitActionMode(getView());
+
 			return false;
 		}
 	};
@@ -1072,9 +1033,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 							/*
 								Next 3 lines of code are used only if you want to use test file for upload
 							 */
-							name = "TestFile";
-							in = new TestFileGenerator(name, 8*1024*1024).run();
-							in = getContext().openFileInput(name);
+//							name = "TestFile";
+//							in = new TestFileGenerator(name, 4*1024*1024).run();
+//							in = getContext().openFileInput(name);
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());
 
@@ -1098,6 +1059,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						} catch (Exception e ) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
+						Toast.makeText(getActivity().getApplicationContext(), getString(R.string.toast_action_taken_upload_start), Toast.LENGTH_LONG).show();
 					}
 				}
 			});

@@ -108,4 +108,19 @@ public class AllocationItem {
     public void setItemId(String itemId) {
         this.itemId = itemId;
     }
+
+    public static AllocationItem clone(AllocationItem item){
+        AllocationItem ai = new AllocationItem();
+        ai.name = item.getName();
+        ai.path = item.getPath();
+        ai.drive = item.getDrive();
+        ai.cdfsId = item.getCdfsId();
+        ai.itemId = item.getItemId();
+        ai.sequence = item.getSequence();
+        ai.totalSeg = item.getTotalSeg();
+        ai.size = item.getSize();
+        ai.CDFSItemSize = item.getCDFSItemSize();
+        ai.folder = item.getAttrFolder();
+        return ai;
+    }
 }

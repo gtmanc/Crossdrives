@@ -18,6 +18,7 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
+import com.crossdrives.cdfs.move.Move;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
@@ -251,6 +252,22 @@ public class Service implements IService {
 
     public void setDeleteProgressListener(IDeleteProgressListener listener) {
         deleteProgressListener = listener;
+    }
+
+    public Task<com.crossdrives.driveclient.model.File> move(String fileID, String parent) throws MissingDriveClientException, PermissionException {
+
+//        IDeleteProgressListener listener = defaultDeleteProgressListener;
+//        if (deleteProgressListener != null)
+//            listener = deleteProgressListener;
+
+        Move mover = new Move(mCDFS, fileID, parent);
+        final Throwable[] throwables = {null};
+
+        Log.d(TAG, "CDFS Service: move");
+
+        mCDFS.requiresDriveClientNonNull();
+
+        return mover.execute();
     }
 
 }
