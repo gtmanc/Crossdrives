@@ -4,10 +4,16 @@
     <string name="app_name">Crossdrives</string>
 
     <string name="search_hint">search drives</string>
+
+    <!--            menu items          -->
+    <!-- Action bar -->
     <string name="actionModeDelete">Delete</string>
     <string name="actionModeSelectAll">Select All</string>
     <string name="actionModeDetail">Copy</string>
     <string name="actionModeCopy">Copy Link</string>
+    <!-- overflow icon popup menu -->
+    <string name="overflow_popup_menu_item_move">Move</string>
+    <string name="overflow_popup_menu_item_info">Infomation</string>
 
     <!--Query Result Fragment-->
     <string name="file_default_name">Name</string>

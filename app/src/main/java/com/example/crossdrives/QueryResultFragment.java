@@ -3,6 +3,7 @@ package com.example.crossdrives;
 import android.Manifest;
 import android.app.SearchManager;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -26,6 +27,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -40,10 +42,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
-import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
-import com.crossdrives.test.TestFileGenerator;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -616,8 +616,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.i(TAG, "onImageItemClick:" + position);
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
+			popup.setOnMenuItemClickListener(com.crossdrives.ui.listener.PopupMenu.create());
 			MenuInflater inflater = popup.getMenuInflater();
-			inflater.inflate(R.menu.menu_context, popup.getMenu());
+			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			popup.show();
 		}
 	};
