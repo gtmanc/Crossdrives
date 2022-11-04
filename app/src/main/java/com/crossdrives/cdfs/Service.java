@@ -7,6 +7,7 @@ import android.util.Log;
 import androidx.core.content.ContextCompat;
 
 import com.crossdrives.cdfs.allocation.Result;
+import com.crossdrives.cdfs.create.Create;
 import com.crossdrives.cdfs.delete.Delete;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.Download;
@@ -268,6 +269,22 @@ public class Service implements IService {
         mCDFS.requiresDriveClientNonNull();
 
         return mover.execute();
+    }
+
+    public Task<com.crossdrives.driveclient.model.File>  create(String name, String parent) throws MissingDriveClientException, PermissionException {
+
+//        IDeleteProgressListener listener = defaultDeleteProgressListener;
+//        if (deleteProgressListener != null)
+//            listener = deleteProgressListener;
+
+        Create creator = new Create(mCDFS, name, parent);
+        final Throwable[] throwables = {null};
+
+        Log.d(TAG, "CDFS Service: move");
+
+        mCDFS.requiresDriveClientNonNull();
+
+        return creator.execute();
     }
 
 }

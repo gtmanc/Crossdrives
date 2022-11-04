@@ -51,7 +51,7 @@ public class Infrastructure{
         Strings
      */
     private final String NAME_CDFS_FOLDER = IConstant.NAME_CDFS_FOLDER;
-    private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
+    private final String MINETYPE_FOLDER = IConstant.MINETYPE_FOLDER;
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
 

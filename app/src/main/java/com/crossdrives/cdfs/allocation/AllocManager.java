@@ -191,6 +191,19 @@ public class AllocManager implements IAllocManager {
         return globalResult.get();
     }
 
+    /*
+        Create a item with attribute folder
+     */
+    static public AllocationItem createItemFolder(String drive, String name, String parent, String cdfsId){
+        AllocationItem item = new AllocationItem();
+        item.setAttrFolder(true);
+        item.setDrive(drive);
+        item.setName(name);
+        item.setPath(parent);
+        item.setCdfsId(cdfsId);
+        return item;
+    }
+
     private boolean getConclusion(java.util.List<Result> results){
         boolean conlusion = false;
 

@@ -3,7 +3,6 @@ package com.example.crossdrives;
 import android.Manifest;
 import android.app.SearchManager;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -27,7 +26,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -97,7 +95,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private ActionMode mActionMode = null;
 
-	private String currentFolder;
+	private String whereWeAre;
+	private List<String> topologyParents;
+
+
 	/*
 	Next page handler. Use this handler to get file list of next page. It is available in response of
 	previous file list request
@@ -418,7 +419,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		mNextPage = null;	//null to get first page of file list
 		mQSTATE = QSTATE_READY;
-		currentFolder = "Root";
+		whereWeAre = "Root";
 	}
 
 	private void setQStateInprogress(){
@@ -495,7 +496,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						service.setDownloadProgressListener(downloadProgressListener);
 					}
 					try {
-						service.download(item.getID(), currentFolder).addOnSuccessListener(successListener)
+						service.download(item.getID(), whereWeAre).addOnSuccessListener(successListener)
 								.addOnFailureListener(failureListener);
 					} catch (MissingDriveClientException | PermissionException e) {
 						Toast.makeText(getContext(), "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -939,7 +940,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			Log.d(TAG, "Delete item: " + selectedItem.getName());
 			try {
-				task = service.delete(selectedItem.getID(),currentFolder);
+				task = service.delete(selectedItem.getID(), whereWeAre);
 			} catch (MissingDriveClientException | PermissionException e) {
 				Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG);
 				Log.w(TAG, e.getMessage());
@@ -1040,7 +1041,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());
 
-							task = service.upload(in, name, currentFolder);
+							task = service.upload(in, name, whereWeAre);
 							InputStream finalIn = in;
 							/*
 							* Setup listeners
