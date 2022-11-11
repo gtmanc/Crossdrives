@@ -62,7 +62,7 @@ public class Create {
                 Log.d(TAG, "Fetch map...");
                 //callback(Delete.State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll();
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(folderWeAre);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
                 //callback(Delete.State.GET_MAP_COMPLETE);
@@ -124,5 +124,6 @@ public class Create {
                 future.completeExceptionally(new Throwable(ex.toString()));
             }
         });
+        return future;
     }
 }

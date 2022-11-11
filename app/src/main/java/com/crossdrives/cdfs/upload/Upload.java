@@ -21,6 +21,7 @@ import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.About;
 import com.google.gson.Gson;
@@ -459,7 +460,7 @@ public class Upload {
             Log.d(TAG, "generate local map files...");
             HashMap<String, UpdateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
                 Gson gson = new Gson();
-                FileLocal creator = new FileLocal(mCDFS.getContext());
+                FileLocal creator = new FileLocal(SnippetApp.getAppContext());
                 UpdateContent content = new UpdateContent();
                 content.setID(mapIDFuture.join().get(driveName).getId());
                 String localMapName = driveName + "_map.txt";

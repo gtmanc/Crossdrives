@@ -271,7 +271,7 @@ public class Service implements IService {
         return mover.execute();
     }
 
-    public Task<com.crossdrives.driveclient.model.File>  create(String name, String parent) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File>  create(String name, java.util.List<String> parent) throws MissingDriveClientException, PermissionException {
 
 //        IDeleteProgressListener listener = defaultDeleteProgressListener;
 //        if (deleteProgressListener != null)

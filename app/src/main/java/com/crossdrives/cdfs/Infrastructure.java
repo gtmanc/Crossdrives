@@ -257,7 +257,7 @@ public class Infrastructure{
                 */
                 //fileMetadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
                 //fileMetadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
-                java.io.File path = new java.io.File(mCDFS.getContext().getFilesDir() + "/" + NAME_ALLOCATION_ROOT);
+                java.io.File path = new java.io.File(SnippetApp.getAppContext().getFilesDir() + "/" + NAME_ALLOCATION_ROOT);
                 fileMetadata.setParents(Collections.singletonList(result.folder));
                 //fileMetadata.setParents(null); //Set parent to null if you want to upload file to root
                 fileMetadata.setName(NAME_ALLOCATION_ROOT);

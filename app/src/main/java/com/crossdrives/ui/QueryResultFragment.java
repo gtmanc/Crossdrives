@@ -1,4 +1,4 @@
-package com.example.crossdrives;
+package com.crossdrives.ui;
 
 import android.Manifest;
 import android.app.SearchManager;
@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
+import com.crossdrives.ui.actions.OpenDocument;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -53,6 +54,10 @@ import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
 import com.crossdrives.ui.Permission;
+import com.example.crossdrives.DriveServiceHelper;
+import com.example.crossdrives.QueryFileAdapter;
+import com.example.crossdrives.R;
+import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -474,33 +479,34 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
 						return;
 					}
-					Log.d(TAG, "Start to download file: " + item.mName);
-					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
-					//Log.d(TAG, "File ID: " + item.mId);
-					//TODO: open detail of file
-					Notification notification
-					= new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
-					notification.setContentTitle(getString(R.string.notification_title_downloading));
-					notification.setContentText(getString(R.string.notification_content_default));
-					notification.build();
-					ResultUpdater resultUpdater = new ResultUpdater();
-					OnSuccessListener<String> successListener = resultUpdater.createDownloadSuccessListener(notification);//createDownloadSuccessListener();
-					OnFailureListener failureListener = resultUpdater.createDownloadFailureListener(notification);
-					IDownloadProgressListener downloadProgressListener = new ProgressUpdater().createDownloadListener(notification);
-//					mNotificationsByDownloadListener.put(downloadProgressListener, notification);
-//					mDownloadSuccessListener.put(successListener, notification);
-//					mDownloadFailedListener.put(failureListener, notification);
-					//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
-					Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
-					if (service != null) {
-						service.setDownloadProgressListener(downloadProgressListener);
-					}
-					try {
-						service.download(item.getID(), whereWeAre).addOnSuccessListener(successListener)
-								.addOnFailureListener(failureListener);
-					} catch (MissingDriveClientException | PermissionException e) {
-						Toast.makeText(getContext(), "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
-					}
+					OpenDocument.download(getActivity(), item, whereWeAre);
+//					Log.d(TAG, "Start to download file: " + item.mName);
+//					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
+//					//Log.d(TAG, "File ID: " + item.mId);
+//					//TODO: open detail of file
+//					Notification notification
+//					= new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
+//					notification.setContentTitle(getString(R.string.notification_title_downloading));
+//					notification.setContentText(getString(R.string.notification_content_default));
+//					notification.build();
+//					ResultUpdater resultUpdater = new ResultUpdater();
+//					OnSuccessListener<String> successListener = resultUpdater.createDownloadSuccessListener(notification);//createDownloadSuccessListener();
+//					OnFailureListener failureListener = resultUpdater.createDownloadFailureListener(notification);
+//					IDownloadProgressListener downloadProgressListener = new ProgressUpdater().createDownloadListener(notification);
+////					mNotificationsByDownloadListener.put(downloadProgressListener, notification);
+////					mDownloadSuccessListener.put(successListener, notification);
+////					mDownloadFailedListener.put(failureListener, notification);
+//					//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
+//					Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
+//					if (service != null) {
+//						service.setDownloadProgressListener(downloadProgressListener);
+//					}
+//					try {
+//						service.download(item.getID(), whereWeAre).addOnSuccessListener(successListener)
+//								.addOnFailureListener(failureListener);
+//					} catch (MissingDriveClientException | PermissionException e) {
+//						Toast.makeText(getContext(), "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
+//					}
 				});
 
 				permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
@@ -515,10 +521,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					return;
 				}
 			} else {
+				/*
+                    An entry is tapped. Distinguish whether the entry is already in selected state or not.
+                    1. click on the item in selected state, again exit item selection state
+                    2. User likes to select another item or open a folder
+                */
 				if (item.isSelected()) {
-                    /*
-                    click on the selected item, again exit item selection state
-                    */
 					setItemChecked(item, position, false);
 					if (mSelectedItemCount == 0) {
 						mAdapter.setOverflowIconVisible(true);
@@ -526,9 +534,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						exitActionMode(view);
 					}
 				} else {
-                    /*
-                    click on the others, select the item. (change the checkbox in the item to "checked")
-                    */
+					if()
+                    	/*
+                    	click on the others, select the item. (change the checkbox in the item to "checked")
+                    	*/
 					setItemChecked(item, position, true);
 				}
 				updateActionModeTitle();
@@ -644,7 +653,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		int i = 0;
 		for(Iterator iter = mItems.iterator();iter.hasNext();) {
 			SerachResultItemModel item = (SerachResultItemModel) iter.next();
-			if(item.isSelected) {
+			if(item.isSelected()) {
 				item.setSelected(false);
 				mSelectedItemCount--;
 			}

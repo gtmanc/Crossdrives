@@ -26,7 +26,7 @@ public class CDFS extends BaseCDFS{
     private boolean msTaskfinished = false;
 
     CDFS(Context context) {
-        super(context);
+        super();
     }
 
     static public CDFS getCDFSService(Context context){

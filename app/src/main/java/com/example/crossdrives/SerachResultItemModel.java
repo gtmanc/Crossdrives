@@ -8,12 +8,14 @@ public class SerachResultItemModel {
     String mName;
     String mId;
     DateTime mDateTime;
+    boolean folder; //attributes indicates whether the item is a folder or not.
 
-    public SerachResultItemModel(boolean isSelected, String Name, String id, DateTime dt) {
+    public SerachResultItemModel(boolean isSelected, String Name, String id, DateTime dt, boolean folder) {
         this.isSelected = isSelected;
         this.mName = Name;
         mId = id;
         mDateTime = dt;
+        this.folder = folder;
     }
 
     public boolean isSelected() {
@@ -42,5 +44,11 @@ public class SerachResultItemModel {
 
     public void setDateTime(DateTime dt) { this.mDateTime = dt; }
 
+    public boolean isFolder() {
+        return folder;
+    }
 
+    public void setFolder(boolean folder) {
+        this.folder = folder;
+    }
 }
