@@ -30,6 +30,8 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -42,6 +44,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
+import com.crossdrives.ui.actions.FetchList;
 import com.crossdrives.ui.actions.OpenDocument;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
@@ -119,11 +122,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private final String QSTATE_EOL = "query EOL"; //Query reach the end of list
 	private String mQSTATE;
 
+	FetchList fetchList;
+
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
+
+		fetchList = new ViewModelProvider(this).get(FetchList.class);
+		fetchList.get().observe(this, listChangeObserver);
 	}
 
 	@Nullable
@@ -211,72 +219,22 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 //			mDriveServiceHelper.resetQuery();
 			setQStateInprogress();
+
+
 		try {
-			CDFS.getCDFSService(getActivity().getApplicationContext()).getService().list(mNextPage)
-					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
-						@Override
-						public void onSuccess(com.crossdrives.cdfs.Result result) {
-							List<File> f = result.getFileList().getFiles();
-							//ListView listview = (ListView) findViewById(R.id.listview_query);
+			fetchList.fetchAsync(topologyParents, null);
 
-
-							mItems = new ArrayList<>();
-							Log.i(TAG, "Number of files: " + f.size());
-							for (File file : result.getFileList().getFiles()) {
-//                                if(file.getModifiedTime() == null){
-//                                    Log.w(TAG, "Modified dateTime is null");
-//                                }
-
-								//Log.d(TAG, "files name: " + file.getName());
-								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
-							}
-
-							mAdapter = new QueryFileAdapter(mItems, getContext());
-							mAdapter.setOnItemClickListener(itemClickListener);
-							mRecyclerView.setAdapter(mAdapter);
-
-							mNextPage = result.getFileList().getNextPageToken();
-							if(mNextPage == null){
-								Log.d(TAG, "Next page handler is null!");
-								CloseQuery();
-							}
-							mProgressBar.setVisibility(View.INVISIBLE);
-
-
-						}
-
-					})
-					.addOnFailureListener(new OnFailureListener() {
-						@Override
-						public void onFailure(@NonNull Exception exception) {
-							//mProgressBar.setVisibility(View.GONE);
-							Log.e(TAG, "Unable to query files.", exception);
-							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-							mProgressBar.setVisibility(View.INVISIBLE);
-						}
-					});
-		} catch (MissingDriveClientException e) {
-			Log.w(TAG, e.getMessage());
-			Log.w(TAG, e.getCause());
-			mProgressBar.setVisibility(View.INVISIBLE);
-			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
-		} catch (GeneralServiceException e){
-			Log.w(TAG, e.getMessage());
-			Log.w(TAG, e.getCause());
-			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
-			mProgressBar.setVisibility(View.INVISIBLE);
-		}
-//					.addOnSuccessListener(new OnSuccessListener<FileList>() {
+//			CDFS.getCDFSService().getService().list(mNextPage)
+//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
 //						@Override
-//						public void onSuccess(FileList fileList) {
-//							List<File> f = fileList.getFiles();
+//						public void onSuccess(com.crossdrives.cdfs.Result result) {
+//							List<File> f = result.getFileList().getFiles();
 //							//ListView listview = (ListView) findViewById(R.id.listview_query);
 //
 //
 //							mItems = new ArrayList<>();
 //							Log.i(TAG, "Number of files: " + f.size());
-//							for (File file : fileList.getFiles()) {
+//							for (File file : result.getFileList().getFiles()) {
 ////                                if(file.getModifiedTime() == null){
 ////                                    Log.w(TAG, "Modified dateTime is null");
 ////                                }
@@ -289,12 +247,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //							mAdapter.setOnItemClickListener(itemClickListener);
 //							mRecyclerView.setAdapter(mAdapter);
 //
-//							mNextPage = fileList.getNextPageToken();
+//							mNextPage = result.getFileList().getNextPageToken();
 //							if(mNextPage == null){
 //								Log.d(TAG, "Next page handler is null!");
 //								CloseQuery();
 //							}
 //							mProgressBar.setVisibility(View.INVISIBLE);
+//
+//
 //						}
 //
 //					})
@@ -308,8 +268,30 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //							mProgressBar.setVisibility(View.INVISIBLE);
 //						}
 //					});
-		//}
+		} catch (MissingDriveClientException e) {
+			Log.w(TAG, e.getMessage());
+			Log.w(TAG, e.getCause());
+			mProgressBar.setVisibility(View.INVISIBLE);
+			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+		} catch (GeneralServiceException e){
+			Log.w(TAG, e.getMessage());
+			Log.w(TAG, e.getCause());
+			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+			mProgressBar.setVisibility(View.INVISIBLE);
+		}
 	}
+
+	final Observer<ArrayList<SerachResultItemModel>> listChangeObserver  = new Observer<ArrayList<SerachResultItemModel>>(){
+
+		@Override
+		public void onChanged(ArrayList<SerachResultItemModel> items) {
+			mAdapter = new QueryFileAdapter(items, getContext());
+			mAdapter.setOnItemClickListener(itemClickListener);
+			mRecyclerView.setAdapter(mAdapter);
+
+			mProgressBar.setVisibility(View.INVISIBLE);
+		}
+	};
 
 	private void queryFileContinue(){
 
@@ -332,7 +314,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		//mDriveServiceHelper.queryFiles()
 		try {
-			CDFS.getCDFSService(getActivity()).getService().list(mNextPage)
+			CDFS.getCDFSService().getService().list(mNextPage)
 					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
 						@Override
 						public void onSuccess(com.crossdrives.cdfs.Result result) {
@@ -534,7 +516,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						exitActionMode(view);
 					}
 				} else {
-					if()
+
                     	/*
                     	click on the others, select the item. (change the checkbox in the item to "checked")
                     	*/
@@ -934,7 +916,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			notification.build();
 			progressListener = new ProgressUpdater().createDeleteListener(notification);
 
-			Service service = CDFS.getCDFSService(getActivity()).getService();
+			Service service = CDFS.getCDFSService().getService();
 			service.setDeleteProgressListener(progressListener);
 
 			//get the item checked
@@ -1040,7 +1022,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						String name = file.getPath();	//Note name is stored in path returned from UriToFile
 						Log.d(TAG, "Name of file to upload: " + file.getPath());
 						try {
-							service = CDFS.getCDFSService(getActivity()).getService();
+							service = CDFS.getCDFSService().getService();
 							/*
 								Next 3 lines of code are used only if you want to use test file for upload
 							 */

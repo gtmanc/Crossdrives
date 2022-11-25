@@ -25,14 +25,10 @@ public class CDFS extends BaseCDFS{
      */
     private boolean msTaskfinished = false;
 
-    CDFS(Context context) {
-        super();
-    }
-
-    static public CDFS getCDFSService(Context context){
+    static public CDFS getCDFSService(){
         if(mCDFS == null){
             Log.d(TAG, "Create instance CDFS");
-            mCDFS = new CDFS(context);
+            mCDFS = new CDFS();
             mService = new Service(mCDFS);
         }
 

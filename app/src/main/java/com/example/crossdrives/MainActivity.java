@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity{
 
             IDriveClient dc = supporttedDriveClient.get(brand).build(token);
 
-            CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
+            CDFS.getCDFSService().addClient(brand, dc);
             CompletableFuture<String> future = Futures.get(brand);
             future.complete(token);
         }
@@ -199,10 +199,10 @@ public class MainActivity extends AppCompatActivity{
                 //Write user profile to database
             IDriveClient dc = (IDriveClient)supporttedDriveClient.get(brand);
             dc = dc.build(token);
-            CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
+            CDFS.getCDFSService().addClient(brand, dc);
 //            GoogleDriveClient gdc
 //                    (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
-            CDFS.getCDFSService(getApplicationContext()).addClient(brand, dc);
+            CDFS.getCDFSService().addClient(brand, dc);
                 //GraphDriveClient onedrive = new GraphDriveClient();
                 //addOneDriveClient(token);
                 //Log.d(TAG, "Onedrive silence sign in works");
@@ -249,7 +249,7 @@ public class MainActivity extends AppCompatActivity{
     private void addGoogleDriveClient(String token){
         GoogleDriveClient gdc =
                 (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
-        CDFS.getCDFSService(getApplicationContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+        CDFS.getCDFSService().addClient(GlobalConstants.BRAND_GOOGLE, gdc);
 //        try {
 //            Thread.sleep(5000);
 //        } catch (InterruptedException e) {
@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity{
     void addOneDriveClient(String token){
         OneDriveClient odc =
                 (OneDriveClient) OneDriveClient.builder(token).buildClient();
-        CDFS.getCDFSService(getApplicationContext()).addClient(GlobalConstants.BRAND_MS, odc);
+        CDFS.getCDFSService().addClient(GlobalConstants.BRAND_MS, odc);
 //        oneDriveClient.
 //                list().
 //                buildRequest().

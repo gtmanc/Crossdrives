@@ -5,6 +5,8 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.lifecycle.MutableLiveData;
+
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
@@ -20,6 +22,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 public class OpenDocument {
     static final String TAG = "CD.OpenDocument";
+
     static public boolean download(Activity activity, SerachResultItemModel item, String parent){
         boolean result;
         Context context = activity.getApplicationContext();
@@ -36,7 +39,7 @@ public class OpenDocument {
         OnSuccessListener<String> successListener = resultUpdater.createDownloadSuccessListener(notification);//createDownloadSuccessListener();
         OnFailureListener failureListener = resultUpdater.createDownloadFailureListener(notification);
         IDownloadProgressListener downloadProgressListener = new ProgressUpdater().createDownloadListener(notification);
-        Service service = CDFS.getCDFSService(context).getService();
+        Service service = CDFS.getCDFSService().getService();
         result = true;
         if (service != null) {
             service.setDownloadProgressListener(downloadProgressListener);

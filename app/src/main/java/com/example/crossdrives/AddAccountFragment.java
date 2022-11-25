@@ -159,7 +159,7 @@ public class AddAccountFragment extends BaseFragment{
         public void onFinished(int result, String brand) {
             boolean r;
             IDriveClient client;
-            CDFS cdfs = CDFS.getCDFSService(getActivity().getApplicationContext());
+            CDFS cdfs = CDFS.getCDFSService();
             if(result == SignInManager.RESULT_SUCCESS){
                 boolean r_am = false;
                 String brand_am = GlobalConstants.BRAND_GOOGLE;
@@ -253,7 +253,7 @@ public class AddAccountFragment extends BaseFragment{
                     GoogleDriveClient gdc =
                             (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
                     Log.d(TAG, "Add CDFS client: " + gdc);
-                    CDFS.getCDFSService(SnippetApp.getAppContext()).addClient(GlobalConstants.BRAND_GOOGLE, gdc);
+                    CDFS.getCDFSService().addClient(GlobalConstants.BRAND_GOOGLE, gdc);
                     //mDrives.put(GlobalConstants.BRAND_GOOGLE, i);
                 }
                 else if(profile.Brand == SignInManager.BRAND_MS)
@@ -263,7 +263,7 @@ public class AddAccountFragment extends BaseFragment{
                             (OneDriveClient) OneDriveClient.builder((String) token).buildClient();
 
                     Log.d(TAG, "Add CDFS client: " + odc);
-                    CDFS.getCDFSService(SnippetApp.getAppContext()).addClient(GlobalConstants.BRAND_MS, odc);
+                    CDFS.getCDFSService().addClient(GlobalConstants.BRAND_MS, odc);
                     //mDrives.put(GlobalConstants.BRAND_MS, i);
                 }
                 else{
