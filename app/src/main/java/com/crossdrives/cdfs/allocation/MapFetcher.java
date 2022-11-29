@@ -3,6 +3,8 @@ package com.crossdrives.cdfs.allocation;
 import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.exception.ItemNotFoundException;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.IDriveClient;
@@ -13,7 +15,10 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +41,7 @@ public class MapFetcher {
     final String PREFIX_ALLOCATION = "Allocation_";
     final String EXT_ALLOCATION = ".cdfs";
     private final String NAME_ALLOCATION_ROOT = "Allocation_root.cdfs";
+    private final String NAME_ALLOCATION = "Allocation.cdfs";
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
@@ -276,33 +282,40 @@ public class MapFetcher {
     /*
         Get specified map in CDFS folder for each drive
      */
-    public CompletableFuture<HashMap<String, File>> listAll(String parent) {
+    public CompletableFuture<HashMap<String, File>> listAll(List<String> parents) {
         CompletableFuture<HashMap<String, File>> resultFuture;
         Fetcher fetcher = new Fetcher(mDrives);
 
-
         resultFuture = CompletableFuture.supplyAsync(()-> {
-            HashMap<String, File> folders;
-            CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll();
+            HashMap<String, File> baseFolders;
+            CompletableFuture<HashMap<String, File>> foldersFuture = getBaseFolderAll();
 
             //if any is null. exit
             Log.d(TAG, "Check CDFS folders... ");
-            folders = foldersFuture.join();
+            baseFolders = foldersFuture.join();
 
-            if(folders.values().stream().anyMatch(((v)-> v == null))){
+            if(baseFolders.values().stream().anyMatch(((v)-> v == null))){
                 Log.w(TAG, "CDFS folder is missing!");
                 return null;
             }
 
-            CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(folders);
-
-            HashMap<String, File> maps = Mapper.reValue(list.join(), (fileList)->{
-                File f = getFromFiles(fileList, PREFIX_ALLOCATION + parent + EXT_ALLOCATION);
-                if(f ==null){
-                    Log.w(TAG, "Map file is missing! ");
-                }
+            final CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(baseFolders);
+            final HashMap<String, FileList> fileListsBase = list.join();
+            final HashMap<String, FileList> fileListAtDest = getListAtDestination(parents, fileListsBase, fetcher);
+            HashMap<String, File> maps = Mapper.reValue(fileListAtDest, (key, fileList)->{
+                File f = getFromFiles(fileList, NAME_ALLOCATION);
+                throwExIfNull(f, "Map item is not found. Drive: " + key, "");
                 return f;
             });
+
+//            CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(baseFolders);
+//            HashMap<String, File> maps = Mapper.reValue(list.join(), (fileList)->{
+//                File f = getFromFiles(fileList, PREFIX_ALLOCATION + parent + EXT_ALLOCATION);
+//                if(f ==null){
+//                    Log.w(TAG, "Map file is missing! ");
+//                }
+//                return f;
+//            });
 
             return maps;
         });
@@ -310,9 +323,82 @@ public class MapFetcher {
     }
 
     /*
-        Get CDFS folder for each drive
+        Walk through the parents and return the map item list at the destination folder.
      */
-    public CompletableFuture<HashMap<String, File>> getFolderAll(){
+    HashMap<String, FileList> getListAtDestination(List<String> pids, HashMap<String, FileList> fileListBase, Fetcher fetcher){
+        Collection<Exception> exceptions = new ArrayList<>();
+
+        HashMap<String, FileList>[] fileLists = new HashMap[]{fileListBase};
+        CompletableFuture<HashMap<String, FileList>>[] list = new CompletableFuture[]{};
+        pids.stream().forEachOrdered((pid)->{
+            HashMap<String, File> nextFolder = findItemMatched(fileLists[0], pid);
+            list[0] = fetcher.listAll(nextFolder);
+            fileLists[0] = list[0].join();
+        });
+
+        return fileLists[0];
+    }
+    /*
+        Find the file (item) which the ID is matched to parent ID for each drive.
+        i.e. the ID is CDFS ID
+        Input:
+            fileList: the given item list
+            pid     : the parent id we are looking for
+        Output:
+            Found item in each drive.
+     */
+    HashMap<String, File> findItemMatched(HashMap<String, FileList> fileLists, String pid){
+
+        //Get map item from the input list
+        HashMap<String, File> mapItems = Mapper.reValue(fileLists, (key, list)->{
+
+            File file = getFromFiles(list, NAME_ALLOCATION);
+            throwExIfNull(file, "Map file may be missing! " + "Drive:" + key, "");
+            return file;
+         });
+
+        //download map
+        CompletableFuture<HashMap<String, OutputStream>> downloadFuture = pullAllByID(
+                Mapper.reValue(mapItems, (file)->{
+                    return file.getId();
+                }));
+
+        //Find the item which the CDFS ID matches to pid
+        HashMap<String, AllocationItem> allocationItems = Mapper.reValue(downloadFuture.join(), (key, stream)->{
+            AllocationItem result = null;
+            Optional<AllocationItem> optional =
+            AllocManager.toContainer(stream).getAllocItem().stream().filter((item)->{
+                return item.getCdfsId().compareToIgnoreCase(pid) == 0;
+            }).findAny();
+            throwExIfNotPresent(optional, "Parent not found! " + "Drive:" + key, "");
+            return optional.get();
+        });
+
+        //Transform the found item to the output type
+        return Mapper.reValue(allocationItems, (ai)->{
+            File file = new File();
+            file.setId(ai.getItemId());
+            return file;
+        });
+    }
+
+
+    <T> void throwExIfNotPresent(Optional<T> optional, String message, String cause) throws ItemNotFoundException {
+        if(!optional.isPresent()) {
+            throw new ItemNotFoundException(message, new Throwable(cause));
+        }
+    }
+
+    <T> void throwExIfNull(T t, String message, String cause) throws ItemNotFoundException {
+        if(t == null) {
+            throw new ItemNotFoundException(message, new Throwable(cause));
+        }
+    }
+
+    /*
+        Get Base(CDFS) folder for each drive
+     */
+    public CompletableFuture<HashMap<String, File>> getBaseFolderAll(){
         Fetcher fetcher = new Fetcher(mDrives);
         CompletableFuture<HashMap<String, File>> resultFuture;
         resultFuture = CompletableFuture.supplyAsync(()-> {
@@ -359,7 +445,7 @@ public class MapFetcher {
         return resultFuture;
     }
 
-    public CompletableFuture<File> getfolder(String driveName){
+    public CompletableFuture<File> getBaseFolder(String driveName){
         Fetcher fetcher= new Fetcher(mDrives);
         CompletableFuture<FileList> fileListFuture;
 
@@ -375,7 +461,7 @@ public class MapFetcher {
         return folder;
     }
 
-    public CompletableFuture<HashMap<String, OutputStream>> pullAll(String parent){
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(List<String> parent){
         CompletableFuture <HashMap<String, File>> mapIDsFuture =
         listAll(parent);
         return pullAllByID(Mapper.reValue(mapIDsFuture.join(), (file)->{

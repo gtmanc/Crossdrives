@@ -97,12 +97,12 @@ public class Upload {
         mCDFS = cdfs;
     }
 
-    public CompletableFuture<File> upload(File file, String name, String parent, IUploadProgressListener listener) throws FileNotFoundException {
+    public CompletableFuture<File> upload(File file, String name, List<String> parents, IUploadProgressListener listener) throws FileNotFoundException {
         InputStream ins = new FileInputStream(file);
-        return upload(ins, name, parent, listener);
+        return upload(ins, name, parents, listener);
     }
 
-    public CompletableFuture<File> upload(InputStream ins, String CdfsName, String parent, IUploadProgressListener listener)  {
+    public CompletableFuture<File> upload(InputStream ins, String CdfsName, List<String> parents, IUploadProgressListener listener)  {
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
         mListener = listener;
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
@@ -230,7 +230,7 @@ public class Upload {
                 long allocatedLen = set.getValue();
                 MapFetcher mapFetcher = new MapFetcher(drives);
                 CompletableFuture<com.google.api.services.drive.model.File> checkFolderFuture =
-                        mapFetcher.getfolder(driveName);
+                        mapFetcher.getBaseFolder(driveName);
 
                 /*
                     Upload process for each drive. There could be number of threads run in parallel
@@ -431,7 +431,7 @@ public class Upload {
             MapFetcher mapFetcher = new MapFetcher(reducedDriveList);
 
             callback(State.MAP_UPDATE_STARTED);
-            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
+            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parents);
             HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
             if(mapIDs.values().stream().anyMatch((v)->v==null)){
                 Log.w(TAG, "map is missing!");
@@ -440,7 +440,7 @@ public class Upload {
                 return null;
             }
 
-            CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(parent);
+            CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(parents);
             AllocManager am = new AllocManager(mCDFS);
             HashMap<String, AllocContainer> containers = Mapper.reValue(mapStreamFuture.join(), (in)->{
                 return am.toContainer(in);

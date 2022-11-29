@@ -332,7 +332,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //                                    Log.w(TAG, "Modified dateTime is null");
 //                                }
 								//ItemModelBase item = mItems.get(i);
-								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
+								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime(),false));
 								//item.setName(file.getName());
 								i++;
 							}

@@ -16,6 +16,7 @@ import com.google.gson.Gson;
 
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,11 +46,11 @@ public class MapUpdater {
     }
 
     public CompletableFuture<HashMap<String, File>> updateAll(HashMap<String, AllocContainer> containers
-        , String parent){
+        , List<String> parents){
         CompletableFuture<HashMap<String, File>> resultFuture = new CompletableFuture<>();
         CompletableFuture.supplyAsync(()->{
             MapFetcher mapFetcher = new MapFetcher(mDrives);
-            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
+            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parents);
             HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
             if(mapIDs.values().stream().anyMatch((v)->v==null)){
                 Log.w(TAG, "map is missing!");
