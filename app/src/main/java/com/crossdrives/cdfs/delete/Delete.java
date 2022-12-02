@@ -36,7 +36,7 @@ public class Delete {
     static final String TAG = "CD.Delete";
     CDFS mCDFS;
     final String mFileID;
-    String mParent;
+    List<String> mParents;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
     final int MAX_CHUNK = 10;
 
@@ -57,10 +57,10 @@ public class Delete {
     int progressTotalSegment = 0;
     int progressTotalDeleted = 0;
 
-    public Delete(CDFS cdfs, String id, String parent, IDeleteProgressListener listener) {
+    public Delete(CDFS cdfs, String id, List<String> parents, IDeleteProgressListener listener) {
         this.mCDFS = cdfs;
         this.mFileID = id;
-        this.mParent = parent;
+        this.mParents = parents;
         mListener = listener;
     }
 
@@ -82,7 +82,7 @@ public class Delete {
                 Log.d(TAG, "Fetch map...");
                 callback(State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
                 callback(State.GET_MAP_COMPLETE);
@@ -105,7 +105,7 @@ public class Delete {
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(updatedMaps, mParent);
+                        = updater.updateAll(updatedMaps, mParents);
                 updateFuture.join();
                 callback(State.MAP_UPDATE_COMPLETE);
 

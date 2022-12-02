@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
@@ -20,10 +21,18 @@ import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class OpenDocument {
-    static final String TAG = "CD.OpenDocument";
+import java.util.ArrayList;
+import java.util.List;
 
-    static public boolean download(Activity activity, SerachResultItemModel item, String parent){
+import hilt_aggregated_deps._dagger_hilt_android_internal_lifecycle_DefaultViewModelFactories_ActivityEntryPoint;
+
+public class OpenDocument extends ViewModel {
+    static final String TAG = "CD.OpenDocument";
+    //Topology: path including root to folder where we are. 'Root' is always the first element.
+
+    static List<String> mParents = new ArrayList<>();
+
+    static public boolean download(Activity activity, SerachResultItemModel item, List<String> parents){
         boolean result;
         Context context = activity.getApplicationContext();
         Log.d(TAG, "Start to download file: " + item.getName());
@@ -45,7 +54,7 @@ public class OpenDocument {
             service.setDownloadProgressListener(downloadProgressListener);
         }
         try {
-            service.download(item.getID(), parent).addOnSuccessListener(successListener)
+            service.download(item.getID(), parents).addOnSuccessListener(successListener)
                     .addOnFailureListener(failureListener);
         } catch (MissingDriveClientException | PermissionException e) {
             Toast.makeText(context, "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -53,5 +62,18 @@ public class OpenDocument {
         }
 
         return result;
+    }
+
+    static public String OpenFolder(String parentId){
+        mParents.add(parentId);
+        return parentId;
+    }
+
+    static public String exitFolder(String parentId){
+        if(mParents.get(mParents.size()-1).compareToIgnoreCase(parentId) != 0){
+            throw new IllegalArgumentException("Parent ID could not recognized!");
+        }
+        mParents.remove(mParents.size()-1);
+        return parentId;
     }
 }

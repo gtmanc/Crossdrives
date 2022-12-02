@@ -30,6 +30,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -86,7 +87,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
-	private ArrayList<SerachResultItemModel> mItems;
+	private ArrayList<SerachResultItemModel> mItems;	//items used to render UI
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	private QueryFileAdapter mAdapter;
@@ -103,8 +104,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private ActionMode mActionMode = null;
 
-	private String whereWeAre;
-	private List<String> topologyParents;
+	private List<String> mParents;
 
 
 	/*
@@ -220,9 +220,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //			mDriveServiceHelper.resetQuery();
 			setQStateInprogress();
 
-
 		try {
-			fetchList.fetchAsync(topologyParents, null);
+			fetchList.fetchAsync(mParents, null);
 
 //			CDFS.getCDFSService().getService().list(mNextPage)
 //					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
@@ -285,6 +284,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onChanged(ArrayList<SerachResultItemModel> items) {
+			Log.d(TAG, "Live data available.");
 			mAdapter = new QueryFileAdapter(items, getContext());
 			mAdapter.setOnItemClickListener(itemClickListener);
 			mRecyclerView.setAdapter(mAdapter);
@@ -294,6 +294,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	};
 
 	private void queryFileContinue(){
+		ArrayList<SerachResultItemModel> items = fetchList.get().getValue();
+		String nextPageToken = fetchList.getNextPageToken();
 
 		//We are reaching the end of list. Stop query.
 		//We are okay because no filter is applied.
@@ -308,58 +310,59 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//mProgressBar.setVisibility(View.VISIBLE);
 
 		//Insert a null item so that the adapter knows that progress bar needs to be shown to the user
-		mItems.add(null);
+		items.add(null);
 		Log.d(TAG, "Notify inserted");
-		mAdapter.notifyItemInserted(mItems.size() - 1);
+		mAdapter.notifyItemInserted(items.size() - 1);
 
 		//mDriveServiceHelper.queryFiles()
 		try {
-			CDFS.getCDFSService().getService().list(mNextPage)
-					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
-						@Override
-						public void onSuccess(com.crossdrives.cdfs.Result result) {
-							List<File> f = result.getFileList().getFiles();
-							int i = 0;
-							//now we are done with the query. take out the progress bar from the list
-							Log.i(TAG, "Notify removed");
-							mItems.remove(mItems.size() - 1);
-							mAdapter.notifyItemRemoved(mItems.size());
-
-							Log.i(TAG, "Number of files fetched: " + f.size());
-
-							for (File file : result.getFileList().getFiles()) {
-//                                if(file.getModifiedTime() == null){
-//                                    Log.w(TAG, "Modified dateTime is null");
-//                                }
-								//ItemModelBase item = mItems.get(i);
-								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime(),false));
-								//item.setName(file.getName());
-								i++;
-							}
-
-							//now update adapter
-							//mAdapter.updateRecords(mItems);
-							Log.d(TAG, "Notify data set change");
-							//TODO: to clarify why the newly loaded items are not updated to screen if we dont do any further scroll.
-							// i.e. enter the recycler view from previous screen and only few items are initially loaded
-							mAdapter.notifyDataSetChanged();
-
-							mNextPage = result.getFileList().getNextPageToken();
-							if(mNextPage == null){
-								Log.d(TAG, "Next page handler is null!");
-								CloseQuery();
-							}
-						}
-					})
-					.addOnFailureListener(new OnFailureListener() {
-						@Override
-						public void onFailure(@NonNull Exception exception) {
-							//mProgressBar.setVisibility(View.GONE);
-							Log.e(TAG, "Unable to query files.", exception);
-							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-						}
-					});
+			fetchList.fetchAsync(mParents, nextPageToken);
+//			CDFS.getCDFSService().getService().list(mNextPage)
+//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
+//						@Override
+//						public void onSuccess(com.crossdrives.cdfs.Result result) {
+//							List<File> f = result.getFileList().getFiles();
+//							int i = 0;
+//							//now we are done with the query. take out the progress bar from the list
+//							Log.i(TAG, "Notify removed");
+//							mItems.remove(mItems.size() - 1);
+//							mAdapter.notifyItemRemoved(mItems.size());
+//
+//							Log.i(TAG, "Number of files fetched: " + f.size());
+//
+//							for (File file : result.getFileList().getFiles()) {
+////                                if(file.getModifiedTime() == null){
+////                                    Log.w(TAG, "Modified dateTime is null");
+////                                }
+//								//ItemModelBase item = mItems.get(i);
+//								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime(),false));
+//								//item.setName(file.getName());
+//								i++;
+//							}
+//
+//							//now update adapter
+//							//mAdapter.updateRecords(mItems);
+//							Log.d(TAG, "Notify data set change");
+//							//TODO: to clarify why the newly loaded items are not updated to screen if we dont do any further scroll.
+//							// i.e. enter the recycler view from previous screen and only few items are initially loaded
+//							mAdapter.notifyDataSetChanged();
+//
+//							mNextPage = result.getFileList().getNextPageToken();
+//							if(mNextPage == null){
+//								Log.d(TAG, "Next page handler is null!");
+//								CloseQuery();
+//							}
+//						}
+//					})
+//					.addOnFailureListener(new OnFailureListener() {
+//						@Override
+//						public void onFailure(@NonNull Exception exception) {
+//							//mProgressBar.setVisibility(View.GONE);
+//							Log.e(TAG, "Unable to query files.", exception);
+//							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
+//							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
+//						}
+//					});
 
 		} catch (MissingDriveClientException e) {
 			Log.w(TAG, e.getMessage());
@@ -383,13 +386,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
 			super.onScrolled(recyclerView, dx, dy);
+			ArrayList<SerachResultItemModel> items = fetchList.get().getValue();
 
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
-			Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
+			Log.d(TAG, "Onscroll mItems.Size:" + items.size());
 			//fetch next page if last item is already shown to the user
-			if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
-				//bottom of list!
+			if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == items.size() - 1) {
 				queryFileContinue();
 			}
 		}
@@ -406,7 +409,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		mNextPage = null;	//null to get first page of file list
 		mQSTATE = QSTATE_READY;
-		whereWeAre = "Root";
+		OpenDocument.OpenFolder("Root");
 	}
 
 	private void setQStateInprogress(){
@@ -461,7 +464,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
 						return;
 					}
-					OpenDocument.download(getActivity(), item, whereWeAre);
+					OpenDocument.download(getActivity(), item, mParents);
 //					Log.d(TAG, "Start to download file: " + item.mName);
 //					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
 //					//Log.d(TAG, "File ID: " + item.mId);
@@ -931,7 +934,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			Log.d(TAG, "Delete item: " + selectedItem.getName());
 			try {
-				task = service.delete(selectedItem.getID(), whereWeAre);
+				task = service.delete(selectedItem.getID(), mParents);
 			} catch (MissingDriveClientException | PermissionException e) {
 				Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG);
 				Log.w(TAG, e.getMessage());
@@ -1032,7 +1035,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());
 
-							task = service.upload(in, name, whereWeAre);
+							task = service.upload(in, name, mParents);
 							InputStream finalIn = in;
 							/*
 							* Setup listeners

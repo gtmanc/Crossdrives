@@ -43,7 +43,7 @@ import java.util.concurrent.locks.ReentrantLock;
     Google play service task api is adopted so that the application can decide the thread can be used
     to run.
  */
-public class Service implements IService {
+public class Service{
     private static String TAG = "CD.Service";
     CDFS mCDFS;
 
@@ -58,7 +58,6 @@ public class Service implements IService {
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
 
-    @Override
     public Task<com.crossdrives.cdfs.Result> list(Object nextPage) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
@@ -128,8 +127,7 @@ public class Service implements IService {
         name: the name in CDFS space
         parent: the target folder name of the upload
     */
-    @Override
-    public Task upload(InputStream ins, String name, String parent) throws Exception {
+    public Task upload(InputStream ins, String name, java.util.List<String> parents) throws Exception {
         Upload upload = new Upload(mCDFS);
         Task task;
         final Throwable[] throwables = {null};
@@ -153,7 +151,7 @@ public class Service implements IService {
                     listener = uploadProgressListener;
 
                 CompletableFuture<File> future =
-                        upload.upload(ins, name, parent, listener);
+                        upload.upload(ins, name, parents, listener);
 
                 future.exceptionally((ex) -> {
                     Log.w(TAG, "Upload completed exceptionally. " + ex.getMessage());
@@ -194,7 +192,7 @@ public class Service implements IService {
         fileID:   CDFS item ID
         parent:   CDFS folder where the item exists in
      */
-    public Task<String> download(String fileID, String parent) throws MissingDriveClientException, PermissionException {
+    public Task<String> download(String fileID, java.util.List<String> parents) throws MissingDriveClientException, PermissionException {
 
         IDownloadProgressListener listener = defaultDownloadProgressListener;
         if (downloadProgressListener != null)
@@ -206,7 +204,7 @@ public class Service implements IService {
             throw new PermissionException("Permission for accessing download folder has not yet granted!", new Throwable(""));
         }
 
-        Download download = new Download(mCDFS, fileID, parent, listener);
+        Download download = new Download(mCDFS, fileID, parents, listener);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: Download");
@@ -228,13 +226,13 @@ public class Service implements IService {
 
     };
 
-    public Task<com.crossdrives.driveclient.model.File> delete(String fileID, String parent) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> delete(String fileID, java.util.List<String> parents) throws MissingDriveClientException, PermissionException {
 
         IDeleteProgressListener listener = defaultDeleteProgressListener;
         if (deleteProgressListener != null)
             listener = deleteProgressListener;
 
-        Delete deleter = new Delete(mCDFS, fileID, parent, listener);
+        Delete deleter = new Delete(mCDFS, fileID, parents, listener);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: Delete");
@@ -255,13 +253,13 @@ public class Service implements IService {
         deleteProgressListener = listener;
     }
 
-    public Task<com.crossdrives.driveclient.model.File> move(String fileID, String parent) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> move(String fileID, java.util.List<String> parents) throws MissingDriveClientException, PermissionException {
 
 //        IDeleteProgressListener listener = defaultDeleteProgressListener;
 //        if (deleteProgressListener != null)
 //            listener = deleteProgressListener;
 
-        Move mover = new Move(mCDFS, fileID, parent);
+        Move mover = new Move(mCDFS, fileID, parents);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: move");

@@ -189,7 +189,7 @@ public class Upload {
                     */
                     item.setSequence(SeqNum[0]);
                     SeqNum[0]++;  //TODO: do we have concurrent issue?
-                    item.setPath(parent);
+                    item.setPath(parents.get(parents.size()-1));    //simply put the last ID
                     item.setAttrFolder(false);
                     item.setCDFSItemSize(uploadSize[0]);
                     items.put(slice.getName(), item);
@@ -280,7 +280,7 @@ public class Upload {
 //                      if(localFileOptional.isPresent()){
 //                      File localFile = localFileOptional.get();
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setParents(Collections.singletonList(cdfsFolder.getId()));
+                        fileMetadata.setParents(parents);
                         fileMetadata.setName(localFile.getName());
                         Log.d(TAG, "Drive: " + driveName + ". local file to upload: " + localFile.getName());
                         mCDFS.getDrives().get(driveName).getClient().upload().

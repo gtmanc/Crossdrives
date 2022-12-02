@@ -35,14 +35,14 @@ public class Create {
     final String mName;     //name of the item to create
     //IDs of the parents which contains the item. If not specified, the item will be placed directly in root.
     //The list describes the topology of the parents. e.g. the last is folder where we are
-    List<String> mParent;
+    List<String> mParents;
 
 
 
-    public Create(CDFS mCDFS, String name, List<String> mParent) {
+    public Create(CDFS mCDFS, String name, List<String> parents) {
         this.mCDFS = mCDFS;
         this.mName = name;
-        this.mParent = mParent;
+        this.mParents = parents;
     }
 
     public Create setFeature(){
@@ -57,12 +57,11 @@ public class Create {
             @Override
             public File call() throws Exception {
                 File result = new File();
-                String folderWeAre = mParent.get(mParent.size()-1);
 
                 Log.d(TAG, "Fetch map...");
                 //callback(Delete.State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(folderWeAre);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
                 //callback(Delete.State.GET_MAP_COMPLETE);
@@ -70,7 +69,7 @@ public class Create {
                 //Create a folder in remote
                 mCDFS.getDrives().keySet().stream().forEach((driveName)->{
                     CompletableFuture<com.google.api.services.drive.model.File> future;
-                    future = createDriveFolder(driveName, mName, mParent);
+                    future = createDriveFolder(driveName, mName, mParents);
                 });
 
                 //Create a default allocation file and store it to the folder just created
@@ -84,14 +83,14 @@ public class Create {
                 HashMap<String, AllocContainer> modified = Mapper.reValue(mapped, (k, v)->{
                     String driveName = k;
                     AllocContainer container = v;
-                    container.addItem(AllocManager.createItemFolder(driveName, mName, folderWeAre, "folder id"));
+                    container.addItem(AllocManager.createItemFolder(driveName, mName, mParents.get(mParents.size()-1), "folder id"));
                     return container;
                 });
 
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(modified, folderWeAre);
+                        = updater.updateAll(modified, mParents);
                 updateFuture.join();
 
                 //Prepare result before we exit

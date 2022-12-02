@@ -30,13 +30,13 @@ public class Move {
     final String TAG = "CD.Move";
     CDFS mCDFS;
     final String mFileID;
-    String mParent;
+    List<String> mParents;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
-    public Move(CDFS cdfs, String id, String parent) {
+    public Move(CDFS cdfs, String id, List<String> parents) {
         this.mCDFS = cdfs;
         this.mFileID = id;
-        this.mParent = parent;
+        this.mParents = parents;
     }
 
     public Task<File> execute() {
@@ -55,7 +55,7 @@ public class Move {
                 Log.d(TAG, "Fetch map...");
                 //callback(Delete.State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
                 //callback(Delete.State.GET_MAP_COMPLETE);
@@ -84,7 +84,7 @@ public class Move {
                     List<AllocationItem> itemList= container.getAllocItem();
                     List<AllocationItem> items = itemList.stream().map((item)->{
                         AllocationItem ai = AllocationItem.clone(item);
-                        ai.setPath(mParent);
+                        ai.setPath(mParents.get(mParents.size()-1));
                         return ai;
                     }).collect(Collectors.toList());
                     return container;
@@ -93,7 +93,7 @@ public class Move {
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(containers, mParent);
+                        = updater.updateAll(containers, mParents);
                 updateFuture.join();
 
                 return result;

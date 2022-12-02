@@ -43,7 +43,7 @@ public class Download {
     static final String TAG = "CD.Download";
     CDFS mCDFS;
     String mFileID;
-    String mParent;
+    List<String> mParents;
     final int MAX_CHUNK = 10;
     final int POISON_PILL = 0;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
@@ -63,10 +63,10 @@ public class Download {
     int progressTotalSegment = 0;
     int progressTotalDownloaded = 0;
 
-    public Download(CDFS mCDFS, String fileID, String parent, IDownloadProgressListener listener) {
+    public Download(CDFS mCDFS, String fileID, List<String> parents, IDownloadProgressListener listener) {
         this.mCDFS = mCDFS;
         mFileID = fileID;
-        mParent = parent;
+        mParents = parents;
         mListener = listener;
     }
 
@@ -81,7 +81,7 @@ public class Download {
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
 
                 callback(State.GET_REMOTE_MAP_STARTED);
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
 
                 Log.d(TAG, "map fetched");
