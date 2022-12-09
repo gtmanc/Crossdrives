@@ -1,4 +1,4 @@
-package com.crossdrives.ui.actions;
+package com.crossdrives.ui.document;
 
 import android.app.Activity;
 import android.content.Context;
@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
+import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.ui.listener.ProgressUpdater;
@@ -24,13 +25,12 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import hilt_aggregated_deps._dagger_hilt_android_internal_lifecycle_DefaultViewModelFactories_ActivityEntryPoint;
+public class Open extends ViewModel {
+    static final String TAG = "CD.Open";
 
-public class OpenDocument extends ViewModel {
-    static final String TAG = "CD.OpenDocument";
-    //Topology: path including root to folder where we are. 'Root' is always the first element.
 
-    static List<String> mParents = new ArrayList<>();
+
+    static FetchList fetchList = new FetchList();
 
     static public boolean download(Activity activity, SerachResultItemModel item, List<String> parents){
         boolean result;
@@ -64,16 +64,5 @@ public class OpenDocument extends ViewModel {
         return result;
     }
 
-    static public String OpenFolder(String parentId){
-        mParents.add(parentId);
-        return parentId;
-    }
 
-    static public String exitFolder(String parentId){
-        if(mParents.get(mParents.size()-1).compareToIgnoreCase(parentId) != 0){
-            throw new IllegalArgumentException("Parent ID could not recognized!");
-        }
-        mParents.remove(mParents.size()-1);
-        return parentId;
-    }
 }

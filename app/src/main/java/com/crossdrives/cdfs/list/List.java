@@ -162,7 +162,12 @@ public class List {
 
                 filelist.setFiles(Itemlist);
 
-
+                //Page size for various drives
+                //Google: integer
+                // The maximum number of files to return per page. Partial or empty result pages are possible
+                // even before the end of the files list has been reached. Acceptable values are 1 to 1000, inclusive. (Default: 100)
+                //Microsoft
+                //
                 if(globalResult.get()){
                     callback.onSuccess(filelist);
                 }else{

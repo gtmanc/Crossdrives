@@ -30,7 +30,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -45,8 +44,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
-import com.crossdrives.ui.actions.FetchList;
-import com.crossdrives.ui.actions.OpenDocument;
+import com.crossdrives.ui.document.Open;
+import com.crossdrives.ui.document.OpenTree;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -57,7 +56,6 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
-import com.crossdrives.ui.Permission;
 import com.example.crossdrives.DriveServiceHelper;
 import com.example.crossdrives.QueryFileAdapter;
 import com.example.crossdrives.R;
@@ -121,8 +119,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private final String QSTATE_INPROGRESS = "query ongoing";	//A query is ongoing
 	private final String QSTATE_EOL = "query EOL"; //Query reach the end of list
 	private String mQSTATE;
+	private Querier mQuerier = new Querier();
+	private boolean isQueryOngoing = false;
 
-	FetchList fetchList;
+	OpenTree treeOpener;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -130,8 +130,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
 
-		fetchList = new ViewModelProvider(this).get(FetchList.class);
-		fetchList.get().observe(this, listChangeObserver);
+		treeOpener = new ViewModelProvider(this).get(OpenTree.class);
+		treeOpener.getItems().observe(this, listChangeObserver);
 	}
 
 	@Nullable
@@ -221,7 +221,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			setQStateInprogress();
 
 		try {
-			fetchList.fetchAsync(mParents, null);
+			treeOpener.open(null);
 
 //			CDFS.getCDFSService().getService().list(mNextPage)
 //					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
@@ -289,13 +289,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			mAdapter.setOnItemClickListener(itemClickListener);
 			mRecyclerView.setAdapter(mAdapter);
 
+			isQueryOngoing = false;
 			mProgressBar.setVisibility(View.INVISIBLE);
 		}
 	};
 
 	private void queryFileContinue(){
-		ArrayList<SerachResultItemModel> items = fetchList.get().getValue();
-		String nextPageToken = fetchList.getNextPageToken();
+		ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
+		String nextPageToken = treeOpener.getNextPageToken();
 
 		//We are reaching the end of list. Stop query.
 		//We are okay because no filter is applied.
@@ -316,7 +317,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		//mDriveServiceHelper.queryFiles()
 		try {
-			fetchList.fetchAsync(mParents, nextPageToken);
+			//TODO: will be removed
+			treeOpener.fetchListByPageAsync();
 //			CDFS.getCDFSService().getService().list(mNextPage)
 //					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
 //						@Override
@@ -377,23 +379,107 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//}
 	}
 
+	abstract class State{
+		Querier querier;
+		public State(Querier querier) {
+			this.querier = querier;
+		}
+
+		public abstract void query() throws GeneralServiceException, MissingDriveClientException;
+	}
+
+	class ReadyState extends State{
+		public ReadyState(Querier querier) {
+			super(querier);
+		}
+
+		@Override
+		public void query() throws GeneralServiceException, MissingDriveClientException {
+			querier.changeState(new FetchingState(querier));
+			treeOpener.open(null);	//set null to query the items in base folder
+			treeOpener.fetchListByPageAsync();
+			//fetchList.fetchAsync(mParents, null);
+		}
+	}
+
+	class FetchingState extends State{
+
+		public FetchingState(Querier querier) {
+			super(querier);
+		}
+
+		@Override
+		public void query() throws GeneralServiceException, MissingDriveClientException {
+			if (treeOpener.getNextPageToken() == null){
+				querier.changeState(new EndState(querier));
+				return;
+			}
+
+			treeOpener.fetchListByPageAsync();
+		}
+	}
+
+	class EndState extends State{
+
+		public EndState(Querier querier) {
+			super(querier);
+		}
+
+		@Override
+		public void query() {
+			querier.changeState(new ReadyState(querier));
+		}
+	}
+	class Querier{
+		State state;
+
+		public Querier() {
+			this.state = new ReadyState(this);
+		}
+
+		void changeState(State state){
+			this.state = state;
+		};
+
+		State getState(){return this.state;}
+	}
+
 	private RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
 		@Override
 		public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
 			super.onScrollStateChanged(recyclerView, newState);
+			Log.d(TAG, "onScrollStateChanged");
 		}
 
 		@Override
 		public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
 			super.onScrolled(recyclerView, dx, dy);
-			ArrayList<SerachResultItemModel> items = fetchList.get().getValue();
+
+			ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
 
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
 			Log.d(TAG, "Onscroll mItems.Size:" + items.size());
+
 			//fetch next page if last item is already shown to the user
-			if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == items.size() - 1) {
-				queryFileContinue();
+			if (linearLayoutManager == null){return;};
+
+			if(isQueryOngoing == true) {
+				Log.d(TAG, "Skip requested query since previous one not yet done.");
+				return;
+			}
+
+			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == items.size() - 1) {
+				//queryFileContinue();
+				try {
+					isQueryOngoing = true;
+					mQuerier.getState().query();
+				} catch (GeneralServiceException | MissingDriveClientException e) {
+					isQueryOngoing = false;
+					Log.w(TAG, e.getMessage());
+					Log.w(TAG, e.getCause());
+					Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+				}
 			}
 		}
 	};
@@ -407,9 +493,18 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private void initialQuery(){
 		Log.i(TAG, "initialQuery...");
 
-		mNextPage = null;	//null to get first page of file list
+		mNextPage = null;	//null to get first page of file listMissingDriveClientException
 		mQSTATE = QSTATE_READY;
-		OpenDocument.OpenFolder("Root");
+
+		isQueryOngoing = true;
+		try {
+			mQuerier.getState().query();
+		} catch (GeneralServiceException | MissingDriveClientException e) {
+			Log.w(TAG, e.getMessage());
+			Log.w(TAG, e.getCause());
+			e.printStackTrace();
+			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+		}
 	}
 
 	private void setQStateInprogress(){
@@ -464,7 +559,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
 						return;
 					}
-					OpenDocument.download(getActivity(), item, mParents);
+					Open.download(getActivity(), item, mParents);
 //					Log.d(TAG, "Start to download file: " + item.mName);
 //					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
 //					//Log.d(TAG, "File ID: " + item.mId);
