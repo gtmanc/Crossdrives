@@ -2,6 +2,8 @@ package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.exception.ItemNotFoundException;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -77,7 +79,7 @@ public class MapFetcher {
         It is reserved for the change if the allocation map is changed to folder basis.
         Currently, it is drive basis. (all items are in a single allocation map)
     */
-    public void fetchAll(String parent, ICallBackMapFetch<HashMap<String, OutputStream>> callback) {
+    public void fetchAll(@Nullable String parentName, ICallBackMapFetch<HashMap<String, OutputStream>> callback) {
 
         this.callback = callback;
 
@@ -94,44 +96,49 @@ public class MapFetcher {
         * */
         mDrives.forEach((name, drive)->{
             Log.d(TAG, "Start to fetch root allocation file. Drive: " + name);
-            fetch(states.get(name), name, drive.getClient());
+            fetch(states.get(name), name, drive.getClient(), parentName);
         });
 
     }
 
-    private void fetch(State state, String name, IDriveClient client){
+    private void fetch(State state, String driveName, IDriveClient client, String parentName){
         /*
             Start with get CDFS folder
          */
-        getFolder(state, name, client);
+        getFolder(state, driveName, client, parentName);
     }
 
-    private void getFolder(State state, String name, IDriveClient client){
+    void getFolder(State state, String driveName, IDriveClient client, String parentName){
+        String clause = "mimeType = '" + MINETYPE_FOLDER  +
+                "' and name = ";
 
-//        CompletableFuture<String> future = new CompletableFuture<>();
-//
-//        sExecutor.submit(() -> {
+        if(parentName == null){
+            clause = clause.concat("'" + NAME_CDFS_FOLDER+ "'");
+        }else{
+            clause = clause.concat("'" + parentName + "'");
+        }
+
+
         state.setState(State.STATE_CHECK_FOLDER);
         //states.put(name, state);
         client.list().buildRequest()
                 //sClient.get(0).list().buildRequest()
-                .setNextPage(null)
+                .setNextPage(null)  //TODO: #42
                 .setPageSize(0) //0 means no page size is applied
-                .filter(FILTERCLAUSE_CDFS_FOLDER)
+                .filter(clause)
                 //.filter("mimeType = 'application/vnd.google-apps.folder'")
                 //.filter(null)   //null means no filter will be applied
                 .run(new IFileListCallBack<FileList, Object>() {
-                    //As we specified the folder name, suppose only cdfs folder in the list.
                     @Override
                     public void success(FileList fileList, Object o) {
                         String id = null;
 
-                        id = handleResultGetFolder(fileList);
+                        id = GetFolderId(fileList, parentName);
                         if(id != null) {
-                            getFileID(state, name, client, id);
+                            getFileID(state, driveName, client, id);
                         }
                         else{
-                            //Known issue - #42
+                            //#48 TODO
                             callback.onCompletedExceptionally(new Throwable("CDFS folder is missing"));
                         }
                         //future.complete(result);
@@ -146,13 +153,16 @@ public class MapFetcher {
 
     }
 
-    private String handleResultGetFolder(FileList fileList){
+    /*
+        Find 1st item which name matches the specified
+     */
+    private String GetFolderId(FileList fileList, String name){
         String id = null;
 //      for(int i = 0 ; i < fileList.getFiles().size(); i++){
 //          fileList.getFiles().get(i).getName().compareToIgnoreCase("cdfs");
 //      }
         if(fileList.getFiles().size() > 0) {
-            if (fileList.getFiles().get(0).getName().compareToIgnoreCase("cdfs") == 0) {
+            if (fileList.getFiles().get(0).getName().compareToIgnoreCase(name) == 0) {
                 id = fileList.getFiles().get(0).getId();
             }
             else {
@@ -176,7 +186,7 @@ public class MapFetcher {
         client.list().buildRequest()
                 //sClient.get(0).list().buildRequest()
                 .setNextPage(null)
-                .setPageSize(0) //0 means no page size is applied
+                .setPageSize(0) //0 means no page size is applied TODO #42
                 //.filter("name = 'allocation.cdfs'" + "in 'CDFS'")
                 .filter(query)
                 //.filter(null)   //null means no filter will be applied
@@ -217,6 +227,7 @@ public class MapFetcher {
 
         if(fileList.getFiles().size() > 0) {Log.d(TAG, "Files found in CDFS folder.");}
 
+        //#48 TODO
         files = fileList.getFiles().stream().filter((file)->{
             return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ?  true : false;
         }).findAny();
@@ -282,7 +293,7 @@ public class MapFetcher {
     /*
         Get specified map in CDFS folder for each drive
      */
-    public CompletableFuture<HashMap<String, File>> listAll(List<String> parents) {
+    public CompletableFuture<HashMap<String, File>> listAll(String cdfsPid) {
         CompletableFuture<HashMap<String, File>> resultFuture;
         Fetcher fetcher = new Fetcher(mDrives);
 
@@ -396,9 +407,9 @@ public class MapFetcher {
     }
 
     /*
-        Get Base(CDFS) folder for each drive
+        Get folder meta data for each drive
      */
-    public CompletableFuture<HashMap<String, File>> getBaseFolderAll(){
+    public CompletableFuture<HashMap<String, File>> getFolderAll(){
         Fetcher fetcher = new Fetcher(mDrives);
         CompletableFuture<HashMap<String, File>> resultFuture;
         resultFuture = CompletableFuture.supplyAsync(()-> {
@@ -434,7 +445,7 @@ public class MapFetcher {
             HashMap<String, FileList> resultListAll = list.join();
 
             folders = Mapper.reValue(list.join(), (files)->{
-                File f = getFromFiles(files, NAME_CDFS_FOLDER);
+                File f = getFromFiles(files, NAME_CDFS_FOLDER);//TODO #42
                 Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
                 return f;
             });

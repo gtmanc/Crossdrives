@@ -3,6 +3,8 @@ package com.crossdrives.cdfs.list;
 import android.database.Cursor;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
@@ -12,18 +14,26 @@ import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.data.DBConstants;
+import com.crossdrives.driveclient.model.File;
 import com.crossdrives.msgraph.SnippetApp;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class List {
     final String TAG = "CD.List";
     CDFS mCDFS;
+    private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
     //Columns
     final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
@@ -41,10 +51,33 @@ public class List {
         mCDFS = cdfs;
     }
 
-    public void list(String parent, ICallbackList<FileList> callback) {
+
+    public Task<FileList> execute(@Nullable AllocationItem parent){
+        Task<FileList> task;
+
+        task = Tasks.call(mExecutor, new Callable<FileList>()
+        {
+
+            @Override
+            public FileList call() throws Exception {
+                MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
+                CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(null);
+
+                return null;
+            }
+        });
+
+        return task;
+    }
+
+    public void list(@Nullable AllocationItem parent, ICallbackList<FileList> callback) {
         FileList filelist = new FileList();
         java.util.List<com.google.api.services.drive.model.File> Itemlist = new ArrayList<>();
         java.util.List<com.google.api.services.drive.model.File> Dirlist = new ArrayList<>();
+        final String path;
+
+        if(parent != null) {path = parent.getPath();}
+        else{path = null;}
 
         /*
             Fetch the remote allocation files. The fetcher will ensure all of the allocations file
@@ -52,7 +85,7 @@ public class List {
             content of the downloaded allocation files are updated to local database.
          */
         MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-        mapFetcher.fetchAll(parent, new ICallBackMapFetch<HashMap<String, OutputStream>>() {
+        mapFetcher.fetchAll(path, new ICallBackMapFetch<HashMap<String, OutputStream>>() {
             @Override
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
                 java.util.List<AllocationItem> children, dirs;
@@ -63,81 +96,14 @@ public class List {
                 AtomicBoolean globalResult = new AtomicBoolean(true);
 
 
-                globalResult.set(am.CheckThenUpdateLocalCopy(parent, allocations));
-//                /*
-//                    Update the fetched allocation content to database. We will query local database
-//                    for the file list requested by caller.
-//                 */
-//                mCDFS.getDrives().forEach((key, value)->{
-//                    ac.set(am.toContainer(allocations.get(key)));
-////                    if(am.checkCompatibility(ac.get()) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
-////                        am.saveAllocItem(ac.get(), key);
-////                    }else{
-////                        Log.w(TAG, "allocation version is not compatible!");
-////                    }
-//                    /*
-//                        Each time new allocation fetched, we have to delete the old rows and then insert the new items
-//                        so that the duplicated rows can be removed.
-//                    */
-//                    am.deleteAllExistingByDrive(key);
-//                    /*
-//                        Check allocation item traversely and save to database if the item is valid
-//                        Here we will lost the cause because it could consume large amount of memory.
-//                    */
-//                    for(AllocationItem item : ac.get().getAllocItem()) {
-//                        results.set(checker.checkAllocItem(item));
-//                        /*
-//                            We only want to know whether the item is good or not. Therefore, any check
-//                            failure we treat the item as faulty item. If any faulty item detected, set
-//                            the global result to false so that we can call back to via onCompleteExceptionally.
-//                            instead onSuccess.
-//                        */
-//                        if(getConclusion(results.get())){
-//                            am.saveItem(item, key);
-//                        }else{
-//                            Log.w(TAG, "Single item check: faulty item detected ");
-//                            globalResult.set(false);
-//                        }
-//                    }
-//
-//                    mCDFS.getDrives().get(key).addContainer(ac.get());
-//                });
-//
-//                /*
-//                    To do the item cross check, the database functionality is utilized.
-//                    Build name list contains the unique names. We will use the list to query local
-//                    database for cross item check.
-//                 */
-//                complete = new ArrayList<>();
-//                names = getNonDirItems(parent);
-//                if(names != null){complete.addAll(names);}
-//                dirs = getItemsDir(parent);
-//                if(dirs != null){complete.addAll(dirs);}
-//
-//                if(complete != null) {
-//                    if (complete.stream().filter((name) -> {
-//                        boolean result = true;
-//                        java.util.List<AllocationItem> items;
-//                        items = getItemsByName(name);
-//                        results.set(checker.checkItemsCrossly(items));
-//                        if (getConclusion(results.get())) {
-//                        } else {
-//                            Log.w(TAG, "Corss item check: faulty items detected ");
-//                            am.deleteItemsByName(name);
-//                            result = false;
-//                        }
-//                        return result;
-//                    }).count() < complete.size()) {
-//                        globalResult.set(false);
-//                    }
-//                }
+                globalResult.set(am.CheckThenUpdateLocalCopy(path, allocations));
 
                 /*
                     The faulty items have been removed from database if detected in previous step.
                     Rebuild name list for the list result to be sent to callback.
                  */
-                children = getItemsByFolder(parent, false);
-                dirs = getItemsByFolder(parent, true);
+                children = getItemsByFolder(path, false);
+                dirs = getItemsByFolder(path, true);
                 if(children != null) {
                     for (int i = 0; i < children.size(); i++) {
                         com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
@@ -149,18 +115,17 @@ public class List {
                 }
 
                 if(dirs !=null) {
-                    java.util.List<String> parentList = new ArrayList<>();
-                    parentList.add(parent);
                     for (int i = 0; i < dirs.size(); i++) {
                         com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
                         f.setName(children.get(i).getName());
                         f.setId(children.get(i).getCdfsId());
-                        f.setParents(parentList);
                         Itemlist.add(f);
                     }
                 }
 
                 filelist.setFiles(Itemlist);
+                //#42 TODO.Directly tell caller there is no next page for the time being.
+                filelist.setNextPageToken(null);
 
                 //Page size for various drives
                 //Google: integer

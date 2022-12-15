@@ -296,7 +296,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private void queryFileContinue(){
 		ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
-		String nextPageToken = treeOpener.getNextPageToken();
 
 		//We are reaching the end of list. Stop query.
 		//We are okay because no filter is applied.
@@ -318,7 +317,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//mDriveServiceHelper.queryFiles()
 		try {
 			//TODO: will be removed
-			treeOpener.fetchListByPageAsync();
+			treeOpener.fetchAsync();
 //			CDFS.getCDFSService().getService().list(mNextPage)
 //					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
 //						@Override
@@ -397,7 +396,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void query() throws GeneralServiceException, MissingDriveClientException {
 			querier.changeState(new FetchingState(querier));
 			treeOpener.open(null);	//set null to query the items in base folder
-			treeOpener.fetchListByPageAsync();
+			treeOpener.fetchAsync();
 			//fetchList.fetchAsync(mParents, null);
 		}
 	}
@@ -410,12 +409,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void query() throws GeneralServiceException, MissingDriveClientException {
-			if (treeOpener.getNextPageToken() == null){
+			if (treeOpener.endOfList()){
 				querier.changeState(new EndState(querier));
 				return;
 			}
 
-			treeOpener.fetchListByPageAsync();
+			treeOpener.fetchAsync();
 		}
 	}
 

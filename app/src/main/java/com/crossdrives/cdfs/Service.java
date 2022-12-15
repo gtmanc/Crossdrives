@@ -19,6 +19,7 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.move.Move;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
@@ -58,7 +59,7 @@ public class Service{
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
 
-    public Task<com.crossdrives.cdfs.Result> list(Object nextPage) throws MissingDriveClientException, GeneralServiceException {
+    public Task<com.crossdrives.cdfs.Result> list(AllocationItem parent) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
         final Throwable[] throwables = {null};
@@ -67,7 +68,7 @@ public class Service{
         Task task;
 
 
-        Log.d(TAG, "Service: list files. nextPage: " + nextPage);
+        Log.d(TAG, "Service: list files");
 
         mCDFS.requiresDriveClientNonNull();
 
@@ -76,7 +77,7 @@ public class Service{
             public com.crossdrives.cdfs.Result call() throws Exception {
 //                listLock.lock();
                 CompletableFuture<FileList> future = new CompletableFuture<>();
-                list.list(null, new ICallbackList<FileList>() {
+                list.list(parent, new ICallbackList<FileList>() {
                     @Override
                     public void onSuccess(FileList files) {
                         fileList[0] = files;

@@ -11,6 +11,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Result;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -28,39 +29,54 @@ public class OpenTree extends ViewModel {
     final String TAG = "CD.OpenTree";
 
     //Topology: path including root to folder where we are. 'Root' is always the first element.
-    List<String> mParents = new ArrayList<>();
+    List<AllocationItem> mParents = new ArrayList<>();
 
     private MutableLiveData<ArrayList<SerachResultItemModel>> mItems = new MutableLiveData<>();
     String mNextPage = null;
 
     /*
-        parentID: set null to get list in base folder (CDFS root)
+        parent: set null to get list in base folder (CDFS root)
      */
-    public void open(@Nullable String parentId) throws GeneralServiceException, MissingDriveClientException {
-        if(parentId != null) {
-            mParents.add(parentId);
+    public void open(@Nullable AllocationItem parent) throws GeneralServiceException, MissingDriveClientException {
+        if(parent != null) {
+            mParents.add(parent);
         }
     }
 
-    public MutableLiveData<ArrayList<SerachResultItemModel>> fetchListByPageAsync() throws GeneralServiceException, MissingDriveClientException {
-        return fetchAsync(mParents, mNextPage);
-    }
+//    public MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync() throws GeneralServiceException, MissingDriveClientException {
+//
+//        return fetchAsync(mParents.get(getLastIndex(mParents)));
+//    }
 
 
-    public String exitFolder(String parentId){
-        if(mParents.get(mParents.size()-1).compareToIgnoreCase(parentId) != 0){
+    public void exitFolder(AllocationItem parent){
+        int i = getLastIndex(mParents);
+
+        if(mParents.get(i).getCdfsId().compareToIgnoreCase(parent.getCdfsId()) != 0){
             throw new IllegalArgumentException("Parent ID could not recognized!");
         }
-        mParents.remove(mParents.size()-1);
-        return parentId;
+        mParents.remove(i);;
     }
 
-    MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync(@Nullable List<String> parentIDs, @Nullable String nextPage) throws GeneralServiceException, MissingDriveClientException {
+    public @NonNull MutableLiveData<ArrayList<SerachResultItemModel>> getItems(){return mItems;}
+
+    //public @Nullable String getNextPageToken(){return mNextPage;}
+
+    <T> int getLastIndex(List<T> list){
+        int i;
+        if(list == null){ i = 0;}
+        else{ i = list.size()-1;}
+        return i;
+    }
+
+
+    public MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync() throws GeneralServiceException, MissingDriveClientException {
+        AllocationItem parent = mParents.get(getLastIndex(mParents));
         /*
             call CDFS list to fetch the list asynchronously
          */
         //       try {
-        CDFS.getCDFSService().getService().list(nextPage)
+        CDFS.getCDFSService().getService().list(parent)
                 .addOnSuccessListener(new OnSuccessListener<Result>() {
                     @Override
                     public void onSuccess(com.crossdrives.cdfs.Result result) {
@@ -111,10 +127,8 @@ public class OpenTree extends ViewModel {
 //        }
 
         return mItems;
-
     }
 
-    public @NonNull MutableLiveData<ArrayList<SerachResultItemModel>> getItems(){return mItems;}
+    public boolean endOfList(){return mNextPage == null;}
 
-    public @Nullable String getNextPageToken(){return mNextPage;}
 }

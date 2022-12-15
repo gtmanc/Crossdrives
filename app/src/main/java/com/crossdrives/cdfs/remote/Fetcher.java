@@ -91,7 +91,7 @@ public class Fetcher {
         CompletableFuture<FileList> resultFuture = new CompletableFuture<>();
 
         request = drive.getClient().list().buildRequest().
-            setNextPage(null).
+            setNextPage(null).  //TODO: #42
             setPageSize(0); //0 means no page size is applied. The behavior depends on the drive vendor
 
         //Set filter only if parent i not an empty string. An empty string indicated that items in root is required.
