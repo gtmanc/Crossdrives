@@ -1,29 +1,27 @@
 package com.crossdrives.cdfs;
 
-import com.google.api.services.drive.model.FileList;
-
 import java.util.List;
 
-public class Result {
-    FileList fileList;
+public class Result<T> {
+    T result;
 
-    java.util.List<com.crossdrives.cdfs.allocation.Result> results;
+    java.util.List<com.crossdrives.cdfs.allocation.Result> errCodes;
 
-    public void setResults(java.util.List<com.crossdrives.cdfs.allocation.Result> results)
+    public void setErrCodes(java.util.List<com.crossdrives.cdfs.allocation.Result> errCodes)
     {
-        this.results = results;
+        this.errCodes = errCodes;
     }
 
-    public void setFileList(FileList fileList){
-        this.fileList = fileList;
+    public void setFileList(T result){
+        this.result = result;
 
     }
 
-    public FileList getFileList() {
-        return fileList;
+    public T getFileList() {
+        return result;
     }
 
-    public List<com.crossdrives.cdfs.allocation.Result> getResults() {
-        return results;
+    public List<com.crossdrives.cdfs.allocation.Result> getErrCodes() {
+        return errCodes;
     }
 }

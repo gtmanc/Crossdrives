@@ -30,14 +30,10 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /*
     Interface for application.
@@ -116,7 +112,7 @@ public class Service{
                 }
 
                 result.setFileList(fileList[0]);
-                result.setResults(allocCheckResults[0]);
+                result.setErrCodes(allocCheckResults[0]);
                 return result;
             }
         });

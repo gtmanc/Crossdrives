@@ -3,6 +3,7 @@ package com.crossdrives.cdfs.list;
 import android.database.Cursor;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.crossdrives.cdfs.CDFS;
@@ -13,6 +14,7 @@ import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.driveclient.model.File;
 import com.crossdrives.msgraph.SnippetApp;
@@ -23,8 +25,11 @@ import com.google.api.services.drive.model.FileList;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,7 +75,7 @@ public class List {
         return task;
     }
 
-    public void list(@Nullable AllocationItem parent, ICallbackList<FileList> callback) {
+    public void list(@Nullable AllocationItem parent, ICallbackList<java.util.List<CdfsItem>> callback) {
         FileList filelist = new FileList();
         java.util.List<com.google.api.services.drive.model.File> Itemlist = new ArrayList<>();
         java.util.List<com.google.api.services.drive.model.File> Dirlist = new ArrayList<>();
@@ -88,7 +93,7 @@ public class List {
         mapFetcher.fetchAll(path, new ICallBackMapFetch<HashMap<String, OutputStream>>() {
             @Override
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
-                java.util.List<AllocationItem> children, dirs;
+                java.util.List<CdfsItem> children, dirs;
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
                 AllocManager am = new AllocManager(mCDFS);
                 //Checker checker = new Checker();
@@ -102,30 +107,30 @@ public class List {
                     The faulty items have been removed from database if detected in previous step.
                     Rebuild name list for the list result to be sent to callback.
                  */
-                children = getItemsByFolder(path, false);
-                dirs = getItemsByFolder(path, true);
-                if(children != null) {
-                    for (int i = 0; i < children.size(); i++) {
-                        com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
-                        f.setName(children.get(i).getName());
-                        f.setId(children.get(i).getCdfsId());
-                        f.setParents(null);
-                        Itemlist.add(f);
-                    }
-                }
-
-                if(dirs !=null) {
-                    for (int i = 0; i < dirs.size(); i++) {
-                        com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
-                        f.setName(children.get(i).getName());
-                        f.setId(children.get(i).getCdfsId());
-                        Itemlist.add(f);
-                    }
-                }
-
-                filelist.setFiles(Itemlist);
-                //#42 TODO.Directly tell caller there is no next page for the time being.
-                filelist.setNextPageToken(null);
+//                children = getItemsByFolder(path, false);
+//                dirs = getItemsByFolder(path, true);
+                children = buildCdfsItemList(path);
+//                for (int i = 0; i < children.size(); i++) {
+//                    com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
+//                    f.setName(children.get(i).getName());
+//                    f.setId(children.get(i).getCdfsId());
+//                    f.setParents(null);
+//                    Itemlist.add(f);
+//                }
+//
+//
+//                if(dirs !=null) {
+//                    for (int i = 0; i < dirs.size(); i++) {
+//                        com.google.api.services.drive.model.File f = new com.google.api.services.drive.model.File();
+//                        f.setName(children.get(i).getName());
+//                        f.setId(children.get(i).getCdfsId());
+//                        Itemlist.add(f);
+//                    }
+//                }
+//
+//                filelist.setFiles(Itemlist);
+//                //#42 TODO.Directly tell caller there is no next page for the time being.
+//                filelist.setNextPageToken(null);
 
                 //Page size for various drives
                 //Google: integer
@@ -134,9 +139,9 @@ public class List {
                 //Microsoft
                 //
                 if(globalResult.get()){
-                    callback.onSuccess(filelist);
+                    callback.onSuccess(children);
                 }else{
-                    callback.onCompleteExceptionally(filelist, results.get());
+                    callback.onCompleteExceptionally(children, results.get());
                 }
 
             }
@@ -148,7 +153,136 @@ public class List {
         });
     }
 
-    private java.util.List<AllocationItem> getItemsByFolder(String parent, boolean folder){
+    private @NonNull java.util.List<CdfsItem> buildCdfsItemList(@Nullable String parent) {
+        DBHelper dh = new DBHelper(SnippetApp.getAppContext());
+        java.util.List<CdfsItem> items = new ArrayList<>();
+        final String clause1;
+        Cursor cursor = null;
+
+        /*
+            Set filter(clause) parent. This actually is not needed anymore because the CDFS is changed to
+            multiply parents structure. The local database only contains items which have the same parent(path).
+         */
+        clause1 = buildClauseParent(parent);
+
+        /*
+            Set filter(clause) attribute folder
+         */
+        //clause2 = buildClauseFolder(folder);
+
+        /*
+            First build up a CDFS list with an empty drive item map. The map will be filled in next step.
+            Use database group statement to make sure only one entry is got from all entries which
+            have the same CDFS ID
+        */
+        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
+        cursor = dh.query(clause1);
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            return items;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+            cursor.close();
+            return items;
+        }
+
+        final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
+        final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
+        final int indexDrive = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_DRIVENAME);
+        final int indexCDFSId = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSID);
+        final int indexItemId = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_ITEMID);
+        final int indexSeq = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SEQUENCE);
+        final int indexTotalSeg = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TOTALSEG);
+        final int indexSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SIZE);
+        final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
+        final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
+        cursor.moveToFirst();
+        for(int i = 0 ; i < cursor.getCount(); i++){
+            CdfsItem item = new CdfsItem();
+            ConcurrentHashMap<String, java.util.List<String>> map = new ConcurrentHashMap<>();
+            item.setMap(map);
+            item.setName(cursor.getString(indexName));
+            item.setId(cursor.getString(indexCDFSId));
+            item.setPath(cursor.getString(indexPath));
+            items.add(item);
+            cursor.moveToNext();
+        }
+        cursor.close();
+
+        /*
+            Fill the map we created in previous step. Read out the entries which has the same CDFS ID and then put the
+            drive item ID to the map according to the drive name.
+         */
+        dh.GroupBy(null);   //remove the group clause we setup in prvious step
+
+        items.stream().forEach((item)->{    //each cdfs item
+            String clause2 = ALLOCITEMS_LIST_COL_CDFSID;
+            clause2 = clause2.concat(" = " + item.getId());
+            Cursor cursor2 = null;
+            cursor2 = dh.query(clause1, clause2);
+            if(cursor2 == null){
+                Log.w(TAG, "Cursor is null!");
+                return;
+            }
+            if(cursor2.getCount() <= 0){
+                Log.w(TAG, "Count of cursor is zero!");
+                cursor2.close();
+                return ;
+            }
+            ConcurrentHashMap<String, java.util.List<String>> map = item.getMap();
+            cursor2.moveToFirst();
+            for(int i = 0 ; i < cursor2.getCount(); i++){
+                map.get(cursor2.getString(indexDrive)).add(cursor2.getString(indexItemId));
+                cursor2.moveToNext();
+            }
+
+        });
+
+        return items;
+    }
+
+    String buildClauseParent(String parent){
+        String clause = ALLOCITEMS_LIST_COL_PATH;
+        if (parent == null) {
+            clause = clause.concat(" =" + "\"" + "Root" + "\"");
+        } else {
+            clause = clause.concat(" =" + "\"" + parent + "\"");
+        }
+        return clause;
+    }
+
+    String buildClauseFolder(boolean folder){
+        String clause = ALLOCITEMS_LIST_COL_FOLDER;
+        if (folder) {
+            clause = clause.concat(" =" + " 1");
+        } else {
+            clause = clause.concat(" =" + " 0");
+        }
+        return clause;
+    }
+
+    boolean checkQueryResult(Cursor cursor) {
+        boolean result = true;
+        if(cursor == null){
+            Log.w(TAG, "Cursor is null!");
+            return false;
+        }
+        if(cursor.getCount() <= 0){
+            Log.w(TAG, "Count of cursor is zero!");
+
+        }
+        return result;
+    }
+
+    void closeCursor(Cursor cursor){
+        if(cursor != null){ cursor.close();}
+    }
+    /*
+        Get grouped item(s) from local database. Only an item is got even if multiple entries in local
+        database have the same CDFS ID
+     */
+    private java.util.List<AllocationItem> getItemsByFolder(@Nullable String parent, boolean folder){
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         java.util.List<AllocationItem> items= new ArrayList<>();
         String clause1, clause2;
@@ -174,6 +308,10 @@ public class List {
         }
         Log.w(TAG, "Get items not a dir. Clause: " + clause1 + " and " + clause2);
 
+        /*
+            Use database group statement to make sure only one entry is got from all entries which
+            have the sme CDFS ID
+        */
         dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
         cursor = dh.query(clause1, clause2);
 
