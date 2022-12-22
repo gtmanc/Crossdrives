@@ -10,13 +10,11 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
-import com.crossdrives.cdfs.allocation.Result;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.data.DBConstants;
-import com.crossdrives.driveclient.model.File;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -25,8 +23,6 @@ import com.google.api.services.drive.model.FileList;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,18 +53,31 @@ public class List {
     }
 
 
-    public Task<FileList> execute(@Nullable AllocationItem parent){
-        Task<FileList> task;
+    public Task<ListResult> execute(@Nullable AllocationItem parent){
+        Task<ListResult> task;
 
-        task = Tasks.call(mExecutor, new Callable<FileList>()
+
+        task = Tasks.call(mExecutor, new Callable<ListResult>()
         {
 
             @Override
-            public FileList call() throws Exception {
+            public ListResult call() throws Exception {
+                ListResult result = new ListResult();
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
                 CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(null);
+                final String path;
+                java.util.List<CdfsItem> items;
 
-                return null;
+                if(parent != null) {path = parent.getPath();}
+                else{path = null;}
+
+                HashMap<String, OutputStream> allocations = fetchMapFuture.join();
+                AllocManager am = new AllocManager(mCDFS);
+                am.CheckThenUpdateLocalCopy(path, allocations);
+
+                items = buildCdfsItemList(path);
+                result.setItems(items);
+                return result;
             }
         });
 
@@ -97,7 +106,7 @@ public class List {
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
                 AllocManager am = new AllocManager(mCDFS);
                 //Checker checker = new Checker();
-                AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
+                AtomicReference<java.util.List<ListResult>> results = new AtomicReference<>();
                 AtomicBoolean globalResult = new AtomicBoolean(true);
 
 

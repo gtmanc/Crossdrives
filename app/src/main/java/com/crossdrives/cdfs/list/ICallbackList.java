@@ -5,6 +5,6 @@ public interface ICallbackList <Result> {
 
     void onFailure(Throwable throwable);
 
-    void onCompleteExceptionally(Result result, java.util.List<com.crossdrives.cdfs.allocation.Result> casues);
+    void onCompleteExceptionally(Result result, java.util.List<ListResult> casues);
 
 }

@@ -3,6 +3,7 @@ package com.crossdrives.cdfs;
 import android.util.Log;
 
 import com.crossdrives.cdfs.allocation.AllocManager;
+import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.driveclient.IDriveClient;

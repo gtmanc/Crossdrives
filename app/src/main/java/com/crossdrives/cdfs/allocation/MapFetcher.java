@@ -299,7 +299,7 @@ public class MapFetcher {
 
         resultFuture = CompletableFuture.supplyAsync(()-> {
             HashMap<String, File> baseFolders;
-            CompletableFuture<HashMap<String, File>> foldersFuture = getBaseFolderAll();
+            CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll();
 
             //if any is null. exit
             Log.d(TAG, "Check CDFS folders... ");
@@ -312,7 +312,7 @@ public class MapFetcher {
 
             final CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(baseFolders);
             final HashMap<String, FileList> fileListsBase = list.join();
-            final HashMap<String, FileList> fileListAtDest = getListAtDestination(parents, fileListsBase, fetcher);
+            final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileListsBase, fetcher);
             HashMap<String, File> maps = Mapper.reValue(fileListAtDest, (key, fileList)->{
                 File f = getFromFiles(fileList, NAME_ALLOCATION);
                 throwExIfNull(f, "Map item is not found. Drive: " + key, "");

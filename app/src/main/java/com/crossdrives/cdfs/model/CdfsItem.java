@@ -1,5 +1,7 @@
 package com.crossdrives.cdfs.model;
 
+import com.google.api.client.util.DateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +18,9 @@ public class CdfsItem {
 
     //Indicator whether the item is a folder(parent) or not
     boolean folder;
+
+    //modified time
+    DateTime dateTime;
 
     //drive item IDs in each user's drive
     ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
@@ -58,5 +63,13 @@ public class CdfsItem {
 
     public void setFolder(boolean folder) {
         this.folder = folder;
+    }
+
+    public DateTime getDateTime() {
+        return dateTime;
+    }
+
+    public void setDateTime(DateTime dateTime) {
+        this.dateTime = dateTime;
     }
 }

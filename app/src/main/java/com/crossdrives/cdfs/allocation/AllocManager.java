@@ -7,6 +7,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.data.DBHelper;
+import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.data.DBConstants;
@@ -98,12 +99,18 @@ public class AllocManager implements IAllocManager {
         return container;
     }
 
+    /*
+        Check the items for the integrity. Try best to save good item to local database.
+        return:
+            true: all items are good
+            false: good items have been saved to local db. However, certain items may be faulty.
+     */
     public boolean CheckThenUpdateLocalCopy(String parent, HashMap<String, OutputStream> allocations){
         AtomicReference<AllocContainer> ac = new AtomicReference<>();
         Checker checker = new Checker();
         AtomicBoolean globalResult = new AtomicBoolean(true);
         java.util.List<String> whole;
-        AtomicReference<java.util.List<Result>> results = new AtomicReference<>();
+        AtomicReference<java.util.List<AllocResultCodes>> results = new AtomicReference<>();
 
         /*
             Clear whole table when new allocation maps are fetched.
@@ -204,7 +211,7 @@ public class AllocManager implements IAllocManager {
         return item;
     }
 
-    private boolean getConclusion(java.util.List<Result> results){
+    private boolean getConclusion(java.util.List<AllocResultCodes> results){
         boolean conlusion = false;
 
         if(results.stream().allMatch((r)->{
@@ -215,8 +222,8 @@ public class AllocManager implements IAllocManager {
         return conlusion;
     }
 
-    private List<Result> grtErrorList(){
-        List<Result> errors= new ArrayList<>();
+    private List<ListResult> grtErrorList(){
+        List<ListResult> errors= new ArrayList<>();
 
         return errors;
     }

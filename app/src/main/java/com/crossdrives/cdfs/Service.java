@@ -6,7 +6,8 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-import com.crossdrives.cdfs.allocation.Result;
+import com.crossdrives.cdfs.list.ListResult;
+import com.crossdrives.cdfs.common.ResultCodes;
 import com.crossdrives.cdfs.create.Create;
 import com.crossdrives.cdfs.delete.Delete;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
@@ -55,12 +56,12 @@ public class Service{
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
 
-    public Task<com.crossdrives.cdfs.Result> list(AllocationItem parent) throws MissingDriveClientException, GeneralServiceException {
+    public Task<ListResult> list(AllocationItem parent) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
         final Throwable[] throwables = {null};
-        final java.util.List<Result>[] allocCheckResults = new java.util.List[]{null};
-        com.crossdrives.cdfs.Result result = new com.crossdrives.cdfs.Result();
+        final java.util.List<ListResult>[] allocCheckResults = new java.util.List[]{null};
+        ResultCodes result = new ResultCodes();
         Task task;
 
 
@@ -68,55 +69,57 @@ public class Service{
 
         mCDFS.requiresDriveClientNonNull();
 
-        task = Tasks.call(mExecutor, new Callable<Object>() {
-            @Override
-            public com.crossdrives.cdfs.Result call() throws Exception {
-//                listLock.lock();
-                CompletableFuture<FileList> future = new CompletableFuture<>();
-                list.list(parent, new ICallbackList<FileList>() {
-                    @Override
-                    public void onSuccess(FileList files) {
-                        fileList[0] = files;
-//                        listLock.lock();
-//                        queryFinished.signal();
-//                        listLock.unlock();
-                        future.complete(files);
-                    }
+        task = list.execute(parent);
 
-                    @Override
-                    public void onCompleteExceptionally(FileList files, java.util.List<Result> results) {
-                        fileList[0] = files;
-                        allocCheckResults[0] = results;
-//                        listLock.lock();
-//                        queryFinished.signal();
-//                        listLock.unlock();
-                        future.complete(files);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        throwables[0] = throwable;
-//                        listLock.lock();
-//                        queryFinished.signal();
-//                        listLock.unlock();
-                        future.completeExceptionally(throwable);
-                    }
-                });
-
-//                queryFinished.await();
-//                listLock.unlock();
-                future.join();
-
-                if (throwables[0] != null) {
-                    throw new GeneralServiceException("", throwables[0]);
-                }
-
-                result.setFileList(fileList[0]);
-                result.setErrCodes(allocCheckResults[0]);
-                return result;
-            }
-        });
-
+//        task = Tasks.call(mExecutor, new Callable<Object>() {
+//            @Override
+//            public ResultCodes call() throws Exception {
+////                listLock.lock();
+//                CompletableFuture<FileList> future = new CompletableFuture<>();
+//                list.list(parent, new ICallbackList<FileList>() {
+//                    @Override
+//                    public void onSuccess(FileList files) {
+//                        fileList[0] = files;
+////                        listLock.lock();
+////                        queryFinished.signal();
+////                        listLock.unlock();
+//                        future.complete(files);
+//                    }
+//
+//                    @Override
+//                    public void onCompleteExceptionally(FileList files, java.util.List<ListResult> results) {
+//                        fileList[0] = files;
+//                        allocCheckResults[0] = results;
+////                        listLock.lock();
+////                        queryFinished.signal();
+////                        listLock.unlock();
+//                        future.complete(files);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Throwable throwable) {
+//                        throwables[0] = throwable;
+////                        listLock.lock();
+////                        queryFinished.signal();
+////                        listLock.unlock();
+//                        future.completeExceptionally(throwable);
+//                    }
+//                });
+//
+////                queryFinished.await();
+////                listLock.unlock();
+//                future.join();
+//
+//                if (throwables[0] != null) {
+//                    throw new GeneralServiceException("", throwables[0]);
+//                }
+//
+//                result.setFileList(fileList[0]);
+//                result.setErrCodes(allocCheckResults[0]);
+//                return result;
+//            }
+//        });
+//
         return task;
     }
     /*

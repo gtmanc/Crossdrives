@@ -3,7 +3,7 @@ package com.crossdrives.cdfs.upload;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.IConstant;
+import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
 import com.crossdrives.cdfs.allocation.IDProducer;
@@ -35,7 +35,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -102,7 +101,7 @@ public class Upload {
         return upload(ins, name, parents, listener);
     }
 
-    public CompletableFuture<File> upload(InputStream ins, String CdfsName, List<String> parents, IUploadProgressListener listener)  {
+    public CompletableFuture<File> upload(InputStream ins, String CdfsName, String parent, IUploadProgressListener listener)  {
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
         mListener = listener;
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
@@ -189,7 +188,7 @@ public class Upload {
                     */
                     item.setSequence(SeqNum[0]);
                     SeqNum[0]++;  //TODO: do we have concurrent issue?
-                    item.setPath(parents.get(parents.size()-1));    //simply put the last ID
+                    item.setPath(parent.get(parent.size()-1));    //simply put the last ID
                     item.setAttrFolder(false);
                     item.setCDFSItemSize(uploadSize[0]);
                     items.put(slice.getName(), item);
@@ -280,7 +279,7 @@ public class Upload {
 //                      if(localFileOptional.isPresent()){
 //                      File localFile = localFileOptional.get();
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setParents(parents);
+                        fileMetadata.setParents(parent);
                         fileMetadata.setName(localFile.getName());
                         Log.d(TAG, "Drive: " + driveName + ". local file to upload: " + localFile.getName());
                         mCDFS.getDrives().get(driveName).getClient().upload().
@@ -431,7 +430,7 @@ public class Upload {
             MapFetcher mapFetcher = new MapFetcher(reducedDriveList);
 
             callback(State.MAP_UPDATE_STARTED);
-            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parents);
+            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
             HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
             if(mapIDs.values().stream().anyMatch((v)->v==null)){
                 Log.w(TAG, "map is missing!");
@@ -440,7 +439,7 @@ public class Upload {
                 return null;
             }
 
-            CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(parents);
+            CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(parent);
             AllocManager am = new AllocManager(mCDFS);
             HashMap<String, AllocContainer> containers = Mapper.reValue(mapStreamFuture.join(), (in)->{
                 return am.toContainer(in);

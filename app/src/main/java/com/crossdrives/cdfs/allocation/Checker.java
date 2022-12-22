@@ -2,18 +2,18 @@ package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Checker {
     final String TAG = "CD.Checker";
-    List<RuleSingle<Result>> rulesSingle = new ArrayList<>();
-    List<RuleJoined<Result>> rulesJoined = new ArrayList<>();
+    List<RuleSingle<AllocResultCodes>> rulesSingle = new ArrayList<>();
+    List<RuleJoined<AllocResultCodes>> rulesJoined = new ArrayList<>();
 
     interface RuleSingle<Result>{
         Result check(AllocationItem item);
@@ -36,15 +36,15 @@ public class Checker {
     /*
         Stream API tutorial: https://www.baeldung.com/java-8-streams
      */
-    public List<Result> checkAllocationFile(AllocContainer ac){
-        List<Result> results = new ArrayList<>();
+    public List<ListResult> checkAllocationFile(AllocContainer ac){
+        List<ListResult> results = new ArrayList<>();
 
 
         return results;
     }
 
-    public List<Result> checkAllocItem(final AllocationItem item){
-        List<Result> results = new ArrayList<>();
+    public List<AllocResultCodes> checkAllocItem(final AllocationItem item){
+        List<AllocResultCodes> results = new ArrayList<>();
         rulesSingle.forEach((rule)->{
             results.add(rule.check(item));
             });
@@ -52,8 +52,8 @@ public class Checker {
         return results;
     }
 
-    public List<Result> checkItemsCrossly(List<AllocationItem> items){
-        List<Result> results = new ArrayList<>();
+    public List<AllocResultCodes> checkItemsCrossly(List<AllocationItem> items){
+        List<AllocResultCodes> results = new ArrayList<>();
         rulesJoined.forEach((rule)->{
             results.add(rule.check(items));
         });
@@ -67,13 +67,13 @@ public class Checker {
     /*
         Seq starts with 1 and the max equals to totalSeg.
      */
-    class RuleCheckSeqNum implements RuleSingle<Result> {
+    class RuleCheckSeqNum implements RuleSingle<AllocResultCodes> {
 
         @Override
-        public Result check(AllocationItem item) {
+        public AllocResultCodes check(AllocationItem item) {
             int seq = item.getSequence();
             int totalSeg = item.getTotalSeg();
-            Result result = new Result(ResultCode.SUCCESS, "");
+            AllocResultCodes result = new AllocResultCodes(AllocResultCodes.SUCCESS, "");
 
             if( seq == 0){
                 result.setErr(ResultCode.ERR_SEQ_OVER_SEG);
@@ -89,13 +89,13 @@ public class Checker {
         }
     }
 
-    class RuleCheckSize implements RuleSingle<Result> {
+    class RuleCheckSize implements RuleSingle<AllocResultCodes> {
 
         @Override
-        public Result check(AllocationItem item) {
+        public AllocResultCodes check(AllocationItem item) {
             long size = item.getSize();
             long maxSize = item.getCDFSItemSize();
-            Result result = new Result(ResultCode.SUCCESS, "");
+            AllocResultCodes result = new AllocResultCodes(AllocResultCodes.SUCCESS, "");
 
             if (size > maxSize) {
                 result.setErr(ResultCode.ERR_SIZE_OVER_MAX);
@@ -108,28 +108,28 @@ public class Checker {
     /*
         Cross item checks
     */
-    class RuleCheckSizeCrossly implements RuleJoined<Result>{
+    class RuleCheckSizeCrossly implements RuleJoined<AllocResultCodes>{
 
         @Override
-        public Result check(List<AllocationItem> items) {
-            Result result = new Result(ResultCode.SUCCESS, "SUCCESS");
+        public AllocResultCodes check(List<AllocationItem> items) {
+            AllocResultCodes result = new AllocResultCodes(AllocResultCodes.SUCCESS, "SUCCESS");
             final long size = items.get(0).getCDFSItemSize();
             if(!items.stream().allMatch((item) -> {
                 return item.getCDFSItemSize() == size;
             })){
                 Log.w(TAG, "CDFS Sizes are not identical.");
-                result.setErr(ResultCode.ERR_CDFSSIZE_NOT_IDENTICAL);
+                result.setErr(AllocResultCodes.ERR_CDFSSIZE_NOT_IDENTICAL);
             }
 
             return result;
         }
     }
 
-    class RuleCheckTotalSegCrossly implements RuleJoined<Result>{
+    class RuleCheckTotalSegCrossly implements RuleJoined<AllocResultCodes>{
 
         @Override
-        public Result check(List<AllocationItem> items) {
-            Result result = new Result(ResultCode.SUCCESS, "");
+        public AllocResultCodes check(List<AllocationItem> items) {
+            AllocResultCodes result = new AllocResultCodes(AllocResultCodes.SUCCESS, "");
 
             final int totalSeg = items.get(0).getTotalSeg();
 
@@ -137,18 +137,18 @@ public class Checker {
                 return item.getTotalSeg() == totalSeg;
             })) {
                 Log.w(TAG, "totalSeq are not identical.");
-                result.setErr(ResultCode.ERR_TOTALSEG_NOT_IDENTICAL);
+                result.setErr(AllocResultCodes.ERR_TOTALSEG_NOT_IDENTICAL);
             }
 
             return result;
         }
     }
 
-    class RuleCheckMissingItem implements RuleJoined<Result>{
+    class RuleCheckMissingItem implements RuleJoined<AllocResultCodes>{
 
         @Override
-        public Result check(final List<AllocationItem> items) {
-            Result result = new Result(ResultCode.SUCCESS, "");
+        public AllocResultCodes check(final List<AllocationItem> items) {
+            AllocResultCodes result = new AllocResultCodes(AllocResultCodes.SUCCESS, "");
             final int totalSeg = items.get(0).getTotalSeg();
             Stream<Integer> sorted;
 
@@ -160,7 +160,7 @@ public class Checker {
             if(items.size() != totalSeg) {
                 Log.w(TAG, "Number of items check unsuccessful. Item may be missing. " +
                         "Number of item: " + items.size() + " TotalSeg: " + totalSeg);
-                result.setErr(ResultCode.ERR_MISSING_ITEM);
+                result.setErr(AllocResultCodes.ERR_MISSING_ITEM);
             }
 
 //            Log.d(TAG, "Sorted elements:");
@@ -176,7 +176,7 @@ public class Checker {
                     newSeq = seq;}
                 return newSeq; }) != totalSeg){
                 Log.w(TAG, "Seq number check unsuccessful. item may be missing");
-                result.setErr(ResultCode.ERR_MISSING_ITEM);
+                result.setErr(AllocResultCodes.ERR_MISSING_ITEM);
             }
 
             return result;

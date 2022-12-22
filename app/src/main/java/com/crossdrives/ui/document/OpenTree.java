@@ -8,10 +8,12 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.Result;
+import com.crossdrives.cdfs.common.ResultCodes;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
+import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -77,29 +79,27 @@ public class OpenTree extends ViewModel {
          */
         //       try {
         CDFS.getCDFSService().getService().list(parent)
-                .addOnSuccessListener(new OnSuccessListener<Result>() {
+                .addOnSuccessListener(new OnSuccessListener<ListResult>() {
                     @Override
-                    public void onSuccess(com.crossdrives.cdfs.Result result) {
-                        List<File> f = result.getFileList().getFiles();
-                        //ListView listview = (ListView) findViewById(R.id.listview_query);
-
+                    public void onSuccess(ListResult result) {
+                        List<CdfsItem> items = result.getItems();
                         ArrayList<SerachResultItemModel> fetched = new ArrayList<>();
 
-                        Log.i(TAG, "Number of files: " + f.size());
-                        for (File file : result.getFileList().getFiles()) {
+                        Log.i(TAG, "Number of files: " + items.size());
+                        for (CdfsItem item : items) {
 //                                if(file.getModifiedTime() == null){
 //                                    Log.w(TAG, "Modified dateTime is null");
 //                                }
                             //Log.d(TAG, "files name: " + file.getName());
                             boolean isFolder = false;
-                            if(file.getParents()!=null){isFolder = true;}
-                            fetched.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime(), isFolder));
+                            if(item.isFolder()){isFolder = true;}
+                            fetched.add(new SerachResultItemModel(false, item.getName(), item.getId(), item.getDateTime(), isFolder));
                         }
 
                         //in a worker thread, use the postValue(T) method to update the LiveData object.
                         mItems.postValue(fetched);
 
-                        mNextPage = result.getFileList().getNextPageToken();
+//                        mNextPage = result.getFileList().getNextPageToken();
 //                            if(mNextPage == null){
 //                                Log.d(TAG, "Next page handler is null!");
 //                                CloseQuery();

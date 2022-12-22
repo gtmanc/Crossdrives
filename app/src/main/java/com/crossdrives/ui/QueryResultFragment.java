@@ -224,9 +224,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			treeOpener.open(null);
 
 //			CDFS.getCDFSService().getService().list(mNextPage)
-//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
+//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.common.Result>() {
 //						@Override
-//						public void onSuccess(com.crossdrives.cdfs.Result result) {
+//						public void onSuccess(com.crossdrives.cdfs.common.Result result) {
 //							List<File> f = result.getFileList().getFiles();
 //							//ListView listview = (ListView) findViewById(R.id.listview_query);
 //
@@ -319,9 +319,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//TODO: will be removed
 			treeOpener.fetchAsync();
 //			CDFS.getCDFSService().getService().list(mNextPage)
-//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.Result>() {
+//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.common.Result>() {
 //						@Override
-//						public void onSuccess(com.crossdrives.cdfs.Result result) {
+//						public void onSuccess(com.crossdrives.cdfs.common.Result result) {
 //							List<File> f = result.getFileList().getFiles();
 //							int i = 0;
 //							//now we are done with the query. take out the progress bar from the list

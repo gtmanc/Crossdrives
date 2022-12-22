@@ -3,13 +3,11 @@ package com.crossdrives.cdfs.create;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.IConstant;
+import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
-import com.crossdrives.cdfs.delete.Delete;
 import com.crossdrives.cdfs.model.AllocContainer;
-import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.create.ICreateCallBack;
 import com.crossdrives.driveclient.model.File;
