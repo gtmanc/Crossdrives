@@ -1,49 +1,35 @@
 package com.crossdrives.cdfs.download;
 
-import android.app.Activity;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Compositor;
 import com.crossdrives.cdfs.allocation.ICompositeCallback;
 import com.crossdrives.cdfs.allocation.MapFetcher;
-import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
-import com.crossdrives.cdfs.upload.IUploadProgressListener;
-import com.crossdrives.cdfs.upload.Upload;
-import com.crossdrives.cdfs.util.EntryCreator;
-import com.crossdrives.cdfs.util.Mapper;
-import com.crossdrives.cdfs.util.StreamHandler;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
-import com.crossdrives.driveclient.download.IDownloadRequest;
 import com.crossdrives.driveclient.model.MediaData;
-import com.crossdrives.msgraph.SnippetApp;
-import com.crossdrives.test.TestFileIntegrityChecker;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
-import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Download {
     static final String TAG = "CD.Download";
     CDFS mCDFS;
     String mFileID;
-    List<String> mParents;
+    CdfsItem mParent;
     final int MAX_CHUNK = 10;
     final int POISON_PILL = 0;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
@@ -63,10 +49,10 @@ public class Download {
     int progressTotalSegment = 0;
     int progressTotalDownloaded = 0;
 
-    public Download(CDFS mCDFS, String fileID, List<String> parents, IDownloadProgressListener listener) {
+    public Download(CDFS mCDFS, String fileID, CdfsItem parent, IDownloadProgressListener listener) {
         this.mCDFS = mCDFS;
         mFileID = fileID;
-        mParents = parents;
+        mParent = parent;
         mListener = listener;
     }
 
@@ -81,7 +67,7 @@ public class Download {
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
 
                 callback(State.GET_REMOTE_MAP_STARTED);
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
 
                 Log.d(TAG, "map fetched");

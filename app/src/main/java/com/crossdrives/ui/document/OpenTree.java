@@ -30,8 +30,8 @@ import java.util.List;
 public class OpenTree extends ViewModel {
     final String TAG = "CD.OpenTree";
 
-    //Topology: path including root to folder where we are. 'Root' is always the first element.
-    List<AllocationItem> mParents = new ArrayList<>();
+    //folder topology: parents (folders). An empty list indicates we are at 'root'.
+    List<CdfsItem> mParents = new ArrayList<>();
 
     private MutableLiveData<ArrayList<SerachResultItemModel>> mItems = new MutableLiveData<>();
     String mNextPage = null;
@@ -39,7 +39,7 @@ public class OpenTree extends ViewModel {
     /*
         parent: set null to get list in base folder (CDFS root)
      */
-    public void open(@Nullable AllocationItem parent) throws GeneralServiceException, MissingDriveClientException {
+    public void open(@Nullable CdfsItem parent) throws GeneralServiceException, MissingDriveClientException {
         if(parent != null) {
             mParents.add(parent);
         }
@@ -51,13 +51,16 @@ public class OpenTree extends ViewModel {
 //    }
 
 
-    public void exitFolder(AllocationItem parent){
+    public void exitFolder(CdfsItem parent){
+
         int i = getLastIndex(mParents);
 
-        if(mParents.get(i).getCdfsId().compareToIgnoreCase(parent.getCdfsId()) != 0){
+        if(i == 0){return;} //we are in root. do nothing.
+
+        if(mParents.get(i).getId().compareToIgnoreCase(parent.getId()) != 0){
             throw new IllegalArgumentException("Parent ID could not recognized!");
         }
-        mParents.remove(i);;
+        mParents.remove(i);
     }
 
     public @NonNull MutableLiveData<ArrayList<SerachResultItemModel>> getItems(){return mItems;}
@@ -73,7 +76,7 @@ public class OpenTree extends ViewModel {
 
 
     public MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync() throws GeneralServiceException, MissingDriveClientException {
-        AllocationItem parent = mParents.get(getLastIndex(mParents));
+        CdfsItem parent = mParents.get(getLastIndex(mParents));
         /*
             call CDFS list to fetch the list asynchronously
          */

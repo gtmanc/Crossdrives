@@ -13,7 +13,7 @@ public class CdfsItem {
     //CDFS ID
     String Id;
 
-    //CDFS display path. Or the parents. e.g. AAA\BBB\CCC
+    //CDFS display path which contains the item. Or the parents. e.g. AAA\BBB\CCC
     String path;
 
     //Indicator whether the item is a folder(parent) or not
@@ -22,7 +22,7 @@ public class CdfsItem {
     //modified time
     DateTime dateTime;
 
-    //drive item IDs in each user's drive
+    //drive item IDs in each user's drive which are mapped to the CDFS item
     ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
 
     public String getName() {

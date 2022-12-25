@@ -5,6 +5,7 @@ import android.util.Log;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.model.UpdateContent;
 import com.crossdrives.cdfs.model.updateFile;
 import com.crossdrives.cdfs.remote.updater;
@@ -46,11 +47,11 @@ public class MapUpdater {
     }
 
     public CompletableFuture<HashMap<String, File>> updateAll(HashMap<String, AllocContainer> containers
-        , List<String> parents){
+        , CdfsItem parent){
         CompletableFuture<HashMap<String, File>> resultFuture = new CompletableFuture<>();
         CompletableFuture.supplyAsync(()->{
             MapFetcher mapFetcher = new MapFetcher(mDrives);
-            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parents);
+            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
             HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
             if(mapIDs.values().stream().anyMatch((v)->v==null)){
                 Log.w(TAG, "map is missing!");

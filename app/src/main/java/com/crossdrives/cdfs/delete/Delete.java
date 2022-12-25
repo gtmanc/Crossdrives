@@ -6,10 +6,9 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
-import com.crossdrives.cdfs.download.Download;
-import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
@@ -36,7 +35,7 @@ public class Delete {
     static final String TAG = "CD.Delete";
     CDFS mCDFS;
     final String mFileID;
-    List<String> mParents;
+    CdfsItem mParent;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
     final int MAX_CHUNK = 10;
 
@@ -57,10 +56,10 @@ public class Delete {
     int progressTotalSegment = 0;
     int progressTotalDeleted = 0;
 
-    public Delete(CDFS cdfs, String id, List<String> parents, IDeleteProgressListener listener) {
+    public Delete(CDFS cdfs, String id, CdfsItem parent, IDeleteProgressListener listener) {
         this.mCDFS = cdfs;
         this.mFileID = id;
-        this.mParents = parents;
+        this.mParent = parent;
         mListener = listener;
     }
 
@@ -82,7 +81,7 @@ public class Delete {
                 Log.d(TAG, "Fetch map...");
                 callback(State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
                 callback(State.GET_MAP_COMPLETE);
@@ -105,7 +104,7 @@ public class Delete {
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(updatedMaps, mParents);
+                        = updater.updateAll(updatedMaps, mParent);
                 updateFuture.join();
                 callback(State.MAP_UPDATE_COMPLETE);
 

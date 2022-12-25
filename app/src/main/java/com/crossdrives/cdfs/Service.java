@@ -21,6 +21,7 @@ import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.move.Move;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
@@ -56,7 +57,7 @@ public class Service{
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
 
-    public Task<ListResult> list(AllocationItem parent) throws MissingDriveClientException, GeneralServiceException {
+    public Task<ListResult> list(CdfsItem parent) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
         final Throwable[] throwables = {null};
@@ -127,7 +128,7 @@ public class Service{
         name: the name in CDFS space
         parent: the target folder name of the upload
     */
-    public Task upload(InputStream ins, String name, java.util.List<String> parents) throws Exception {
+    public Task upload(InputStream ins, String name, java.util.List<CdfsItem> parents) throws Exception {
         Upload upload = new Upload(mCDFS);
         Task task;
         final Throwable[] throwables = {null};
@@ -192,7 +193,7 @@ public class Service{
         fileID:   CDFS item ID
         parent:   CDFS folder where the item exists in
      */
-    public Task<String> download(String fileID, java.util.List<String> parents) throws MissingDriveClientException, PermissionException {
+    public Task<String> download(String fileID, CdfsItem parent) throws MissingDriveClientException, PermissionException {
 
         IDownloadProgressListener listener = defaultDownloadProgressListener;
         if (downloadProgressListener != null)
@@ -204,7 +205,7 @@ public class Service{
             throw new PermissionException("Permission for accessing download folder has not yet granted!", new Throwable(""));
         }
 
-        Download download = new Download(mCDFS, fileID, parents, listener);
+        Download download = new Download(mCDFS, fileID, parent, listener);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: Download");
@@ -226,13 +227,13 @@ public class Service{
 
     };
 
-    public Task<com.crossdrives.driveclient.model.File> delete(String fileID, java.util.List<String> parents) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> delete(String fileID, CdfsItem parent) throws MissingDriveClientException, PermissionException {
 
         IDeleteProgressListener listener = defaultDeleteProgressListener;
         if (deleteProgressListener != null)
             listener = deleteProgressListener;
 
-        Delete deleter = new Delete(mCDFS, fileID, parents, listener);
+        Delete deleter = new Delete(mCDFS, fileID, parent, listener);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: Delete");
@@ -253,13 +254,13 @@ public class Service{
         deleteProgressListener = listener;
     }
 
-    public Task<com.crossdrives.driveclient.model.File> move(String fileID, java.util.List<String> parents) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> move(String fileID, CdfsItem parent) throws MissingDriveClientException, PermissionException {
 
 //        IDeleteProgressListener listener = defaultDeleteProgressListener;
 //        if (deleteProgressListener != null)
 //            listener = deleteProgressListener;
 
-        Move mover = new Move(mCDFS, fileID, parents);
+        Move mover = new Move(mCDFS, fileID, parent);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: move");
@@ -269,13 +270,13 @@ public class Service{
         return mover.execute();
     }
 
-    public Task<com.crossdrives.driveclient.model.File>  create(String name, java.util.List<String> parent) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File>  create(String name, java.util.List<CdfsItem> parents) throws MissingDriveClientException, PermissionException {
 
 //        IDeleteProgressListener listener = defaultDeleteProgressListener;
 //        if (deleteProgressListener != null)
 //            listener = deleteProgressListener;
 
-        Create creator = new Create(mCDFS, name, parent);
+        Create creator = new Create(mCDFS, name, parents);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: move");

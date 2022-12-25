@@ -6,18 +6,15 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
-import com.crossdrives.cdfs.delete.Delete;
-import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.model.File;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -30,13 +27,13 @@ public class Move {
     final String TAG = "CD.Move";
     CDFS mCDFS;
     final String mFileID;
-    List<String> mParents;
+    CdfsItem mParent;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
-    public Move(CDFS cdfs, String id, List<String> parents) {
+    public Move(CDFS cdfs, String id, CdfsItem parent) {
         this.mCDFS = cdfs;
         this.mFileID = id;
-        this.mParents = parents;
+        this.mParent = parent;
     }
 
     public Task<File> execute() {
@@ -55,7 +52,7 @@ public class Move {
                 Log.d(TAG, "Fetch map...");
                 //callback(Delete.State.GET_MAP_STARTED);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParents);
+                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
                 HashMap<String, OutputStream> maps = mapsFuture.join();
                 Log.d(TAG, "map fetched");
                 //callback(Delete.State.GET_MAP_COMPLETE);
@@ -84,7 +81,7 @@ public class Move {
                     List<AllocationItem> itemList= container.getAllocItem();
                     List<AllocationItem> items = itemList.stream().map((item)->{
                         AllocationItem ai = AllocationItem.clone(item);
-                        ai.setPath(mParents.get(mParents.size()-1));
+                        ai.setPath(mParent.getPath());
                         return ai;
                     }).collect(Collectors.toList());
                     return container;
@@ -93,7 +90,7 @@ public class Move {
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(containers, mParents);
+                        = updater.updateAll(containers, mParent);
                 updateFuture.join();
 
                 return result;

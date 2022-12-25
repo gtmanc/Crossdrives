@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.exception.ItemNotFoundException;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.IDriveClient;
@@ -292,29 +293,31 @@ public class MapFetcher {
 
     /*
         Get specified map in CDFS folder for each drive
+        Input: a null object indicates that cdfs root is specified
      */
-    public CompletableFuture<HashMap<String, File>> listAll(String cdfsPid) {
+    public CompletableFuture<HashMap<String, File>> listAll(@Nullable CdfsItem parent) {
         CompletableFuture<HashMap<String, File>> resultFuture;
         Fetcher fetcher = new Fetcher(mDrives);
 
         resultFuture = CompletableFuture.supplyAsync(()-> {
             HashMap<String, File> baseFolders;
-            CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll();
+            //CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll(parent);
 
             //if any is null. exit
-            Log.d(TAG, "Check CDFS folders... ");
-            baseFolders = foldersFuture.join();
+            //Log.d(TAG, "Check CDFS folders... ");
+            //baseFolders = foldersFuture.join();
+            baseFolders = getMetaDataAll(parent);
 
             if(baseFolders.values().stream().anyMatch(((v)-> v == null))){
                 Log.w(TAG, "CDFS folder is missing!");
                 return null;
             }
 
-            final CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(baseFolders);
-            final HashMap<String, FileList> fileListsBase = list.join();
-            final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileListsBase, fetcher);
-            HashMap<String, File> maps = Mapper.reValue(fileListAtDest, (key, fileList)->{
-                File f = getFromFiles(fileList, NAME_ALLOCATION);
+            final CompletableFuture<HashMap<String, FileList>> listFuture = fetcher.listAll(baseFolders);
+            final HashMap<String, FileList> fileList = listFuture.join();
+            //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
+            HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
+                File f = getFromFiles(list, NAME_ALLOCATION);
                 throwExIfNull(f, "Map item is not found. Drive: " + key, "");
                 return f;
             });
@@ -409,7 +412,29 @@ public class MapFetcher {
     /*
         Get folder meta data for each drive
      */
-    public CompletableFuture<HashMap<String, File>> getFolderAll(){
+    public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
+        HashMap<String, File> file;
+        Map<String, File> metaData;
+
+        if(parent != null){
+            file = new HashMap<>();
+            //simply make api happy
+            parent.getMap().forEach((k, v)->{
+                File f = new File();
+                f.setId(v.get(0));
+                file.put(k, f);
+            });
+            return file;
+        }else
+        {   //base folder
+            file = getMetaDataRoot().join();
+        }
+
+        return file;
+    }
+
+    //obsolete function. deprecated
+    public CompletableFuture<HashMap<String, File>> getMetaDataRoot(){
         Fetcher fetcher = new Fetcher(mDrives);
         CompletableFuture<HashMap<String, File>> resultFuture;
         resultFuture = CompletableFuture.supplyAsync(()-> {
@@ -472,7 +497,7 @@ public class MapFetcher {
         return folder;
     }
 
-    public CompletableFuture<HashMap<String, OutputStream>> pullAll(List<String> parent){
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(CdfsItem parent){
         CompletableFuture <HashMap<String, File>> mapIDsFuture =
         listAll(parent);
         return pullAllByID(Mapper.reValue(mapIDsFuture.join(), (file)->{
