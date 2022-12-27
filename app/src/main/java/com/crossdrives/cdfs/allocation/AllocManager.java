@@ -151,7 +151,7 @@ public class AllocManager implements IAllocManager {
 
         /*
             To do the item cross check, the database functionality is utilized.
-            Build name list contains the unique names. We will use the list to query local
+            Build name list contains the unique Names. We will use the list to query local
             database for cross item check.
         */
 //        whole = getNameList(parent);
@@ -269,7 +269,7 @@ public class AllocManager implements IAllocManager {
             cursor.moveToNext();
         }
 
-        //names = new utils().buildNameList(cursor);
+        //Names = new utils().buildNameList(cursor);
         cursor.close();
         return names;
     }

@@ -222,6 +222,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		try {
 			treeOpener.open(null);
+			treeOpener.fetchAsync();
 
 //			CDFS.getCDFSService().getService().list(mNextPage)
 //					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.common.Result>() {
@@ -558,7 +559,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
 						return;
 					}
-					Open.download(getActivity(), item, mParents);
+					Open.download(getActivity(), item, treeOpener.whereWeAre());
 //					Log.d(TAG, "Start to download file: " + item.mName);
 //					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
 //					//Log.d(TAG, "File ID: " + item.mId);
@@ -1028,7 +1029,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			Log.d(TAG, "Delete item: " + selectedItem.getName());
 			try {
-				task = service.delete(selectedItem.getID(), mParents);
+				task = service.delete(selectedItem.getID(), treeOpener.whereWeAre());
 			} catch (MissingDriveClientException | PermissionException e) {
 				Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG);
 				Log.w(TAG, e.getMessage());
@@ -1129,7 +1130,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //							Log.d(TAG, "Test file used. file: " + name +
 //									" Length:" + in.available());
 
-							task = service.upload(in, name, mParents);
+							task = service.upload(in, name, treeOpener.getParents());
 							InputStream finalIn = in;
 							/*
 							* Setup listeners

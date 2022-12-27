@@ -3,6 +3,7 @@ package com.crossdrives.cdfs;
 import android.util.Log;
 
 import com.crossdrives.cdfs.allocation.AllocManager;
+import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
@@ -32,7 +33,7 @@ public class Infrastructure{
 //    private String mFileId;
     //IFileListCallBack<FileList, Object> mCallback;
     String mDriveName;
-    private final String NAME_ALLOCATION_ROOT = "Allocation_root.cdfs";
+    private final String NAME_ALLOCATION_ROOT = Names.allocFile(null);
 
     private class Result{
         public String folder;

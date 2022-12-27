@@ -40,14 +40,11 @@ public class MapFetcher {
     /*
         Query strings
      */
-    private final String NAME_CDFS_FOLDER = "CDFS";
-    final String PREFIX_ALLOCATION = "Allocation_";
-    final String EXT_ALLOCATION = ".cdfs";
-    private final String NAME_ALLOCATION_ROOT = "Allocation_root.cdfs";
-    private final String NAME_ALLOCATION = "Allocation.cdfs";
+    private final String NAME_CDFS_FOLDER = Names.CDFS_FOLDER;
+    private final String PREFIX_ALLOCATION_FILE = Names.PREFIX_ALLOC_FILE;
     private final String MINETYPE_FOLDER = "application/vnd.google-apps.folder";
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
-            "' and name = '" + NAME_CDFS_FOLDER + "'";
+            "' and name = '" + Names.CDFS_FOLDER + "'";
 
     private HashMap<String, State> states = new HashMap<>();
     private HashMap<String, OutputStream> output = new HashMap<>();
@@ -114,7 +111,7 @@ public class MapFetcher {
                 "' and name = ";
 
         if(parentName == null){
-            clause = clause.concat("'" + NAME_CDFS_FOLDER+ "'");
+            clause = clause.concat("'" + NAME_CDFS_FOLDER + "'");
         }else{
             clause = clause.concat("'" + parentName + "'");
         }
@@ -230,7 +227,7 @@ public class MapFetcher {
 
         //#48 TODO
         files = fileList.getFiles().stream().filter((file)->{
-            return file.getName().compareToIgnoreCase(NAME_ALLOCATION_ROOT) == 0 ?  true : false;
+            return file.getName().compareToIgnoreCase(Names.allocFile(null)) == 0 ?  true : false;  //root
         }).findAny();
         if(!files.isPresent()){Log.w(TAG, "No root allocation file presents!");}
         files.ifPresent((file) -> {
@@ -317,7 +314,7 @@ public class MapFetcher {
             final HashMap<String, FileList> fileList = listFuture.join();
             //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
             HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
-                File f = getFromFiles(list, NAME_ALLOCATION);
+                File f = getFromFiles(list, Names.allocFile(parent.getId()));
                 throwExIfNull(f, "Map item is not found. Drive: " + key, "");
                 return f;
             });
@@ -345,7 +342,7 @@ public class MapFetcher {
         HashMap<String, FileList>[] fileLists = new HashMap[]{fileListBase};
         CompletableFuture<HashMap<String, FileList>>[] list = new CompletableFuture[]{};
         pids.stream().forEachOrdered((pid)->{
-            HashMap<String, File> nextFolder = findItemMatched(fileLists[0], pid);
+            HashMap<String, File> nextFolder = null;//findItemMatched(fileLists[0], pid);
             list[0] = fetcher.listAll(nextFolder);
             fileLists[0] = list[0].join();
         });
@@ -366,7 +363,7 @@ public class MapFetcher {
         //Get map item from the input list
         HashMap<String, File> mapItems = Mapper.reValue(fileLists, (key, list)->{
 
-            File file = getFromFiles(list, NAME_ALLOCATION);
+            File file = getFromFiles(list, null);
             throwExIfNull(file, "Map file may be missing! " + "Drive:" + key, "");
             return file;
          });
@@ -489,7 +486,7 @@ public class MapFetcher {
 
         CompletableFuture<File> folder =
         CompletableFuture.supplyAsync(()->{
-            File f = getFromFiles(fileListFuture.join(), NAME_CDFS_FOLDER);
+            File f = getFromFiles(fileListFuture.join(), Names.allocFile(null));
             Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
             return f;
         });
@@ -522,7 +519,7 @@ public class MapFetcher {
                 result = files.get();
 
             } else {
-                Log.w(TAG, "No root allocation file presents!");
+                Log.w(TAG, "Can not find the specified item: " + name);
             }
         }else{
             Log.w(TAG, "No files found in the specified folder");

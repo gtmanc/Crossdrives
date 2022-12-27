@@ -53,30 +53,36 @@ public class OpenTree extends ViewModel {
 
     public void exitFolder(CdfsItem parent){
 
-        int i = getLastIndex(mParents);
+        CdfsItem item = getLastItem(mParents);
 
-        if(i == 0){return;} //we are in root. do nothing.
+        if(item == null){return;} //we are in root. do nothing.
 
-        if(mParents.get(i).getId().compareToIgnoreCase(parent.getId()) != 0){
+        if(item.getId().compareToIgnoreCase(parent.getId()) != 0){
             throw new IllegalArgumentException("Parent ID could not recognized!");
         }
-        mParents.remove(i);
+        mParents.remove(item);
+    }
+
+    public @NonNull List<CdfsItem> getParents(){
+        return mParents;
     }
 
     public @NonNull MutableLiveData<ArrayList<SerachResultItemModel>> getItems(){return mItems;}
 
     //public @Nullable String getNextPageToken(){return mNextPage;}
 
-    <T> int getLastIndex(List<T> list){
-        int i;
-        if(list == null){ i = 0;}
-        else{ i = list.size()-1;}
-        return i;
+    <T> T getLastItem(List<T> list){
+        T item = null;
+        if(list.size() != 0){
+            item = list.get(list.size()-1);
+        }
+
+        return item;
     }
 
 
     public MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync() throws GeneralServiceException, MissingDriveClientException {
-        CdfsItem parent = mParents.get(getLastIndex(mParents));
+        CdfsItem parent = getLastItem(mParents);
         /*
             call CDFS list to fetch the list asynchronously
          */
@@ -132,6 +138,9 @@ public class OpenTree extends ViewModel {
         return mItems;
     }
 
+    @Nullable public CdfsItem whereWeAre(){
+        return mParents.isEmpty()? null : mParents.get(mParents.size()-1);
+    }
     public boolean endOfList(){return mNextPage == null;}
 
 }

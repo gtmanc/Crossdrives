@@ -360,7 +360,7 @@ public class List {
             cursor.moveToNext();
         }
         cursor.close();
-        //names = new utils().buildNameList(cursor);
+        //Names = new utils().buildNameList(cursor);
         return items;
     }
 }

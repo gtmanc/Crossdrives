@@ -14,6 +14,7 @@ import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.exception.PermissionException;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -32,7 +33,7 @@ public class Open extends ViewModel {
 
     static FetchList fetchList = new FetchList();
 
-    static public boolean download(Activity activity, SerachResultItemModel item, List<String> parents){
+    static public boolean download(Activity activity, SerachResultItemModel item, CdfsItem parent){
         boolean result;
         Context context = activity.getApplicationContext();
         Log.d(TAG, "Start to download file: " + item.getName());
@@ -54,7 +55,7 @@ public class Open extends ViewModel {
             service.setDownloadProgressListener(downloadProgressListener);
         }
         try {
-            service.download(item.getID(), parents).addOnSuccessListener(successListener)
+            service.download(item.getID(), parent).addOnSuccessListener(successListener)
                     .addOnFailureListener(failureListener);
         } catch (MissingDriveClientException | PermissionException e) {
             Toast.makeText(context, "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
