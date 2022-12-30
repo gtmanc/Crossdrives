@@ -289,7 +289,7 @@ public class MapFetcher {
     }
 
     /*
-        Get specified map in CDFS folder for each drive
+        Get metadata of map files which stored in user's drives
         Input: a null object indicates that cdfs root is specified
      */
     public CompletableFuture<HashMap<String, File>> listAll(@Nullable CdfsItem parent) {
@@ -297,24 +297,26 @@ public class MapFetcher {
         Fetcher fetcher = new Fetcher(mDrives);
 
         resultFuture = CompletableFuture.supplyAsync(()-> {
-            HashMap<String, File> baseFolders;
+            HashMap<String, File> mataDataFolder;
             //CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll(parent);
 
             //if any is null. exit
             //Log.d(TAG, "Check CDFS folders... ");
             //baseFolders = foldersFuture.join();
-            baseFolders = getMetaDataAll(parent);
+            mataDataFolder = getMetaDataAll(parent);
 
-            if(baseFolders.values().stream().anyMatch(((v)-> v == null))){
+            //something wrong if the base folder doesn't exist in the user's drive
+            if(mataDataFolder.entrySet().stream().anyMatch(((set)-> set.getValue()== null))){
                 Log.w(TAG, "CDFS folder is missing!");
                 return null;
             }
 
-            final CompletableFuture<HashMap<String, FileList>> listFuture = fetcher.listAll(baseFolders);
+            final CompletableFuture<HashMap<String, FileList>> listFuture = fetcher.listAll(mataDataFolder);
             final HashMap<String, FileList> fileList = listFuture.join();
             //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
             HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
-                File f = getFromFiles(list, Names.allocFile(parent.getId()));
+                String id = parent == null? null : parent.getId();
+                File f = getFromFiles(list, Names.allocFile(id));
                 throwExIfNull(f, "Map item is not found. Drive: " + key, "");
                 return f;
             });
@@ -408,6 +410,7 @@ public class MapFetcher {
 
     /*
         Get folder meta data for each drive
+        The calling function is responsible to check if the metadata is valid (non-null).
      */
     public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
         HashMap<String, File> file;
@@ -478,6 +481,9 @@ public class MapFetcher {
         return resultFuture;
     }
 
+    /*
+        get metadata of a map file in user drive
+     */
     public CompletableFuture<File> getBaseFolder(String driveName){
         Fetcher fetcher= new Fetcher(mDrives);
         CompletableFuture<FileList> fileListFuture;

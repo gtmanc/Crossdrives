@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.allocation.Infrastructure;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
@@ -24,6 +25,7 @@ import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
+import com.crossdrives.cdfs.util.collection.Allocation;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Tasks;
@@ -39,6 +41,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -155,7 +158,9 @@ public class Upload {
                 resultFuture.completeExceptionally(e);
                 return null;
             }
-            Log.d(TAG, "Size to upload: " + uploadSize[0]);
+            Log.d(TAG, "Number of Parents :" + parents.size());
+            Log.d(TAG, "Parent:" + whereWeAre.getPath() + " Size to upload: " + uploadSize[0]);
+
             //Allocator allocator = new Allocator(quotaMap, file.length());
             Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
             allocation = allocator.getAllocationResult();
@@ -284,7 +289,8 @@ public class Upload {
 //                      if(localFileOptional.isPresent()){
 //                      File localFile = localFileOptional.get();
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setParents(buildParentDriveIdList(driveName, parents));
+                        Log.d(TAG, buildParentDriveIdList(driveName, parents).get(0));
+                        fileMetadata.setParents(Collections.singletonList(buildParentDriveIdList(driveName, parents).get(0)));
                         fileMetadata.setName(localFile.getName());
                         Log.d(TAG, "Drive: " + driveName + ". local file to upload: " + localFile.getName());
                         mCDFS.getDrives().get(driveName).getClient().upload().
@@ -305,7 +311,7 @@ public class Upload {
 //                                        Collection<File> collection = new ArrayList<File>(l);
 //                                        remainingQueue.remove(collection.stream().filter((e)->{
 //                                            return e.getName().equals(file.getOriginalLocalFile().getName());}).findAny().get());
-                                        if(!com.crossdrives.cdfs.util.Collection.removeByName(remainingQueue, file.getOriginalLocalFile().getName())){
+                                        if(!Allocation.removeByName(remainingQueue, file.getOriginalLocalFile().getName())){
                                             Log.w(TAG, "Item may not removed from remaining list as expectedly!");
                                         }
                                     }
@@ -612,16 +618,32 @@ public class Upload {
 
     /*
         This is only required for Google drive. Microsoft use path instead.
-        An empty list is returned if root is specified.
+        Input: CDFS items contains the folder where we will upload to.
+        Inputting an empty item list or null to get meta data of base folder (CDFS).
+        An empty list is returned if base folder is given.
      */
-    List<String> buildParentDriveIdList(@NonNull String driveName, @Nullable List<CdfsItem> items){
+    @NonNull List<String> buildParentDriveIdList(@NonNull String driveName, @Nullable List<CdfsItem> items){
         List<String> idList = new ArrayList<>();
 
-        if(items.size() == 0){return idList;}
 
-        items.stream().forEachOrdered(item->{
-            idList.add(item.getMap().get(driveName).get(0));
+        if(items.size() == 0 || items == null)  //root?
+        {
+            Log.d(TAG, "Build id list for base.");
+            Infrastructure builder = new Infrastructure(driveName, mCDFS.getClient(driveName), mCDFS);
+            idList.add(builder.getMetaDataBase(driveName).join().getId());
+        }else {
+            Log.d(TAG, "Build id list for parents.");
+            items.stream().forEachOrdered(item->{
+                idList.add(item.getMap().get(driveName).get(0));
+            });
+        }
+
+        Log.d(TAG, "Print out id list:");
+        idList.forEach((id)->{
+            Log.d(TAG, id);
         });
+
+        Log.d(TAG, "id list build ok. Size: " + idList.size());
         return idList;
     }
 

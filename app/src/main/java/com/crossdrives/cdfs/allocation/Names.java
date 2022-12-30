@@ -25,4 +25,11 @@ public class Names {
         return name;
     }
 
+    /*
+        Get the name of base folder (not seen for CDFS).
+    */
+    static public String baseFolder(){
+        return CDFS_FOLDER;
+    }
+
 }

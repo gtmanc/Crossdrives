@@ -1,6 +1,4 @@
-package com.crossdrives.cdfs.util;
-
-import android.util.Log;
+package com.crossdrives.cdfs.util.collection;
 
 import com.crossdrives.cdfs.model.AllocationItem;
 
@@ -8,10 +6,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Collection{
+public class Allocation {
     static final String TAG = "CD.Collection";
 
     public static boolean removeBySeq(java.util.Collection<AllocationItem> collection, Integer seq) {

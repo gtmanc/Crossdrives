@@ -1,12 +1,18 @@
-package com.crossdrives.cdfs;
+package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.common.IConstant;
+import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.data.FileLocal;
 import com.crossdrives.cdfs.model.AllocContainer;
+import com.crossdrives.cdfs.remote.Fetcher;
+import com.crossdrives.cdfs.util.Mapper;
+import com.crossdrives.cdfs.util.collection.Files;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.create.ICreateCallBack;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
@@ -19,8 +25,10 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,7 +66,7 @@ public class Infrastructure{
             "' and name = '" + NAME_CDFS_FOLDER + "'";
 
     private CDFS mCDFS;
-
+    private ConcurrentHashMap<String, Drive> mDrives;
     /*
     A flag used to wait until the drive client callback gets called. Always set to false each time an operation
     is performed.
@@ -69,6 +77,7 @@ public class Infrastructure{
         mClient = client;
         mDriveName = name;
         mCDFS = cdfs;
+        mDrives = cdfs.getDrives();
     }
 
     public void checkAndBuild() {
@@ -405,7 +414,7 @@ public class Infrastructure{
             Log.w(TAG, "allocation version is not compatible!");
         }
 
-        mCDFS.mDrives.get(mDriveName).addContainer(ac);
+        mCDFS.getDrives().get(mDriveName).addContainer(ac);
         return true;
     }
 
@@ -425,147 +434,46 @@ public class Infrastructure{
     }
 
 
-//    /*
-//        Download content of a file
-//     */
-//    @Override
-//    public Task<OutputStream> download(String id) {
-//        Task task;
-//        Log.d(TAG, "Operation: download " + id);
-//        task = Tasks.call(sExecutor, new Callable<Object>() {
-//            @Override
-//            public OutputStream call() throws Exception {
-//                msTaskfinished = false;
-//                mDrives.values().iterator().next().download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
-//                    //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
-//                    @Override
-//                    //public void success(InputStream inputStream){
-//                    public void success(OutputStream os){
-//                        exitWait();
-//                        mStream = os;
-//
-//                        Log.d(TAG, "download finished.");
-////                        try {
-////                            os.close();
-////                        } catch (IOException e) {
-////                            e.printStackTrace();
-////                        }
-//                    }
-//
-//                    @Override
-//                    public void failure(String ex) {
-//                        exitWait();
-//                        Log.w(TAG, "download failed" + ex.toString());
-//                    }
-//                });
-//                waitUntilFinished();
-//                if(mStream == null){ Log.w(TAG, "stream is null" );}
-//                return mStream;
-//            }
-//        });
-//
-//        return task;
-//    }
-//
-//    @Override
-//    public Task<String> upload(File metadata, java.io.File path) {
-//
-//        Task task;
-//        Log.d(TAG, "CDFS: upload file. " + path.toString());
-//        task = Tasks.call(sExecutor, new Callable<Object>() {
-//            @Override
-//            public String call() throws Exception {
-//
-//                msTaskfinished = false;
-//                /*
-//                    Drive client test only. Always use index 0 (i.e first one added)
-//                 */
-//                mDrives.values().iterator().next().upload().buildRequest(metadata, path).run(new IUploadCallBack() {
-//                    @Override
-//                    public void success(File file) {
-//                        exitWait();
-//                        mFileId = file.getId();
-//                        Log.d(TAG, "Upload file OK. ID: " + file.getId());
-//                    }
-//
-//                    @Override
-//                    public void failure(String ex) {
-//                        exitWait();
-//                        Log.w(TAG, "Failed to upload file: " + ex.toString());
-//                    }
-//                });
-//                waitUntilFinished();
-//                return mFileId;
-//            }
-//        });
-//        return task;
-//    }
-//
-//    @Override
-//    public Task<String> create(File metadata) {
-//
-//        Task task;
-//        Log.d(TAG, "CDFS create file: " + metadata.getName());
-//        task = Tasks.call(sExecutor, new Callable<Object>() {
-//            @Override
-//            public String call() throws Exception {
-//
-//                msTaskfinished = false;
-//                /*
-//                    Drive client test only. Always use index 0 (i.e first one added)
-//                 */
-//                mDrives.values().iterator().next().create().buildRequest(metadata).run(new ICreateCallBack<File>() {
-//                    @Override
-//                    public void success(File file) {
-//                        exitWait();
-//                        mFileId = file.getId();
-//                        Log.d(TAG, "Create file OK. ID: " + file.getId());
-//                    }
-//
-//                    @Override
-//                    public void failure(String ex) {
-//                        exitWait();
-//                        Log.w(TAG, "Failed to create file: " + ex.toString());
-//                    }
-//                });
-//                waitUntilFinished();
-//                return mFileId;
-//            }
-//        });
-//        return task;
-//    }
-//
-//    @Override
-//    public Task<String> delete(File metadata) {
-//
-//        Task task;
-//        Log.d(TAG, "CDFS delete file: " + metadata.getName());
-//        task = Tasks.call(sExecutor, new Callable<Object>() {
-//            @Override
-//            public String call() throws Exception {
-//
-//                msTaskfinished = false;
-//                /*
-//                    Drive client test only. Always use index 0 (i.e first one added)
-//                 */
-//                mDrives.values().iterator().next().delete().buildRequest(metadata).run(new IDeleteCallBack<File>() {
-//                    @Override
-//                    public void success(File file) {
-//                        exitWait();
-//                        mFileId = file.getId();
-//                        Log.d(TAG, "Delete file OK. ID: " + file.getId());
-//                    }
-//
-//                    @Override
-//                    public void failure(String ex) {
-//                        exitWait();
-//                        Log.w(TAG, "Failed to delete file: " + ex.toString());
-//                    }
-//                });
-//                waitUntilFinished();
-//                return mFileId;
-//            }
-//        });
-//        return task;
-//    }
+
+    /*
+        Get meta data of base folder in all available user's drives
+        Return: meta data of the base folders
+    */
+    public CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(){
+        CompletableFuture<HashMap<String, File>> metaDataFutures = new CompletableFuture<>();
+        HashMap<String, CompletableFuture<File>> metaDataMap = new HashMap<>();
+
+        mDrives.keySet().stream().forEach((key)->{
+            metaDataMap.put(key, getMetaDataBase(key));
+        });
+
+        metaDataFutures = CompletableFuture.supplyAsync(()->{
+          return Mapper.reValue(metaDataMap, (future)->{
+              return future.join();
+          });
+        });
+
+        return metaDataFutures;
+    }
+
+
+    /*
+        get metadata of base folder (CDFS) in user drive.
+        Return: meta data of the base folder
+     */
+    public CompletableFuture<File> getMetaDataBase(String driveName){
+        Fetcher fetcher= new Fetcher(mDrives);
+        CompletableFuture<FileList> fileListFuture;
+
+        fileListFuture =  fetcher.list(driveName, "");
+
+        CompletableFuture<File> folder =
+                CompletableFuture.supplyAsync(()->{
+                    File f = Files.getFromFiles(fileListFuture.join(), Names.allocFile(null));
+                    Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
+                    return f;
+                });
+
+        return folder;
+    }
 }

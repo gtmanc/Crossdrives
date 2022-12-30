@@ -12,6 +12,7 @@ import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
+import com.crossdrives.cdfs.util.collection.Allocation;
 import com.crossdrives.driveclient.delete.IDeleteCallBack;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -162,7 +163,7 @@ public class Delete {
                                 Log.d(TAG, "Item deleted OK. Drive: " + driveName + ". Seq: " + file.getInteger());
 //                                AllocationItem found = remainingList.stream().filter((r)->
 //                                {return (r.getSequence() == file.getInteger());}).findAny().get();
-                                if(!com.crossdrives.cdfs.util.Collection.removeBySeq(remainingList, file.getInteger())){
+                                if(!Allocation.removeBySeq(remainingList, file.getInteger())){
                                     Log.w(TAG, "Item may not removed from remaining list as expctedly!");
                                 }
 
