@@ -108,12 +108,13 @@ public class Upload {
         return upload(ins, name, parents, listener);
     }
 
-    public CompletableFuture<File> upload(InputStream ins, String CdfsName, List<CdfsItem> parents, IUploadProgressListener listener)  {
+    public CompletableFuture<File> upload(InputStream ins, String CdfsName, @NonNull List<CdfsItem> parents, IUploadProgressListener listener)  {
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
         mListener = listener;
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
-            CdfsItem whereWeAre = parents.isEmpty()? createRootCdfsItem() : parents.get(parents.size()-1);
+            CdfsItem whereWeAre = parents.isEmpty() ? null : parents.get(parents.size()-1);
+            String pathParent = whereWeAre == null ? IConstant.CDFS_PATH_BASE : whereWeAre.getPath();
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
@@ -159,7 +160,7 @@ public class Upload {
                 return null;
             }
             Log.d(TAG, "Number of Parents :" + parents.size());
-            Log.d(TAG, "Parent:" + whereWeAre.getPath() + " Size to upload: " + uploadSize[0]);
+            Log.d(TAG, "Path:" + pathParent + " Size to upload: " + uploadSize[0]);
 
             //Allocator allocator = new Allocator(quotaMap, file.length());
             Allocator allocator = new Allocator(quotaMap, uploadSize[0]);
@@ -198,7 +199,11 @@ public class Upload {
                     */
                     item.setSequence(SeqNum[0]);
                     SeqNum[0]++;  //TODO: do we have concurrent issue?
-                    item.setPath(whereWeAre.getPath());
+                    String path = IConstant.CDFS_PATH_BASE;
+//                    if(pathParent != IConstant.CDFS_PATH_BASE){
+//                        path = whereWeAre.getPath() + "\\" + whereWeAre.getName();
+//                    }
+                    item.setPath(pathParent);
                     item.setAttrFolder(false);
                     item.setCDFSItemSize(uploadSize[0]);
                     items.put(slice.getName(), item);
@@ -289,7 +294,6 @@ public class Upload {
 //                      if(localFileOptional.isPresent()){
 //                      File localFile = localFileOptional.get();
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        Log.d(TAG, buildParentDriveIdList(driveName, parents).get(0));
                         fileMetadata.setParents(Collections.singletonList(buildParentDriveIdList(driveName, parents).get(0)));
                         fileMetadata.setName(localFile.getName());
                         Log.d(TAG, "Drive: " + driveName + ". local file to upload: " + localFile.getName());
@@ -500,7 +504,8 @@ public class Upload {
          */
         workingFuture.exceptionally((ex)->{
             Log.w(TAG, "work future exceptionally: " + ex.getMessage());
-            Log.w(TAG, Arrays.stream(ex.getStackTrace()).findFirst().toString());
+            //Log.w(TAG, Arrays.stream(ex.getStackTrace()).findFirst().toString());
+            ex.printStackTrace();
             resultFuture.completeExceptionally(ex);
             return null;
         });
@@ -607,13 +612,6 @@ public class Upload {
     void callback(State state){
         mState = state;
         mListener.progressChanged(this);
-    }
-
-    CdfsItem createRootCdfsItem(){
-        CdfsItem item = new CdfsItem();
-
-        item.setPath("");
-        return item;
     }
 
     /*

@@ -12,7 +12,7 @@ public class Names {
     static final String EXT_NAME_ALLOC = ".cdfs";
     /*
         Return the allocation file name: Allocation_[folder_CdfsId].cdfs
-        Input null to specify 'root'.
+        Input null to specify root of CDFS.
      */
     static public String allocFile(@Nullable String cdfsId){
         String name = PREFIX_ALLOC_FILE;

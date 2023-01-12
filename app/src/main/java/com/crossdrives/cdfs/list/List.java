@@ -10,6 +10,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
+import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -162,7 +163,12 @@ public class List {
         });
     }
 
-    private @NonNull java.util.List<CdfsItem> buildCdfsItemList(@Nullable String parent) {
+    /*
+        Build list of CDFS items from local database
+        Input:
+            pathParent: the cdfs display path string
+     */
+    private @NonNull java.util.List<CdfsItem> buildCdfsItemList(@Nullable String pathParent) {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         java.util.List<CdfsItem> items = new ArrayList<>();
         final String clause1;
@@ -172,7 +178,7 @@ public class List {
             Set filter(clause) parent. This actually is not needed anymore because the CDFS is changed to
             multiply parents structure. The local database only contains items which have the same parent(path).
          */
-        clause1 = buildClauseParent(parent);
+        clause1 = buildClausePath(pathParent);
 
         /*
             Set filter(clause) attribute folder
@@ -227,7 +233,7 @@ public class List {
 
         items.stream().forEach((item)->{    //each cdfs item
             String clause2 = ALLOCITEMS_LIST_COL_CDFSID;
-            clause2 = clause2.concat(" = " + item.getId());
+            clause2 = clause2.concat(" = " + "'" + item.getId() + "'");
             Cursor cursor2 = null;
             cursor2 = dh.query(clause1, clause2);
             if(cursor2 == null){
@@ -251,12 +257,13 @@ public class List {
         return items;
     }
 
-    String buildClauseParent(String parent){
+    String buildClausePath(String parent){
         String clause = ALLOCITEMS_LIST_COL_PATH;
         if (parent == null) {
-            clause = clause.concat(" =" + "\"" + "Root" + "\"");
+            //clause = clause.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
+            clause = clause.concat(" = " + "'\\' ");
         } else {
-            clause = clause.concat(" =" + "\"" + parent + "\"");
+            clause = clause.concat(" = " + parent);
         }
         return clause;
     }

@@ -290,7 +290,8 @@ public class MapFetcher {
 
     /*
         Get metadata of map files which stored in user's drives
-        Input: a null object indicates that cdfs root is specified
+        Input:
+            CDFS parent item. Directly set to root if null is input.
      */
     public CompletableFuture<HashMap<String, File>> listAll(@Nullable CdfsItem parent) {
         CompletableFuture<HashMap<String, File>> resultFuture;
@@ -409,12 +410,12 @@ public class MapFetcher {
     }
 
     /*
-        Get folder meta data for each drive
-        The calling function is responsible to check if the metadata is valid (non-null).
+        Get drive meta data of a CDFS item for each drive
+        Input:
+            CDFS parent item. Directly set to root if null is input.
      */
     public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
         HashMap<String, File> file;
-        Map<String, File> metaData;
 
         if(parent != null){
             file = new HashMap<>();
@@ -424,9 +425,8 @@ public class MapFetcher {
                 f.setId(v.get(0));
                 file.put(k, f);
             });
-            return file;
         }else
-        {   //base folder
+        {   //base folder: directly pfetc data from remote
             file = getMetaDataRoot().join();
         }
 

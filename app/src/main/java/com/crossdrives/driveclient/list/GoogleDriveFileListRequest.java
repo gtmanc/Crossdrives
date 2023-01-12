@@ -84,7 +84,7 @@ public class GoogleDriveFileListRequest extends BaseRequest implements IFileList
 
                 Drive.Files.List list = mClient.getGoogleDriveService().files().list()
                         .setSpaces("drive")
-                        .setFields("nextPageToken, files(id, name)")
+                        .setFields("nextPageToken, files(id, name, mimeType)")
                         .setPageToken(mToken);  //this is ok. null means 1st page;
 
                 //apply filter?

@@ -3,13 +3,18 @@ package com.crossdrives.cdfs.allocation;
 import android.database.Cursor;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.gson.Gson;
@@ -274,7 +279,12 @@ public class AllocManager implements IAllocManager {
         return names;
     }
 
-    private java.util.List<String> getCdfsIdList(String parent){
+    /*
+        Input:
+        parent: path string of the folder that we want to query. null indicates CDFS root is specified.
+
+    */
+    private java.util.List<String> getCdfsIdList(@Nullable String parent){
         java.util.List<String> IDs= new ArrayList<>();
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         String filter;
@@ -287,7 +297,7 @@ public class AllocManager implements IAllocManager {
          */
         filter = DBConstants.ALLOCITEMS_LIST_COL_PATH;
         if(parent == null) {
-            filter = filter.concat(" =" + "\"" + "Root" + "\"");
+            filter = filter.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
         }else{
             filter = filter.concat(" =" + "\"" + parent + "\"");
         }
@@ -511,6 +521,30 @@ public class AllocManager implements IAllocManager {
         dh.setAttrFolder(item.getAttrFolder());
         dh.insert();
     }
+
+    /*
+        Create a CDFS root parent item
+        return a cdfs item with fields:
+        1. path :               empty string. i.e.""
+        2. ID   :               null
+        3. Attribute folder:    true
+    */
+//    public static CdfsItem createRootCdfsItem(){
+//        CdfsItem item = new CdfsItem();
+//
+//        item.setPath("");
+//        item.setId(null);
+//        item.setFolder(true);;
+//        return item;
+//    }
+
+//    public static boolean isRoot(@NonNull CdfsItem item){
+//
+//        if(item.getId() == null && item.getPath().compareToIgnoreCase("") == 0 && item.isFolder()){
+//            return true;
+//        }
+//        return false;
+//    }
 
     int deleteAllExistingByDrive(String drive){
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());

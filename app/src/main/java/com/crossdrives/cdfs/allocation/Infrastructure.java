@@ -4,8 +4,6 @@ import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IAllocManager;
-import com.crossdrives.cdfs.allocation.AllocManager;
-import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.data.FileLocal;
@@ -61,7 +59,7 @@ public class Infrastructure{
         Strings
      */
     private final String NAME_CDFS_FOLDER = IConstant.NAME_CDFS_FOLDER;
-    private final String MINETYPE_FOLDER = IConstant.MINETYPE_FOLDER;
+    private final String MINETYPE_FOLDER = IConstant.MIMETYPE_FOLDER;
     private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
             "' and name = '" + NAME_CDFS_FOLDER + "'";
 
@@ -469,8 +467,8 @@ public class Infrastructure{
 
         CompletableFuture<File> folder =
                 CompletableFuture.supplyAsync(()->{
-                    File f = Files.getFromFiles(fileListFuture.join(), Names.allocFile(null));
-                    Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
+                    File f = Files.getFolder(fileListFuture.join(), Names.baseFolder());
+                    Log.d(TAG, "CDFS folder found. ID: " + f.getId());
                     return f;
                 });
 

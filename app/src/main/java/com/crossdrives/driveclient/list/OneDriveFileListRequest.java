@@ -132,6 +132,11 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                             Log.d(TAG, "Item id: " + items.get(i).id);
                             f.setName(items.get(i).name);
                             f.setId(items.get(i).id);
+                            //https://developers.google.com/drive/api/guides/folder
+                            //a folder is a file with the MIME type application/vnd.google-apps.folder and with no extension.
+                            if(items.get(i).folder!=null) {
+                                f.setMimeType("application/vnd.google-apps.folder");
+                            }
                             files.add(f);
                         }
                         fileList.setFiles(files);

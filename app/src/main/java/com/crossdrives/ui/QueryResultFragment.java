@@ -85,7 +85,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
-	private ArrayList<SerachResultItemModel> mItems;	//items used to render UI
+	private ArrayList<SerachResultItemModel> mItems = new ArrayList<>();	//items used to render UI
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	private QueryFileAdapter mAdapter;
@@ -201,6 +201,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mRecyclerView.addOnScrollListener(onScrollListener);
 		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
+		mAdapter = new QueryFileAdapter(mItems, getContext());
+		mAdapter.setOnItemClickListener(itemClickListener);
+		mRecyclerView.setAdapter(mAdapter);
+
 		mProgressBar.setVisibility(View.VISIBLE);
 
 		initialQuery();
@@ -285,10 +289,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onChanged(ArrayList<SerachResultItemModel> items) {
-			Log.d(TAG, "Live data available.");
-			mAdapter = new QueryFileAdapter(items, getContext());
-			mAdapter.setOnItemClickListener(itemClickListener);
-			mRecyclerView.setAdapter(mAdapter);
+			Log.d(TAG, "Live data available. Number of items: " + items.size());
+
+			mItems.addAll(items);
+			mAdapter.notifyDataSetChanged();
 
 			isQueryOngoing = false;
 			mProgressBar.setVisibility(View.INVISIBLE);

@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 public class Create {
     static final String TAG = "CD.Create";
 
-    private final String MINETYPE_FOLDER = IConstant.MINETYPE_FOLDER;
+    private final String MINETYPE_FOLDER = IConstant.MIMETYPE_FOLDER;
 
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
