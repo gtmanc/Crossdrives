@@ -188,19 +188,11 @@ public class List {
         /*
             First build up a CDFS list with an empty drive item map. The map will be filled in next step.
             Use database group statement to make sure only one entry is got from all entries which
-            have the same CDFS ID
+            have the same CDFS ID.
         */
         dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
         cursor = dh.query(clause1);
-        if(cursor == null){
-            Log.w(TAG, "Cursor is null!");
-            return items;
-        }
-        if(cursor.getCount() <= 0){
-            Log.w(TAG, "Count of cursor is zero!");
-            cursor.close();
-            return items;
-        }
+        if(!queryResultCheck(cursor)){return items;}
 
         final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
         final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
@@ -229,29 +221,25 @@ public class List {
             Fill the map we created in previous step. Read out the entries which has the same CDFS ID and then put the
             drive item ID to the map according to the drive name.
          */
-        dh.GroupBy(null);   //remove the group clause we setup in prvious step
-
+        dh.GroupBy(null);   //remove the group clause we setup in previous step
         items.stream().forEach((item)->{    //each cdfs item
             String clause2 = ALLOCITEMS_LIST_COL_CDFSID;
             clause2 = clause2.concat(" = " + "'" + item.getId() + "'");
             Cursor cursor2 = null;
             cursor2 = dh.query(clause1, clause2);
-            if(cursor2 == null){
-                Log.w(TAG, "Cursor is null!");
-                return;
-            }
-            if(cursor2.getCount() <= 0){
-                Log.w(TAG, "Count of cursor is zero!");
-                cursor2.close();
-                return ;
-            }
+            if(!queryResultCheck(cursor2)){return;}
             ConcurrentHashMap<String, java.util.List<String>> map = item.getMap();
             cursor2.moveToFirst();
             for(int i = 0 ; i < cursor2.getCount(); i++){
-                map.get(cursor2.getString(indexDrive)).add(cursor2.getString(indexItemId));
+                String driveName = cursor2.getString(indexDrive);
+                // Add ID first time?
+                if(map.get(driveName) == null){
+                    java.util.List<String> list = new ArrayList<>();
+                    map.put(driveName, list);
+                }
+                map.get(driveName).add(cursor2.getString(indexItemId));
                 cursor2.moveToNext();
             }
-
         });
 
         return items;
@@ -278,17 +266,21 @@ public class List {
         return clause;
     }
 
-    boolean checkQueryResult(Cursor cursor) {
-        boolean result = true;
+    /*
+        A helper function for query
+     */
+    boolean queryResultCheck(Cursor cursor) {
+
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");
             return false;
         }
         if(cursor.getCount() <= 0){
             Log.w(TAG, "Count of cursor is zero!");
-
+            cursor.close();
+            return false;
         }
-        return result;
+        return true;
     }
 
     void closeCursor(Cursor cursor){

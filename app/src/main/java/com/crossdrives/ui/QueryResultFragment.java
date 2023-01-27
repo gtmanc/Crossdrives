@@ -119,7 +119,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private final String QSTATE_INPROGRESS = "query ongoing";	//A query is ongoing
 	private final String QSTATE_EOL = "query EOL"; //Query reach the end of list
 	private String mQSTATE;
-	private Querier mQuerier = new Querier();
+	//private Querier mQuerier = new Querier();
 	private boolean isQueryOngoing = false;
 
 	OpenTree treeOpener;
@@ -222,10 +222,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//mProgressBar.setVisibility(View.VISIBLE);
 
 //			mDriveServiceHelper.resetQuery();
-			setQStateInprogress();
+//			setQStateInprogress();
 
 		try {
-			treeOpener.open(null);
+//			mQuerier.getState().query();
 			treeOpener.fetchAsync();
 
 //			CDFS.getCDFSService().getService().list(mNextPage)
@@ -272,16 +272,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //							mProgressBar.setVisibility(View.INVISIBLE);
 //						}
 //					});
-		} catch (MissingDriveClientException e) {
+		} catch (MissingDriveClientException | GeneralServiceException e) {
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
 			mProgressBar.setVisibility(View.INVISIBLE);
 			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
-		} catch (GeneralServiceException e){
-			Log.w(TAG, e.getMessage());
-			Log.w(TAG, e.getCause());
-			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
-			mProgressBar.setVisibility(View.INVISIBLE);
 		}
 	}
 
@@ -289,7 +284,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onChanged(ArrayList<SerachResultItemModel> items) {
-			Log.d(TAG, "Live data available. Number of items: " + items.size());
+			int size = 0 ;
+			if(items == null){ size = items.size();}
+			Log.d(TAG, "Live data available. Number of items: " + size);
 
 			mItems.addAll(items);
 			mAdapter.notifyDataSetChanged();
@@ -304,11 +301,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		//We are reaching the end of list. Stop query.
 		//We are okay because no filter is applied.
-		if (getState() == QSTATE_EOL) {
-			CloseQuery();
-			Log.d(TAG, "End of List. Exit directly");
-			return;
-		}
+//		if (getState() == QSTATE_EOL) {
+//			CloseQuery();
+//			Log.d(TAG, "End of List. Exit directly");
+//			return;
+//		}
 
 		Log.d(TAG, "Querying for files continue.");
 
@@ -370,83 +367,81 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //						}
 //					});
 
-		} catch (MissingDriveClientException e) {
+		} catch (MissingDriveClientException | GeneralServiceException e) {
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
-			mProgressBar.setVisibility(View.INVISIBLE);
-		}catch (GeneralServiceException e){
-			Log.w(TAG, e.getMessage());
-			Log.w(TAG, e.getCause());
-			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 			mProgressBar.setVisibility(View.INVISIBLE);
 		}
 		//}
 	}
 
-	abstract class State{
-		Querier querier;
-		public State(Querier querier) {
-			this.querier = querier;
-		}
-
-		public abstract void query() throws GeneralServiceException, MissingDriveClientException;
-	}
-
-	class ReadyState extends State{
-		public ReadyState(Querier querier) {
-			super(querier);
-		}
-
-		@Override
-		public void query() throws GeneralServiceException, MissingDriveClientException {
-			querier.changeState(new FetchingState(querier));
-			treeOpener.open(null);	//set null to query the items in base folder
-			treeOpener.fetchAsync();
-			//fetchList.fetchAsync(mParents, null);
-		}
-	}
-
-	class FetchingState extends State{
-
-		public FetchingState(Querier querier) {
-			super(querier);
-		}
-
-		@Override
-		public void query() throws GeneralServiceException, MissingDriveClientException {
-			if (treeOpener.endOfList()){
-				querier.changeState(new EndState(querier));
-				return;
-			}
-
-			treeOpener.fetchAsync();
-		}
-	}
-
-	class EndState extends State{
-
-		public EndState(Querier querier) {
-			super(querier);
-		}
-
-		@Override
-		public void query() {
-			querier.changeState(new ReadyState(querier));
-		}
-	}
-	class Querier{
-		State state;
-
-		public Querier() {
-			this.state = new ReadyState(this);
-		}
-
-		void changeState(State state){
-			this.state = state;
-		};
-
-		State getState(){return this.state;}
-	}
+//	abstract class State{
+//		Querier querier;
+//		public State(Querier querier) {
+//			this.querier = querier;
+//		}
+//
+//		public abstract void query() throws GeneralServiceException, MissingDriveClientException;
+//	}
+//
+//	class ReadyState extends State{
+//		public ReadyState(Querier querier) {
+//			super(querier);
+//		}
+//
+//		@Override
+//		public void query() throws GeneralServiceException, MissingDriveClientException {
+//			Log.d(TAG, "State Ready.");
+//			querier.changeState(new FetchingState(querier));
+//			treeOpener.open(null);	//set null to query the items in base folder
+//			treeOpener.fetchAsync();
+//			//fetchList.fetchAsync(mParents, null);
+//		}
+//	}
+//
+//	class FetchingState extends State{
+//
+//		public FetchingState(Querier querier) {
+//			super(querier);
+//		}
+//
+//		@Override
+//		public void query() throws GeneralServiceException, MissingDriveClientException {
+//			Log.d(TAG, "State fetching.");
+//			if (treeOpener.endOfList()){
+//				querier.changeState(new EndState(querier));
+//				return;
+//			}
+//
+//			treeOpener.fetchAsync();
+//		}
+//	}
+//
+//	class EndState extends State{
+//
+//		public EndState(Querier querier) {
+//			super(querier);
+//		}
+//
+//		@Override
+//		public void query() {
+//			Log.d(TAG, "State End.");
+//			querier.changeState(new ReadyState(querier));
+//		}
+//	}
+//	class Querier{
+//		State state;
+//
+//		public Querier() {
+//			this.state = new ReadyState(this);
+//		}
+//
+//		void changeState(State state){
+//			this.state = state;
+//		};
+//
+//		State getState(){return this.state;}
+//	}
 
 	private RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
 		@Override
@@ -455,35 +450,31 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.d(TAG, "onScrollStateChanged");
 		}
 
+		/*
+			This method gets called if and only if items have been added to recycler view.
+		 */
 		@Override
 		public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
 			super.onScrolled(recyclerView, dx, dy);
 
-			ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
-
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
-			Log.d(TAG, "Onscroll mItems.Size:" + items.size());
+			Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
 
 			//fetch next page if last item is already shown to the user
 			if (linearLayoutManager == null){return;};
 
-			if(isQueryOngoing == true) {
-				Log.d(TAG, "Skip requested query since previous one not yet done.");
-				return;
-			}
+//			if(isQueryOngoing == true) {
+//				Log.d(TAG, "Skip requested query since previous one not yet done.");
+//				return;
+//			}
 
-			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == items.size() - 1) {
-				//queryFileContinue();
-				try {
-					isQueryOngoing = true;
-					mQuerier.getState().query();
-				} catch (GeneralServiceException | MissingDriveClientException e) {
-					isQueryOngoing = false;
-					Log.w(TAG, e.getMessage());
-					Log.w(TAG, e.getCause());
-					Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
-				}
+			//size of item list(mItems) is always more than 1 because onScrolled only gets called if item has been added
+			//to recycler view.
+			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
+				queryFileContinue();
+				Log.d(TAG, "Reach EOL. Fetch next part of list.");
+
 			}
 		}
 	};
@@ -495,14 +486,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
         Initialization of query
      */
 	private void initialQuery(){
-		Log.i(TAG, "initialQuery...");
+		Log.d(TAG, "initialQuery...");
 
-		mNextPage = null;	//null to get first page of file listMissingDriveClientException
-		mQSTATE = QSTATE_READY;
+//		mNextPage = null;	//null to get first page of file listMissingDriveClientException
+//		mQSTATE = QSTATE_READY;
 
-		isQueryOngoing = true;
 		try {
-			mQuerier.getState().query();
+			treeOpener.open(null);
 		} catch (GeneralServiceException | MissingDriveClientException e) {
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
@@ -511,17 +501,17 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	}
 
-	private void setQStateInprogress(){
-		mQSTATE = QSTATE_INPROGRESS;
-	}
-
-	private String getState(){
-		return mQSTATE;
-	}
-
-	void CloseQuery(){
-		mQSTATE = QSTATE_EOL;
-	}
+//	private void setQStateInprogress(){
+//		mQSTATE = QSTATE_INPROGRESS;
+//	}
+//
+//	private String getState(){
+//		return mQSTATE;
+//	}
+//
+//	void CloseQuery(){
+//		mQSTATE = QSTATE_EOL;
+//	}
 
 	/*
     Two states :
@@ -882,7 +872,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			if (id == R.id.sheet_menu_item_upload_file) {
 				Log.d(TAG, "Upload");
 				//null means no filter is applied
-				mStartOpenDocument.launch(null);
+				String[] filter = new String[]{"*/*"};
+				mStartOpenDocument.launch(filter);
 			}else{
 				Log.w(TAG, "Unknown!");
 			}

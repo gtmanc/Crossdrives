@@ -8,16 +8,15 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.common.ResultCodes;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ListResult;
-import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.SerachResultItemModel;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.services.drive.model.File;
+import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +35,21 @@ public class OpenTree extends ViewModel {
     private MutableLiveData<ArrayList<SerachResultItemModel>> mItems = new MutableLiveData<>();
     String mNextPage = null;
 
+    boolean Ongoing;
+
+    private Querier mQuerier = new Querier();
+
     /*
-        parent: set null to get list in base folder (CDFS root)
-     */
+            parent: set null to get list in base folder (CDFS root)
+         */
     public void open(@Nullable CdfsItem parent) throws GeneralServiceException, MissingDriveClientException {
+
         if(parent != null) {
             mParents.add(parent);
         }
+
+        mQuerier.resetState();
+        //mQuerier.getState().fetch();
     }
 
 //    public MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync() throws GeneralServiceException, MissingDriveClientException {
@@ -80,13 +87,18 @@ public class OpenTree extends ViewModel {
         return item;
     }
 
-
     public MutableLiveData<ArrayList<SerachResultItemModel>> fetchAsync() throws GeneralServiceException, MissingDriveClientException {
+        mQuerier.getState().fetch();
+        return mItems;
+    }
+
+    MutableLiveData<ArrayList<SerachResultItemModel>> list() throws GeneralServiceException, MissingDriveClientException {
         CdfsItem parent = getLastItem(mParents);
         /*
             call CDFS list to fetch the list asynchronously
          */
         //       try {
+        setFetchOngoing(true);
         CDFS.getCDFSService().getService().list(parent)
                 .addOnSuccessListener(new OnSuccessListener<ListResult>() {
                     @Override
@@ -126,6 +138,11 @@ public class OpenTree extends ViewModel {
                         ArrayList<SerachResultItemModel> fetched = null;
                         mItems.postValue(fetched);
                     }
+                }).addOnCompleteListener(new OnCompleteListener<ListResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<ListResult> task) {
+                        setFetchOngoing(false);
+                    }
                 });
 //        }
 //        catch (MissingDriveClientException | GeneralServiceException e) {
@@ -141,6 +158,156 @@ public class OpenTree extends ViewModel {
     @Nullable public CdfsItem whereWeAre(){
         return mParents.isEmpty()? null : mParents.get(mParents.size()-1);
     }
-    public boolean endOfList(){return mNextPage == null;}
+    public boolean endOfList(){
+        //We assume CDFS list always gives full list
+        return true;
+        //return mNextPage == null;
+    }
+
+    boolean isFetchOngoing(){return Ongoing;}
+    void setFetchOngoing(boolean status){Ongoing = status;}
+
+    abstract class State{
+        Querier querier;
+        public State(Querier querier) {
+            this.querier = querier;
+        }
+
+        public abstract void fetch() throws GeneralServiceException, MissingDriveClientException;
+
+        //public abstract void onComplete();
+    }
+
+//    class CloseState extends State {
+//        public CloseState(Querier querier) {
+//            super(querier);
+//        }
+//
+//        @Override
+//        public void fetch() throws GeneralServiceException, MissingDriveClientException {
+//            Log.d(TAG, "State Close.");
+////            querier.changeState(new IdleState(querier));
+////            treeOpener.open(null);	//set null to query the items in base folder
+////            treeOpener.fetchAsync();
+////            //fetchList.fetchAsync(mParents, null);
+//        }
+//
+////        @Override
+////        public void onComplete(){
+////
+////        }
+//    }
+
+//    class IdleState extends State {
+//        public IdleState(Querier querier) {
+//            super(querier);
+//        }
+//
+//        @Override
+//        public void fetch() throws GeneralServiceException, MissingDriveClientException {
+//            Log.d(TAG, "State Idle");
+//            querier.changeState(new FetchingState(querier));
+////            treeOpener.open(null);	//set null to query the items in base folder
+////            treeOpener.fetchAsync();
+////            //fetchList.fetchAsync(mParents, null);
+//        }
+//
+//        @Override
+//        public void onComplete() {
+//
+//        }
+//    }
+
+    class FirstTimeFetchState extends State{
+        public FirstTimeFetchState(Querier querier) {
+            super(querier);
+        }
+
+        @Override
+        public void fetch() throws GeneralServiceException, MissingDriveClientException {
+            Log.d(TAG, "First time fetch");
+            querier.changeState(new FetchingState(querier));
+            querier.fetchAsync();
+        }
+
+//        @Override
+//        public void onComplete() {
+//
+//        }
+    }
+    class FetchingState extends State {
+
+        public FetchingState(Querier querier) {
+            super(querier);
+        }
+
+        @Override
+        public void fetch() throws GeneralServiceException, MissingDriveClientException {
+            Log.d(TAG, "State fetching.");
+           if (querier.fetchOngoing()){
+               Log.d(TAG, "A fetch is ongoing. Skip");
+               return;
+           }
+//
+            if(querier.nextPageTokenNull() == null){
+                querier.changeState(new EndState(querier));
+                Log.d(TAG, "Change to End State.");
+            }else{
+                querier.fetchAsync();
+            }
+
+        }
+
+//        @Override
+//        public void onComplete() {
+//            querier.changeState(new IdleState(querier));
+//        }
+    }
+
+    class EndState extends State {
+
+        public EndState(Querier querier) {
+            super(querier);
+        }
+
+        @Override
+        public void fetch() {
+            Log.d(TAG, "State End.");
+//            querier.changeState(new CloseState(querier));
+        }
+
+//        @Override
+//        public void onComplete() {
+//
+//        }
+    }
+
+    class Querier{
+        State state;
+
+        public Querier() {
+            resetState();
+        }
+
+        void changeState(State state){
+            this.state = state;
+        };
+
+        State getState(){return this.state;}
+
+        void resetState(){this.state = new FirstTimeFetchState(this);}
+
+        void fetchAsync() throws GeneralServiceException, MissingDriveClientException {
+            OpenTree.this.list();
+        }
+
+        boolean fetchOngoing(){
+            return isFetchOngoing();
+        }
+
+        String nextPageTokenNull(){
+            return mNextPage;
+        }
+    }
 
 }
