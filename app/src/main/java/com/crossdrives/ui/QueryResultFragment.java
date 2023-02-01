@@ -1,6 +1,7 @@
 package com.crossdrives.ui;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -20,6 +21,7 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 import android.widget.SearchView;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -28,6 +30,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
@@ -60,6 +63,7 @@ import com.example.crossdrives.DriveServiceHelper;
 import com.example.crossdrives.QueryFileAdapter;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
+import com.example.crossdrives.SignOutDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -75,17 +79,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
+public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener, CreateFolderAlertDialog.CreateFolderDialogListener{
 	private String TAG = "CD.QueryResultFragment";
 	DrawerLayout mDrawer = null;
 	NavigationView mNavigationView, mBottomNavigationView;
 
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
-	private ArrayList<SerachResultItemModel> mItems = new ArrayList<>();	//items used to render UI
+	private ArrayList<SerachResultItemModel> mItems;	//items used to render UI
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	private QueryFileAdapter mAdapter;
@@ -102,7 +105,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private ActionMode mActionMode = null;
 
-	private List<String> mParents;
+	private Activity mActivity;
 
 
 	/*
@@ -152,6 +155,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		super.onViewCreated(view, savedInstanceState);
 
 		mView = view;
+		mActivity = getActivity();
 		NavController navController = Navigation.findNavController(view);
 		DrawerLayout drawerLayout = view.findViewById(R.id.layout_query_result);
 		mDrawer = drawerLayout;
@@ -201,6 +205,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mRecyclerView.addOnScrollListener(onScrollListener);
 		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
+		mItems = new ArrayList<>();
 		mAdapter = new QueryFileAdapter(mItems, getContext());
 		mAdapter.setOnItemClickListener(itemClickListener);
 		mRecyclerView.setAdapter(mAdapter);
@@ -208,13 +213,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mProgressBar.setVisibility(View.VISIBLE);
 
 		initialQuery();
-		queryFile(view);
+		queryFile();
 	}
 
 	/*
 	 *  First time query
 	 */
-	private void queryFile(final View v){
+	private void queryFile(){
 
 		//if (mDriveServiceHelper != null) {
 			Log.d(TAG, "Querying for files.");
@@ -285,7 +290,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void onChanged(ArrayList<SerachResultItemModel> items) {
 			int size = 0 ;
-			if(items == null){ size = items.size();}
+			if(items != null){ size = items.size();}
 			Log.d(TAG, "Live data available. Number of items: " + size);
 
 			mItems.addAll(items);
@@ -472,7 +477,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//size of item list(mItems) is always more than 1 because onScrolled only gets called if item has been added
 			//to recycler view.
 			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
-				queryFileContinue();
+				queryFile();
 				Log.d(TAG, "Reach EOL. Fetch next part of list.");
 
 			}
@@ -751,10 +756,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void onClick(View v) {
 			Log.d(TAG, "fab is clicked");
-			String cdfsid1 = "cdfsid1";
-			Log.d(TAG, String.valueOf(Objects.hash(cdfsid1))); //629195495
-			cdfsid1 = "cdfsid2";
-			Log.d(TAG, String.valueOf(Objects.hash(cdfsid1))); //629195496
 
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
 //			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
@@ -868,14 +869,23 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			//The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
 			//drawer is closed exactly before screen proceed to next one
-			Log.d(TAG, "Bottom item is clicked: ");
-			if (id == R.id.sheet_menu_item_upload_file) {
-				Log.d(TAG, "Upload");
-				//null means no filter is applied
-				String[] filter = new String[]{"*/*"};
+			Log.d(TAG, "Bottom sheet item is clicked: ");
+			if (id == R.id.bottom_sheet_menu_item_upload_file) {
+				Log.d(TAG, "Item upload.");
+				String[] filter = new String[]{"*/*"}; // Set filter to all types. Null will lead to crash.
 				mStartOpenDocument.launch(filter);
+			}else if (id == R.id.bottom_sheet_menu_item_create_folder){
+
+				Log.d(TAG, "Item create folder.");
+				CreateFolderAlertDialog dialog = new CreateFolderAlertDialog();
+				dialog.show(getActivity().getSupportFragmentManager(), "CreateFolderDialog");
+
+				//We are safe to use mActivity here because onViewCreated() is invoked. i.e. mActivity is
+				//initialized in onViewCreated()
+				Intent intent = new Intent(mActivity, CreateFolderDialog.class);
+				mStartForResult.launch(intent);
 			}else{
-				Log.w(TAG, "Unknown!");
+				Log.w(TAG, "Unknown item detected!");
 			}
 			return true;
 		}
@@ -1081,9 +1091,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
-	HashMap<IUploadProgressListener, Notification> mNotificationsByUploadListener = new HashMap<>();
-	HashMap<OnSuccessListener, Notification> mNotificationsByUploadSuccessListener = new HashMap<>();
-	HashMap<OnFailureListener, Notification> mNotificationsByUpFailedListener = new HashMap<>();
 	private ActivityResultLauncher<String[]> mStartOpenDocument = registerForActivityResult(new ActivityResultContracts.OpenDocument(),
 			new ActivityResultCallback<Uri>() {
 				@Override
@@ -1150,66 +1157,25 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				}
 			});
 
-	IUploadProgressListener createUploadListener(){
-		IUploadProgressListener uploadListener = new IUploadProgressListener() {
-			@Override
-			public void progressChanged(Upload uploader) {
-				Notification notification;
-				Upload.State state = uploader.getState();
-				notification = mNotificationsByUploadListener.get(this);
-				if (state == Upload.State.GET_REMOTE_QUOTA_STARTED) {
-					Log.d(TAG, "[Notification]:fetching remote maps...");
-					notification.updateContentText(getString(R.string.notification_content_upload_start_get_quota));
-				}
-				else if(state == Upload.State.PREPARE_LOCAL_FILES_STARTED){
-					Log.d(TAG, "[Notification]:split file...");
-					notification.updateContentText(getString(R.string.notification_content_upload_start_prepare_data));
-				}
-				else if(state == Upload.State.MEDIA_IN_PROGRESS) {
-					int current = uploader.getProgressCurrent();
-					int max = uploader.getProgressMax();
-					Log.d(TAG, "[Notification]:update progress. Current " + current + " Max: " + max);
-					notification.updateContentText(getString(R.string.notification_content_upload_uploading_file));
-					notification.updateProgress(current, max);
-				}
-				else if(state == Upload.State.MAP_UPDATE_STARTED){
-					Log.d(TAG, "update remote maps...");
-					notification.updateContentText(getString(R.string.notification_content_upload_start_update_maps));
-				}
-			}
-		};
-		return uploadListener;
-	}
+	ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+			new ActivityResultCallback<ActivityResult>() {
+				@Override
+				public void onActivityResult(ActivityResult result) {
+					Log.d(TAG, "onActivityResult called. Result code:" + result.getResultCode());
+					String action, brand;
+					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
+					if (result.getResultCode() == Activity.RESULT_OK) {
+						Intent intent = result.getData();
+						action = intent.getStringExtra(CreateFolderDialog.KEY_ACTION);
+						//brand = intent.getStringExtra("Brand");
+						Log.d(TAG, "Action:" + action);
+						if (action.equals(CreateFolderDialog.ACTION_FOLDER_NAME)) {
+							Log.d(TAG, "folder name entered: " + intent.getExtras().getString(CreateFolderDialog.KEY_FOLDER_NAME));
 
-	<T> OnSuccessListener<T> createUploadSuccessListner(){
-		OnSuccessListener<T> listener = new OnSuccessListener<T>() {
-			@Override
-			public void onSuccess(T t) {
-				Notification notification = mNotificationsByUploadSuccessListener.get(this);
-				notification.removeProgressBar();
-				notification.updateContentTitle(getString(R.string.notification_title_upload_completed));
-				notification.updateContentText(getString(R.string.notification_content_upload_complete));
-			}
-		};
-		return listener;
-	}
-
-	OnFailureListener createUploadFailureListner() {
-		OnFailureListener listener = new OnFailureListener() {
-			@Override
-			public void onFailure(@NonNull Exception e) {
-				Notification notification = mNotificationsByUpFailedListener.get(this);
-				Log.w(TAG, "upload failed: " + e.getMessage() + e.getCause());
-				Toast.makeText(SnippetApp.getAppContext(), "Upload Failed: "
-						+ e.getMessage(), Toast.LENGTH_SHORT).show();
-				notification.removeProgressBar();
-				notification.updateContentTitle(getString(R.string.notification_title_upload_completed));
-				notification.updateContentText(getString(R.string.notification_content_upload_complete_exceptionally));
-			}
-		};
-		return listener;
-	}
-
+						}
+					}
+				}
+			});
 	//https://www.jb51.net/article/112581.htm
 	private java.io.File UriToFile(final Uri uri){
 		if ( null == uri ) return null;
@@ -1248,5 +1214,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 		}
 		return new java.io.File(data);
+	}
+
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		Log.d(TAG, "User input folder: ");
+	}
+
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+
 	}
 }

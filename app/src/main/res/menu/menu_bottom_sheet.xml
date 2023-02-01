@@ -4,7 +4,11 @@
     tools:showIn="navigation_view">
 
     <group android:checkableBehavior="single">
-        <item android:id="@+id/sheet_menu_item_upload_file"
+        <item android:id="@+id/bottom_sheet_menu_item_create_folder"
+            android:title="Folder"
+            android:icon="@drawable/baseline_create_new_folder_24"/>
+
+        <item android:id="@+id/bottom_sheet_menu_item_upload_file"
             android:title="Upload"
             android:icon="@drawable/ic_baseline_file_upload_24"/>
 
