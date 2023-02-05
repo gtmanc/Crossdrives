@@ -42,9 +42,16 @@
     <string name="signout_dialog_action_signout">Sign out</string>
     <string name="signout_dialog_action_cancel">Cancel</string>
 
-    <!-- no longer used! Option dialog floating action button -->
-    <string name="title_fab_option">Add</string>
-    <string name="button_fab_option_upload">Upload file</string>
+    <!-- Base dialog: text picker dialog -->
+    <string name="title_base_text_picker_dialog">Text Picker</string>
+    <string name="button_base_text_picker_dialog_negative">Cancel</string>
+    <string name="button_base_text_picker_dialog_positive">OK</string>
+    <string name="InputHint1_BaseTextPicker_dialog">Input text</string>
+    <string name="InputHint2_BaseTextPicker_dialog">Input text</string>
+    <string name="InputHint3_BaseTextPicker_dialog">Input text</string>
+
+    <!-- Create folder dialog -->
+    <string name="title_create_folder_dialog">Create Folder</string>
 
     <!-- Dialog permission request education -->
     <string name="message_permission_education">Grant the permission so that download can work as expectedly</string>

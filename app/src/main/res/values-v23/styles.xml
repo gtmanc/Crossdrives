@@ -28,7 +28,7 @@
         </item>
         <item name="android:textColor">?attr/colorButton1Content</item>
         <item name="android:paddingLeft">16dp</item>
-        <item name="android:paddingRight">16dp</item>n
+        <item name="android:paddingRight">16dp</item>
         <item name="android:drawableTint">?attr/colorButton1Content</item>
         <item name="android:gravity">left|center_vertical</item>
         <!-- android:drawablePadding seems has no effect in Material button. use iconPadding instead-->
@@ -38,6 +38,10 @@
 
     <!-- Button in Signout dialog and system test -->
     <style name="Widget.Custom.ActionButton1" parent="Widget.AppCompat.ActionButton">
+        <item name="android:textColor">?attr/colorActionButton1Content</item>
+    </style>
+
+    <style name="Widget.Custom.ActionButtonPositive" parent="Widget.AppCompat.ActionButton">
         <item name="android:textColor">?attr/colorActionButton1Content</item>
     </style>
 

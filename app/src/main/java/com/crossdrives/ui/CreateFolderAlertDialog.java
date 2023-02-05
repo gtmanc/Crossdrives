@@ -27,7 +27,7 @@ import java.util.List;
     which is not the host fragment.
 */
 public class CreateFolderAlertDialog extends DialogFragment {
-    final String TAG = "CD.CreateFolderDialog";
+    final String TAG = "CD.BaseActionDialog";
     CreateFolderDialogListener listener;
 
     public interface CreateFolderDialogListener{

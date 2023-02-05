@@ -3,15 +3,18 @@ package com.crossdrives.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import androidx.activity.ComponentActivity;
 import androidx.annotation.Nullable;
 
 import com.example.crossdrives.R;
+import com.google.android.material.textfield.TextInputEditText;
 
-public class CreateFolderDialog extends ComponentActivity {
-    final String TAG = "CD.CreateFolderDialog";
+public class BaseActionDialog extends ComponentActivity
+{
+    final String TAG = "CD.BaseActionDialog";
     public static String KEY_ACTION = "Action";
     public static String ACTION_FOLDER_NAME = "pick folder name";
 
@@ -21,6 +24,8 @@ public class CreateFolderDialog extends ComponentActivity {
 
     Activity mActivity;
 
+    TextInputEditText editText;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,10 +33,12 @@ public class CreateFolderDialog extends ComponentActivity {
         setContentView(R.layout.fab_option_dialog);
 
         this.setFinishOnTouchOutside(false);
-        findViewById(R.id.button_fab_option_dialog_upload).setOnClickListener(NegativeButtonListener);
-        findViewById(R.id.button_fab_option_dialog_upload).setOnClickListener(PositiveButtonListener);
-
+        findViewById(R.id.button_create_folder_dialog_negative).setOnClickListener(NegativeButtonListener);
+        findViewById(R.id.button_create_folder_dialog_positive).setOnClickListener(PositiveButtonListener);
+        editText = findViewById(R.id.input_box1_base_text_picker_dialog);
         mActivity = this;
+
+        Log.d(TAG, "Data in bundle extre: " + this.getIntent().getStringExtra("Sent"));
     }
 
 
@@ -51,10 +58,9 @@ public class CreateFolderDialog extends ComponentActivity {
             bundle.putString(KEY_FOLDER_NAME, "");
             intent.putExtra(KEY_ACTION, ACTION_FOLDER_NAME);
             intent.putExtras(bundle);
+            Log.d(TAG, "Entered name: " +editText.getText().toString());
             mActivity.setResult(RESULT_OK, intent);
             finish();
         }
     };
-
-
 }

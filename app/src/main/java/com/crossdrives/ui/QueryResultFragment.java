@@ -57,13 +57,11 @@ import com.crossdrives.cdfs.Service;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
-import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
 import com.example.crossdrives.DriveServiceHelper;
 import com.example.crossdrives.QueryFileAdapter;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
-import com.example.crossdrives.SignOutDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -78,7 +76,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener, CreateFolderAlertDialog.CreateFolderDialogListener{
@@ -877,12 +874,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}else if (id == R.id.bottom_sheet_menu_item_create_folder){
 
 				Log.d(TAG, "Item create folder.");
-				CreateFolderAlertDialog dialog = new CreateFolderAlertDialog();
-				dialog.show(getActivity().getSupportFragmentManager(), "CreateFolderDialog");
+//				CreateFolderAlertDialog dialog = new CreateFolderAlertDialog();
+//				dialog.show(getActivity().getSupportFragmentManager(), "BaseActionDialog");
 
 				//We are safe to use mActivity here because onViewCreated() is invoked. i.e. mActivity is
 				//initialized in onViewCreated()
-				Intent intent = new Intent(mActivity, CreateFolderDialog.class);
+				Intent intent = new Intent(mActivity, BaseActionDialog.class);
+				intent.putExtra("Sent", "Test data");
 				mStartForResult.launch(intent);
 			}else{
 				Log.w(TAG, "Unknown item detected!");
@@ -1166,11 +1164,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
 					if (result.getResultCode() == Activity.RESULT_OK) {
 						Intent intent = result.getData();
-						action = intent.getStringExtra(CreateFolderDialog.KEY_ACTION);
+						action = intent.getStringExtra(BaseActionDialog.KEY_ACTION);
 						//brand = intent.getStringExtra("Brand");
 						Log.d(TAG, "Action:" + action);
-						if (action.equals(CreateFolderDialog.ACTION_FOLDER_NAME)) {
-							Log.d(TAG, "folder name entered: " + intent.getExtras().getString(CreateFolderDialog.KEY_FOLDER_NAME));
+						if (action.equals(BaseActionDialog.ACTION_FOLDER_NAME)) {
+							Log.d(TAG, "folder name entered: " + intent.getExtras().getString(BaseActionDialog.KEY_FOLDER_NAME));
 
 						}
 					}

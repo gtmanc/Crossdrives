@@ -24,8 +24,8 @@
     <item name="colorSecondary">@android:color/darker_gray</item>
 
     <!-- Query result list -->
-    <item name="colorQueryListItemBGIdle">@color/colorQueryListItemBGIdle</item>
-    <item name="colorQueryListBackgroundSelected">@color/colorQueryListItemBGSelected</item>
+    <item name="colorQueryListItemBGIdle">@color/color_query_list_item_background_normal</item>
+    <item name="colorQueryListBackgroundSelected">@color/color_query_list_item_background_selected</item>
     <item name="colorQueryListItemPicBGChecked">@color/colorQueryListItemPicBGChecked</item>
 
 
@@ -48,6 +48,9 @@
     <item name="colorButton2Content">@color/button1_content_color_state</item>
     <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
     <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
+
+
+
   </style>
 
   <style name="AppTheme.AppBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
