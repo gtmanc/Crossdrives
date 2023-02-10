@@ -49,6 +49,8 @@ import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.ui.document.Open;
 import com.crossdrives.ui.document.OpenTree;
+import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
+import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -877,11 +879,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //				CreateFolderAlertDialog dialog = new CreateFolderAlertDialog();
 //				dialog.show(getActivity().getSupportFragmentManager(), "BaseActionDialog");
 
-				//We are safe to use mActivity here because onViewCreated() is invoked. i.e. mActivity is
-				//initialized in onViewCreated()
-				Intent intent = new Intent(mActivity, BaseActionDialog.class);
-				intent.putExtra("Sent", "Test data");
-				mStartForResult.launch(intent);
+				// We are safe to use mActivity here because onViewCreated() is invoked. i.e. mActivity is
+				// initialized in onViewCreated()
+				CreateFolderDialogBuilder builder = new CreateFolderDialogBuilder();
+				builder.setTitle("Create Folder").setContent("Enter folder name").setNumTextInputBox(1);
+				mStartForResult.launch(builder.build(mActivity));
 			}else{
 				Log.w(TAG, "Unknown item detected!");
 			}
@@ -1163,14 +1165,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					String action, brand;
 					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
 					if (result.getResultCode() == Activity.RESULT_OK) {
+						ArrayList<String> results;
 						Intent intent = result.getData();
-						action = intent.getStringExtra(BaseActionDialog.KEY_ACTION);
-						//brand = intent.getStringExtra("Brand");
-						Log.d(TAG, "Action:" + action);
-						if (action.equals(BaseActionDialog.ACTION_FOLDER_NAME)) {
-							Log.d(TAG, "folder name entered: " + intent.getExtras().getString(BaseActionDialog.KEY_FOLDER_NAME));
+						CreateFolderDialogResultResolver resolver = new CreateFolderDialogResultResolver();
+						results = resolver.getNames(intent);
+						Log.d(TAG, "folder name entered: " + results.get(0));
 
-						}
 					}
 				}
 			});

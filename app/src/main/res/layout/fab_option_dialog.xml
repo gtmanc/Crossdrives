@@ -8,29 +8,60 @@
         android:id="@+id/title_base_text_picker_dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/title_base_text_picker_dialog"
+        android:text="@string/title_base_action_dialog"
         android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
         app:layout_constraintLeft_toLeftOf="@id/sys_test_dialog_guideline_vertical_left"
         app:layout_constraintRight_toRightOf="@id/sys_test_dialog_guideline_vertical_right"
         app:layout_constraintTop_toTopOf="@id/sys_test_dialog_guideline_horizontal_Top"
         />
+    <TextView
+        android:id="@+id/content_base_action_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/content_base_action_dialog"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+        app:layout_constraintLeft_toLeftOf="@id/sys_test_dialog_guideline_vertical_left"
+        app:layout_constraintTop_toBottomOf="@id/title_base_text_picker_dialog"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        />
+
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_box1_base_text_picker_dialog"
+        android:id="@+id/textInputLayout1_base_text_picker_dialog"
         style="@style/Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         app:layout_constraintLeft_toLeftOf="@id/sys_test_dialog_guideline_vertical_left"
         app:layout_constraintRight_toRightOf="@id/sys_test_dialog_guideline_vertical_right"
-        app:layout_constraintTop_toBottomOf="@id/title_base_text_picker_dialog">
-
+        app:layout_constraintTop_toBottomOf="@id/title_base_text_picker_dialog"
+        android:visibility="gone"
+        >
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_box1_base_text_picker_dialog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:hint="@string/InputHint1_BaseTextPicker_dialog" />
-    </com.google.android.material.textfield.TextInputLayout>
 
+            android:minHeight="48dp"
+            android:hint="@string/hint1_base_action_dialog" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout2_base_text_picker_dialog"
+        style="@style/Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@id/sys_test_dialog_guideline_vertical_left"
+        app:layout_constraintRight_toRightOf="@id/sys_test_dialog_guideline_vertical_right"
+        app:layout_constraintTop_toBottomOf="@id/title_base_text_picker_dialog"
+        android:visibility="gone">
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/edit_box2_base_text_picker_dialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:hint="@string/hint1_base_action_dialog" />
+    </com.google.android.material.textfield.TextInputLayout>
     <Button
         android:id="@+id/button_create_folder_dialog_negative"
         style="@style/Widget.Custom.ActionButton1"
@@ -38,9 +69,9 @@
         android:layout_height="48dp"
         android:layout_marginRight="24dp"
         android:layout_marginTop="16dp"
-        android:text="@string/button_base_text_picker_dialog_negative"
+        android:text="@string/button_base_action_dialog_negative"
         app:layout_constraintRight_toLeftOf="@id/button_create_folder_dialog_positive"
-        app:layout_constraintTop_toBottomOf="@+id/input_box1_base_text_picker_dialog"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout2_base_text_picker_dialog"
         />
         <!-- android:paddingBottom="16dp"
         android:drawableLeft="@drawable/ic_baseline_file_upload_24" -->
@@ -51,9 +82,9 @@
         android:layout_height="48dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="16dp"
-        android:text="@string/button_base_text_picker_dialog_positive"
+        android:text="@string/button_base_action_dialog_positive"
         app:layout_constraintRight_toLeftOf="@id/sys_test_dialog_guideline_vertical_right"
-        app:layout_constraintTop_toBottomOf="@+id/input_box1_base_text_picker_dialog"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout2_base_text_picker_dialog"
         android:gravity="center"
         />
         <!-- android:paddingBottom="16dp"

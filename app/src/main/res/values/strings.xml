@@ -42,13 +42,13 @@
     <string name="signout_dialog_action_signout">Sign out</string>
     <string name="signout_dialog_action_cancel">Cancel</string>
 
-    <!-- Base dialog: text picker dialog -->
-    <string name="title_base_text_picker_dialog">Text Picker</string>
-    <string name="button_base_text_picker_dialog_negative">Cancel</string>
-    <string name="button_base_text_picker_dialog_positive">OK</string>
-    <string name="InputHint1_BaseTextPicker_dialog">Input text</string>
-    <string name="InputHint2_BaseTextPicker_dialog">Input text</string>
-    <string name="InputHint3_BaseTextPicker_dialog">Input text</string>
+    <!-- Base Action dialog-->
+    <string name="title_base_action_dialog">Take Action</string>
+    <string name="content_base_action_dialog">Take action to continue</string>
+    <string name="button_base_action_dialog_negative">Cancel</string>
+    <string name="button_base_action_dialog_positive">OK</string>
+    <string name="hint1_base_action_dialog">Input text</string>
+    <string name="hint2_base_action_dialog">Input text</string>
 
     <!-- Create folder dialog -->
     <string name="title_create_folder_dialog">Create Folder</string>
