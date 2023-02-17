@@ -60,7 +60,7 @@ https://stackoverflow.com/questions/72596066/error-package-r-does-not-exist-in-n
             android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
         </activity>
         <activity android:name="com.crossdrives.ui.BaseActionDialog"
-            android:theme="@style/Theme.Custom.Option.MaterialComponents.Dialog.MinWidth"
+            android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth"
             android:exported="false"
             android:excludeFromRecents="true">
         </activity>

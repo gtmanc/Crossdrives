@@ -26,8 +26,11 @@
     <attr name="colorButton2Stroke" format="color" />
 
     <!-- Action buttons -->
-    <attr name="colorActionButton1Background" format="reference"/>
-    <attr name="colorActionButton1BackgroundPress" format="color"/>
-    <attr name="colorActionButton1BackgroundRelease" format="color"/>
-    <attr name="colorActionButton1Content" format="color"> </attr>
+    <attr name="colorActionButton1NegativeBackground" format="reference"/>
+    <attr name="colorActionButton1NegativeBackgroundPress" format="color"/>
+    <attr name="colorActionButton1NegativeBackgroundRelease" format="color"/>
+    <attr name="colorActionButton1PositiveBackground" format="reference"/>
+    <attr name="colorActionButton1PositiveBackgroundPress" format="color"/>
+    <attr name="colorActionButton1PositiveBackgroundRelease" format="color"/>
+    <attr name="colorActionButton1Text" format="color"> </attr>
 </resources>

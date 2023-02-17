@@ -41,7 +41,10 @@
   <color name="colorActionModeOverflow">@color/colorSecondary</color>
 
   <!-- Action buttons -->
-  <color name="colorActionButton1BackgroundPress">#41BBDEFB</color>
+  <color name="colorActionButton1NegativeBackgroundPress">@color/colorPrimaryLight</color>
+  <color name="colorActionButton1NegativeBackgroundRelease">@color/colorSecondary</color>
+  <color name="colorActionButton1PositiveBackgroundPress">@color/colorPrimaryLight</color>
+  <color name="colorActionButton1PositiveBackgroundRelease">@color/colorSecondary</color>
   <color name="colorFABBackground">@color/colorSecondary</color>
 
   <!-- Dialog-->

@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import androidx.activity.ComponentActivity;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 
 import com.example.crossdrives.R;
 import com.google.android.material.textfield.TextInputEditText;
@@ -48,8 +50,8 @@ public class BaseActionDialog extends ComponentActivity
         TextView viewTitle = findViewById(R.id.title_base_text_picker_dialog);
         TextView viewContent = findViewById(R.id.content_base_action_dialog);
         Log.d(TAG, "Content: " + viewContent.getText().toString());
-        Button negativeButton = findViewById(R.id.button_create_folder_dialog_negative);
-        Button positiveButton = findViewById(R.id.button_create_folder_dialog_positive);
+        Button negativeButton = findViewById(R.id.button_negative_base_action_dialog);
+        Button positiveButton = findViewById(R.id.button_positive_base_action_dialog);
         viewTextInputLayout = new ArrayList<>();
         viewEditTexts = new ArrayList<>();
         viewTextInputLayout.add(findViewById(R.id.textInputLayout1_base_text_picker_dialog));
@@ -83,10 +85,28 @@ public class BaseActionDialog extends ComponentActivity
         if(textPositiveButton != null){
             positiveButton.setText(textPositiveButton);
         }
+
+        if(numberTextEditBox > 2) {numberTextEditBox=2;}
         for(int i = 0; i < numberTextEditBox; i++){
             viewTextInputLayout.get(i).setVisibility(View.VISIBLE);
         }
 
+        //Determine the widget that the buttons are aligned to
+        int id = 0;
+        if(numberTextEditBox==0){
+            id = R.id.content_base_action_dialog;
+        }else{
+            id = viewTextInputLayout.get(numberTextEditBox-1).getId();
+        }
+
+        ConstraintLayout constraintLayout = findViewById(R.id.layout_base_action_dialog);
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(constraintLayout);
+        constraintSet.connect(R.id.button_negative_base_action_dialog,ConstraintSet.TOP,
+                id, ConstraintSet.BOTTOM,0);
+        constraintSet.connect(R.id.button_positive_base_action_dialog,ConstraintSet.TOP,
+                id,ConstraintSet.BOTTOM,0);
+        constraintSet.applyTo(constraintLayout);
         negativeButton.setOnClickListener(NegativeButtonListener);
         positiveButton.setOnClickListener(PositiveButtonListener);
 

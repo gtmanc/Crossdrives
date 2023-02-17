@@ -130,12 +130,6 @@
     <!-- colorPrimary will affect stroke and floating text color -->
     <item name="colorPrimary">@android:color/holo_blue_light</item>
 
-    <!--Action buttons -->
-    <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
-    <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
-    <item name="colorActionButton1BackgroundRelease">@color/colorSecondary</item>
-    <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
-    <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
   </style>
 
   <!-- Option Dialogs -->
@@ -162,11 +156,14 @@
     <item name="colorPrimary">@android:color/holo_blue_light</item>
 
     <!--Action buttons -->
-    <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
-    <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
-    <item name="colorActionButton1BackgroundRelease">@color/colorSecondary</item>
+    <item name="colorActionButton1NegativeBackground">@drawable/action_button1_negative_background_state</item>
+    <item name="colorActionButton1NegativeBackgroundPress">@color/colorActionButton1NegativeBackgroundPress</item>
+    <item name="colorActionButton1NegativeBackgroundRelease">@color/colorActionButton1NegativeBackgroundRelease</item>
+    <item name="colorActionButton1PositiveBackground">@drawable/action_button1_positive_background_state</item>
+    <item name="colorActionButton1PositiveBackgroundPress">@color/colorActionButton1PositiveBackgroundPress</item>
+    <item name="colorActionButton1PositiveBackgroundRelease">@color/colorActionButton1PositiveBackgroundPress</item>
     <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
-    <item name="colorActionButton1Content">@android:color/white</item>
+    <item name="colorActionButton1Text">@android:color/white</item>
 
     <!-- activity transition animation. No effect observed:
     <item name="android:windowActivityTransitions">true</item>

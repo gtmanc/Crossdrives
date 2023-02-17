@@ -38,11 +38,16 @@
 
     <!-- Button in Signout dialog and system test -->
     <style name="Widget.Custom.ActionButton1" parent="Widget.AppCompat.ActionButton">
-        <item name="android:textColor">?attr/colorActionButton1Content</item>
+        <item name="android:textColor">?attr/colorActionButton1Text</item>
     </style>
 
-    <style name="Widget.Custom.ActionButtonPositive" parent="Widget.AppCompat.ActionButton">
-        <item name="android:textColor">?attr/colorActionButton1Content</item>
+    <style name="Widget.Custom.ActionButton1Positive" parent="Widget.AppCompat.ActionButton">
+        <item name="android:background">?attr/colorActionButton1PositiveBackground</item>
+        <item name="android:textColor">?attr/colorActionButton1Text</item>
+    </style>
+    <style name="Widget.Custom.ActionButton1Negative" parent="Widget.AppCompat.ActionButton">
+        <item name="android:background">?attr/colorActionButton1NegativeBackground</item>
+        <item name="android:textColor">?attr/colorActionButton1Text</item>
     </style>
 
     <!-- Floating action buttom-->

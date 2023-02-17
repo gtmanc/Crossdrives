@@ -1161,8 +1161,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			new ActivityResultCallback<ActivityResult>() {
 				@Override
 				public void onActivityResult(ActivityResult result) {
-					Log.d(TAG, "onActivityResult called. Result code:" + result.getResultCode());
-					String action, brand;
 					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
 					if (result.getResultCode() == Activity.RESULT_OK) {
 						ArrayList<String> results;
