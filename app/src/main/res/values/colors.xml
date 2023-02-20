@@ -42,9 +42,14 @@
 
   <!-- Action buttons -->
   <color name="colorActionButton1NegativeBackgroundPress">@color/colorPrimaryLight</color>
-  <color name="colorActionButton1NegativeBackgroundRelease">@color/colorSecondary</color>
+  <color name="colorActionButton1NegativeBackgroundRelease">@color/colorDialog1background</color>
   <color name="colorActionButton1PositiveBackgroundPress">@color/colorPrimaryLight</color>
-  <color name="colorActionButton1PositiveBackgroundRelease">@color/colorSecondary</color>
+  <color name="colorActionButton1PositiveBackgroundRelease">@color/colorDialog1background</color>
+  
+  <color name="colorActionButton1PositiveBorder">@color/colorSecondary</color>
+  <color name="colorActionButton1NegativeBorder">@color/colorSecondary</color>
+
+  <!-- Floating action button -->
   <color name="colorFABBackground">@color/colorSecondary</color>
 
   <!-- Dialog-->

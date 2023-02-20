@@ -32,5 +32,7 @@
     <attr name="colorActionButton1PositiveBackground" format="reference"/>
     <attr name="colorActionButton1PositiveBackgroundPress" format="color"/>
     <attr name="colorActionButton1PositiveBackgroundRelease" format="color"/>
+    <attr name="colorActionButton1PositiveBorder" format="color"></attr>
     <attr name="colorActionButton1Text" format="color"> </attr>
+    <attr name="colorActionButton1NegativeBorder" format="color"></attr>
 </resources>
