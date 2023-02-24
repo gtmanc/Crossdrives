@@ -70,6 +70,9 @@ public class OpenTree extends ViewModel {
         mParents.remove(item);
     }
 
+    /*
+        Return: never be null. An empty list indicates we are at 'root'.
+     */
     public @NonNull List<CdfsItem> getParents(){
         return mParents;
     }

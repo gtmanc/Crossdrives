@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
-import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.IDriveClient;
 
 import java.io.BufferedReader;
@@ -17,7 +16,7 @@ import java.io.OutputStreamWriter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class FileLocal implements IFileCreation {
+public class LocalFileCreator implements IFileCreation {
     private String TAG = "CD.CreationLocal";
     IDriveClient mClient;
     String mFileId;
@@ -31,7 +30,7 @@ public class FileLocal implements IFileCreation {
      */
     private boolean msTaskfinished = false;
 
-    public FileLocal(Context context) { mContext = context;}
+    public LocalFileCreator(Context context) { mContext = context;}
 
     /*
         Create file in app's directory "/"

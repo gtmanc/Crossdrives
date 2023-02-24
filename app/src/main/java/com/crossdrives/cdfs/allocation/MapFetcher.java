@@ -291,7 +291,7 @@ public class MapFetcher {
     /*
         Get metadata of map files which stored in user's drives
         Input:
-            CDFS parent item. Directly set to root if null is input.
+            CDFS parent item. Directly set to root in the method if null is input.
      */
     public CompletableFuture<HashMap<String, File>> listAll(@Nullable CdfsItem parent) {
         CompletableFuture<HashMap<String, File>> resultFuture;
@@ -482,7 +482,9 @@ public class MapFetcher {
     }
 
     /*
-        get metadata of a map file in user drive
+        get metadata of the base folder in user drive.
+        Input:
+            driveName: drive name.
      */
     public CompletableFuture<File> getBaseFolder(String driveName){
         Fetcher fetcher= new Fetcher(mDrives);
@@ -492,7 +494,7 @@ public class MapFetcher {
 
         CompletableFuture<File> folder =
         CompletableFuture.supplyAsync(()->{
-            File f = getFromFiles(fileListFuture.join(), Names.allocFile(null));
+            File f = getFromFiles(fileListFuture.join(), Names.baseFolder());
             Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
             return f;
         });
@@ -500,7 +502,11 @@ public class MapFetcher {
         return folder;
     }
 
-    public CompletableFuture<HashMap<String, OutputStream>> pullAll(CdfsItem parent){
+    /*
+        Input:
+            List of parents. Directly set to root in the method if null is input.
+     */
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(@Nullable CdfsItem parent){
         CompletableFuture <HashMap<String, File>> mapIDsFuture =
         listAll(parent);
         return pullAllByID(Mapper.reValue(mapIDsFuture.join(), (file)->{

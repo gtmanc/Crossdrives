@@ -6,7 +6,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.data.FileLocal;
+import com.crossdrives.cdfs.data.LocalFileCreator;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.cdfs.util.Mapper;
@@ -236,7 +236,7 @@ public class Infrastructure{
             if(result.file == null){
                 String json;
                 File fileMetadata = new File();
-                FileLocal fc = new FileLocal(SnippetApp.getAppContext());
+                LocalFileCreator fc = new LocalFileCreator(SnippetApp.getAppContext());
                 AllocManager am = new AllocManager(mCDFS);
                 /*
                     Generate local allocation file in the folder create at previous stage.

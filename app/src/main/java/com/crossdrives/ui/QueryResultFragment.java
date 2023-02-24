@@ -1168,7 +1168,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 						CreateFolderDialogResultResolver resolver = new CreateFolderDialogResultResolver();
 						results = resolver.getNames(intent);
 						Log.d(TAG, "folder name entered: " + results.get(0));
-
+						try {
+							CDFS.getCDFSService().getService().create(results.get(0), treeOpener.getParents());
+						} catch (Exception e) {
+							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+						}
 					}
 				}
 			});

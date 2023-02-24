@@ -3,7 +3,7 @@ package com.crossdrives.cdfs.allocation;
 import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.data.FileLocal;
+import com.crossdrives.cdfs.data.LocalFileCreator;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.model.UpdateContent;
@@ -15,9 +15,7 @@ import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
 import com.google.gson.Gson;
 
-import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -62,7 +60,7 @@ public class MapUpdater {
 
             HashMap<String, UpdateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
                 Gson gson = new Gson();
-                FileLocal creator = new FileLocal(SnippetApp.getAppContext());
+                LocalFileCreator creator = new LocalFileCreator(SnippetApp.getAppContext());
                 UpdateContent content = new UpdateContent();
                 content.setID(mapIDFuture.join().get(driveName).getId());
                 String localMapName = driveName + "_map.txt";

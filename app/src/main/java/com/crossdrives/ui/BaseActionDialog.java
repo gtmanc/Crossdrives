@@ -43,21 +43,21 @@ public class BaseActionDialog extends ComponentActivity
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.fab_option_dialog);
+        setContentView(R.layout.base_action_dialog_dialog);
         mActivity = this;
         this.setFinishOnTouchOutside(false);
 
-        TextView viewTitle = findViewById(R.id.title_base_text_picker_dialog);
+        TextView viewTitle = findViewById(R.id.title_base_action_dialog);
         TextView viewContent = findViewById(R.id.content_base_action_dialog);
         Log.d(TAG, "Content: " + viewContent.getText().toString());
         Button negativeButton = findViewById(R.id.button_negative_base_action_dialog);
         Button positiveButton = findViewById(R.id.button_positive_base_action_dialog);
         viewTextInputLayout = new ArrayList<>();
         viewEditTexts = new ArrayList<>();
-        viewTextInputLayout.add(findViewById(R.id.textInputLayout1_base_text_picker_dialog));
-        viewTextInputLayout.add(findViewById(R.id.textInputLayout2_base_text_picker_dialog));
-        viewEditTexts.add(findViewById(R.id.edit_box1_base_text_picker_dialog));
-        viewEditTexts.add(findViewById(R.id.edit_box2_base_text_picker_dialog));
+        viewTextInputLayout.add(findViewById(R.id.textInputLayout1_base_action_dialog));
+        viewTextInputLayout.add(findViewById(R.id.textInputLayout2_base_action_dialog));
+        viewEditTexts.add(findViewById(R.id.edit_box1_base_action_dialog));
+        viewEditTexts.add(findViewById(R.id.edit_box2_base_action_dialog));
 
         //
         Intent intent = this.getIntent();

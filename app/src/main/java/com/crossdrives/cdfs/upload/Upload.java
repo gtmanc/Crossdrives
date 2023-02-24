@@ -14,7 +14,7 @@ import com.crossdrives.cdfs.allocation.IDProducer;
 import com.crossdrives.cdfs.allocation.ISplitAllCallback;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.Splitter;
-import com.crossdrives.cdfs.data.FileLocal;
+import com.crossdrives.cdfs.data.LocalFileCreator;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -474,7 +473,7 @@ public class Upload {
             Log.d(TAG, "generate local map files...");
             HashMap<String, UpdateContent> localMaps = Mapper.reValue(containers, (driveName, container)->{
                 Gson gson = new Gson();
-                FileLocal creator = new FileLocal(SnippetApp.getAppContext());
+                LocalFileCreator creator = new LocalFileCreator(SnippetApp.getAppContext());
                 UpdateContent content = new UpdateContent();
                 content.setID(mapIDFuture.join().get(driveName).getId());
                 String localMapName = driveName + "_map.txt";
