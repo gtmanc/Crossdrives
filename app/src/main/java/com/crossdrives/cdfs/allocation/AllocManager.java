@@ -205,8 +205,10 @@ public class AllocManager implements IAllocManager {
 
     /*
         Create a item with attribute folder
+        Input:
+
      */
-    static public AllocationItem createItemFolder(String drive, String name, String parent, String cdfsId){
+    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent, String cdfsId){
         AllocationItem item = new AllocationItem();
         item.setAttrFolder(true);
         item.setDrive(drive);
@@ -587,5 +589,4 @@ public class AllocManager implements IAllocManager {
 
         return stream;
     }
-
 }

@@ -1164,15 +1164,23 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
 					if (result.getResultCode() == Activity.RESULT_OK) {
 						ArrayList<String> results;
-						Intent intent = result.getData();
+						Task<com.crossdrives.driveclient.model.File> task;
+						OnSuccessListener<com.crossdrives.driveclient.model.File> successListener;
+						OnFailureListener failureListener;
+ 						Intent intent = result.getData();
 						CreateFolderDialogResultResolver resolver = new CreateFolderDialogResultResolver();
 						results = resolver.getNames(intent);
 						Log.d(TAG, "folder name entered: " + results.get(0));
 						try {
-							CDFS.getCDFSService().getService().create(results.get(0), treeOpener.getParents());
+							task = CDFS.getCDFSService().getService().create(results.get(0), treeOpener.getParents());
+							ResultUpdater resultUpdater = new ResultUpdater();
+							successListener = resultUpdater.createCreateSuccessListener(null);
+							failureListener = resultUpdater.createCreateFailureListener(null);
+							task.addOnSuccessListener(successListener).addOnFailureListener(failureListener);
 						} catch (Exception e) {
 							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 						}
+
 					}
 				}
 			});

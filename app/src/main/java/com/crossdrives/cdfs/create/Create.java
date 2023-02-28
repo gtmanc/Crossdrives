@@ -13,6 +13,7 @@ import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.data.LocalFileCreator;
 import com.crossdrives.cdfs.model.AllocContainer;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.remote.uploader;
 import com.crossdrives.cdfs.util.Mapper;
@@ -66,6 +67,7 @@ public class Create {
     public Task<File> execute(){
         Task<com.crossdrives.driveclient.model.File> task;
         CdfsItem whereWeAre = mParents.isEmpty()? null : mParents.get(mParents.size()-1);
+        String pathParent = whereWeAre == null ? IConstant.CDFS_PATH_BASE : whereWeAre.getPath();
 
         task = Tasks.call(mExecutor, new Callable<File>() {
             @Override
@@ -82,23 +84,33 @@ public class Create {
                 Log.d(TAG, "map fetched");
                 //callback(Delete.State.GET_MAP_COMPLETE);
 
-                //Create the folder in the remote target folder
+                HashMap<String, List<String>> parentIDLists = new HashMap<>();
+                //Create the folder in the remote target folder. The parent ID list is also built up
+                //in this step.
                 mCDFS.getDrives().keySet().stream().forEach((driveName)->{
                     //Get drive id of base folder
                     CompletableFuture<com.google.api.services.drive.model.File> baseFolderIdFuture = mapFetcher.getBaseFolder(driveName);
                     com.google.api.services.drive.model.File file = baseFolderIdFuture.join();
                     Log.d(TAG, "Base folder ID got: " + file.getId());
-                    createRemoteFolderFutures.put(driveName, createFolderRemote(driveName, mName, mParents, file.getId()));
+                    List<String> list = buildParentDriveIdList(driveName, mParents, file.getId());
+                    parentIDLists.put(driveName, list);
+                    createRemoteFolderFutures.put(driveName, createFolderRemote(driveName, mName, list));
                 });
 
                 //Wait until the folders are created. Build the drive item id list that we will used to
-                //generate the CDFS Id in the later step.
-                Collection<String> idList = new ArrayList<>();
+                //generate the CDFS Id in the later step. The new created folder drive ID is also appended
+                // to tje parent ID list that we will used in lter step.
+                Collection<String> idListConcantenated = new ArrayList<>();
                 Mapper.reValue(createRemoteFolderFutures, future->{
                     return future.join().getId();
-                }).values().stream().forEach((id)->{
-                    idList.add(id);
+                }).entrySet().stream().forEach((entry)->{
+                    String driveName = entry.getKey();
+                    String driveID = entry.getValue();
+                    Log.d(TAG, "New folder ID: " + entry.getValue());
+                    idListConcantenated.add(driveID);
+                    parentIDLists.get(driveName).add(driveID);
                 });
+                Log.d(TAG, "Size of ID list built up: " + idListConcantenated.size());
 
                 //Just map to allocation container so that we can easily process later
                 HashMap<String, AllocContainer> mapContainer = Mapper.reValue(mapFile, (stream)->{
@@ -106,29 +118,47 @@ public class Create {
                 });
 
                 //Add the new allocation item with attribute folder to the container
-                final String cdfsId = IDProducer.deriveID(idList);
+                final String cdfsId = IDProducer.deriveID(idListConcantenated);
                 HashMap<String, AllocContainer> modified = Mapper.reValue(mapContainer, (k, v)->{
                     String driveName = k;
                     AllocContainer container = v;
-                    container.addItem(AllocManager.createItemFolder(driveName, mName, whereWeAre.getPath(), cdfsId));
+                    AllocationItem item = AllocManager.createItemFolder(driveName, mName, pathParent, cdfsId);
+                    container.addItem(item);
                     return container;
                 });
 
                 //update the map files
+                Log.d(TAG, "Update map file in parent...");
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
                         = updater.updateAll(modified, whereWeAre);
                 updateFuture.join();
+                Log.d(TAG, "Parent map file updated.");
 
                 //Create a default local allocation file and store(upload) it to the folder just created
                 LocalFileCreator lfc = new LocalFileCreator(SnippetApp.getAppContext());
                 AllocManager am = new AllocManager(mCDFS);
-                lfc.create(Names.allocFile(cdfsId), am.newAllocation());
+                final java.io.File defaultMapLocal = lfc.create(Names.allocFile(cdfsId), am.newAllocation());
                 //json = lfc.read(Names.allocFile(cdfsId));
 
+                //Prepare the metaData for uploader
                 HashMap<String, File> defaultMapFiles= new HashMap<>();
                 mCDFS.getDrives().keySet().forEach((key)->{
-                    defaultMapFiles.put(key, lfc.);
+                    File cdfsMetaData = new File();
+                    com.google.api.services.drive.model.File googleMetaData = new com.google.api.services.drive.model.File();
+                    googleMetaData.setName(defaultMapLocal.getName());
+                    List<String> singleParentList = new ArrayList<>();
+                    singleParentList.add(parentIDLists.get(key).get(parentIDLists.get(key).size()-1));
+                    Log.d(TAG, "Parent for upload default map: " + singleParentList.get(0));
+                    googleMetaData.setParents(singleParentList);
+//                    Log.d(TAG, "Parents for upload default map:");
+//                    parentIDLists.get(key).stream().forEach((id)->{
+//                        Log.d(TAG, id);
+//                    });
+                    cdfsMetaData.setOriginalLocalFile(defaultMapLocal);
+                    cdfsMetaData.setFile(googleMetaData);
+                    defaultMapFiles.put(key, cdfsMetaData);
+                    Log.d(TAG, "Default local map files:" + defaultMapFiles);
                 });
 
                 uploader uploader = new uploader(mCDFS.getDrives());
@@ -145,14 +175,12 @@ public class Create {
         return task;
     }
 
-    CompletableFuture<com.google.api.services.drive.model.File> createFolderRemote(String driveName, String name, @NonNull List<CdfsItem> CdfsParents, String baseFolderId){
+    CompletableFuture<com.google.api.services.drive.model.File> createFolderRemote(String driveName, String name, @NonNull List<String> driveIdLists){
         CompletableFuture<com.google.api.services.drive.model.File> future = new CompletableFuture<>();
         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-        List<String> IdList = buildParentDriveIdList(driveName, CdfsParents);
         fileMetadata.setName(name);
         fileMetadata.setMimeType(MINETYPE_FOLDER);
-        IdList.add(0, baseFolderId);    //insert the base folder id to the head because we are working on drive ID domain
-        fileMetadata.setParents(IdList);
+        fileMetadata.setParents(driveIdLists);
         mCDFS.getClient(driveName).create().buildRequest(fileMetadata).run(new ICreateCallBack<com.google.api.services.drive.model.File>() {
             @Override
             public void success(com.google.api.services.drive.model.File file) {
@@ -177,21 +205,28 @@ public class Create {
     }
 
     /*
+        A helper function for building up the drive ID list for a specified drive.
         This is only required for Google drive. Microsoft uses path instead.
         Input:
             driveName:
-            items: item list in CDFSItem. Can not be null.
+            items: item list in CDFSItem. Can not be null. An empty list indicates CDFS root.
         Return:
-            if root is specified.
+            Drive ID list of the specified drive that ID of the base folder is inserted at head.
+            An empty list is returned if root is specified.
      */
-    List<String> buildParentDriveIdList(@NonNull String driveName, @NonNull List<CdfsItem> items){
+    List<String> buildParentDriveIdList(@NonNull String driveName, @NonNull List<CdfsItem> items, @NonNull String baseFolderId){
         List<String> idList = new ArrayList<>();
+
+        idList.add(0, baseFolderId);    //insert the base folder id at the head to build up a complete drive ID list.
 
         if(items.size() == 0){return idList;}
 
         items.stream().forEachOrdered(item->{
             idList.add(item.getMap().get(driveName).get(0));
         });
+
+
+
         return idList;
     }
 }

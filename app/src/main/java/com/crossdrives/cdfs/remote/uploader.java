@@ -20,6 +20,12 @@ public class uploader {
         this.mDrives = mDrives;
     }
 
+    /*
+        Input:
+            metaData for each available drives. where:
+            file:   metaData will be directly sent to drive request
+            originalLocalFile: the path name to the local file to upload
+     */
     public CompletableFuture<HashMap<String, com.crossdrives.driveclient.model.File>> uploadAll(HashMap<String, com.crossdrives.driveclient.model.File> files){
         HashMap<String, CompletableFuture<com.crossdrives.driveclient.model.File>> Futures = new HashMap<>();
 

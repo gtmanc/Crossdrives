@@ -167,4 +167,37 @@ public class ResultUpdater {
         }
     }
 
+    public OnSuccessListener<File> createCreateSuccessListener(Notification notification){
+        OnSuccessListener<File> listener = new OnSuccessListener<File>() {
+            @Override
+            public void onSuccess(File file) {
+
+                //Notification notification = mNotificationsByUploadSuccessListener.get(this);
+                if(notification != null){
+                    notification.removeProgressBar();
+                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
+                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
+                }
+                Toast.makeText(context, context.getString(R.string.toast_create_file_success), Toast.LENGTH_LONG).show();
+            }
+        };
+        return listener;
+    }
+
+    public OnFailureListener createCreateFailureListener(Notification notification) {
+        OnFailureListener listener = new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //Notification notification = mDownloadFailedListener.get(this);
+                //Notification notification = mNotificationsByUploadSuccessListener.get(this);
+                if(notification != null){
+                    notification.removeProgressBar();
+                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
+                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
+                }
+                Toast.makeText(context, context.getString(R.string.toast_create_file_failure), Toast.LENGTH_LONG).show();
+            }
+        };
+        return listener;
+    }
 }

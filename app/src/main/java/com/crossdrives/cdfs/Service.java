@@ -279,7 +279,7 @@ public class Service{
         Create creator = new Create(mCDFS, name, parents);
         final Throwable[] throwables = {null};
 
-        Log.d(TAG, "CDFS Service: move");
+        Log.d(TAG, "CDFS Service: Create");
 
         mCDFS.requiresDriveClientNonNull();
 

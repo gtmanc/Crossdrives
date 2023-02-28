@@ -90,6 +90,8 @@
     <string name="notification_content_delete_complete_exceptionally">Oops... Something wrong during Delete</string>
 
     <!-- Toast messages -->
+    <string name="toast_create_file_success">Create file OK!</string>
+    <string name="toast_create_file_failure">Failed to create file!</string>
     <!-- Action taken -->
     <string name="toast_action_taken_delete_start">The file is being deleting</string>
     <string name="toast_action_taken_download_start">The file is being downloading</string>
