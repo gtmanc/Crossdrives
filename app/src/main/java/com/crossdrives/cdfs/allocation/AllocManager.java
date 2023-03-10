@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -105,12 +106,12 @@ public class AllocManager implements IAllocManager {
     }
 
     /*
-        Check the items for the integrity. Try best to save good item to local database.
+        Check the items for the integrity. Try best to save good items to the  local database.
         return:
             true: all items are good
             false: good items have been saved to local db. However, certain items may be faulty.
      */
-    public boolean CheckThenUpdateLocalCopy(String parent, HashMap<String, OutputStream> allocations){
+    public boolean CheckThenUpdateLocalCopy(String pathParent, HashMap<String, OutputStream> allocations){
         AtomicReference<AllocContainer> ac = new AtomicReference<>();
         Checker checker = new Checker();
         AtomicBoolean globalResult = new AtomicBoolean(true);
@@ -125,12 +126,30 @@ public class AllocManager implements IAllocManager {
         Log.d(TAG, "Delete all items in local database....");
 
         deleteAll();
+
+        //Remove the nulls. null could appear once the map file item is not found in user drive.
+        //A typical known situation is list operation is performed while base builder has not yet finishes.
+        //This step is only a helper for following steps
+        HashMap<String, OutputStream> reducedOs = new HashMap<>();
+        allocations.entrySet().stream().forEach(set->{
+            if(set.getValue() != null){
+                reducedOs.put(set.getKey(), set.getValue());
+            }
+            else{
+                Log.d(TAG, "Output stream is null. Drive: " + set.getKey());
+            }
+        });
+
         /*
             Update the fetched allocation content to database. We will query local database
             for the file list requested by caller.
         */
-        mCDFS.getDrives().forEach((key, value)->{
-            ac.set(toContainer(allocations.get(key)));
+        reducedOs.entrySet().stream().forEach((set)->{
+            String key = set.getKey();
+            OutputStream value = set.getValue();
+
+            ac.set(toContainer(value));
+
             /*
                 Check allocation item traversely and save to database if the item is valid
                 Here we will lost the cause because it could consume large amount of memory.
@@ -144,14 +163,13 @@ public class AllocManager implements IAllocManager {
                     instead onSuccess.
                 */
                 if(getConclusion(results.get())){
-                    saveItem(item, key);
+                    saveItem(item);
                 }else{
                     Log.w(TAG, "Single item check: faulty item detected ");
                     globalResult.set(false);
                 }
             }
 
-            mCDFS.getDrives().get(key).addContainer(ac.get());
         });
 
         /*
@@ -159,27 +177,8 @@ public class AllocManager implements IAllocManager {
             Build name list contains the unique Names. We will use the list to query local
             database for cross item check.
         */
-//        whole = getNameList(parent);
-//        if(whole != null) {
-//            if (whole.stream().filter((name) -> {
-//                boolean result = true;
-//                java.util.List<AllocationItem> items;
-//                items = getItemsByName(name);
-//                results.set(checker.checkItemsCrossly(items));
-//                if (getConclusion(results.get())) {
-//                } else {
-//                    Log.w(TAG, "Corss item check: faulty items detected ");
-//                    deleteItemsByName(name);
-//                    result = false;
-//                }
-//                return result;
-//            }).count() < whole.size()) {
-//                globalResult.set(false);
-//            }
-//        }
-
         java.util.List<String> IDs;
-        IDs = getCdfsIdList(parent);
+        IDs = getCdfsIdList(pathParent);
         if(IDs != null) {
             Log.d(TAG, "Cross item check...");
             if (IDs.stream().filter((id) -> {
@@ -204,7 +203,7 @@ public class AllocManager implements IAllocManager {
     }
 
     /*
-        Create a item with attribute folder
+        A helper function to create a folder allocation item
         Input:
 
      */
@@ -215,6 +214,10 @@ public class AllocManager implements IAllocManager {
         item.setName(name);
         item.setPath(parent);
         item.setCdfsId(cdfsId);
+        item.setCDFSItemSize(0);
+        item.setSize(0);
+        item.setSequence(1);
+        item.setTotalSeg(1);
         return item;
     }
 
@@ -504,12 +507,12 @@ public class AllocManager implements IAllocManager {
         container.addItem(item2);
     }
 
-    public void saveItem(AllocationItem item, String drive)
+    public void saveItem(AllocationItem item)
     {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
 
 
-        Log.d(TAG, "Save new allocation. Drive: " + drive);
+        //Log.d(TAG, "Save new allocation. Drive: " + drive);
 
         dh.setName(item.getName());
         dh.setDrive(item.getDrive());

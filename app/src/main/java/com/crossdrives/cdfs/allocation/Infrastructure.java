@@ -412,7 +412,6 @@ public class Infrastructure{
             Log.w(TAG, "allocation version is not compatible!");
         }
 
-        mCDFS.getDrives().get(mDriveName).addContainer(ac);
         return true;
     }
 

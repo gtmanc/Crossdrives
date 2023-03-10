@@ -12,10 +12,10 @@ import java.util.stream.Stream;
 
 public class Checker {
     final String TAG = "CD.Checker";
-    List<RuleSingle<AllocResultCodes>> rulesSingle = new ArrayList<>();
+    List<RuleIndividual<AllocResultCodes>> rulesSingle = new ArrayList<>();
     List<RuleJoined<AllocResultCodes>> rulesJoined = new ArrayList<>();
 
-    interface RuleSingle<Result>{
+    interface RuleIndividual<Result>{
         Result check(AllocationItem item);
     }
 
@@ -67,7 +67,7 @@ public class Checker {
     /*
         Seq starts with 1 and the max equals to totalSeg.
      */
-    class RuleCheckSeqNum implements RuleSingle<AllocResultCodes> {
+    class RuleCheckSeqNum implements RuleIndividual<AllocResultCodes> {
 
         @Override
         public AllocResultCodes check(AllocationItem item) {
@@ -89,7 +89,7 @@ public class Checker {
         }
     }
 
-    class RuleCheckSize implements RuleSingle<AllocResultCodes> {
+    class RuleCheckSize implements RuleIndividual<AllocResultCodes> {
 
         @Override
         public AllocResultCodes check(AllocationItem item) {

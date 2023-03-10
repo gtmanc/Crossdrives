@@ -17,8 +17,4 @@ public class Drive {
         return mClient;
     }
 
-    public AllocContainer getContainer(){return mContainer;}
-    public void addContainer(AllocContainer container){mContainer = container;}
-
-
 }

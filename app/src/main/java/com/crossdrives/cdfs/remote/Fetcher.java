@@ -2,6 +2,9 @@ package com.crossdrives.cdfs.remote;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Mapper;
@@ -63,7 +66,10 @@ public class Fetcher {
 
         return helperFetchList(mDrives.get(driveName), parent);
     }
-
+    /*
+        Pull the content of the map files in Outputstream. Note the outputStream could be NULL if no
+        map file is found in the specified folder.
+    */
     public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, String> fileID){
         CompletableFuture<HashMap<String, OutputStream>> resultFuture =
                 CompletableFuture.supplyAsync(()->{
@@ -118,23 +124,34 @@ public class Fetcher {
     }
     /*
         Get content of a file
+        Input:
+            file ID: drive item ID. Can be null.
+        Return:
+            A task which will return with file content in OutputStream. Note the content could be NULL.
+
      */
-    CompletableFuture<OutputStream> helpertFetchContent(Drive drive, String fileID){
+    CompletableFuture<OutputStream> helpertFetchContent(Drive drive, @Nullable String fileID){
         CompletableFuture<OutputStream> resultFuture = new CompletableFuture<>();
-        drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<MediaData>() {
-            @Override
-            public void success(MediaData mediaData) {
-                Log.d(TAG, "OK!. Content is downloaded.");
-                resultFuture.complete(mediaData.getOs());
-            }
 
-            @Override
-            public void failure(String ex) {
-                Log.w(TAG, "fetch content failed: " + ex);
-                resultFuture.completeExceptionally(new Throwable(ex));
-            }
-        });
+        if(fileID == null){
+            Log.w(TAG, "file ID is null. Drive: " + drive);
+            resultFuture.complete(null);
+        }
+        else {
+            drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<MediaData>() {
+                @Override
+                public void success(MediaData mediaData) {
+                    Log.d(TAG, "OK!. Content is downloaded.");
+                    resultFuture.complete(mediaData.getOs());
+                }
 
+                @Override
+                public void failure(String ex) {
+                    Log.w(TAG, "fetch content failed: " + ex);
+                    resultFuture.completeExceptionally(new Throwable(ex));
+                }
+            });
+        }
         return resultFuture;
     }
 

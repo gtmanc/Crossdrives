@@ -292,6 +292,10 @@ public class MapFetcher {
         Get metadata of map files which stored in user's drives
         Input:
             CDFS parent item. Directly set to root in the method if null is input.
+
+        Return:
+            A task which will return with map files. Note the map could be NULL if map file is not found
+            in user's drive.
      */
     public CompletableFuture<HashMap<String, File>> listAll(@Nullable CdfsItem parent) {
         CompletableFuture<HashMap<String, File>> resultFuture;
@@ -316,9 +320,18 @@ public class MapFetcher {
             final HashMap<String, FileList> fileList = listFuture.join();
             //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
             HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
+                File f = null;
                 String id = parent == null? null : parent.getId();
-                File f = getFromFiles(list, Names.allocFile(id));
-                throwExIfNull(f, "Map item is not found. Drive: " + key, "");
+                if(list != null) {
+                    Log.w(TAG, "Empty folder. Drive:" + key);
+                    f = getFromFiles(list, Names.allocFile(id));
+                }
+
+                if(f == null) {
+                    f = new File();
+                    Log.w(TAG, "No map file found in the specified folder! Drive:" + key);
+                }
+                    //throwExIfNull(f, "Map item is not found. Drive: " + key, "");
                 return f;
             });
 
@@ -367,7 +380,7 @@ public class MapFetcher {
         HashMap<String, File> mapItems = Mapper.reValue(fileLists, (key, list)->{
 
             File file = getFromFiles(list, null);
-            throwExIfNull(file, "Map file may be missing! " + "Drive:" + key, "");
+            //throwExIfNull(file, "Map file may be missing! " + "Drive:" + key, "");
             return file;
          });
 
@@ -384,7 +397,7 @@ public class MapFetcher {
             AllocManager.toContainer(stream).getAllocItem().stream().filter((item)->{
                 return item.getCdfsId().compareToIgnoreCase(pid) == 0;
             }).findAny();
-            throwExIfNotPresent(optional, "Parent not found! " + "Drive:" + key, "");
+            //throwExIfNotPresent(optional, "Parent not found! " + "Drive:" + key, "");
             return optional.get();
         });
 
@@ -471,7 +484,11 @@ public class MapFetcher {
 
             folders = Mapper.reValue(list.join(), (files)->{
                 File f = getFromFiles(files, NAME_CDFS_FOLDER);//TODO #42
-                Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
+                if(f!=null){
+                    Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
+                }else{
+                    Log.w(TAG, "Base folder is missing.");
+                }
                 return f;
             });
 
@@ -495,7 +512,12 @@ public class MapFetcher {
         CompletableFuture<File> folder =
         CompletableFuture.supplyAsync(()->{
             File f = getFromFiles(fileListFuture.join(), Names.baseFolder());
-            Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
+            if(f!=null){
+                Log.d(TAG, "OK. CDFS folder found. ID: " + f.getId());
+            }else{
+                Log.w(TAG, "Base folder is missing. Drive: " + driveName);
+            }
+
             return f;
         });
 
@@ -510,7 +532,11 @@ public class MapFetcher {
         CompletableFuture <HashMap<String, File>> mapIDsFuture =
         listAll(parent);
         return pullAllByID(Mapper.reValue(mapIDsFuture.join(), (file)->{
-            return file.getId();
+            String id = null;
+            //The file object could be null if no map file is found in user drive
+            if(file != null){id = file.getId();}
+            else{Log.w(TAG, "Drive id to pull is null");}
+            return id;
         }));
     }
 

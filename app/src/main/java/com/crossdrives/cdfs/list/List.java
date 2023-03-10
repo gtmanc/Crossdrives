@@ -65,18 +65,20 @@ public class List {
             public ListResult call() throws Exception {
                 ListResult result = new ListResult();
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(null);
-                final String path;
+                CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(parent);
+                final String pathParent;
                 java.util.List<CdfsItem> items;
 
-                if(parent != null) {path = parent.getPath();}
-                else{path = null;}
+                //Prepare the path string that we will use to query database items
+                if(parent != null) {pathParent = parent.getPath();}
+                else{pathParent = null;}
 
                 HashMap<String, OutputStream> allocations = fetchMapFuture.join();
                 AllocManager am = new AllocManager(mCDFS);
-                am.CheckThenUpdateLocalCopy(path, allocations);
 
-                items = buildCdfsItemList(path);
+                am.CheckThenUpdateLocalCopy(pathParent, allocations);
+
+                items = buildCdfsItemList(pathParent);
                 result.setItems(items);
                 return result;
             }
@@ -85,7 +87,7 @@ public class List {
         return task;
     }
 
-    public void list(@Nullable AllocationItem parent, ICallbackList<java.util.List<CdfsItem>> callback) {
+    void list(@Nullable AllocationItem parent, ICallbackList<java.util.List<CdfsItem>> callback) {
         FileList filelist = new FileList();
         java.util.List<com.google.api.services.drive.model.File> Itemlist = new ArrayList<>();
         java.util.List<com.google.api.services.drive.model.File> Dirlist = new ArrayList<>();

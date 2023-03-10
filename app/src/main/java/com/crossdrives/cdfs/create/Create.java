@@ -51,9 +51,9 @@ public class Create {
         Input:
             cdfs: CDFS instance
             name: name of the folder will be created
-            parents: list of parents in terms of CdfsItem. An empty list indicates root.
+            parents: list of involved parents in CdfsItem. An empty list indicates root.
     */
-    public Create(CDFS cdfs, String name, List<CdfsItem> parents) {
+    public Create(CDFS cdfs, String name, @NonNull List<CdfsItem> parents) {
         this.mCDFS = cdfs;
         this.mName = name;
         this.mParents = parents;
@@ -84,7 +84,7 @@ public class Create {
                 Log.d(TAG, "map fetched");
                 //callback(Delete.State.GET_MAP_COMPLETE);
 
-                HashMap<String, List<String>> parentIDLists = new HashMap<>();
+                //HashMap<String, List<String>> parentIDLists = new HashMap<>();
                 //Create the folder in the remote target folder. The parent ID list is also built up
                 //in this step.
                 mCDFS.getDrives().keySet().stream().forEach((driveName)->{
@@ -92,8 +92,8 @@ public class Create {
                     CompletableFuture<com.google.api.services.drive.model.File> baseFolderIdFuture = mapFetcher.getBaseFolder(driveName);
                     com.google.api.services.drive.model.File file = baseFolderIdFuture.join();
                     Log.d(TAG, "Base folder ID got: " + file.getId());
-                    List<String> list = buildParentDriveIdList(driveName, mParents, file.getId());
-                    parentIDLists.put(driveName, list);
+                    List<String> list = buildSingleParentDriveIdList(driveName, mParents, file.getId());
+                    //parentIDLists.put(driveName, list);
                     createRemoteFolderFutures.put(driveName, createFolderRemote(driveName, mName, list));
                 });
 
@@ -101,14 +101,16 @@ public class Create {
                 //generate the CDFS Id in the later step. The new created folder drive ID is also appended
                 // to tje parent ID list that we will used in lter step.
                 Collection<String> idListConcantenated = new ArrayList<>();
+                HashMap<String, String> idNewCreatedItems = new HashMap<>();
                 Mapper.reValue(createRemoteFolderFutures, future->{
                     return future.join().getId();
                 }).entrySet().stream().forEach((entry)->{
                     String driveName = entry.getKey();
-                    String driveID = entry.getValue();
+                    String id = entry.getValue();
                     Log.d(TAG, "New folder ID: " + entry.getValue());
-                    idListConcantenated.add(driveID);
-                    parentIDLists.get(driveName).add(driveID);
+                    idListConcantenated.add(id);
+                    //parentIDLists.get(driveName).add(id);
+                    idNewCreatedItems.put(driveName, id);
                 });
                 Log.d(TAG, "Size of ID list built up: " + idListConcantenated.size());
 
@@ -148,7 +150,7 @@ public class Create {
                     com.google.api.services.drive.model.File googleMetaData = new com.google.api.services.drive.model.File();
                     googleMetaData.setName(defaultMapLocal.getName());
                     List<String> singleParentList = new ArrayList<>();
-                    singleParentList.add(parentIDLists.get(key).get(parentIDLists.get(key).size()-1));
+                    singleParentList.add(idNewCreatedItems.get(key));
                     Log.d(TAG, "Parent for upload default map: " + singleParentList.get(0));
                     googleMetaData.setParents(singleParentList);
 //                    Log.d(TAG, "Parents for upload default map:");
@@ -197,14 +199,25 @@ public class Create {
         return future;
     }
 
-    CdfsItem createRootCdfsItem(){
-        CdfsItem item = new CdfsItem();
+    /*
+    */
+    List<String> buildSingleParentDriveIdList(@NonNull String driveName, @NonNull List<CdfsItem> items, @NonNull String baseFolderId){
+        List<String> idList = new ArrayList<>();
 
-        item.setPath("");
-        return item;
+        if(items.size() == 0) {
+            idList.add(0, baseFolderId);    //base folder.
+        }else{
+            long indexSecondToLast = items.stream().count()-2;
+            CdfsItem foundItem = items.stream().skip(indexSecondToLast).findFirst().get();
+            //Assume the item must be a folder. Directly get the first element
+            idList.add(foundItem.getMap().get(driveName).get(0));
+        }
+
+        return idList;
     }
 
     /*
+        Obsolete.
         A helper function for building up the drive ID list for a specified drive.
         This is only required for Google drive. Microsoft uses path instead.
         Input:
@@ -214,7 +227,7 @@ public class Create {
             Drive ID list of the specified drive that ID of the base folder is inserted at head.
             An empty list is returned if root is specified.
      */
-    List<String> buildParentDriveIdList(@NonNull String driveName, @NonNull List<CdfsItem> items, @NonNull String baseFolderId){
+    List<String> buildMultipleParentDriveIdList(@NonNull String driveName, @NonNull List<CdfsItem> items, @NonNull String baseFolderId){
         List<String> idList = new ArrayList<>();
 
         idList.add(0, baseFolderId);    //insert the base folder id at the head to build up a complete drive ID list.
