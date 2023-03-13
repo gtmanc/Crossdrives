@@ -214,6 +214,9 @@ public class List {
             item.setName(cursor.getString(indexName));
             item.setId(cursor.getString(indexCDFSId));
             item.setPath(cursor.getString(indexPath));
+            //Solution for get a boolean from db:
+            //https://stackoverflow.com/questions/4088080/get-boolean-from-database-using-android-and-sqlite
+            item.setFolder(cursor.getInt(indexAttrFolder) > 0 );
             items.add(item);
             cursor.moveToNext();
         }

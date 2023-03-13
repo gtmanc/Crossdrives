@@ -42,8 +42,10 @@ public class Mapper<V> {
             return entry;
         });
 
+        //Using our own implementation of method toMap() to deal with he issue:
+        //Collectors.toMap throws a NullPointerException if one of the values is null
         Map<String, R> remapped =
-                stream.collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+                stream.collect(com.crossdrives.cdfs.util.collection.Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
         return new HashMap<>(remapped);
     };
@@ -69,7 +71,9 @@ public class Mapper<V> {
                         }
                     };
                     return entry;
-                }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+                    //Using our own implementation of method toMap() to deal with he issue:
+                    //Collectors.toMap throws a NullPointerException if one of the values is null
+                }).collect(com.crossdrives.cdfs.util.collection.Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
         return new HashMap<>(remapped);
     };

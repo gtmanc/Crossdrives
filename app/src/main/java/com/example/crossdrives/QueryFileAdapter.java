@@ -1,6 +1,7 @@
 package com.example.crossdrives;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.sun.jna.platform.unix.X11;
 
 import java.util.List;
 public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.ViewHolder> implements View.OnLongClickListener{
@@ -133,31 +136,33 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
                 holder.ivMore.setVisibility(View.VISIBLE);
             }
 
-            /*
-             Checked?
-             */
-            if (item.isSelected()) {
-                Log.d(TAG, "Set item [" + Integer.toString(position) + "]" + "CHECKED");
-                //holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_error_outline_24);
-                //holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_check_box_24);
-                //holder.ItemView.setBackgroundResource(R.drawable.drawer_menu_item_bg_round_padded);
-                holder.ItemView.setBackground(mContext.getDrawable(R.drawable.query_result_list_bg_selected));
-                holder.iv_item_pic.setImageResource(R.drawable.ic_baseline_check_24);
-                //mContext.getTheme().resolveAttribute(R.attr.colorQueryListItemPicBGChecked, tv, true);
-                holder.iv_item_pic.setBackground(mContext.getDrawable(R.drawable.query_list_item_pic_background));
-
-            }
-            else {
-                Log.d(TAG, "Set item [" + Integer.toString(position) + "]" + "UNCHECKED");
-                //holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_check_box_outline_blank_24);
-                //holder.ivCheckBox.setImageResource(R.drawable.query_list_item_background_idle);
-                //holder.ivCheckBox.setBackgroundResource(0);
-                //holder.ivCheckBox.setBackgroundResource(R.drawable.query_list_item_background_idle);
-                //holder.ItemView.setBackground(mContext.getDrawable(R.drawable.query_list_item_background_idle));
-                holder.ItemView.setBackground(mContext.getDrawable(R.drawable.query_list_item_bg_state));
-                holder.iv_item_pic.setImageResource(R.drawable.ic_outline_folder_24);
-                holder.iv_item_pic.setBackground(null);
-            }
+            //Change entry background and large icon depending on the item state
+            Log.d(TAG, "item is folder? " + item.folder);
+            holder.ItemView.setBackground(toBackground(item));
+            holder.iv_item_pic.setImageResource(toLargeIconId(item));
+            holder.iv_item_pic.setBackground(toLargeIconBackground(item));
+//            if (item.isSelected()) {
+//                Log.d(TAG, "Set item [" + Integer.toString(position) + "]" + "CHECKED");
+//                //holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_error_outline_24);
+//                //holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_check_box_24);
+//                //holder.ItemView.setBackgroundResource(R.drawable.drawer_menu_item_bg_round_padded);
+//                holder.ItemView.setBackground(mContext.getDrawable(R.drawable.query_result_list_bg_selected));
+//                holder.iv_item_pic.setImageResource(R.drawable.ic_baseline_check_24);
+//                //mContext.getTheme().resolveAttribute(R.attr.colorQueryListItemPicBGChecked, tv, true);
+//                holder.iv_item_pic.setBackground(mContext.getDrawable(R.drawable.query_list_item_pic_background));
+//
+//            }
+//            else {
+//                Log.d(TAG, "Set item [" + Integer.toString(position) + "]" + "UNCHECKED");
+//                //holder.ivCheckBox.setImageResource(R.drawable.ic_baseline_check_box_outline_blank_24);
+//                //holder.ivCheckBox.setImageResource(R.drawable.query_list_item_background_idle);
+//                //holder.ivCheckBox.setBackgroundResource(0);
+//                //holder.ivCheckBox.setBackgroundResource(R.drawable.query_list_item_background_idle);
+//                //holder.ItemView.setBackground(mContext.getDrawable(R.drawable.query_list_item_background_idle));
+//                holder.ItemView.setBackground(mContext.getDrawable(R.drawable.query_list_item_bg_state));
+//                holder.iv_item_pic.setImageResource(R.drawable.baseline_insert_drive_file_24);
+//                holder.iv_item_pic.setBackground(null);
+//            }
         }else{
             Log.d(TAG, "holder is progress bar");
         }
@@ -214,92 +219,34 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         return type;
     }
 
-    //public class QueryFileAdapter extends BaseAdapter {
-//    private String TAG = "CD.QueryFileAdapter";
-//    List<ItemModelBase> mItems;
-//    LayoutInflater mInflater;
-//    boolean mCheckBoxVisible = false;
-//
-//    public QueryFileAdapter(Activity activity, List<ItemModelBase> Items) {
-//        mItems = Items;
-//        mInflater = activity.getLayoutInflater();
-//    }
-//
-//    @Override
-//    public int getCount() {
-//        return mItems.size();
-//    }
-//
-//    @Override
-//    public Object getItem(int position) {
-//        return position;
-//    }
-//
-//    @Override
-//    public long getItemId(int position) {
-//        return position;
-//    }
-//
-//    @Override
-//    public View getView(int position, View convertView, ViewGroup parent) {
-//        ViewHolder holder = null;
-//
-//        Log.d(TAG, "[getView]:position=" + position +"convertView=" + convertView);
-//
-////        if(position == (getCount()-1))
-////            Log.d(TAG, "Reach end of list");
-//
-//        if (convertView == null){
-//
-//            convertView = mInflater.inflate(R.layout.list_view_item, parent, false);
-//
-//            holder = new ViewHolder();
-//
-//            holder.tvItemName = (TextView)convertView.findViewById(R.id.tv_item_name);
-//            holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
-//
-//            convertView.setTag(holder);
-//        }
-//        else{
-//            holder = (ViewHolder)convertView.getTag();
-//        }
-//
-//        ItemModelBase model = mItems.get(position);
-//        /*
-//         Show the check box?
-//         */
-//        holder.ivCheckBox.setVisibility(View.GONE);
-//        if(mCheckBoxVisible == true){
-//            holder.ivCheckBox.setVisibility(View.VISIBLE);
-//        }
-//
-//        /*
-//         Checked?
-//         */
-//        if (model.isSelected())
-//            holder.ivCheckBox.setBackgroundResource(R.drawable.checked);
-//
-//        else
-//            holder.ivCheckBox.setBackgroundResource(R.drawable.check);
-//
-//        holder.tvItemName.setText(model.getName());
-//
-//        return convertView;
-//    }
-//
-//
-//    class ViewHolder{
-//
-//        TextView tvItemName;
-//        ImageView ivCheckBox;
-//    }
-//
-//    public void updateRecords(List<ItemModelBase> users){
-//        this.mItems = users;
-//
-//        notifyDataSetChanged();
-//    }
-//
+    //
+    int toLargeIconId(SerachResultItemModel item){
+        int id = R.drawable.baseline_insert_drive_file_24;
+        if (item.isSelected()) {
+            id = R.drawable.ic_baseline_check_24;
+        }
+        else if(item.folder){
+            id = R.drawable.ic_outline_folder_24;
+        }
+        return id;
+    }
+
+    Drawable toLargeIconBackground(SerachResultItemModel item){
+        Drawable drawable = null;
+        if (item.isSelected()) {
+            drawable = mContext.getDrawable(R.drawable.query_list_item_pic_background);
+        }
+        return drawable;
+    }
+
+    Drawable toBackground(SerachResultItemModel item){
+        Drawable drawable = mContext.getDrawable(R.drawable.query_list_item_bg_state);
+        if (item.isSelected()) {
+            drawable = mContext.getDrawable(R.drawable.query_result_list_bg_selected);
+        }
+        return drawable;
+    }
+
     public void setOverflowIconVisible(boolean visible){
 
 

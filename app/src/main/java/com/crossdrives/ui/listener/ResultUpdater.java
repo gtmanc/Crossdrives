@@ -174,9 +174,9 @@ public class ResultUpdater {
 
                 //Notification notification = mNotificationsByUploadSuccessListener.get(this);
                 if(notification != null){
-                    notification.removeProgressBar();
-                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
-                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
+//                    notification.removeProgressBar();
+//                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
+//                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
                 }
                 Toast.makeText(context, context.getString(R.string.toast_create_file_success), Toast.LENGTH_LONG).show();
             }
@@ -191,11 +191,12 @@ public class ResultUpdater {
                 //Notification notification = mDownloadFailedListener.get(this);
                 //Notification notification = mNotificationsByUploadSuccessListener.get(this);
                 if(notification != null){
-                    notification.removeProgressBar();
-                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
-                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
+//                    notification.removeProgressBar();
+//                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
+//                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
                 }
-                Toast.makeText(context, context.getString(R.string.toast_create_file_failure), Toast.LENGTH_LONG).show();
+                Toast.makeText(context, context.getString(R.string.toast_create_file_failure) +
+                        " " +e.getMessage(), Toast.LENGTH_LONG).show();
             }
         };
         return listener;

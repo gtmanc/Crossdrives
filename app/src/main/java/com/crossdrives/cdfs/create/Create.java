@@ -12,6 +12,7 @@ import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.data.LocalFileCreator;
+import com.crossdrives.cdfs.exception.ItemNotFoundException;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -91,6 +92,7 @@ public class Create {
                     //Get drive id of base folder
                     CompletableFuture<com.google.api.services.drive.model.File> baseFolderIdFuture = mapFetcher.getBaseFolder(driveName);
                     com.google.api.services.drive.model.File file = baseFolderIdFuture.join();
+                    throwExIfNull(file,"Base folder is missing!","");
                     Log.d(TAG, "Base folder ID got: " + file.getId());
                     List<String> list = buildSingleParentDriveIdList(driveName, mParents, file.getId());
                     //parentIDLists.put(driveName, list);
@@ -116,6 +118,7 @@ public class Create {
 
                 //Just map to allocation container so that we can easily process later
                 HashMap<String, AllocContainer> mapContainer = Mapper.reValue(mapFile, (stream)->{
+                    throwExIfNull(stream,"Map file is missing!","");
                     return AllocManager.toContainer(stream);
                 });
 
@@ -214,6 +217,12 @@ public class Create {
         }
 
         return idList;
+    }
+
+    <T> void throwExIfNull(T t, String message, String cause) throws ItemNotFoundException {
+        if(t == null) {
+            throw new ItemNotFoundException(message, new Throwable(cause));
+        }
     }
 
     /*

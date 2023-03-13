@@ -328,10 +328,10 @@ public class MapFetcher {
                 }
 
                 if(f == null) {
-                    f = new File();
+                    //f = new File();
                     Log.w(TAG, "No map file found in the specified folder! Drive:" + key);
                 }
-                    //throwExIfNull(f, "Map item is not found. Drive: " + key, "");
+                //throwExIfNull(f, "Map item is not found. Drive: " + key, "");
                 return f;
             });
 

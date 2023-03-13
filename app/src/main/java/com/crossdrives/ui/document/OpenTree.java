@@ -115,6 +115,7 @@ public class OpenTree extends ViewModel {
 //                                    Log.w(TAG, "Modified dateTime is null");
 //                                }
                             //Log.d(TAG, "files name: " + file.getName());
+                            //Log.d(TAG, "folder?: " + item.isFolder());
                             boolean isFolder = false;
                             if(item.isFolder()){isFolder = true;}
                             fetched.add(new SerachResultItemModel(false, item.getName(), item.getId(), item.getDateTime(), isFolder));
