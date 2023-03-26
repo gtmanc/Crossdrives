@@ -1,5 +1,9 @@
 package com.example.crossdrives;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DiffUtil;
+
 import com.google.api.client.util.DateTime;
 
 public class SerachResultItemModel {
@@ -50,5 +54,10 @@ public class SerachResultItemModel {
 
     public void setFolder(boolean folder) {
         this.folder = folder;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return super.equals(obj);
     }
 }

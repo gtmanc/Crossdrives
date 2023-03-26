@@ -19,6 +19,9 @@
         <action
             android:id="@+id/navigate_to_system_test"
             app:destination="@id/system_test_fragment" />
+        <action
+            android:id="@+id/navigate_to_myself"
+            app:destination="@id/query_result_fragment" />
     </fragment>
 
     <fragment
@@ -92,8 +95,6 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
-            app:popUpTo="@+id/add_account_fragment"
-            app:popUpToInclusive="true"
             />
-    </fragment>
+        </fragment>
 </navigation>

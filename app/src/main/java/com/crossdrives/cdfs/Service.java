@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.crossdrives.cdfs.list.ListResult;
@@ -57,7 +58,7 @@ public class Service{
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
 
-    public Task<ListResult> list(CdfsItem parent) throws MissingDriveClientException, GeneralServiceException {
+    public Task<ListResult> list(@Nullable CdfsItem parent) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
         final Throwable[] throwables = {null};

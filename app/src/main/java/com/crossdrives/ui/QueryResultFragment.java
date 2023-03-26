@@ -78,6 +78,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener, CreateFolderAlertDialog.CreateFolderDialogListener{
@@ -87,10 +88,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
-	private ArrayList<SerachResultItemModel> mItems;	//items used to render UI
+	private List<SerachResultItemModel> mItems;	//items used to render UI
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
-	private QueryFileAdapter mAdapter;
+	//private QueryFileAdapter mAdapter;
+	private RootItemsAdaptor mAdapter;
+
 	private Toolbar mToolbar, mBottomAppBar;
 	private View mView = null;
 	private BottomSheetBehavior bottomSheetBehavior;
@@ -132,8 +135,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
 
-		treeOpener = new ViewModelProvider(this).get(OpenTree.class);
-		treeOpener.getItems().observe(this, listChangeObserver);
+		treeOpener = new ViewModelProvider(getActivity()).get(OpenTree.class);
+//		treeOpener.getItems().observe(this, listChangeObserver);
+		Log.d(TAG, "TreeOpen object: " + treeOpener);
+
+		mAdapter = new RootItemsAdaptor();
+		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
+		mRecyclerView.setAdapter(mAdapter);
+		mAdapter.setNotifier();
 	}
 
 	@Nullable
@@ -142,9 +151,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		Log.i(TAG, "onCreateView");
 
 		View v = inflater.inflate(R.layout.query_result_fragment, container, false);
-
-		//mDriveServiceHelper = DriveServiceHelper.getInstance();
-
 		return v;
 	}
 
@@ -204,15 +210,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mRecyclerView.addOnScrollListener(onScrollListener);
 		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
-		mItems = new ArrayList<>();
-		mAdapter = new QueryFileAdapter(mItems, getContext());
-		mAdapter.setOnItemClickListener(itemClickListener);
-		mRecyclerView.setAdapter(mAdapter);
+//		mItems = new ArrayList<>();
+//		mAdapter = new QueryFileAdapter(mItems, getContext());
+//		mAdapter.setOnItemClickListener(itemClickListener);
+//		mRecyclerView.setAdapter(mAdapter);
 
 		mProgressBar.setVisibility(View.VISIBLE);
 
-		initialQuery();
-		queryFile();
+//		initialQuery();
+//		queryFile();
 	}
 
 	/*
@@ -230,52 +236,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		try {
 //			mQuerier.getState().query();
-			treeOpener.fetchAsync();
-
-//			CDFS.getCDFSService().getService().list(mNextPage)
-//					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.common.Result>() {
-//						@Override
-//						public void onSuccess(com.crossdrives.cdfs.common.Result result) {
-//							List<File> f = result.getFileList().getFiles();
-//							//ListView listview = (ListView) findViewById(R.id.listview_query);
-//
-//
-//							mItems = new ArrayList<>();
-//							Log.i(TAG, "Number of files: " + f.size());
-//							for (File file : result.getFileList().getFiles()) {
-////                                if(file.getModifiedTime() == null){
-////                                    Log.w(TAG, "Modified dateTime is null");
-////                                }
-//
-//								//Log.d(TAG, "files name: " + file.getName());
-//								mItems.add(new SerachResultItemModel(false, file.getName(), file.getId(), file.getModifiedTime()));
-//							}
-//
-//							mAdapter = new QueryFileAdapter(mItems, getContext());
-//							mAdapter.setOnItemClickListener(itemClickListener);
-//							mRecyclerView.setAdapter(mAdapter);
-//
-//							mNextPage = result.getFileList().getNextPageToken();
-//							if(mNextPage == null){
-//								Log.d(TAG, "Next page handler is null!");
-//								CloseQuery();
-//							}
-//							mProgressBar.setVisibility(View.INVISIBLE);
-//
-//
-//						}
-//
-//					})
-//					.addOnFailureListener(new OnFailureListener() {
-//						@Override
-//						public void onFailure(@NonNull Exception exception) {
-//							//mProgressBar.setVisibility(View.GONE);
-//							Log.e(TAG, "Unable to query files.", exception);
-//							//TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
-//							//https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-//							mProgressBar.setVisibility(View.INVISIBLE);
-//						}
-//					});
+			treeOpener.getItems().fetch();
 		} catch (MissingDriveClientException | GeneralServiceException e) {
 			Log.w(TAG, e.getMessage());
 			Log.w(TAG, e.getCause());
@@ -284,21 +245,21 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	}
 
-	final Observer<ArrayList<SerachResultItemModel>> listChangeObserver  = new Observer<ArrayList<SerachResultItemModel>>(){
-
-		@Override
-		public void onChanged(ArrayList<SerachResultItemModel> items) {
-			int size = 0 ;
-			if(items != null){ size = items.size();}
-			Log.d(TAG, "Live data available. Number of items: " + size);
-
-			mItems.addAll(items);
-			mAdapter.notifyDataSetChanged();
-
-			isQueryOngoing = false;
-			mProgressBar.setVisibility(View.INVISIBLE);
-		}
-	};
+//	final Observer<ArrayList<SerachResultItemModel>> listChangeObserver  = new Observer<ArrayList<SerachResultItemModel>>(){
+//
+//		@Override
+//		public void onChanged(ArrayList<SerachResultItemModel> items) {
+//			int size = 0 ;
+//			if(items != null){ size = items.size();}
+//			Log.d(TAG, "Live data available. Number of items: " + size);
+//
+//			mItems.addAll(items);
+//			mAdapter.notifyDataSetChanged();
+//
+//			isQueryOngoing = false;
+//			mProgressBar.setVisibility(View.INVISIBLE);
+//		}
+//	};
 
 	private void queryFileContinue(){
 		ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
@@ -318,12 +279,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//Insert a null item so that the adapter knows that progress bar needs to be shown to the user
 		items.add(null);
 		Log.d(TAG, "Notify inserted");
-		mAdapter.notifyItemInserted(items.size() - 1);
+		//mAdapter.notifyItemInserted(items.size() - 1);
 
 		//mDriveServiceHelper.queryFiles()
 		try {
 			//TODO: will be removed
-			treeOpener.fetchAsync();
+			treeOpener.getItems().fetch();
 //			CDFS.getCDFSService().getService().list(mNextPage)
 //					.addOnSuccessListener(new OnSuccessListener<com.crossdrives.cdfs.common.Result>() {
 //						@Override
@@ -463,7 +424,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
-			Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
+			//Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
 
 			//fetch next page if last item is already shown to the user
 			if (linearLayoutManager == null){return;};
@@ -475,11 +436,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			//size of item list(mItems) is always more than 1 because onScrolled only gets called if item has been added
 			//to recycler view.
-			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
-				queryFile();
-				Log.d(TAG, "Reach EOL. Fetch next part of list.");
-
-			}
+//			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
+//				queryFile();
+//				Log.d(TAG, "Reach EOL. Fetch next part of list.");
+//
+//			}
 		}
 	};
 
@@ -491,31 +452,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
      */
 	private void initialQuery(){
 		Log.d(TAG, "initialQuery...");
-
-//		mNextPage = null;	//null to get first page of file listMissingDriveClientException
-//		mQSTATE = QSTATE_READY;
-
-		try {
-			treeOpener.open(null);
-		} catch (GeneralServiceException | MissingDriveClientException e) {
-			Log.w(TAG, e.getMessage());
-			Log.w(TAG, e.getCause());
-			e.printStackTrace();
-			Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
-		}
+		treeOpener.open(null);
 	}
-
-//	private void setQStateInprogress(){
-//		mQSTATE = QSTATE_INPROGRESS;
-//	}
-//
-//	private String getState(){
-//		return mQSTATE;
-//	}
-//
-//	void CloseQuery(){
-//		mQSTATE = QSTATE_EOL;
-//	}
 
 	/*
     Two states :
@@ -538,7 +476,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	HashMap<OnFailureListener, Notification> mDownloadFailedListener = new HashMap<>();
 	CompletableFuture<Boolean> requestPermissionFuture;
 	Permission permission;
-	private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
+	private RootItemsAdaptor.Notifier itemClickListener = new RootItemsAdaptor.Notifier() {
+	//private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(View view, int position){
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
@@ -708,6 +647,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			popup.show();
+		}
+
+		@Override
+		public void onCurrentListChanged(List<SerachResultItemModel> list) {
+			mItems = list;
 		}
 	};
 
