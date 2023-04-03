@@ -33,7 +33,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
@@ -61,7 +60,6 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.msgraph.SnippetApp;
 import com.example.crossdrives.DriveServiceHelper;
-import com.example.crossdrives.QueryFileAdapter;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -88,11 +86,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
-	private List<SerachResultItemModel> mItems;	//items used to render UI
+	//private List<SerachResultItemModel> mItems;	//items used to render UI
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	//private QueryFileAdapter mAdapter;
-	private RootItemsAdaptor mAdapter;
+	private RootItemsAdapter mAdapter;
 
 	private Toolbar mToolbar, mBottomAppBar;
 	private View mView = null;
@@ -139,10 +137,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //		treeOpener.getItems().observe(this, listChangeObserver);
 		Log.d(TAG, "TreeOpen object: " + treeOpener);
 
-		mAdapter = new RootItemsAdaptor();
+		mAdapter = new RootItemsAdapter(getContext());
 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
-		mRecyclerView.setAdapter(mAdapter);
-		mAdapter.setNotifier();
 	}
 
 	@Nullable
@@ -204,16 +200,20 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mLayoutManager = new LinearLayoutManager(getContext());
 		//It seems to be ok we create a new layout manager ans set to the recyclarview.
 		//It is observed each time null is got if view.getLayoutManager is called
+		//Reason why we need to set layout manager: https://stackoverflow.com/questions/50171647/recyclerview-setlayoutmanager
 		mRecyclerView.setLayoutManager(mLayoutManager);
+		mRecyclerView.setAdapter(mAdapter);
+		mAdapter.setNotifier(AdapterNotifier);
 
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
-		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
 //		mItems = new ArrayList<>();
 //		mAdapter = new QueryFileAdapter(mItems, getContext());
 //		mAdapter.setOnItemClickListener(itemClickListener);
 //		mRecyclerView.setAdapter(mAdapter);
+
+		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
 		mProgressBar.setVisibility(View.VISIBLE);
 
@@ -422,6 +422,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
 			super.onScrolled(recyclerView, dx, dy);
 
+			List<SerachResultItemModel> currList = mAdapter.getCurrentList();
+			OpenTree.ItemLiveData liveData = treeOpener.getItems();
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
 			//Log.d(TAG, "Onscroll mItems.Size:" + mItems.size());
@@ -436,11 +438,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			//size of item list(mItems) is always more than 1 because onScrolled only gets called if item has been added
 			//to recycler view.
-//			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == mItems.size() - 1) {
-//				queryFile();
-//				Log.d(TAG, "Reach EOL. Fetch next part of list.");
-//
-//			}
+			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == currList.size() - 1) {
+				Log.d(TAG, "Reach EOL. Fetch next part of list.");
+				liveData.fetch();
+			}
 		}
 	};
 
@@ -476,14 +477,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	HashMap<OnFailureListener, Notification> mDownloadFailedListener = new HashMap<>();
 	CompletableFuture<Boolean> requestPermissionFuture;
 	Permission permission;
-	private RootItemsAdaptor.Notifier itemClickListener = new RootItemsAdaptor.Notifier() {
+	private RootItemsAdapter.Notifier AdapterNotifier = new RootItemsAdapter.Notifier() {
 	//private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
-		public void onItemClick(View view, int position){
+		public void onItemClick(RootItemsAdapter adapter, View view, int position){
+			List<SerachResultItemModel> list = adapter.getCurrentList();
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
 			Log.d(TAG, "Short press item:" + position);
 			Log.d(TAG, "Count of selected:" + mSelectedItemCount);
-			SerachResultItemModel item = mItems.get(position);
+			SerachResultItemModel item = list.get(position);
 
 			if (view == view.findViewById(R.id.iv_more_vert)) {
 				Log.d(TAG, "More_vert pressed!");
@@ -560,10 +562,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				updateActionModeTitle();
 			}
 
-			//now update adapter
-			mItems.set(position, item);
-			//mAdapter.notifyItemChanged(position);
-			mAdapter.notifyDataSetChanged();
+			mAdapter.notifyItemChanged(position);
+			//mAdapter.notifyDataSetChanged();
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
@@ -594,13 +594,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
                 });
 
 		@Override
-		public void onItemLongClick(View view, int position) {
-
+		public void onItemLongClick(RootItemsAdapter adapter, View view, int position) {
+			List<SerachResultItemModel> list = adapter.getCurrentList();
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Long Pressed!", Toast.LENGTH_SHORT).show();
 			Log.i(TAG, "Long press item:" + position);
 			Log.i(TAG, "Count of selected:" + mSelectedItemCount);
 
-			SerachResultItemModel item = mItems.get(position);
+			SerachResultItemModel item = list.get(position);
 
 			if(mState == STATE_NORMAL) {
                 /*
@@ -633,13 +633,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 
 			//now update adapter
-			mItems.set(position, item);
-			mAdapter.notifyDataSetChanged();
+			mAdapter.notifyItemChanged(position);
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
 		@Override
-		public void onImageItemClick(View view, int position) {
+		public void onImageItemClick(RootItemsAdapter adapter, View view, int position) {
 			Log.i(TAG, "onImageItemClick:" + position);
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
@@ -650,8 +649,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 
 		@Override
-		public void onCurrentListChanged(List<SerachResultItemModel> list) {
-			mItems = list;
+		public void onCurrentListChanged(RootItemsAdapter adapter, List<SerachResultItemModel> list) {
+
 		}
 	};
 
@@ -673,7 +672,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	//The method first check if a item has been selected. If yes, deselected it.
 	private void deselectAllItems(){
 		int i = 0;
-		for(Iterator iter = mItems.iterator();iter.hasNext();) {
+		List<SerachResultItemModel> currList = mAdapter.getCurrentList();
+
+		for(Iterator iter = currList.iterator();iter.hasNext();) {
 			SerachResultItemModel item = (SerachResultItemModel) iter.next();
 			if(item.isSelected()) {
 				item.setSelected(false);
@@ -950,6 +951,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public boolean onMenuItemClick(MenuItem item) {
 			Task task = null;
+			List<SerachResultItemModel> currList = mAdapter.getCurrentList();
 			OnSuccessListener<com.crossdrives.driveclient.model.File> deleteSuccessListener;
 			OnFailureListener deleteFailureListener;
 			IDeleteProgressListener progressListener;
@@ -967,11 +969,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			service.setDeleteProgressListener(progressListener);
 
 			//get the item checked
-			SerachResultItemModel selectedItem = mItems.stream().filter((i)->{
+			SerachResultItemModel selectedItem = currList.stream().filter((i)->{
 				return i.isSelected();
 			}).findFirst().get();
 			selectedItem.setSelected(false);
-			if(!mItems.remove(selectedItem)){
+			if(!currList.remove(selectedItem)){
 				Log.d(TAG, "Failed to remove item from list!");
 			}
 			mAdapter.notifyDataSetChanged();

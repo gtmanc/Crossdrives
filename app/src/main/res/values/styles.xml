@@ -16,6 +16,7 @@
   <style name="AppTheme.NoActionBar" parent="Theme.MaterialComponents.NoActionBar">
     <item name="windowActionBar">false</item>
     <item name="windowNoTitle">true</item>
+    <!--<item name="windowActionModeOverlay">true</item>-->
     <item name="android:textColorPrimary">@android:color/white</item>
     <item name="android:textColorSecondary">@android:color/darker_gray</item>
     <item name="actionMenuTextColor">@android:color/white</item>

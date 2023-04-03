@@ -28,7 +28,7 @@ public class QueryResultActivity extends AppCompatActivity {
 
     private String TAG = "CD.QueryResultActivity";
     private ArrayList<SerachResultItemModel> mItems;
-    private QueryFileAdapter mAdapter;
+    //private QueryFileAdapter mAdapter;
     private Intent mIntent;
     private int mPreLast = 0;
     //private ProgressBar mProgressBar;

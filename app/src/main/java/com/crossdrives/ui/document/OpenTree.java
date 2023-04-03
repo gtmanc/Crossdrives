@@ -5,7 +5,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.crossdrives.cdfs.CDFS;
@@ -33,21 +32,20 @@ public class OpenTree extends ViewModel {
     //folder topology: parents (folders). An empty list indicates we are at 'root'.
     List<CdfsItem> mParents = new ArrayList<>();
 
-    private MutableLiveData<ArrayList<SerachResultItemModel>> mItems = new MutableLiveData<>();
-    private MyLiveData myLiveData;
+    private ItemLiveData mItems;
     String mNextPage = null;
 
     boolean Ongoing;
 
     public OpenTree() {
-        myLiveData = new MyLiveData(null);
+        mItems = new ItemLiveData(null);
         Log.d(TAG, "ViewModel OpenTree constructed.");
     }
 
-    public class MyLiveData extends LiveData<ArrayList<SerachResultItemModel>> {
+    public class ItemLiveData extends LiveData<ArrayList<SerachResultItemModel>> {
         private Querier mQuerier;
 
-        public MyLiveData(CdfsItem parent) {
+        public ItemLiveData(CdfsItem parent) {
             reset(parent);
         }
 
@@ -67,6 +65,7 @@ public class OpenTree extends ViewModel {
                 mQuerier.getState().fetch();
             } catch (GeneralServiceException | MissingDriveClientException e ) {
                 Log.w(TAG, "query data failed: " + e.getMessage());
+                mQuerier.resetState();
             }
         }
 
@@ -99,8 +98,7 @@ public class OpenTree extends ViewModel {
                 Log.e(TAG, "Unable to query files.", e);
                 //TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
                 //https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
-                ArrayList<SerachResultItemModel> fetched = null;
-                mItems.postValue(fetched);
+                mQuerier.resetState();
             }
         };
 
@@ -251,8 +249,8 @@ public class OpenTree extends ViewModel {
         return mParents;
     }
 
-    public @NonNull MyLiveData getItems() {
-        return myLiveData;
+    public @NonNull ItemLiveData getItems() {
+        return mItems;
     }
 
     //public @Nullable String getNextPageToken(){return mNextPage;}
