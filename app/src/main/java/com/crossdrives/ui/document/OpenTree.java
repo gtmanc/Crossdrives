@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.crossdrives.cdfs.CDFS;
@@ -35,12 +36,19 @@ public class OpenTree extends ViewModel {
     private ItemLiveData mItems;
     String mNextPage = null;
 
+    Listener mListener;
     boolean Ongoing;
 
-    public OpenTree() {
+    public OpenTree(SavedStateHandle savedStateHandle) {
         mItems = new ItemLiveData(null);
         Log.d(TAG, "ViewModel OpenTree constructed.");
     }
+
+    public interface Listener {
+        void onFailure(@NonNull Exception ex);
+    }
+
+    public void setListener(Listener listener){mListener = listener;}
 
     public class ItemLiveData extends LiveData<ArrayList<SerachResultItemModel>> {
         private Querier mQuerier;
@@ -66,6 +74,7 @@ public class OpenTree extends ViewModel {
             } catch (GeneralServiceException | MissingDriveClientException e ) {
                 Log.w(TAG, "query data failed: " + e.getMessage());
                 mQuerier.resetState();
+                if(mListener != null){mListener.onFailure(e);}
             }
         }
 
@@ -99,6 +108,7 @@ public class OpenTree extends ViewModel {
                 //TODO: Has to find out a way to catch UserRecoverableAuthIOException. The handling code example can be found at:
                 //https://stackoverflow.com/questions/15142108/android-drive-api-getting-sys-err-userrecoverableauthioexception-if-i-merge-cod
                 mQuerier.resetState();
+                if(mListener != null){mListener.onFailure(e);}
             }
         };
 

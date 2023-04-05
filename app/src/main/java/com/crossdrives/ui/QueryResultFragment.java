@@ -46,6 +46,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.ui.document.Open;
 import com.crossdrives.ui.document.OpenTree;
 import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
@@ -60,6 +61,8 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.msgraph.SnippetApp;
 import com.example.crossdrives.DriveServiceHelper;
+import com.example.crossdrives.MasterAccountFragmentArgs;
+import com.example.crossdrives.QueryResultActivity;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -72,7 +75,10 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -134,11 +140,22 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		setHasOptionsMenu(true);
 
 		treeOpener = new ViewModelProvider(getActivity()).get(OpenTree.class);
+		treeOpener.setListener(treeOpenListener);
 //		treeOpener.getItems().observe(this, listChangeObserver);
 		Log.d(TAG, "TreeOpen object: " + treeOpener);
 
 		mAdapter = new RootItemsAdapter(getContext());
 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
+
+		String parentPath = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
+		if(parentPath != null){
+			Log.d(TAG, "parentPath: " + parentPath);
+		}else{
+			Log.w(TAG, "parentPath is null");
+		}
+		CdfsItem[] MyArg = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
+		treeOpener.open(null);
+
 	}
 
 	@Nullable
@@ -216,6 +233,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
 
 		mProgressBar.setVisibility(View.VISIBLE);
+
 
 //		initialQuery();
 //		queryFile();
@@ -440,7 +458,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//to recycler view.
 			if(linearLayoutManager.findLastCompletelyVisibleItemPosition() == currList.size() - 1) {
 				Log.d(TAG, "Reach EOL. Fetch next part of list.");
-				liveData.fetch();
+				try {
+					liveData.fetch();
+				} catch (GeneralServiceException | MissingDriveClientException e) {
+					Log.w(TAG, e.getMessage());
+					Log.w(TAG, e.getCause());
+				}
 			}
 		}
 	};
@@ -492,52 +515,29 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 
 			if (mState == STATE_NORMAL) {
-				requestPermissionFuture = new CompletableFuture<>();
-				requestPermissionFuture.thenAccept((isGranted)->{
-					if(!isGranted){
-						Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
+				if(item.isFolder()){
+					}
+				else{
+					requestPermissionFuture = new CompletableFuture<>();
+					requestPermissionFuture.thenAccept((isGranted)->{
+						if(!isGranted){
+							Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
+							return;
+						}
+						Open.download(getActivity(), item, treeOpener.whereWeAre());
+					});
+
+					permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
+							Manifest.permission.WRITE_EXTERNAL_STORAGE).
+							setEducationMessage(getString(R.string.message_permission_education)).
+							setImplicationMessage(getString(R.string.implication_deny_grant_permission_external_storage));
+					boolean permissionGranted = permission.request();
+					//if result is false, requested permission has not yet or user response with "never ask again"
+					//
+					if(permissionGranted == true){
+						requestPermissionFuture.complete(true);
 						return;
 					}
-					Open.download(getActivity(), item, treeOpener.whereWeAre());
-//					Log.d(TAG, "Start to download file: " + item.mName);
-//					Toast.makeText(getContext(), getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
-//					//Log.d(TAG, "File ID: " + item.mId);
-//					//TODO: open detail of file
-//					Notification notification
-//					= new Notification(Notification.Category.NOTIFY_DOWNLOAD, R.drawable.ic_baseline_cloud_circle_24);
-//					notification.setContentTitle(getString(R.string.notification_title_downloading));
-//					notification.setContentText(getString(R.string.notification_content_default));
-//					notification.build();
-//					ResultUpdater resultUpdater = new ResultUpdater();
-//					OnSuccessListener<String> successListener = resultUpdater.createDownloadSuccessListener(notification);//createDownloadSuccessListener();
-//					OnFailureListener failureListener = resultUpdater.createDownloadFailureListener(notification);
-//					IDownloadProgressListener downloadProgressListener = new ProgressUpdater().createDownloadListener(notification);
-////					mNotificationsByDownloadListener.put(downloadProgressListener, notification);
-////					mDownloadSuccessListener.put(successListener, notification);
-////					mDownloadFailedListener.put(failureListener, notification);
-//					//Log.d(TAG, "Put progress listener. listener:" + mNotificationsByDownloadListener);
-//					Service service = CDFS.getCDFSService(getActivity().getApplicationContext()).getService();
-//					if (service != null) {
-//						service.setDownloadProgressListener(downloadProgressListener);
-//					}
-//					try {
-//						service.download(item.getID(), whereWeAre).addOnSuccessListener(successListener)
-//								.addOnFailureListener(failureListener);
-//					} catch (MissingDriveClientException | PermissionException e) {
-//						Toast.makeText(getContext(), "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();
-//					}
-				});
-
-				permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
-						Manifest.permission.WRITE_EXTERNAL_STORAGE).
-						setEducationMessage(getString(R.string.message_permission_education)).
-						setImplicationMessage(getString(R.string.implication_deny_grant_permission_external_storage));
-				boolean permissionGranted = permission.request();
-				//if result is false, requested permission has not yet or user response with "never ask again"
-				//
-				if(permissionGranted == true){
-					requestPermissionFuture.complete(true);
-					return;
 				}
 			} else {
 				/*
@@ -1179,4 +1179,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	public void onDialogNegativeClick(DialogFragment dialog) {
 
 	}
+
+	OpenTree.Listener treeOpenListener = new OpenTree.Listener() {
+		@Override
+		public void onFailure(@NonNull Exception ex) {
+			Log.w(TAG, ex.getMessage());
+			Log.w(TAG, ex.getCause());
+			Toast.makeText(getActivity().getApplicationContext(), ex.getMessage() + ex.getCause(), Toast.LENGTH_LONG).show();
+		}
+	};
 }

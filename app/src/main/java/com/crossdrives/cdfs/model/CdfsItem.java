@@ -1,12 +1,15 @@
 package com.crossdrives.cdfs.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.api.client.util.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CdfsItem {
+public class CdfsItem implements Parcelable {
     //CDFS display name
     String name;
 
@@ -71,5 +74,16 @@ public class CdfsItem {
 
     public void setDateTime(DateTime dateTime) {
         this.dateTime = dateTime;
+    }
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeTypedObject(map, 0);
     }
 }

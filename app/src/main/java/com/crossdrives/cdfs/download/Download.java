@@ -87,7 +87,11 @@ public class Download {
 
                     @Override
                         public void onSliceRequested(String driveName, String id, int seq) {
-                            Log.d(TAG, "slice requested: drive: " + driveName + " seq: " + seq);
+                            Log.d(TAG, "slice requested. drive: " + driveName + ". seq: " + seq);
+                            //Log.d(TAG, "ID: " + id);
+                            if(id == null){
+                                throw new CompletionException("DID is null. The item might be a folder.", exceptions.stream().findAny().get());
+                            }
                             AllocationItem ai = new AllocationItem();
                             ai.setDrive(driveName);
                             ai.setItemId(id);
@@ -168,7 +172,7 @@ public class Download {
 
             @Override
             public void failure(String ex) {
-                Log.w(TAG, "download failed" + ex.toString());
+                Log.w(TAG, "download failed. " + ex.toString());
                 future.completeExceptionally(new Throwable(ex));
             }
         });

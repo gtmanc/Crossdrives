@@ -14,6 +14,8 @@ import android.widget.SearchView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -40,56 +42,18 @@ public class QueryResultActivity extends AppCompatActivity {
     Toolbar mToolbar_normal;
     Toolbar mToolbar_contextual;
 
+    static final public String KEY_PARENT_PATH = "parentPath";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_query_result);
 
-        /*
-        mToolbar_normal = findViewById(R.id.toolbar);
-        mToolbar_contextual = findViewById(R.id.contextual_toolbar);
-        setSupportActionBar(mToolbar_normal);
-
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-//        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        mToolbar_normal.setNavigationOnClickListener(onNavigationClick_NormalBar);
-        mToolbar_contextual.setNavigationOnClickListener(onNavigationClick_ContextuallBar);
-        //toolbar.getBackground().setAlpha(0);
-        Bundle bundle = this.getIntent().getExtras();
-        //ListView listview = (ListView) findViewById(R.id.listview_query);
-        RecyclerView recyclerview = (RecyclerView) findViewById(R.id.recycler_view);
-
-        Log.d(TAG, "onCreated");
-
-        //mProgressBar = (ProgressBar) findViewById(R.id.pb);
-
-        //Object DriveServiceHelper should be created in MainActivity
-        mDriveServiceHelper = DriveServiceHelper.getInstance(null);
-
-        //queryFile is an asynchronous process so that the listview is created right in the addOnSuccessListener
-        mActivity = this;
-
-        // will be assigned later in queryFile()
-        layoutManager = new LinearLayoutManager(this);
-
-        queryFile();
-
-//        listview.setOnScrollListener(onScrollListener);
-//        listview.setOnItemClickListener(onClickListView);
-//        listview.setOnItemLongClickListener(onOnItemLongListener);
-        recyclerview.addOnScrollListener(onScrollListener);
-
-         */
-//        NavController navController = Navigation.findNavController(this, R.id.main_content);
-//
-//        AppBarConfiguration appBarConfiguration =
-//                new AppBarConfiguration.Builder(navController.getGraph()).build();
-//        Toolbar toolbar = findViewById(R.id.toolbar);;
-//
-//        NavigationUI.setupWithNavController(
-//                toolbar, navController, appBarConfiguration);
+        Bundle bundle = new Bundle();
+        bundle.putString(KEY_PARENT_PATH, "Root");
+        NavController navController = Navigation.findNavController(this, R.id.main_content);
+        navController.setGraph(R.navigation.nav_graph, bundle);
     }
 
     private void switchContextualActionBar(){

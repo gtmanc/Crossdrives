@@ -26,10 +26,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Open extends ViewModel {
+public class Open{
     static final String TAG = "CD.Open";
-
-
 
     static FetchList fetchList = new FetchList();
 

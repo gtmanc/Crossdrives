@@ -213,7 +213,10 @@ public class Compositor {
             merged.addAll(s);
         });
 
-        merged.forEach((entry)->Log.d(TAG, "Merged item: " + entry.getValue().getSequence()));
+        Log.d(TAG, "Print merged item(s):");
+                merged.forEach((entry)->Log.d(TAG, "Drive: " + entry.getValue().getDrive() +
+                        ". Seq: " + entry.getValue().getSequence() +
+                        ". DID: " + entry.getValue().getItemId()));
         sorted = merged.stream().sorted((entry1, entry2)->{
             int v1 = entry1.getValue().getSequence();
             int v2 = entry2.getValue().getSequence();

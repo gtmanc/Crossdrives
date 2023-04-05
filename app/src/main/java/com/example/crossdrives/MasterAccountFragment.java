@@ -254,7 +254,7 @@ public class MasterAccountFragment extends BaseFragment {
         Log.d(TAG, "onOptionsItemSelected");
 
         //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (query result screen)
-        NavDirections a = MasterAccountFragmentDirections.navigateBackToQueryResult();
+        NavDirections a = MasterAccountFragmentDirections.navigateBackToQueryResult(null);
         NavHostFragment.findNavController(mFragment).navigate(a);
 
         return super.onOptionsItemSelected(item);
