@@ -20,6 +20,7 @@
         <argument
             android:name="parentsPath"
             app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+
             app:nullable="true" />
         <action
             android:id="@+id/navigate_to_master_account"

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class MasterAccountFragment extends BaseFragment {
+public class MasterAccountFragment extends Fragment{
     private String TAG = "CD.MasterAccountFragment";
     private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
     //private View mView;

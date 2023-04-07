@@ -149,11 +149,19 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		String parentPath = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
 		if(parentPath != null){
-			Log.d(TAG, "parentPath: " + parentPath);
+			Log.d(TAG, "From nav host fragment. parentPath: " + parentPath);
 		}else{
-			Log.w(TAG, "parentPath is null");
+			CdfsItem[] MyArg = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
+			if(MyArg != null){
+				CdfsItem item = MyArg[0];
+				Log.d(TAG, "Arg parentsPath: Name: " + item.getName() + ". Path: " + item.getPath());
+			}
+			else{
+				Log.w(TAG, "Arg parentsPath is null!");
+			}
 		}
-		CdfsItem[] MyArg = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
+
+
 		treeOpener.open(null);
 
 	}
@@ -516,8 +524,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			if (mState == STATE_NORMAL) {
 				if(item.isFolder()){
-					}
-				else{
+					CdfsItem[] itemArray = new CdfsItem[10];
+					CdfsItem cdfsItem = new CdfsItem();
+					cdfsItem.setName(item.getName());
+					cdfsItem.setId(item.getID());
+					itemArray[0] = cdfsItem;
+					NavController navController = Navigation.findNavController(view);
+					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
+					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
+				}else{
 					requestPermissionFuture = new CompletableFuture<>();
 					requestPermissionFuture.thenAccept((isGranted)->{
 						if(!isGranted){

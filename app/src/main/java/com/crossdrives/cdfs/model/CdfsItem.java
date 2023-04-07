@@ -5,7 +5,6 @@ import android.os.Parcelable;
 
 import com.google.api.client.util.DateTime;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,7 +13,7 @@ public class CdfsItem implements Parcelable {
     String name;
 
     //CDFS ID
-    String Id;
+    String id;
 
     //CDFS display path which contains the item. Or the parents. e.g. AAA\BBB\CCC
     String path;
@@ -33,7 +32,7 @@ public class CdfsItem implements Parcelable {
     }
 
     public String getId() {
-        return Id;
+        return id;
     }
 
     public String getPath() {
@@ -49,7 +48,7 @@ public class CdfsItem implements Parcelable {
     }
 
     public void setId(String id) {
-        Id = id;
+        this.id = id;
     }
 
     public void setPath(String path) {
@@ -84,6 +83,22 @@ public class CdfsItem implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeTypedObject(map, 0);
+        parcel.writeString(name);
+        parcel.writeString(id);
+        parcel.writeString(path);
+        parcel.writeInt(folder==true?1:0);
+        parcel.writeMap(map);
     }
+
+    public static final Creator<CdfsItem> CREATOR = new Creator<CdfsItem>() {
+        @Override
+        public CdfsItem createFromParcel(Parcel source) {
+            return new CdfsItem();
+        }
+
+        @Override
+        public CdfsItem[] newArray(int size) {
+            return new CdfsItem[size];
+        }
+    };
 }
