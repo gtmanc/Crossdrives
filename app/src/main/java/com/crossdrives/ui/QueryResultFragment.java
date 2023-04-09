@@ -49,6 +49,7 @@ import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.ui.document.Open;
 import com.crossdrives.ui.document.OpenTree;
+import com.crossdrives.ui.document.OpenTreeFactory;
 import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
 import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
 import com.crossdrives.ui.listener.ProgressUpdater;
@@ -80,6 +81,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -139,31 +141,30 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
 
-		treeOpener = new ViewModelProvider(getActivity()).get(OpenTree.class);
-		treeOpener.setListener(treeOpenListener);
-//		treeOpener.getItems().observe(this, listChangeObserver);
-		Log.d(TAG, "TreeOpen object: " + treeOpener);
-
-		mAdapter = new RootItemsAdapter(getContext());
-		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
-
+		CdfsItem parentItem = null;
 		String parentPath = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
+		CdfsItem[] MyArg = new CdfsItem[1];
 		if(parentPath != null){
 			Log.d(TAG, "From nav host fragment. parentPath: " + parentPath);
 		}else{
-			CdfsItem[] MyArg = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
+			MyArg = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
 			if(MyArg != null){
-				CdfsItem item = MyArg[0];
-				Log.d(TAG, "Arg parentsPath: Name: " + item.getName() + ". Path: " + item.getPath());
+				parentItem = MyArg[0];
+				Log.d(TAG, "Arg parentsPath: Name: " + parentItem.getName() + ". Path: " + parentItem.getPath());
 			}
 			else{
 				Log.w(TAG, "Arg parentsPath is null!");
 			}
 		}
 
+		treeOpener = new ViewModelProvider(this, new OpenTreeFactory(new ArrayList<>(Arrays.asList(MyArg)))).get(OpenTree.class);
+		treeOpener.setListener(treeOpenListener);
+//		treeOpener.getItems().observe(this, listChangeObserver);
+		Log.d(TAG, "TreeOpen object: " + treeOpener);
 
-		treeOpener.open(null);
-
+		mAdapter = new RootItemsAdapter(getContext());
+		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
+		//treeOpener.open(parentItem);
 	}
 
 	@Nullable
@@ -239,9 +240,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //		mRecyclerView.setAdapter(mAdapter);
 
 		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
-
-		mProgressBar.setVisibility(View.VISIBLE);
-
 
 //		initialQuery();
 //		queryFile();
@@ -532,6 +530,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					NavController navController = Navigation.findNavController(view);
 					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
 					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
+					//navController.navigate(QueryResultFragmentDirections.navigateToSystemTest());
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
 					requestPermissionFuture.thenAccept((isGranted)->{
@@ -864,10 +863,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void handleOnBackPressed() {
 			//Go back to launcher
-			Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-			homeIntent.addCategory( Intent.CATEGORY_HOME );
-			homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			startActivity(homeIntent);
+//			Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+//			homeIntent.addCategory( Intent.CATEGORY_HOME );
+//			homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//			startActivity(homeIntent);
+			NavController navController = Navigation.findNavController(mView);
+			if (!navController.popBackStack()) {
+				// Call finish() on your Activity
+				Log.w(TAG, "no stack can be popup!");
+				getActivity().finish();
+			}
 		}
 	};
 
@@ -1201,6 +1206,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.w(TAG, ex.getMessage());
 			Log.w(TAG, ex.getCause());
 			Toast.makeText(getActivity().getApplicationContext(), ex.getMessage() + ex.getCause(), Toast.LENGTH_LONG).show();
+		}
+
+		@Override
+		public void onComplete() {
+			Log.d(TAG, "fetch completed.");
+			mProgressBar.setVisibility(View.GONE);
 		}
 	};
 }

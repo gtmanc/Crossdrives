@@ -22,6 +22,10 @@ import java.util.List;
 
 public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootItemsAdapter.ViewHolder> implements View.OnLongClickListener{
     private String TAG = "CD.RootItemsAdapter";
+
+    private int ITEM_TYPE_PROGRESS = 0;
+    private int ITEM_TYPE_NORMAL = 1;
+
     Notifier mNotifier;
     boolean mOverFlowIconVisible = true;
     Context mContext;
@@ -40,75 +44,98 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
     the notifyDataSetChange is called.
     */
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.list_view_item, parent, false);
-        final RootItemsAdapter.ViewHolder holder = new RootItemsAdapter.ViewHolder(view);
-
-        //Set click listener only for view item
-
+        Log.d(TAG, "onCreateViewHolder.");
+        View view;
+        final RootItemsAdapter.ViewHolder holder;
+        if(viewType == ITEM_TYPE_NORMAL) {
+            Log.d(TAG, "Item is normal.");
+            view = LayoutInflater.from(parent.getContext())
+                   .inflate(R.layout.list_view_item, parent, false);
+            holder = new RootItemsAdapter.ViewHolder(view);
+            holder.iv_item_pic = view.findViewById(R.id.list_item_picture);
+            holder.ivMore = view.findViewById(R.id.iv_more_vert);
+            holder.tvName = view.findViewById(R.id.tv_item_name);
+            holder.tvDate = view.findViewById(R.id.tv_item_date);
             holder.ItemView.setOnClickListener(this.itemOnClickListener);
             holder.ivMore.setOnClickListener(this.ImageMoreClickListener);
             holder.ItemView.setOnLongClickListener(this);
-
+       }
+       else{
+            Log.d(TAG, "Item is progress bar.");
+            view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.query_item_loading, parent, false);
+            holder = new RootItemsAdapter.ViewHolder(view);
+            holder.progressBar = view.findViewById(R.id.item_load_progressBar);
+       }
         return holder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Log.d(TAG, "view object:" + holder.ItemView);
-        List<SerachResultItemModel> list = getCurrentList();
-        SerachResultItemModel item = list.get(position);
-        //set position to tag in view so that we know the position when click listener is called
-        holder.ItemView.setTag(position);
-        holder.ivMore.setTag(position);
-        //holder.ivCheckBox.setImageResource(item.getImageId());
-        //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
-        holder.tvName.setText(item.getName());
-        if(item.getDateTime() == null) {
-            Log.w(TAG, "DateTime is null");
-        }else {
-            holder.tvDate.setText(item.getDateTime().toString());
-        }
+        Log.d(TAG, "onBindViewHolder.");
+        if (holder.progressBar == null) {
+            List<SerachResultItemModel> list = getCurrentList();
+            SerachResultItemModel item = list.get(position);
+            //set position to tag in view so that we know the position when click listener is called
+            holder.ItemView.setTag(position);
+            holder.ivMore.setTag(position);
+            //holder.ivCheckBox.setImageResource(item.getImageId());
+            //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
+            holder.tvName.setText(item.getName());
+            if(item.getDateTime() == null) {
+                Log.w(TAG, "DateTime is null");
+            }else {
+                holder.tvDate.setText(item.getDateTime().toString());
+            }
             /*
                  Show the check box?
              */
 //            holder.iv_item_pic.setImageResource(R.drawable.ic_outline_folder_24);
-        holder.ivMore.setVisibility(View.GONE);
-        if(mOverFlowIconVisible == true){
+            holder.ivMore.setVisibility(View.GONE);
+            if(mOverFlowIconVisible == true){
 //                Log.d(TAG, "set check box visible");
 //                holder.iv_item_pic.setImageResource(R.drawable.ic_checked);
-            holder.ivMore.setVisibility(View.VISIBLE);
-        }
+                holder.ivMore.setVisibility(View.VISIBLE);
+            }
 
-        //Change entry background and large icon depending on the item state
-        Log.d(TAG, "item is folder? " + item.isFolder());
-        holder.ItemView.setBackground(toBackground(item));
-        holder.iv_item_pic.setImageResource(toLargeIconId(item));
-        holder.iv_item_pic.setBackground(toLargeIconBackground(item));
+            //Change entry background and large icon depending on the item state
+            Log.d(TAG, "item is folder? " + item.isFolder());
+            holder.ItemView.setBackground(toBackground(item));
+            holder.iv_item_pic.setImageResource(toLargeIconId(item));
+            holder.iv_item_pic.setBackground(toLargeIconBackground(item));
+        }
+        else{
+            Log.d(TAG, "holder is progress bar");
+        }
+    }
+    @Override
+    public int getItemViewType(int position) {
+        int type = ITEM_TYPE_NORMAL;
+        //Log.d(TAG, "getItemViewType[" + position + "]");
+        if(getCurrentList().get(position).getID() == null)
+        {
+            type = ITEM_TYPE_PROGRESS;
+            //Log.d(TAG, "Progress bar.");
+        }
+//
+        return type;
     }
 
-
-    class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder {
         private String TAG = "CD.ViewHolder";
         View ItemView = null;
         ImageView iv_item_pic, ivMore;
         TextView tvName, tvDate;
-        ProgressBar progressBar = null;
+
+        ProgressBar progressBar;
+
         public ViewHolder(@NonNull View view) {
             super(view);
-            Log.d(this.TAG, "[ViewHolder]: enter ");
-
-            //if(view == mViewItem) {
-                ItemView = view;
-                iv_item_pic = view.findViewById(R.id.list_item_picture);
-                ivMore = view.findViewById(R.id.iv_more_vert);
-                tvName = view.findViewById(R.id.tv_item_name);
-                tvDate = view.findViewById(R.id.tv_item_date);
-//            }else {
-//                Log.d(this.TAG, " set progress bar");
-//                progressBar = view.findViewById(R.id.item_load_progressBar);
-//            }
+            //Log.d(this.TAG, "[ViewHolder]: enter ");
+            ItemView = view;
         }
+
+
     }
 
     static final DiffUtil.ItemCallback<SerachResultItemModel> diffCallback = new DiffUtil.ItemCallback<SerachResultItemModel>() {

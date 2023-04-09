@@ -36,6 +36,7 @@
             android:id="@+id/navigate_to_myself"
             app:destination="@id/query_result_fragment">
             </action>
+
     </fragment>
 
     <fragment

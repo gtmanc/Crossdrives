@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
@@ -39,19 +40,22 @@ public class OpenTree extends ViewModel {
     Listener mListener;
     boolean Ongoing;
 
-    public OpenTree(SavedStateHandle savedStateHandle) {
-        mItems = new ItemLiveData(null);
+    public OpenTree(List<CdfsItem> parentList) {
+        mItems = new ItemLiveData(whereWeAre());
         Log.d(TAG, "ViewModel OpenTree constructed.");
     }
 
     public interface Listener {
         void onFailure(@NonNull Exception ex);
+        void onComplete();
     }
 
     public void setListener(Listener listener){mListener = listener;}
 
     public class ItemLiveData extends LiveData<ArrayList<SerachResultItemModel>> {
         private Querier mQuerier;
+
+        private boolean firstTimeCreated = true;
 
         public ItemLiveData(CdfsItem parent) {
             reset(parent);
@@ -69,6 +73,14 @@ public class OpenTree extends ViewModel {
         protected void onActive() {
             super.onActive();
             Log.d(TAG, "LiveDate onActive called.");
+            //add a dummy item with ID null to inform ListAdaptor to show progress bar.
+            if(firstTimeCreated){
+                Log.d(TAG, "Add progress bar.");
+                ArrayList<SerachResultItemModel> list = new ArrayList<>();
+                list.add(new SerachResultItemModel(true, null,null,null,true));
+                postValue(list);
+            }
+
             try {
                 mQuerier.getState().fetch();
             } catch (GeneralServiceException | MissingDriveClientException e ) {
@@ -76,6 +88,12 @@ public class OpenTree extends ViewModel {
                 mQuerier.resetState();
                 if(mListener != null){mListener.onFailure(e);}
             }
+        }
+
+        @Override
+        protected void onInactive() {
+            super.onInactive();
+            firstTimeCreated = false;
         }
 
         OnSuccessListener<ListResult> onSuccessListener = new OnSuccessListener<ListResult>() {
@@ -116,6 +134,7 @@ public class OpenTree extends ViewModel {
             @Override
             public void onComplete(@NonNull Task task) {
                 setFetchOngoing(false);
+                mListener.onComplete();
             }
         };
 
