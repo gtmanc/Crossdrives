@@ -112,7 +112,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
     public int getItemViewType(int position) {
         int type = ITEM_TYPE_NORMAL;
         //Log.d(TAG, "getItemViewType[" + position + "]");
-        if(getCurrentList().get(position).getID() == null)
+        if(getCurrentList().get(position).getId() == null)
         {
             type = ITEM_TYPE_PROGRESS;
             //Log.d(TAG, "Progress bar.");
@@ -142,7 +142,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
         @Override
         public boolean areItemsTheSame(@NonNull SerachResultItemModel oldItem, @NonNull SerachResultItemModel newItem) {
             // User properties may have changed if reloaded from the DB, but ID is fixed
-            return oldItem.getID() == newItem.getID();
+            return oldItem.getId() == newItem.getId();
         }
 
         @Override

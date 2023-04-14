@@ -141,23 +141,24 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
 
-		CdfsItem parentItem = null;
-		String parentPath = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
-		CdfsItem[] MyArg = new CdfsItem[1];
-		if(parentPath != null){
-			Log.d(TAG, "From nav host fragment. parentPath: " + parentPath);
+
+		String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
+		List<CdfsItem> parentList = new ArrayList<>();
+		if(parentFromNavhost != null){
+			Log.d(TAG, "parentFromNavhost: " + parentFromNavhost);
 		}else{
-			MyArg = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
-			if(MyArg != null){
-				parentItem = MyArg[0];
-				Log.d(TAG, "Arg parentsPath: Name: " + parentItem.getName() + ". Path: " + parentItem.getPath());
+			CdfsItem[] Args = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
+			if(Args != null){
+				parentList.addAll(new ArrayList<>(Arrays.asList(Args)));
+				CdfsItem parentItem = Args[0];
+				Log.d(TAG, "parentList[0]: Name: " + parentList.get(0).getName() + ". Path: " + parentList.get(0).getPath());
 			}
 			else{
-				Log.w(TAG, "Arg parentsPath is null!");
+				Log.w(TAG, "Args is null!");
 			}
 		}
 
-		treeOpener = new ViewModelProvider(this, new OpenTreeFactory(new ArrayList<>(Arrays.asList(MyArg)))).get(OpenTree.class);
+		treeOpener = new ViewModelProvider(this, new OpenTreeFactory(parentList)).get(OpenTree.class);
 		treeOpener.setListener(treeOpenListener);
 //		treeOpener.getItems().observe(this, listChangeObserver);
 		Log.d(TAG, "TreeOpen object: " + treeOpener);
@@ -522,11 +523,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			if (mState == STATE_NORMAL) {
 				if(item.isFolder()){
-					CdfsItem[] itemArray = new CdfsItem[10];
+					int size = 0;
+					List<CdfsItem> plist = treeOpener.getParentList();
+					if( plist != null){	size = plist.size();}
+					CdfsItem[] itemArray = new CdfsItem[size + 1];
 					CdfsItem cdfsItem = new CdfsItem();
 					cdfsItem.setName(item.getName());
-					cdfsItem.setId(item.getID());
-					itemArray[0] = cdfsItem;
+					cdfsItem.setId(item.getId());
+					itemArray[size] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
 					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
 					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
@@ -538,7 +542,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 							Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
 							return;
 						}
-						Open.download(getActivity(), item, treeOpener.whereWeAre());
+						Open.download(getActivity(), item, treeOpener.getParent());
 					});
 
 					permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
@@ -1000,7 +1004,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			Log.d(TAG, "Delete item: " + selectedItem.getName());
 			try {
-				task = service.delete(selectedItem.getID(), treeOpener.whereWeAre());
+				task = service.delete(selectedItem.getId(), treeOpener.getParent());
 			} catch (MissingDriveClientException | PermissionException e) {
 				Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG);
 				Log.w(TAG, e.getMessage());

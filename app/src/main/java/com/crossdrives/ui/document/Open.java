@@ -29,8 +29,6 @@ import java.util.List;
 public class Open{
     static final String TAG = "CD.Open";
 
-    static FetchList fetchList = new FetchList();
-
     static public boolean download(Activity activity, SerachResultItemModel item, CdfsItem parent){
         boolean result;
         Context context = activity.getApplicationContext();
@@ -53,7 +51,7 @@ public class Open{
             service.setDownloadProgressListener(downloadProgressListener);
         }
         try {
-            service.download(item.getID(), parent).addOnSuccessListener(successListener)
+            service.download(item.getId(), parent).addOnSuccessListener(successListener)
                     .addOnFailureListener(failureListener);
         } catch (MissingDriveClientException | PermissionException e) {
             Toast.makeText(context, "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();

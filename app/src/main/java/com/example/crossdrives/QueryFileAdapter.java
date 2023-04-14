@@ -137,7 +137,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
             }
 
             //Change entry background and large icon depending on the item state
-            Log.d(TAG, "item is folder? " + item.folder);
+            Log.d(TAG, "item is folder? " + item.isFolder());
             holder.ItemView.setBackground(toBackground(item));
             holder.iv_item_pic.setImageResource(toLargeIconId(item));
             holder.iv_item_pic.setBackground(toLargeIconBackground(item));
@@ -225,7 +225,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         if (item.isSelected()) {
             id = R.drawable.ic_baseline_check_24;
         }
-        else if(item.folder){
+        else if(item.isFolder()){
             id = R.drawable.ic_outline_folder_24;
         }
         return id;

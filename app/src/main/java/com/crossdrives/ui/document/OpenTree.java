@@ -32,7 +32,7 @@ public class OpenTree extends ViewModel {
     final String TAG = "CD.OpenTree";
 
     //folder topology: parents (folders). An empty list indicates we are at 'root'.
-    List<CdfsItem> mParents = new ArrayList<>();
+    List<CdfsItem> mParents;
 
     private ItemLiveData mItems;
     String mNextPage = null;
@@ -40,9 +40,23 @@ public class OpenTree extends ViewModel {
     Listener mListener;
     boolean Ongoing;
 
+    /*
+    Input:
+        parentList: list of parent CDFS item. Null or empty list indicates root.
+    */
     public OpenTree(List<CdfsItem> parentList) {
-        mItems = new ItemLiveData(whereWeAre());
+        if(parentList != null && !parentList.isEmpty()) {
+            Log.d(TAG, "parentList size: " + parentList.size() + "parentList[0]: Name: " + parentList.get(0).getName() + ". Path: " + parentList.get(0).getPath());
+        }
+
+        mParents = parentList;
         Log.d(TAG, "ViewModel OpenTree constructed.");
+        if(parentList == null){
+            Log.d(TAG, "Parent: root");
+            mParents = new ArrayList<>();
+        }else{Log.d(TAG, "Parent: " + getParent(parentList));}
+        mItems = new ItemLiveData(getParent());
+
     }
 
     public interface Listener {
@@ -85,6 +99,7 @@ public class OpenTree extends ViewModel {
                 mQuerier.getState().fetch();
             } catch (GeneralServiceException | MissingDriveClientException e ) {
                 Log.w(TAG, "query data failed: " + e.getMessage());
+                postValue(null);
                 mQuerier.resetState();
                 if(mListener != null){mListener.onFailure(e);}
             }
@@ -297,10 +312,24 @@ public class OpenTree extends ViewModel {
 //        mQuerier.getState().fetch();
 //        return mItems;
 //    }
-
     @Nullable
-    public CdfsItem whereWeAre() {
-        return mParents.isEmpty() ? null : mParents.get(mParents.size() - 1);
+    public List<CdfsItem> getParentList() {
+        return mParents;
+    }
+    @Nullable
+    public CdfsItem getParent() {
+        return getParent(mParents);
+    }
+
+    private CdfsItem getParent(List<CdfsItem> plist){
+        CdfsItem item = null;
+
+        if(!plist.isEmpty()){
+            item = plist.get(plist.size() - 1);
+            Log.d(TAG, "Name of item: " + item.getName());
+        }
+
+        return item;
     }
 
     public boolean endOfList() {
