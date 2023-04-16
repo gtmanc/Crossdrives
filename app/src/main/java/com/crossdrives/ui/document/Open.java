@@ -32,7 +32,7 @@ public class Open{
     static public boolean download(Activity activity, SerachResultItemModel item, CdfsItem parent){
         boolean result;
         Context context = activity.getApplicationContext();
-        Log.d(TAG, "Start to download file: " + item.getName());
+        Log.d(TAG, "Start to download file: " + item.getCdfsItem().getName());
         Toast.makeText(context, context.getString(R.string.toast_action_taken_download_start), Toast.LENGTH_LONG).show();
         //Log.d(TAG, "File ID: " + item.mId);
         //TODO: open detail of file
@@ -51,7 +51,7 @@ public class Open{
             service.setDownloadProgressListener(downloadProgressListener);
         }
         try {
-            service.download(item.getId(), parent).addOnSuccessListener(successListener)
+            service.download(item.getCdfsItem().getId(), parent).addOnSuccessListener(successListener)
                     .addOnFailureListener(failureListener);
         } catch (MissingDriveClientException | PermissionException e) {
             Toast.makeText(context, "file download failed! " + e.getMessage(), Toast.LENGTH_LONG).show();

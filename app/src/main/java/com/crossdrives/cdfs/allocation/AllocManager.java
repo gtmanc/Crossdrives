@@ -207,13 +207,14 @@ public class AllocManager implements IAllocManager {
         Input:
 
      */
-    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent, String cdfsId){
+    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent, String cdfsId, String id){
         AllocationItem item = new AllocationItem();
         item.setAttrFolder(true);
         item.setDrive(drive);
         item.setName(name);
         item.setPath(parent);
         item.setCdfsId(cdfsId);
+        item.setItemId(id);
         item.setCDFSItemSize(0);
         item.setSize(0);
         item.setSequence(1);
@@ -304,7 +305,7 @@ public class AllocManager implements IAllocManager {
         if(parent == null) {
             filter = filter.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
         }else{
-            filter = filter.concat(" =" + "\"" + parent + "\"");
+            filter = filter.concat(" ="  + "'" + parent + "'");
         }
 
         Log.d(TAG, "Get CDFS ID list. Filter clause: " + filter);

@@ -119,11 +119,11 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
             holder.ivMore.setTag(position);
             //holder.ivCheckBox.setImageResource(item.getImageId());
             //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
-            holder.tvName.setText(item.getName());
-            if(item.getDateTime() == null) {
+            holder.tvName.setText(item.getCdfsItem().getName());
+            if(item.getCdfsItem().getDateTime() == null) {
                 Log.w(TAG, "DateTime is null");
             }else {
-                holder.tvDate.setText(item.getDateTime().toString());
+                holder.tvDate.setText(item.getCdfsItem().getDateTime().toString());
             }
             /*
                  Show the check box?
@@ -137,7 +137,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
             }
 
             //Change entry background and large icon depending on the item state
-            Log.d(TAG, "item is folder? " + item.isFolder());
+            Log.d(TAG, "item is folder? " + item.getCdfsItem().isFolder());
             holder.ItemView.setBackground(toBackground(item));
             holder.iv_item_pic.setImageResource(toLargeIconId(item));
             holder.iv_item_pic.setBackground(toLargeIconBackground(item));
@@ -225,7 +225,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         if (item.isSelected()) {
             id = R.drawable.ic_baseline_check_24;
         }
-        else if(item.isFolder()){
+        else if(item.getCdfsItem().isFolder()){
             id = R.drawable.ic_outline_folder_24;
         }
         return id;

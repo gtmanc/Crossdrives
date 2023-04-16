@@ -70,8 +70,8 @@ public class List {
                 java.util.List<CdfsItem> items;
 
                 //Prepare the path string that we will use to query database items
-                if(parent != null) {pathParent = parent.getPath();}
-                else{pathParent = null;}
+                if(parent != null) {pathParent = parent.getPath() + parent.getName();}
+                else{pathParent = IConstant.CDFS_PATH_BASE;}
 
                 HashMap<String, OutputStream> allocations = fetchMapFuture.join();
                 AllocManager am = new AllocManager(mCDFS);
@@ -210,7 +210,7 @@ public class List {
         for(int i = 0 ; i < cursor.getCount(); i++){
             CdfsItem item = new CdfsItem();
             ConcurrentHashMap<String, java.util.List<String>> map = new ConcurrentHashMap<>();
-            item.setMap(map);
+            item.setMap(map);   //Just set a placeholder. We will fill the content in later step.
             item.setName(cursor.getString(indexName));
             item.setId(cursor.getString(indexCDFSId));
             item.setPath(cursor.getString(indexPath));
@@ -250,11 +250,11 @@ public class List {
         return items;
     }
 
-    String buildClausePath(String parent){
+    String buildClausePath(@Nullable String parent){
         String clause = ALLOCITEMS_LIST_COL_PATH;
         if (parent == null) {
-            //clause = clause.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
-            clause = clause.concat(" = " + "'\\' ");
+            clause = clause.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
+            //clause = clause.concat(" = " + "'\\' ");
         } else {
             clause = clause.concat(" = " + parent);
         }

@@ -81,11 +81,11 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
             holder.ivMore.setTag(position);
             //holder.ivCheckBox.setImageResource(item.getImageId());
             //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
-            holder.tvName.setText(item.getName());
-            if(item.getDateTime() == null) {
+            holder.tvName.setText(item.getCdfsItem().getName());
+            if(item.getCdfsItem().getDateTime() == null) {
                 Log.w(TAG, "DateTime is null");
             }else {
-                holder.tvDate.setText(item.getDateTime().toString());
+                holder.tvDate.setText(item.getCdfsItem().getDateTime().toString());
             }
             /*
                  Show the check box?
@@ -99,7 +99,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
             }
 
             //Change entry background and large icon depending on the item state
-            Log.d(TAG, "item is folder? " + item.isFolder());
+            Log.d(TAG, "item is folder? " + item.getCdfsItem().isFolder());
             holder.ItemView.setBackground(toBackground(item));
             holder.iv_item_pic.setImageResource(toLargeIconId(item));
             holder.iv_item_pic.setBackground(toLargeIconBackground(item));
@@ -112,7 +112,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
     public int getItemViewType(int position) {
         int type = ITEM_TYPE_NORMAL;
         //Log.d(TAG, "getItemViewType[" + position + "]");
-        if(getCurrentList().get(position).getId() == null)
+        if(getCurrentList().get(position).getCdfsItem().getId() == null)
         {
             type = ITEM_TYPE_PROGRESS;
             //Log.d(TAG, "Progress bar.");
@@ -142,7 +142,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
         @Override
         public boolean areItemsTheSame(@NonNull SerachResultItemModel oldItem, @NonNull SerachResultItemModel newItem) {
             // User properties may have changed if reloaded from the DB, but ID is fixed
-            return oldItem.getId() == newItem.getId();
+            return oldItem.getCdfsItem().getId() == newItem.getCdfsItem().getId();
         }
 
         @Override
@@ -216,7 +216,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
         if (item.isSelected()) {
             id = R.drawable.ic_baseline_check_24;
         }
-        else if(item.isFolder()){
+        else if(item.getCdfsItem().isFolder()){
             id = R.drawable.ic_outline_folder_24;
         }
         return id;

@@ -46,15 +46,21 @@ public class OpenTree extends ViewModel {
     */
     public OpenTree(List<CdfsItem> parentList) {
         if(parentList != null && !parentList.isEmpty()) {
-            Log.d(TAG, "parentList size: " + parentList.size() + "parentList[0]: Name: " + parentList.get(0).getName() + ". Path: " + parentList.get(0).getPath());
+            Log.d(TAG, "parentList size: " + parentList.size());
         }
 
         mParents = parentList;
         Log.d(TAG, "ViewModel OpenTree constructed.");
         if(parentList == null){
-            Log.d(TAG, "Parent: root");
+            Log.d(TAG, "Parent list is null.");
             mParents = new ArrayList<>();
-        }else{Log.d(TAG, "Parent: " + getParent(parentList));}
+        }
+        CdfsItem item = getParent();
+        if(item != null){
+            Log.d(TAG, "Parent: " + getParent(parentList).getName());
+        }else{
+            Log.d(TAG, "Empty parent list.");
+        }
         mItems = new ItemLiveData(getParent());
 
     }
@@ -91,7 +97,9 @@ public class OpenTree extends ViewModel {
             if(firstTimeCreated){
                 Log.d(TAG, "Add progress bar.");
                 ArrayList<SerachResultItemModel> list = new ArrayList<>();
-                list.add(new SerachResultItemModel(true, null,null,null,true));
+                SerachResultItemModel serachResultItemModel = new SerachResultItemModel();
+                serachResultItemModel.setCdfsItem(new CdfsItem());
+                list.add(serachResultItemModel);
                 postValue(list);
             }
 
@@ -117,15 +125,23 @@ public class OpenTree extends ViewModel {
                 List<CdfsItem> items = result.getItems();
                 ArrayList<SerachResultItemModel> fetched = new ArrayList<>();
 
-                Log.i(TAG, "Number of files: " + items.size());
+                Log.d(TAG, "Number of files: " + items.size());
                 for (CdfsItem item : items) {
                     //Log.d(TAG, "files name: " + file.getName());
                     //Log.d(TAG, "folder?: " + item.isFolder());
-                    boolean isFolder = false;
-                    if (item.isFolder()) {
-                        isFolder = true;
-                    }
-                    fetched.add(new SerachResultItemModel(false, item.getName(), item.getId(), item.getDateTime(), isFolder));
+//                    boolean isFolder = false;
+//                    if (item.isFolder()) {
+//                        isFolder = true;
+//                    }
+
+                    SerachResultItemModel serachResultItemModel = new SerachResultItemModel();
+                    serachResultItemModel.setCdfsItem(item);
+                    Log.d(TAG, "Map of CDFS item: ");
+                    item.getMap().entrySet().stream().forEach(set->{
+                        Log.d(TAG, "drive: " + set.getKey() + ". id[0]: " + set.getValue().get(0));
+                    });
+                    //fetched.add(new SerachResultItemModel(false, item.getName(), item.getId(), item.getDateTime(), isFolder));
+                    fetched.add(serachResultItemModel);
                 }
 
                 //in a worker thread, use the postValue(T) method to update the LiveData object.

@@ -8,16 +8,17 @@ import com.crossdrives.base.BaseItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.google.api.client.util.DateTime;
 
-public class SerachResultItemModel extends BaseItem {
+public class SerachResultItemModel {
     boolean isSelected;
+    CdfsItem cdfsItem;
 
-    public SerachResultItemModel(boolean isSelected, String Name, String id, DateTime dt, boolean folder) {
-        this.isSelected = isSelected;
-        setName(Name);
-        setId(id);
-        setDateTime(dt);
-        setFolder(folder);
-    }
+//    public SerachResultItemModel(boolean isSelected, String Name, String id, DateTime dt, boolean folder) {
+//        this.isSelected = isSelected;
+//        setName(Name);
+//        setId(id);
+//        setDateTime(dt);
+//        setFolder(folder);
+//    }
 
     public boolean isSelected() {
         return isSelected;
@@ -25,6 +26,14 @@ public class SerachResultItemModel extends BaseItem {
 
     public void setSelected(boolean selected) {
         isSelected = selected;
+    }
+
+    public CdfsItem getCdfsItem() {
+        return cdfsItem;
+    }
+
+    public void setCdfsItem(CdfsItem cdfsItem) {
+        this.cdfsItem = cdfsItem;
     }
 
     @Override

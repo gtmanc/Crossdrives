@@ -522,14 +522,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 
 			if (mState == STATE_NORMAL) {
-				if(item.isFolder()){
+				if(item.getCdfsItem().isFolder()){
 					int size = 0;
 					List<CdfsItem> plist = treeOpener.getParentList();
 					if( plist != null){	size = plist.size();}
 					CdfsItem[] itemArray = new CdfsItem[size + 1];
-					CdfsItem cdfsItem = new CdfsItem();
-					cdfsItem.setName(item.getName());
-					cdfsItem.setId(item.getId());
+					itemArray = plist.toArray(itemArray);
+					CdfsItem cdfsItem = item.getCdfsItem();
 					itemArray[size] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
 					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
@@ -1002,9 +1001,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 			mAdapter.notifyDataSetChanged();
 
-			Log.d(TAG, "Delete item: " + selectedItem.getName());
+			Log.d(TAG, "Delete item: " + selectedItem.getCdfsItem().getName());
 			try {
-				task = service.delete(selectedItem.getId(), treeOpener.getParent());
+				task = service.delete(selectedItem.getCdfsItem().getId(), treeOpener.getParent());
 			} catch (MissingDriveClientException | PermissionException e) {
 				Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG);
 				Log.w(TAG, e.getMessage());

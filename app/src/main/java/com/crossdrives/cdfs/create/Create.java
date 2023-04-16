@@ -109,7 +109,7 @@ public class Create {
                 }).entrySet().stream().forEach((entry)->{
                     String driveName = entry.getKey();
                     String id = entry.getValue();
-                    Log.d(TAG, "New folder ID: " + entry.getValue());
+                    Log.d(TAG, "New folder ID: " + id);
                     idListConcantenated.add(id);
                     //parentIDLists.get(driveName).add(id);
                     idNewCreatedItems.put(driveName, id);
@@ -127,7 +127,7 @@ public class Create {
                 HashMap<String, AllocContainer> modified = Mapper.reValue(mapContainer, (k, v)->{
                     String driveName = k;
                     AllocContainer container = v;
-                    AllocationItem item = AllocManager.createItemFolder(driveName, mName, pathParent, cdfsId);
+                    AllocationItem item = AllocManager.createItemFolder(driveName, mName, pathParent, cdfsId, idNewCreatedItems.get(k));
                     container.addItem(item);
                     return container;
                 });
