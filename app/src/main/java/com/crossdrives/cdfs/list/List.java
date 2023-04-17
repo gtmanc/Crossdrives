@@ -10,6 +10,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
+import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.model.AllocContainer;
@@ -70,8 +71,10 @@ public class List {
                 java.util.List<CdfsItem> items;
 
                 //Prepare the path string that we will use to query database items
-                if(parent != null) {pathParent = parent.getPath() + parent.getName();}
-                else{pathParent = IConstant.CDFS_PATH_BASE;}
+//                if(parent != null) {pathParent = parent.getPath() + parent.getName();}
+//                else{pathParent = IConstant.CDFS_PATH_BASE;}
+                pathParent = Names.CompletePath(parent);
+                Log.d(TAG, "pathParent: " + pathParent);
 
                 HashMap<String, OutputStream> allocations = fetchMapFuture.join();
                 AllocManager am = new AllocManager(mCDFS);
@@ -256,8 +259,9 @@ public class List {
             clause = clause.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
             //clause = clause.concat(" = " + "'\\' ");
         } else {
-            clause = clause.concat(" = " + parent);
+            clause = clause.concat(" = " + "'" + parent + "'");
         }
+        Log.d(TAG, "buildClausePath: " + clause);
         return clause;
     }
 

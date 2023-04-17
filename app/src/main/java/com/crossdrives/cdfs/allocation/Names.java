@@ -2,7 +2,8 @@ package com.crossdrives.cdfs.allocation;
 
 import androidx.annotation.Nullable;
 
-import java.util.Collection;
+import com.crossdrives.cdfs.common.IConstant;
+import com.crossdrives.cdfs.model.CdfsItem;
 
 public class Names {
 
@@ -30,6 +31,18 @@ public class Names {
     */
     static public String baseFolder(){
         return CDFS_FOLDER;
+    }
+
+    /*
+        Get the complete path
+*   */
+    static public String CompletePath(CdfsItem item){
+        String path = IConstant.CDFS_PATH_BASE;
+        if(item != null){
+            path = item.getPath().concat(item.getName());
+        }
+
+        return path;
     }
 
 }

@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.Infrastructure;
+import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
@@ -107,13 +108,20 @@ public class Upload {
         return upload(ins, name, parents, listener);
     }
 
+    /*
+        Input:
+        ins:        the content to upload in InputStream
+        CdfsName:   name for CDFS.
+        parents:    a list for parents. actually, the upload only needs the parent. Just keeps as it is for the future.
+        listener:   for UI
+    */
     public CompletableFuture<File> upload(InputStream ins, String CdfsName, @NonNull List<CdfsItem> parents, IUploadProgressListener listener)  {
         ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
         mListener = listener;
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
             CdfsItem whereWeAre = parents.isEmpty() ? null : parents.get(parents.size()-1);
-            String pathParent = whereWeAre == null ? IConstant.CDFS_PATH_BASE : whereWeAre.getPath();
+            String pathParent = Names.CompletePath(whereWeAre);
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
@@ -198,10 +206,7 @@ public class Upload {
                     */
                     item.setSequence(SeqNum[0]);
                     SeqNum[0]++;  //TODO: do we have concurrent issue?
-                    String path = IConstant.CDFS_PATH_BASE;
-//                    if(pathParent != IConstant.CDFS_PATH_BASE){
-//                        path = whereWeAre.getPath() + "\\" + whereWeAre.getName();
-//                    }
+
                     item.setPath(pathParent);
                     item.setAttrFolder(false);
                     item.setCDFSItemSize(uploadSize[0]);
@@ -293,7 +298,11 @@ public class Upload {
 //                      if(localFileOptional.isPresent()){
 //                      File localFile = localFileOptional.get();
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setParents(Collections.singletonList(buildParentDriveIdList(driveName, parents).get(0)));
+
+                        // It looks strange. Google no longer support multiple folder starting with API v3. However, it still requires a list for parent.
+                        //fileMetadata.setParents(Collections.singletonList(buildParentDriveIdList(driveName, parents).get(0)));
+                        fileMetadata.setParents(Collections.singletonList(whereWeAre.getMap().get(driveName).get(0)));
+
                         fileMetadata.setName(localFile.getName());
                         Log.d(TAG, "Drive: " + driveName + ". local file to upload: " + localFile.getName());
                         mCDFS.getDrives().get(driveName).getClient().upload().
