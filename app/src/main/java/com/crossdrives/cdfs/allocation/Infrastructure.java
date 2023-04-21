@@ -237,7 +237,7 @@ public class Infrastructure{
                 String json;
                 File fileMetadata = new File();
                 LocalFileCreator fc = new LocalFileCreator(SnippetApp.getAppContext());
-                AllocManager am = new AllocManager(mCDFS);
+                AllocManager am = new AllocManager();
                 /*
                     Generate local allocation file in the folder create at previous stage.
                     Then, upload it to the remote.
@@ -401,7 +401,7 @@ public class Infrastructure{
      */
     private boolean handleResultDownload(OutputStream outputStream){
         AllocContainer ac;
-        AllocManager am = new AllocManager(mCDFS);
+        AllocManager am = new AllocManager();
         ac = am.toContainer(outputStream);
         if(am.checkCompatibility(ac) == IAllocManager.ERR_COMPATIBILITY_SUCCESS){
             /*

@@ -32,7 +32,6 @@ public class AllocManager implements IAllocManager {
     static private final String TAG = "CD.AllocManager";
     static private final int mVersion = 1;
     private String mDriveName;
-    static CDFS mCDFS;
 
     //Columns
     final String ALLOCITEMS_LIST_COL_NAME = DBConstants.ALLOCITEMS_LIST_COL_NAME;
@@ -45,8 +44,6 @@ public class AllocManager implements IAllocManager {
     final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
     final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
-
-    public AllocManager(CDFS cdfs) { mCDFS = cdfs;}
 
     static public AllocContainer toContainer(OutputStream stream){
         AllocContainer container;

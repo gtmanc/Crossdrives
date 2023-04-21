@@ -23,6 +23,7 @@ import com.crossdrives.cdfs.model.UpdateContent;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
+import com.crossdrives.cdfs.util.ApplicableDriveBuilder;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
@@ -44,6 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -116,14 +118,21 @@ public class Upload {
         listener:   for UI
     */
     public CompletableFuture<File> upload(InputStream ins, String CdfsName, @NonNull List<CdfsItem> parents, IUploadProgressListener listener)  {
-        ConcurrentHashMap<String, Drive> drives= mCDFS.getDrives();
-        mListener = listener;
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
+            ConcurrentHashMap<String, Drive> drives;
+            mListener = listener;
             CdfsItem whereWeAre = parents.isEmpty() ? null : parents.get(parents.size()-1);
+
             String pathParent = Names.CompletePath(whereWeAre);
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
+
+            //Limit the drive to be the ones that the folder(parent) was created. The drive signed in after the
+            //folder is created will be removed.
+            Log.d(TAG, "Signed in drives:" + mCDFS.getDrives());
+            drives = ApplicableDriveBuilder.build(mCDFS.getDrives(), whereWeAre.getMap());
+            Log.d(TAG, "drives to proceed:" + drives);
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
             //Both queues need to be global as splitter will use
             HashMap<String, ArrayBlockingQueue<File>> toUploadQueueMap = new HashMap<>();
@@ -463,7 +472,7 @@ public class Upload {
             }
 
             CompletableFuture<HashMap<String, OutputStream>> mapStreamFuture = mapFetcher.pullAll(whereWeAre);
-            AllocManager am = new AllocManager(mCDFS);
+            AllocManager am = new AllocManager();
             HashMap<String, AllocContainer> containers = Mapper.reValue(mapStreamFuture.join(), (in)->{
                 return am.toContainer(in);
             });
@@ -582,45 +591,13 @@ public class Upload {
         return remapped;
     }
 
-    boolean isUploadCompleted(int total, ArrayBlockingQueue<File> Q1, LinkedBlockingQueue<File> Q2){
-        boolean result = false;
-        int number1 = Q1.size()-Q1.remainingCapacity();
-        int number2 = Q2.size()-Q2.remainingCapacity();
-        Log.d(TAG, "expected: " + total + " size1: " + Q1.size() + " size2: " + Q2.size());
-        if((Q1.size() + Q2.size()) >= total){
-            result = true;
-        }
-        Delay.delay(1000);
-        return result;
-    }
-
-    File takeFromQueue(ArrayBlockingQueue<File> q){
-        File f = null;
-        try {
-            f = q.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return f;
-    }
-
-    void moveBetweenQueues(ArrayBlockingQueue<File>src, ArrayBlockingQueue<File> dest, File item){
-        File f;
-
-        try {
-            f = src.take();
-            dest.add(f);
-            src.remove(f);
-        } catch (InterruptedException e) {
-            Log.w(TAG, e.getMessage());
-        }
-    }
-
 
     void callback(State state){
         mState = state;
         mListener.progressChanged(this);
     }
+
+
 
     /*
         This is only required for Google drive. Microsoft use path instead.

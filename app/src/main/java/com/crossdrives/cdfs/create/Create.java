@@ -142,7 +142,7 @@ public class Create {
 
                 //Create a default local allocation file and store(upload) it to the folder just created
                 LocalFileCreator lfc = new LocalFileCreator(SnippetApp.getAppContext());
-                AllocManager am = new AllocManager(mCDFS);
+                AllocManager am = new AllocManager();
                 final java.io.File defaultMapLocal = lfc.create(Names.allocFile(cdfsId), am.newAllocation());
                 //json = lfc.read(Names.allocFile(cdfsId));
 

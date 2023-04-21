@@ -302,21 +302,22 @@ public class MapFetcher {
         Fetcher fetcher = new Fetcher(mDrives);
 
         resultFuture = CompletableFuture.supplyAsync(()-> {
-            HashMap<String, File> mataDataFolder;
+            HashMap<String, File> metaDataFolder;
             //CompletableFuture<HashMap<String, File>> foldersFuture = getFolderAll(parent);
 
             //if any is null. exit
             //Log.d(TAG, "Check CDFS folders... ");
             //baseFolders = foldersFuture.join();
-            mataDataFolder = getMetaDataAll(parent);
+            metaDataFolder = getMetaDataAll(parent);
+            Log.d(TAG, "Parent mapped ID list: " + metaDataFolder);
 
-            //something wrong if the base folder doesn't exist in the user's drive
-            if(mataDataFolder.entrySet().stream().anyMatch(((set)-> set.getValue()== null))){
+            //something wrong if no mapped ID for the parent
+            if(metaDataFolder.entrySet().stream().anyMatch(((set)-> set.getValue()== null))){
                 Log.w(TAG, "CDFS folder is missing!");
                 return null;
             }
 
-            final CompletableFuture<HashMap<String, FileList>> listFuture = fetcher.listAll(mataDataFolder);
+            final CompletableFuture<HashMap<String, FileList>> listFuture = fetcher.listAll(metaDataFolder);
             final HashMap<String, FileList> fileList = listFuture.join();
             //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
             HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
@@ -443,7 +444,8 @@ public class MapFetcher {
                 file.put(k, f);
             });
         }else
-        {   //base folder: directly pfetc data from remote
+        {   //base folder: directly fetch data from remote
+            //TODO: directly get meta data of base folder from infrastructure builder
             file = getMetaDataRoot().join();
         }
         return file;

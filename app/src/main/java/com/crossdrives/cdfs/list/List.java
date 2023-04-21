@@ -13,9 +13,11 @@ import com.crossdrives.cdfs.allocation.ICallBackMapFetch;
 import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.DBHelper;
+import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
+import com.crossdrives.cdfs.util.ApplicableDriveBuilder;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
@@ -65,7 +67,8 @@ public class List {
             @Override
             public ListResult call() throws Exception {
                 ListResult result = new ListResult();
-                MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
+                ConcurrentHashMap<String, Drive> drives = ApplicableDriveBuilder.build(mCDFS.getDrives(), parent.getMap());
+                MapFetcher mapFetcher = new MapFetcher(drives);
                 CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(parent);
                 final String pathParent;
                 java.util.List<CdfsItem> items;
@@ -77,7 +80,7 @@ public class List {
                 Log.d(TAG, "pathParent: " + pathParent);
 
                 HashMap<String, OutputStream> allocations = fetchMapFuture.join();
-                AllocManager am = new AllocManager(mCDFS);
+                AllocManager am = new AllocManager();
 
                 am.CheckThenUpdateLocalCopy(pathParent, allocations);
 
@@ -110,7 +113,7 @@ public class List {
             public void onCompleted(HashMap<String, OutputStream> allocations)  {
                 java.util.List<CdfsItem> children, dirs;
                 AtomicReference<AllocContainer> ac = new AtomicReference<>();
-                AllocManager am = new AllocManager(mCDFS);
+                AllocManager am = new AllocManager();
                 //Checker checker = new Checker();
                 AtomicReference<java.util.List<ListResult>> results = new AtomicReference<>();
                 AtomicBoolean globalResult = new AtomicBoolean(true);
