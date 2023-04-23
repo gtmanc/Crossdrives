@@ -1,6 +1,7 @@
 package com.crossdrives.cdfs.util;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.model.CdfsItem;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,18 @@ import java.util.stream.Collectors;
         2. A folder is created with signed in drive(s) and one or some of the drives are signed in additionally.
      */
 
-public class ApplicableDriveBuilder {
+public class ApplicableDriveListBuilder {
+
+    public static ConcurrentHashMap<String, Drive> build(ConcurrentHashMap<String, Drive> signedDrives, CdfsItem parent) {
+        ConcurrentHashMap<String, Drive> result;
+        if(parent == null){
+            result = signedDrives;
+        }else{
+            result = build(signedDrives, parent.getMap());
+        }
+        return result;
+    }
+
     public static ConcurrentHashMap<String, Drive> build(ConcurrentHashMap<String, Drive> signedDrives, ConcurrentHashMap<String, List<String>> itemIdList){
         Map<String, Drive> map = signedDrives.entrySet().stream().filter((set)->{
                     return itemIdList.keySet().stream().anyMatch((k)-> set.getKey().equals(k));

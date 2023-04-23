@@ -17,7 +17,7 @@ import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
-import com.crossdrives.cdfs.util.ApplicableDriveBuilder;
+import com.crossdrives.cdfs.util.ApplicableDriveListBuilder;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
@@ -67,7 +67,7 @@ public class List {
             @Override
             public ListResult call() throws Exception {
                 ListResult result = new ListResult();
-                ConcurrentHashMap<String, Drive> drives = ApplicableDriveBuilder.build(mCDFS.getDrives(), parent.getMap());
+                ConcurrentHashMap<String, Drive> drives = ApplicableDriveListBuilder.build(mCDFS.getDrives(), parent);
                 MapFetcher mapFetcher = new MapFetcher(drives);
                 CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(parent);
                 final String pathParent;

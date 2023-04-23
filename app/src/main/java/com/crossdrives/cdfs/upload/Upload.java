@@ -23,7 +23,7 @@ import com.crossdrives.cdfs.model.UpdateContent;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
-import com.crossdrives.cdfs.util.ApplicableDriveBuilder;
+import com.crossdrives.cdfs.util.ApplicableDriveListBuilder;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -131,7 +130,7 @@ public class Upload {
             //Limit the drive to be the ones that the folder(parent) was created. The drive signed in after the
             //folder is created will be removed.
             Log.d(TAG, "Signed in drives:" + mCDFS.getDrives());
-            drives = ApplicableDriveBuilder.build(mCDFS.getDrives(), whereWeAre.getMap());
+            drives = ApplicableDriveListBuilder.build(mCDFS.getDrives(), whereWeAre);
             Log.d(TAG, "drives to proceed:" + drives);
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
             //Both queues need to be global as splitter will use

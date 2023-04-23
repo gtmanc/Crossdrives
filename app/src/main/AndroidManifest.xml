@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- move Just move package name from build.gradle app level to manifest to avoid issue R.id.xxx not found
 https://stackoverflow.com/questions/72596066/error-package-r-does-not-exist-in-navigation-after-adding-assets-folder-andr-->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package = 'com.example.crossdrives'
-    >
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission
         android:name="android.permission.GET_ACCOUNTS"

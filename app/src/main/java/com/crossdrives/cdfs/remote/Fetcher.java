@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
@@ -18,7 +19,10 @@ import com.google.api.services.drive.model.FileList;
 import com.google.common.collect.ForwardingMapEntry;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -43,14 +47,30 @@ public class Fetcher {
         this.mDrives = mDrives;
     }
     CompletableFuture<FileList> blockedFuture;
-    public CompletableFuture<HashMap<String, FileList>> listAll(HashMap<String, File> parent) {
+    public CompletableFuture<HashMap<String, FileList>> listAll(HashMap<String, File> parent) throws Exception {
         CompletableFuture<HashMap<String, FileList>> resultFuture;
+        List<Exception> ex = new ArrayList<>();
 
-        mDrives.forEach((name, drive) -> {
-            CompletableFuture<FileList> future
-                                = helperFetchList(drive, parent.get(name).getId());
-            fileListFutures.put(name, future);
+//        mDrives.forEach((name, drive) -> {
+//            CompletableFuture<FileList> future
+//                                = helperFetchList(drive, parent.get(name).getId());
+//            fileListFutures.put(name, future);
+//        });
+
+        parent.forEach((driveName, metaData)->{
+            Drive drive = mDrives.get(driveName);
+            //The drive mapped to the parent is missing in the signed in drive list. Simply terminate
+            // right here because we can't ensure the integrity.
+            if(drive == null){
+                Log.w(TAG, "mapped drive is missing.");
+                ex.add(new MissingDriveClientException("Mapped drive for the folder is missing.", new Throwable()));
+            }else{
+                CompletableFuture<FileList> future
+                        = helperFetchList(drive, metaData.getId());
+                fileListFutures.put(driveName, future);
+            }
         });
+        if(!ex.isEmpty()){throw ex.get(0);}
 
         resultFuture = CompletableFuture.supplyAsync(()->{
             return Mapper.reValue(fileListFutures, (future)->{

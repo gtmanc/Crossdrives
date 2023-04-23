@@ -324,7 +324,6 @@ public class MapFetcher {
                 File f = null;
                 String id = parent == null? null : parent.getId();
                 if(list != null) {
-                    Log.w(TAG, "Empty folder. Drive:" + key);
                     f = getFromFiles(list, Names.allocFile(id));
                 }
 
@@ -350,22 +349,6 @@ public class MapFetcher {
         return resultFuture;
     }
 
-    /*
-        Walk through the parents and return the map item list at the destination folder.
-     */
-    HashMap<String, FileList> getListAtDestination(List<String> pids, HashMap<String, FileList> fileListBase, Fetcher fetcher){
-        Collection<Exception> exceptions = new ArrayList<>();
-
-        HashMap<String, FileList>[] fileLists = new HashMap[]{fileListBase};
-        CompletableFuture<HashMap<String, FileList>>[] list = new CompletableFuture[]{};
-        pids.stream().forEachOrdered((pid)->{
-            HashMap<String, File> nextFolder = null;//findItemMatched(fileLists[0], pid);
-            list[0] = fetcher.listAll(nextFolder);
-            fileLists[0] = list[0].join();
-        });
-
-        return fileLists[0];
-    }
     /*
         Find the file (item) which the ID is matched to parent ID for each drive.
         i.e. the ID is CDFS ID
@@ -428,7 +411,7 @@ public class MapFetcher {
         Input:
             CDFS parent item. Directly set to root if null is input.
      */
-    public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
+    public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent) throws Exception {
         HashMap<String, File> file;
 
         //Log.d(TAG, "Get meta data all.");
@@ -452,38 +435,37 @@ public class MapFetcher {
     }
 
     //obsolete function. deprecated
-    public CompletableFuture<HashMap<String, File>> getMetaDataRoot(){
+    public CompletableFuture<HashMap<String, File>> getMetaDataRoot() throws Exception {
         Fetcher fetcher = new Fetcher(mDrives);
+        Map<String, File> rootIDs;
+
+        HashMap<String, File> result = null;
+        rootIDs = mDrives.keySet().stream().map(k -> {
+            Map.Entry<String, File> entry = new Map.Entry<String, File>() {
+                @Override
+                public String getKey() {
+                    return k;
+                }
+
+                @Override
+                public File getValue() {
+                    File f = new File();
+                    f.setId(""); //empty string indicates root is specified
+                    return f;
+                }
+
+                @Override
+                public File setValue(File s) {
+                    return null;
+                }
+            };
+            return entry;
+        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        final CompletableFuture<HashMap<String, FileList>> list = fetcher.listAll(new HashMap<>(rootIDs));
         CompletableFuture<HashMap<String, File>> resultFuture;
         resultFuture = CompletableFuture.supplyAsync(()-> {
-            Map<String, File> rootIDs;
             Map<String, File> folders = null;
-
-            HashMap<String, File> result = null;
-            rootIDs = mDrives.keySet().stream().map(k -> {
-                Map.Entry<String, File> entry = new Map.Entry<String, File>() {
-                    @Override
-                    public String getKey() {
-                        return k;
-                    }
-
-                    @Override
-                    public File getValue() {
-                        File f = new File();
-                        f.setId(""); //empty string indicates root is specified
-                        return f;
-                    }
-
-                    @Override
-                    public File setValue(File s) {
-                        return null;
-                    }
-                };
-                return entry;
-            }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-
-            CompletableFuture<HashMap<String, FileList>> list = null;
-            list = fetcher.listAll(new HashMap<>(rootIDs));
 
             HashMap<String, FileList> resultListAll = list.join();
 
@@ -496,7 +478,6 @@ public class MapFetcher {
                 }
                 return f;
             });
-
 
             return new HashMap<>(folders);
         });
