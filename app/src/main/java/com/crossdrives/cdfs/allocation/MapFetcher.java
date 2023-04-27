@@ -30,6 +30,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MapFetcher {
@@ -411,7 +413,7 @@ public class MapFetcher {
         Input:
             CDFS parent item. Directly set to root if null is input.
      */
-    public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent) throws Exception {
+    public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
         HashMap<String, File> file;
 
         //Log.d(TAG, "Get meta data all.");
@@ -435,7 +437,7 @@ public class MapFetcher {
     }
 
     //obsolete function. deprecated
-    public CompletableFuture<HashMap<String, File>> getMetaDataRoot() throws Exception {
+    public CompletableFuture<HashMap<String, File>> getMetaDataRoot(){
         Fetcher fetcher = new Fetcher(mDrives);
         Map<String, File> rootIDs;
 

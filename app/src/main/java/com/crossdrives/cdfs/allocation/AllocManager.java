@@ -171,24 +171,29 @@ public class AllocManager implements IAllocManager {
 
         /*
             To do the item cross check, the database functionality is utilized.
-            Build name list contains the unique Names. We will use the list to query local
+            Build cdfs id list first. Then, the list is used to query local
             database for cross item check.
         */
         java.util.List<String> IDs;
-        IDs = getCdfsIdList(pathParent);
+        IDs = getCdfsIdList(pathParent);    //build cdfs ID list.
         if(IDs != null) {
             Log.d(TAG, "Cross item check...");
             if (IDs.stream().filter((id) -> {
                 boolean result = true;
                 java.util.List<AllocationItem> items;
-                items = getItemsByID(id);
+                items = getItemsByID(id);   //build item list for the items have the same cdfs id.
                 //Log.d(TAG, "Size of items: " + items.size());
-                results.set(checker.checkItemsCrossly(items));
-                if (getConclusion(results.get())) {
-                } else {
-                    Log.w(TAG, "faulty items detected ");
-                    deleteItemsByID(id);
-                    result = false;
+                if(items.stream().anyMatch((item)->item.getAttrFolder())){
+                    Log.d(TAG, "folder item. skip cross check. ");
+                }
+                else{
+                    results.set(checker.checkItemsCrossly(items));
+                    if (getConclusion(results.get())) {
+                    } else {
+                        Log.w(TAG, "faulty items detected ");
+                        deleteItemsByID(id);
+                        result = false;
+                    }
                 }
                 return result;
             }).count() < IDs.size()) {

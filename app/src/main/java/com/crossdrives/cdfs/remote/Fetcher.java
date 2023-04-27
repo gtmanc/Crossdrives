@@ -47,9 +47,8 @@ public class Fetcher {
         this.mDrives = mDrives;
     }
     CompletableFuture<FileList> blockedFuture;
-    public CompletableFuture<HashMap<String, FileList>> listAll(HashMap<String, File> parent) throws Exception {
+    public CompletableFuture<HashMap<String, FileList>> listAll(HashMap<String, File> parent) {
         CompletableFuture<HashMap<String, FileList>> resultFuture;
-        List<Exception> ex = new ArrayList<>();
 
 //        mDrives.forEach((name, drive) -> {
 //            CompletableFuture<FileList> future
@@ -59,18 +58,18 @@ public class Fetcher {
 
         parent.forEach((driveName, metaData)->{
             Drive drive = mDrives.get(driveName);
+            Log.d(TAG, "drive: " + driveName + ". DriveClient:" + drive);
             //The drive mapped to the parent is missing in the signed in drive list. Simply terminate
             // right here because we can't ensure the integrity.
             if(drive == null){
                 Log.w(TAG, "mapped drive is missing.");
-                ex.add(new MissingDriveClientException("Mapped drive for the folder is missing.", new Throwable()));
+                throw new MissingDriveClientException("Mapped drive for the folder is missing.", new Throwable());
             }else{
                 CompletableFuture<FileList> future
                         = helperFetchList(drive, metaData.getId());
                 fileListFutures.put(driveName, future);
             }
         });
-        if(!ex.isEmpty()){throw ex.get(0);}
 
         resultFuture = CompletableFuture.supplyAsync(()->{
             return Mapper.reValue(fileListFutures, (future)->{

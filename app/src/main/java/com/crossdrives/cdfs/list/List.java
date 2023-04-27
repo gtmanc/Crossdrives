@@ -65,10 +65,10 @@ public class List {
         {
 
             @Override
-            public ListResult call() throws Exception {
+            public ListResult call() {
                 ListResult result = new ListResult();
-                ConcurrentHashMap<String, Drive> drives = ApplicableDriveListBuilder.build(mCDFS.getDrives(), parent);
-                MapFetcher mapFetcher = new MapFetcher(drives);
+                //ConcurrentHashMap<String, Drive> drives = ApplicableDriveListBuilder.build(mCDFS.getDrives(), parent);
+                MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
                 CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(parent);
                 final String pathParent;
                 java.util.List<CdfsItem> items;
