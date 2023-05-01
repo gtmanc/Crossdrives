@@ -80,6 +80,7 @@ public class Infrastructure{
 
     public void checkAndBuild() {
         CompletableFuture<Result> checkFolderFuture = new CompletableFuture<>();
+        final String[] baseFolderId = new String[1];
 
         /*
             Check CDFS folder
@@ -116,6 +117,7 @@ public class Infrastructure{
             CompletableFuture<Result> future = new CompletableFuture<>();
             String query = "'" + result.folder + "' in parents";
 
+            baseFolderId[0] = result.folder;
             if(result.folder != null){
                 Log.d(TAG, "Check allocation file. Query:  " + query);
                 mClient.list().buildRequest()
@@ -232,6 +234,7 @@ public class Infrastructure{
 
         CompletableFuture<Result> createFilesFuture = createFolderFuture.thenCompose(result -> {
             CompletableFuture<Result> future = new CompletableFuture<>();
+            baseFolderId[0] = result.folder;
 
             if(result.file == null){
                 String json;

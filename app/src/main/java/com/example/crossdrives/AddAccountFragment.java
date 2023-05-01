@@ -13,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -25,6 +24,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
+import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -33,13 +33,9 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
-import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class AddAccountFragment extends BaseFragment{
     private String TAG = "CD.AddAccountFragment";
@@ -90,7 +86,7 @@ public class AddAccountFragment extends BaseFragment{
         view.findViewById(R.id.add_account_btn_ms).setOnClickListener(listener_add_onedrive);
         mView = view;
 
-        requireActivity().getOnBackPressedDispatcher().addCallback(callback);
+        //requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
         Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
@@ -170,7 +166,7 @@ public class AddAccountFragment extends BaseFragment{
                 if(brand == GlobalConstants.BRAND_MS) {
                     brand_am = GlobalConstants.BRAND_MS;
                 }
-                ai = am.getAccountActivated(getContext(), brand_am);
+                ai = am.getAccountActivatedByBrand(getContext(), brand_am);
                 r_am = am.setAccountDeactivated(getContext(), ai.brand, ai.name, ai.mail);
                 if(r_am != true){Log.w(TAG, "Set account deactivated not worked");}
 
@@ -195,23 +191,23 @@ public class AddAccountFragment extends BaseFragment{
     private AccountManager.AccountInfo getActivatedAccount(String brand) {
         AccountManager.AccountInfo ai;
         AccountManager am = AccountManager.getInstance();
-        return am.getAccountActivated(getContext(), brand);
+        return am.getAccountActivatedByBrand(getContext(), brand);
     }
 
-    OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
-        @Override
-        public void handleOnBackPressed() {
-            Fragment f = FragmentManager.findFragment(mView);
-
-            // Handle the back button event
-            Log.d(TAG, "Back button pressed!");
-            //passing null to master account fragment to avoid showing the toast
-            AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
-            //action.setCreateAccountName(p.Name);
-            NavHostFragment.findNavController(f).navigate((NavDirections) action);
-
-        }
-    };
+//    OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
+//        @Override
+//        public void handleOnBackPressed() {
+//            Fragment f = FragmentManager.findFragment(mView);
+//
+//            // Handle the back button event
+//            Log.d(TAG, "Back button pressed!");
+//            //passing null to master account fragment to avoid showing the toast
+//            AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
+//            //action.setCreateAccountName(p.Name);
+//            NavHostFragment.findNavController(f).navigate((NavDirections) action);
+//
+//        }
+//    };
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -228,11 +224,16 @@ public class AddAccountFragment extends BaseFragment{
         Log.d(TAG, "onOptionsItemSelected");
 
         //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (master account)
-        AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
+        //AddAccountFragmentDirections.NavigateBackToMasterAccount action = AddAccountFragmentDirections.navigateBackToMasterAccount(null);
+
         //action.setCreateAccountName(p.Name);
         Fragment f = FragmentManager.findFragment(mView);
-        NavHostFragment.findNavController(f).navigate((NavDirections) action);
+//        NavHostFragment.findNavController(f).navigate((NavDirections) action);
 
+        NavController navController = NavHostFragment.findNavController(f);
+        if (!navController.popBackStack()) {
+            Log.w(TAG, "no stack can be popup!");
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -389,7 +390,7 @@ public class AddAccountFragment extends BaseFragment{
     public void onPause() {
         super.onPause();
         Log.d(TAG, "onPause!");
-        callback.remove();
+        //callback.remove();
     }
 
     /*

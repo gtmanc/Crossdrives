@@ -1,8 +1,6 @@
 package com.example.crossdrives;
 
 import android.graphics.Bitmap;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,12 +20,19 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
+
+import com.crossdrives.ui.account.MasterAccountVM;
+import com.crossdrives.ui.document.OpenTree;
+import com.crossdrives.ui.document.OpenTreeFactory;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -43,14 +48,12 @@ public class MasterAccountFragment extends Fragment{
     private Bitmap mBmpUserPhoto;
     List<String> mBrands = GlobalConstants.BrandList;
 
+    MasterAccountVM vm;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //allocate space for the list so that we can directly add the value with index later
-//        for(String s : BrandList) {
-//            mLayoutCards.add(null);
-//        }
+        vm = new ViewModelProvider(this).get(MasterAccountVM.class);
     }
 
     @Nullable
@@ -68,6 +71,9 @@ public class MasterAccountFragment extends Fragment{
         String MyArg = MasterAccountFragmentArgs.fromBundle(getArguments()).getCreateAccountName();
         if(MyArg != null && MyArg != "NoName")
             Toast.makeText(getContext(), "Master Account Added: " + MyArg, Toast.LENGTH_LONG).show();
+
+        Collection<AccountManager.AccountInfo> curr = vm.getCurrList();
+        Collection<AccountManager.AccountInfo> diff = vm.calculateDiff(curr);
 
         readAllAccounts();
 
@@ -117,6 +123,7 @@ public class MasterAccountFragment extends Fragment{
 
         //if there is activated account, start to update the card content.
         for(int i = 0; i < mAi.size(); i++){
+            //Log.d(TAG, "Update card: " + mAi.get(i).brand);
             setCardVisible(i);
             updateLogo(i, mAi.get(i).brand);
 
@@ -226,9 +233,9 @@ public class MasterAccountFragment extends Fragment{
         }
 
         for (int i = 0; i < mBrands.size(); i++) {
-            ai = am.getAccountActivated(getContext(), mBrands.get(i));
+            ai = am.getAccountActivatedByBrand(getContext(), mBrands.get(i));
             if (ai != null) {
-                Log.d(TAG, "Activated account: " + ai.name);
+                Log.d(TAG, "Activated account: " + ai.brand + ". " + ai.name);
 //                if(ai.mail != null){Log.d(TAG, "mail: " + ai.mail);}
 //                else{Log.d(TAG, "mail is empty");}
                 mAi.add(ai);
@@ -254,9 +261,12 @@ public class MasterAccountFragment extends Fragment{
         Log.d(TAG, "onOptionsItemSelected");
 
         //Because we only have a action button (close Button) is action bar, so simply go back to previous screen (query result screen)
-        NavDirections a = MasterAccountFragmentDirections.navigateBackToQueryResult(null);
-        NavHostFragment.findNavController(mFragment).navigate(a);
-
+//        NavDirections a = MasterAccountFragmentDirections.navigateBackToQueryResult(null);
+//        NavHostFragment.findNavController(mFragment).navigate(a);
+        NavController navController = NavHostFragment.findNavController(mFragment);
+        if (!navController.popBackStack()) {
+            Log.w(TAG, "no stack can be popup!");
+        }
         return super.onOptionsItemSelected(item);
     }
 }

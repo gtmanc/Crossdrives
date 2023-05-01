@@ -12,11 +12,20 @@ import android.util.Log;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.data.DBHelper;
 import com.crossdrives.msgraph.MSGraphRestHelper;
+import com.crossdrives.msgraph.SnippetApp;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class AccountManager {
     private static String TAG = "CD.AccountManager";
+
+    private final String Col_State = DBConstants.USERPROFILE_TABLE_COL_STATE;
+    private final int iBrand = DBConstants.TABLE_ACCOUNT_COL_INDX_BRAND;
+    private final int iname = DBConstants.TABLE_ACCOUNT_COL_INDX_NAME;
+    private final int imail = DBConstants.TABLE_ACCOUNT_COL_INDX_MAIL;
+
     static AccountManager mAM;
     public final static int MAX_BRAND_SUPPORT = 2;
 //    public final static String BRAND_GOOGLE = "GDrive";
@@ -27,10 +36,10 @@ public class AccountManager {
 
 
 
-    static class AccountInfo{
-        String brand;
-        String name;
-        String mail;
+    public static class AccountInfo{
+        public String brand;
+        public String name;
+        public String mail;
         Uri photouri;
         Bitmap mBmp;
         Callback mCallback;
@@ -118,19 +127,17 @@ public class AccountManager {
         return err;
     }
 
-    public AccountInfo getAccountActivated(Context context, String brand)
+    public AccountInfo getAccountActivatedByBrand(Context context, String brand)
     {
         Cursor c = null;
         DBHelper dbh = new DBHelper(context, null,null,0);
         AccountInfo info = null;
-        String Col_State = DBConstants.USERPROFILE_TABLE_COL_STATE;
         String Col_Brand = DBConstants.USERPROFILE_TABLE_COL_BRAND;
-        int iname = DBConstants.TABLE_ACCOUNT_COL_INDX_NAME;
-        int imail = DBConstants.TABLE_ACCOUNT_COL_INDX_MAIL;
+
         //int iphoto = DBConstants.COL_INDX_PHOTOURL;
 
         /*
-        Read all rows that the state is activated. Normally, there must be only one activated account for each brand.
+            Read all rows that the state is activated. Normally, there must be only one activated account for each brand.
          */
         c = dbh.query(Col_Brand, "\""+brand +"\"", Col_State, "\""+STATE_ACTIVATED+"\"");
         if (c.getCount() > 1) {
@@ -146,8 +153,36 @@ public class AccountManager {
             info.mail = c.getString(imail);
             //info.photouri = uri;
         }
+        c.close();
 
         return info;
+    }
+
+    public Collection<AccountInfo> getAccountActivated(){
+        Cursor c = null;
+        Collection<AccountInfo> accounts = new ArrayList<>();
+
+        DBHelper dbh = new DBHelper(SnippetApp.getAppContext(), null,null,0);
+
+        c = dbh.query(Col_State, "\""+STATE_ACTIVATED+"\"");
+
+        if(c.getCount() > 0) {
+            c.moveToFirst();
+            do {
+                AccountInfo ai = new AccountInfo();
+                ai.brand = c.getString(iBrand);
+                ai.name = c.getString(iname);
+                ai.mail = c.getString(imail);
+                accounts.add(ai);
+            } while (c.moveToNext());
+        }
+        c.close();
+
+        Log.d(TAG, "num of activated count:" + accounts.size() + "list:");
+        accounts.stream().forEach((info)->{
+            Log.d(TAG, "  brand: " + info.brand + ". name:" + info.name);
+        });
+        return accounts;
     }
 
     /*

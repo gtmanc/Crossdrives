@@ -23,7 +23,6 @@ import com.crossdrives.cdfs.model.UpdateContent;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.allocation.MapFetcher;
-import com.crossdrives.cdfs.util.ApplicableDriveListBuilder;
 import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
@@ -119,7 +118,8 @@ public class Upload {
     public CompletableFuture<File> upload(InputStream ins, String CdfsName, @NonNull List<CdfsItem> parents, IUploadProgressListener listener)  {
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
-            ConcurrentHashMap<String, Drive> drives;
+            ConcurrentHashMap<String, Drive> drives = mCDFS.getDrives();
+            Log.d(TAG, "Signed in drives:" + drives);
             mListener = listener;
             CdfsItem whereWeAre = parents.isEmpty() ? null : parents.get(parents.size()-1);
 
@@ -127,11 +127,6 @@ public class Upload {
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
 
-            //Limit the drive to be the ones that the folder(parent) was created. The drive signed in after the
-            //folder is created will be removed.
-            Log.d(TAG, "Signed in drives:" + mCDFS.getDrives());
-            drives = ApplicableDriveListBuilder.build(mCDFS.getDrives(), whereWeAre);
-            Log.d(TAG, "drives to proceed:" + drives);
             QuotaEnquirer enquirer = new QuotaEnquirer(drives);
             //Both queues need to be global as splitter will use
             HashMap<String, ArrayBlockingQueue<File>> toUploadQueueMap = new HashMap<>();

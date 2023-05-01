@@ -141,12 +141,15 @@ public class DBHelper extends SQLiteOpenHelper {
             statement = "SELECT * FROM " + USERPROFILE_TABLE_NAME + ";";
         }else{
             statement = "SELECT * "
-                       + " FROM " + USERPROFILE_TABLE_NAME
-                       + " WHERE " + expression[0] + " = " + expression[1] + " AND "
-                       + expression[2] + " = " + expression[3]
-                       + ";";
-            Log.d(TAG, "Query required: " + statement);
+                    + " FROM " + USERPROFILE_TABLE_NAME
+                    + " WHERE " + expression[0] + " = " + expression[1];
         }
+        if(expression.length > 2 ){
+            statement.concat( " AND ");
+            statement.concat(expression[2] + " = " + expression[3]
+                    + ";");
+        }
+        Log.d(TAG, "Query required: " + statement);
 
         if(mdb != null)    {
             cursor = mdb.rawQuery(statement, null);

@@ -183,10 +183,10 @@ public class AllocManager implements IAllocManager {
                 java.util.List<AllocationItem> items;
                 items = getItemsByID(id);   //build item list for the items have the same cdfs id.
                 //Log.d(TAG, "Size of items: " + items.size());
-                if(items.stream().anyMatch((item)->item.getAttrFolder())){
-                    Log.d(TAG, "folder item. skip cross check. ");
-                }
-                else{
+//                if(items.stream().anyMatch((item)->item.getAttrFolder())){
+//                    Log.d(TAG, "folder item. skip cross check. ");
+//                }
+//                else{
                     results.set(checker.checkItemsCrossly(items));
                     if (getConclusion(results.get())) {
                     } else {
@@ -194,7 +194,7 @@ public class AllocManager implements IAllocManager {
                         deleteItemsByID(id);
                         result = false;
                     }
-                }
+                //}
                 return result;
             }).count() < IDs.size()) {
                 globalResult.set(false);
@@ -209,7 +209,8 @@ public class AllocManager implements IAllocManager {
         Input:
 
      */
-    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent, String cdfsId, String id){
+    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent,
+                                                  String cdfsId, String id, int seq, int total){
         AllocationItem item = new AllocationItem();
         item.setAttrFolder(true);
         item.setDrive(drive);
@@ -219,8 +220,8 @@ public class AllocManager implements IAllocManager {
         item.setItemId(id);
         item.setCDFSItemSize(0);
         item.setSize(0);
-        item.setSequence(1);
-        item.setTotalSeg(1);
+        item.setSequence(seq);
+        item.setTotalSeg(total);
         return item;
     }
 

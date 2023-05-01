@@ -416,16 +416,16 @@ public class MapFetcher {
     public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
         HashMap<String, File> file;
 
-        //Log.d(TAG, "Get meta data all.");
+        Log.d(TAG, "Get meta data all.");
         if(parent != null){
-            //Log.d(TAG, "Not root.");
+            Log.d(TAG, "Not root.");
             file = new HashMap<>();
             //simply make api happy
             parent.getMap().forEach((k, v)->{
                 File f = new File();
                 //Log.d(TAG, "map size: " + v.size());
                 f.setId(v.get(0));
-                //Log.d(TAG, "id[0]: " + v.get(0));
+                Log.d(TAG, "drive: " + k + ". id[0]: " + v.get(0));
                 file.put(k, f);
             });
         }else

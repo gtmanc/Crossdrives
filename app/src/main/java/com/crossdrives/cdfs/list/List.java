@@ -17,7 +17,6 @@ import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
-import com.crossdrives.cdfs.util.ApplicableDriveListBuilder;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
