@@ -291,11 +291,14 @@ public class AddAccountFragment extends BaseFragment{
                 java.lang.IllegalArgumentException: Navigation action/destination com.example.crossdrives:id/navigate_back_to_master_account cannot be found from the current destination Destination(com.example.crossdrives:id/drawer_menu_item_master_account) class=com.example.crossdrives.MasterAccountFragment
             */
             //passing name to master account fragment so that a toast is shown to the user that an account is created
-            AddAccountFragmentDirections.NavigateBackToMasterAccount action =
-                            AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
-            Log.d(TAG, "mView: " + mView);
-            Navigation.findNavController(mView).navigate((NavDirections) action);
-
+//            AddAccountFragmentDirections.NavigateBackToMasterAccount action =
+//                            AddAccountFragmentDirections.navigateBackToMasterAccount(profile.Name);
+//            Log.d(TAG, "mView: " + mView);
+//            Navigation.findNavController(mView).navigate((NavDirections) action);
+            NavController navController = Navigation.findNavController(mView);
+            if (!navController.popBackStack()) {
+                Log.w(TAG, "no stack can be popup!");
+            }
         }
 
         @Override

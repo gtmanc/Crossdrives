@@ -26,19 +26,19 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.crossdrives.ui.account.MasterAccountVM;
-import com.crossdrives.ui.document.OpenTree;
-import com.crossdrives.ui.document.OpenTreeFactory;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MasterAccountFragment extends Fragment{
     private String TAG = "CD.MasterAccountFragment";
-    private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
+    //private List<AccountManager.AccountInfo> mAi = new ArrayList<>();
     //private View mView;
     private Fragment mFragment;
     private List<CardView> mLayoutCards = new ArrayList<>();
@@ -72,12 +72,14 @@ public class MasterAccountFragment extends Fragment{
         if(MyArg != null && MyArg != "NoName")
             Toast.makeText(getContext(), "Master Account Added: " + MyArg, Toast.LENGTH_LONG).show();
 
-        Collection<AccountManager.AccountInfo> curr = vm.getCurrList();
-        Collection<AccountManager.AccountInfo> diff = vm.calculateDiff(curr);
+        //readAllAccounts();
 
-        readAllAccounts();
+        //build lists that we will use later
+        CardView iv = view.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);
+        iv = view.findViewById(R.id.account_list2); mLayoutCards.add(1, iv);
 
-        prepareUI(view);
+        mLogoResIDs.put(mBrands.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
+        mLogoResIDs.put(mBrands.get(1), new Integer(R.drawable.onedrive_logo_wine));
 
         udpateCards(view);
 
@@ -88,14 +90,6 @@ public class MasterAccountFragment extends Fragment{
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
 
-    }
-
-    private void prepareUI(View v){
-        CardView iv = v.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);
-        iv = v.findViewById(R.id.account_list2); mLayoutCards.add(1, iv);
-
-        mLogoResIDs.put(mBrands.get(0), new Integer(R.drawable.logo_drive_2020q4_color_2x_web_64dp));
-        mLogoResIDs.put(mBrands.get(1), new Integer(R.drawable.onedrive_logo_wine));
     }
 
     private View.OnClickListener listener_account_add = new View.OnClickListener() {
@@ -112,28 +106,51 @@ public class MasterAccountFragment extends Fragment{
         The items in the user profile card view will be updated one by one according to the record(row)
         queried from database.
     */
-    private void udpateCards(View v){
+    private void udpateCards(View v) {
         //Show no account message or not
         showNoAccountMsg(v);
         setCardInVisible(0);
         setCardInVisible(1);
-        if(mAi.size() > 0){
+
+        //Show toast message
+        MasterAccountVM.DiffResult diff = vm.diffThenUpdateCurr();
+        //https://stackoverflow.com/questions/5283444/convert-array-of-strings-into-a-string-in-java/5283753
+        String diffInfo = diff.getDiff().stream().map((ai) -> {
+            return ai.brand;
+        }).collect(Collectors.joining(","));
+
+        if (!diff.getDiff().isEmpty()) {
+            String message = "Master Account ";
+            if (diff.getStatus()) {
+                message = message.concat("added") ;
+            } else {
+                message = message.concat("removed") ;
+            }
+            message = message.concat(" :" + diffInfo);
+            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+        }
+
+        Collection<AccountManager.AccountInfo> curr = vm.getCurrList();
+
+        if(curr.size() > 0){
             RemoveNoAccountMsg(v);
         }
 
         //if there is activated account, start to update the card content.
-        for(int i = 0; i < mAi.size(); i++){
-            //Log.d(TAG, "Update card: " + mAi.get(i).brand);
+        Iterator<AccountManager.AccountInfo> iterator = curr.iterator();
+        int i = 0;
+        while(iterator.hasNext()){
+            AccountManager.AccountInfo ai = iterator.next();
             setCardVisible(i);
-            updateLogo(i, mAi.get(i).brand);
+            updateLogo(i, ai.brand);
 
-            updateName(i);
+            updateName(i, ai.name );
 
-            updateMail(i);
+            updateMail(i, ai.mail);
 
-            updatePhoto(i, mAi.get(i).brand);
+            updatePhoto(i, ai.brand);
+            i++;
         }
-
     }
     private void setCardVisible(int index){
         mLayoutCards.get(index).setVisibility(View.VISIBLE);
@@ -153,13 +170,13 @@ public class MasterAccountFragment extends Fragment{
         ImageView iv = mLayoutCards.get(index).findViewById(R.id.brand_logo);
         iv.setImageResource(mLogoResIDs.get(brand));
     }
-    private void updateName(int index){
+    private void updateName(int index, String name){
         TextView tv = mLayoutCards.get(index).findViewById(R.id.account_name);
-        tv.setText(mAi.get(index).name);
+        tv.setText(name);
     }
-    private void updateMail(int index){
+    private void updateMail(int index, String mail){
         TextView tv = mLayoutCards.get(index).findViewById(R.id.account_mail);
-        tv.setText(mAi.get(index).mail);
+        tv.setText(mail);
     }
     private void updatePhoto(int index, String brand){
         Log.d(TAG, "Update photo. Brand: " + brand);
@@ -223,31 +240,32 @@ public class MasterAccountFragment extends Fragment{
     /*
     Read activated accounts using account manager and save them or it to mAccountList.
      */
-    private void readAllAccounts() {
-        AccountManager.AccountInfo ai;
-        AccountManager am = AccountManager.getInstance();
-
-        //First of all, clean up the list
-        for(int i = 0; i < mAi.size(); i++){
-            mAi.remove(i);
-        }
-
-        for (int i = 0; i < mBrands.size(); i++) {
-            ai = am.getAccountActivatedByBrand(getContext(), mBrands.get(i));
-            if (ai != null) {
-                Log.d(TAG, "Activated account: " + ai.brand + ". " + ai.name);
-//                if(ai.mail != null){Log.d(TAG, "mail: " + ai.mail);}
-//                else{Log.d(TAG, "mail is empty");}
-                mAi.add(ai);
-            } else {
-                Log.d(TAG, "No activated account for brand:" + mBrands.get(i));
-            }
-        }
-    }
+//    private void readAllAccounts() {
+//        AccountManager.AccountInfo ai;
+//        AccountManager am = AccountManager.getInstance();
+//
+//        //First of all, clean up the list
+//        for(int i = 0; i < mAi.size(); i++){
+//            mAi.remove(i);
+//        }
+//
+//        for (int i = 0; i < mBrands.size(); i++) {
+//            ai = am.getAccountActivatedByBrand(getContext(), mBrands.get(i));
+//            if (ai != null) {
+//                Log.d(TAG, "Activated account: " + ai.brand + ". " + ai.name);
+////                if(ai.mail != null){Log.d(TAG, "mail: " + ai.mail);}
+////                else{Log.d(TAG, "mail is empty");}
+//                mAi.add(ai);
+//            } else {
+//                Log.d(TAG, "No activated account for brand:" + mBrands.get(i));
+//            }
+//        }
+//    }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
+
 
         inflater.inflate(R.menu.menu_option, menu);
 

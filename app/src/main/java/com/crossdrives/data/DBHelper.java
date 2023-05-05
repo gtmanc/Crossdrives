@@ -145,8 +145,8 @@ public class DBHelper extends SQLiteOpenHelper {
                     + " WHERE " + expression[0] + " = " + expression[1];
         }
         if(expression.length > 2 ){
-            statement.concat( " AND ");
-            statement.concat(expression[2] + " = " + expression[3]
+            statement = statement.concat( " AND ");
+            statement = statement.concat(expression[2] + " = " + expression[3]
                     + ";");
         }
         Log.d(TAG, "Query required: " + statement);
