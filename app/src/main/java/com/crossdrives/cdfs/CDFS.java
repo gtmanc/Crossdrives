@@ -76,12 +76,11 @@ public class CDFS extends BaseCDFS{
 
     private void createBaseFolder(String name, IDriveClient client){
         File fileMetadata = new File();
-//        fileMetadata.setName("CDFS2");
-//        fileMetadata.setMimeType("application/vnd.google-apps.folder");
-        Infrastructure verify = new Infrastructure(name, client, this);
+
+        Infrastructure builder = Infrastructure.getInstance();
 
         //Check CDFS existing folder. We will do the creation in the callback
-        verify.checkAndBuild();
+        builder.checkAndBuild(name, client);
 
         //Upload test only. For Google, folder cdfs is used. For MS, AAA is used.
         //fileMetadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs

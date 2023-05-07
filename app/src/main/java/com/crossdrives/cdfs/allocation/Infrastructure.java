@@ -8,6 +8,7 @@ import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.data.LocalFileCreator;
 import com.crossdrives.cdfs.model.AllocContainer;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.collection.Files;
@@ -38,7 +39,7 @@ public class Infrastructure{
 //    private OutputStream mStream;
 //    private String mFileId;
     //IFileListCallBack<FileList, Object> mCallback;
-    String mDriveName;
+//    String mDriveName;
     private final String NAME_ALLOCATION_ROOT = Names.allocFile(null);
 
     private class Result{
@@ -53,6 +54,7 @@ public class Infrastructure{
         }
     }
 
+    CdfsItem mCdfsItem;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     /*
@@ -64,21 +66,32 @@ public class Infrastructure{
             "' and name = '" + NAME_CDFS_FOLDER + "'";
 
     private CDFS mCDFS;
-    private ConcurrentHashMap<String, Drive> mDrives;
+    //private ConcurrentHashMap<String, Drive> mDrives;
     /*
     A flag used to wait until the drive client callback gets called. Always set to false each time an operation
     is performed.
     */
     private boolean mResponseGot = false;
+    static private Infrastructure instance;
 
-    public Infrastructure(String name, IDriveClient client, CDFS cdfs) {
-        mClient = client;
-        mDriveName = name;
-        mCDFS = cdfs;
-        mDrives = cdfs.getDrives();
+    public static Infrastructure getInstance(){
+        if(instance == null){
+            instance = new Infrastructure();
+        }
+        return instance;
     }
 
-    public void checkAndBuild() {
+    public Infrastructure() {
+//        mClient = client;
+//        mDriveName = name;
+//        mCDFS = cdfs;
+        //mDrives = cdfs.getDrives();
+
+        mCdfsItem = new CdfsItem();
+        mCdfsItem.setMap(new ConcurrentHashMap<>());
+    }
+
+    public CompletableFuture<CdfsItem> checkAndBuild(String driveName, IDriveClient client) {
         CompletableFuture<Result> checkFolderFuture = new CompletableFuture<>();
         final String[] baseFolderId = new String[1];
 
@@ -87,7 +100,7 @@ public class Infrastructure{
         */
         sExecutor.submit(() -> {
             Log.d(TAG, "Check CDFS folder: " + FILTERCLAUSE_CDFS_FOLDER);
-            mClient.list().buildRequest()
+            client.list().buildRequest()
                     //sClient.get(0).list().buildRequest()
                     .setNextPage(null)
                     .setPageSize(0) //0 means no page size is applied
@@ -120,7 +133,7 @@ public class Infrastructure{
             baseFolderId[0] = result.folder;
             if(result.folder != null){
                 Log.d(TAG, "Check allocation file. Query:  " + query);
-                mClient.list().buildRequest()
+                client.list().buildRequest()
                         //sClient.get(0).list().buildRequest()
                         .setNextPage(null)
                         .setPageSize(0) //0 means no page size is applied
@@ -156,7 +169,7 @@ public class Infrastructure{
             CompletableFuture<Result> future = new CompletableFuture<>();
             if(result.file != null){
                 Log.d(TAG, "download root allocation file");
-                mClient.download().buildRequest(result.file)
+                client.download().buildRequest(result.file)
                         .run(new IDownloadCallBack<MediaData>() {
 
                             @Override
@@ -211,7 +224,7 @@ public class Infrastructure{
                 File fileMetadata = new File();
                 fileMetadata.setName(NAME_CDFS_FOLDER);
                 fileMetadata.setMimeType(MINETYPE_FOLDER);
-                mClient.create().buildRequest(fileMetadata).run(new ICreateCallBack<File>() {
+                client.create().buildRequest(fileMetadata).run(new ICreateCallBack<File>() {
                     @Override
                     public void success(File file) {
                         Log.d(TAG, "Create file OK. ID: " + file.getId());
@@ -273,7 +286,7 @@ public class Infrastructure{
                 fileMetadata.setParents(Collections.singletonList(result.folder));
                 //fileMetadata.setParents(null); //Set parent to null if you want to upload file to root
                 fileMetadata.setName(NAME_ALLOCATION_ROOT);
-                mClient.upload().buildRequest(fileMetadata, path).run(new IUploadCallBack() {
+                client.upload().buildRequest(fileMetadata, path).run(new IUploadCallBack() {
                     @Override
                     public void success(com.crossdrives.driveclient.model.File file) {
                         Log.d(TAG, "Upload file OK. ID: " + file.getFile().getId());
@@ -294,21 +307,34 @@ public class Infrastructure{
             return future;
         });
 
-        createFilesFuture.thenAccept(result -> {
-           /*
-                Infrastructure supposes to be constructed
-            */
-            if(result.folder == null)
-            {
-                Log.w(TAG, "folder ID is null!");
-            }
-            if(result.file == null){
-                Log.w(TAG, "file ID is null!");
-            }
-            else{
-                Log.d(TAG, "build infrastructure completed");
-            }
+        CompletableFuture<CdfsItem> resultFuture =
+        createFilesFuture.thenCompose(result->{
+            CompletableFuture<CdfsItem> future = new CompletableFuture<>();
+            mCdfsItem.setFolder(true);
+            mCdfsItem.setName("");
+            mCdfsItem.setPath("");
+            future.complete(mCdfsItem);
+            ConcurrentHashMap map = mCdfsItem.getMap();
+            map.put(driveName, result.folder);
+            mCdfsItem.setMap(map);
+            return future;
         });
+
+//        createFilesFuture.thenAccept(result -> {
+//           /*
+//                Infrastructure supposes to be constructed
+//            */
+//            if(result.folder == null)
+//            {
+//                Log.w(TAG, "folder ID is null!");
+//            }
+//            if(result.file == null){
+//                Log.w(TAG, "file ID is null!");
+//            }
+//            else{
+//                Log.d(TAG, "build infrastructure completed");
+//            }
+//        });
 
 
         /*
@@ -352,6 +378,8 @@ public class Infrastructure{
             Log.w(TAG, "Exception occurred in create and upload allocation file " + t.toString());
             return null;
         });
+
+        return resultFuture;
     }
 
     private String handleResultGetCDFSFolder(FileList fileList){
@@ -439,41 +467,42 @@ public class Infrastructure{
         Get meta data of base folder in all available user's drives
         Return: meta data of the base folders
     */
-    public CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(){
-        CompletableFuture<HashMap<String, File>> metaDataFutures = new CompletableFuture<>();
-        HashMap<String, CompletableFuture<File>> metaDataMap = new HashMap<>();
-
-        mDrives.keySet().stream().forEach((key)->{
-            metaDataMap.put(key, getMetaDataBase(key));
-        });
-
-        metaDataFutures = CompletableFuture.supplyAsync(()->{
-          return Mapper.reValue(metaDataMap, (future)->{
-              return future.join();
-          });
-        });
-
-        return metaDataFutures;
-    }
+//    public CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(){
+//        CompletableFuture<HashMap<String, File>> metaDataFutures = new CompletableFuture<>();
+//        HashMap<String, CompletableFuture<File>> metaDataMap = new HashMap<>();
+//
+//        mDrives.keySet().stream().forEach((key)->{
+//            metaDataMap.put(key, getMetaDataBase(key));
+//        });
+//
+//        metaDataFutures = CompletableFuture.supplyAsync(()->{
+//          return Mapper.reValue(metaDataMap, (future)->{
+//              return future.join();
+//          });
+//        });
+//
+//        return metaDataFutures;
+//    }
 
 
     /*
         get metadata of base folder (CDFS) in user drive.
         Return: meta data of the base folder
      */
-    public CompletableFuture<File> getMetaDataBase(String driveName){
-        Fetcher fetcher= new Fetcher(mDrives);
-        CompletableFuture<FileList> fileListFuture;
-
-        fileListFuture =  fetcher.list(driveName, "");
-
-        CompletableFuture<File> folder =
-                CompletableFuture.supplyAsync(()->{
-                    File f = Files.getFolder(fileListFuture.join(), Names.baseFolder());
-                    Log.d(TAG, "CDFS folder found. ID: " + f.getId());
-                    return f;
-                });
-
-        return folder;
-    }
+//    public CompletableFuture<File> getMetaDataBase(String driveName){
+//        Fetcher fetcher= new Fetcher(mDrives);
+//        CompletableFuture<FileList> fileListFuture;
+//
+//        fileListFuture =  fetcher.list(driveName, "");
+//
+//        CompletableFuture<File> folder =
+//                CompletableFuture.supplyAsync(()->{
+//                    File f = Files.getFolder(fileListFuture.join(), Names.baseFolder());
+//                    Log.d(TAG, "CDFS folder found. ID: " + f.getId());
+//                    return f;
+//                });
+//
+//        return folder;
+//    }
+    public CdfsItem getBaseItem(){return mCdfsItem;}
 }
