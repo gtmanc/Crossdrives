@@ -14,17 +14,16 @@ import java.util.stream.Stream;
 
 public class MasterAccountVM extends ViewModel {
     final String TAG = "CD.MasterAccountVM";
-    private List<AccountManager.AccountInfo> currList = new ArrayList<>();
+    private List<AccountManager.AccountInfo> currList;
 
-    final static int ACCOUNT_ADDED = 0;
-    final static int ACCOUNT_REMOVED = 1;
-    final static int ACCOUNT_ADDED_VM_CREATED = 2;
+    public final static int ACCOUNT_ADDED = 0;
+    public final static int ACCOUNT_REMOVED = 1;
+    public final static int ACCOUNT_CHANGE_VM_CREATED = 2;
+    public final static int ACCOUNT_NO_CHANGE = 3;
 
     public Collection<AccountManager.AccountInfo> getCurrList(){return currList;}
 
     public class DiffResult{
-
-
         int status;
         List<AccountManager.AccountInfo> diff;
 
@@ -37,28 +36,22 @@ public class MasterAccountVM extends ViewModel {
         }
     }
 
-    boolean isCurrListNull = false;
-    public MasterAccountVM() {
-        isCurrListNull = true;
-    }
-
     /*
             Return
             Diffed list
          */
-    public DiffResult diffThenUpdateCurr(){
+    public DiffResult diffThenUpdateCurr() {
         AccountManager am = AccountManager.getInstance();
         List<AccountManager.AccountInfo> updatedList = new ArrayList<>(am.getAccountActivated());
-        List<AccountManager.AccountInfo> diff;
-        if(currList.size() == 0){diff = updatedList;}
-        else{
-            diff = diffBetweenLists(updatedList, currList);
+        DiffResult result = new DiffResult();
+        result.status = determineStatus(currList, updatedList);
+        Log.d(TAG, "diff status: " + result.status);
+        if (currList == null) {
+            currList = new ArrayList<>();
+            Log.d(TAG, "currList is null");
         }
 
-        DiffResult result = new DiffResult();
-        result.diff = diff;
-        result.isAccountAdded = false;
-        if(currList.size() < updatedList.size()){result.isAccountAdded = true;}
+        result.diff = diffBetweenLists(updatedList, currList);
 
         List<AccountManager.AccountInfo> diff2 = diffBetweenLists(updatedList, currList);
         Log.d(TAG, "diffed account: ");
@@ -67,6 +60,25 @@ public class MasterAccountVM extends ViewModel {
         });
         currList = updatedList;
         return result;
+    }
+
+    private <T> int determineStatus(List<T> oldList, List<T> newList){
+        int status = ACCOUNT_NO_CHANGE;
+        int oldListSize = oldList == null? 0 : oldList.size();
+        int newListSize = newList.size();
+
+        if(oldList == null){
+            status = ACCOUNT_CHANGE_VM_CREATED;
+            return status;
+        }
+
+        if (oldListSize < newListSize) {
+            status = ACCOUNT_ADDED;
+        }else if(oldListSize > newListSize){
+            status = ACCOUNT_REMOVED;
+        }
+
+        return status;
     }
 
     private List<AccountManager.AccountInfo> diffBetweenLists(List<AccountManager.AccountInfo> first, List<AccountManager.AccountInfo> second){

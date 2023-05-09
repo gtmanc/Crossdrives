@@ -119,16 +119,7 @@ public class MasterAccountFragment extends Fragment{
             return ai.brand;
         }).collect(Collectors.joining(","));
 
-        if (!diff.getDiff().isEmpty()) {
-            String message = "Master Account ";
-            if (diff.getStatus()) {
-                message = message.concat("added") ;
-            } else {
-                message = message.concat("removed") ;
-            }
-            message = message.concat(" :" + diffInfo);
-            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-        }
+        showSigninMessage(diff.getStatus(), diffInfo);
 
         Collection<AccountManager.AccountInfo> curr = vm.getCurrList();
 
@@ -152,6 +143,22 @@ public class MasterAccountFragment extends Fragment{
             i++;
         }
     }
+    private void showSigninMessage(int status, String diffInfo){
+        String message = "";
+        if (status == MasterAccountVM.ACCOUNT_ADDED) {
+            message = message.concat("added: ");
+        } else if (status == MasterAccountVM.ACCOUNT_REMOVED) {
+            message = message.concat("removed: ");
+        }
+
+        if(message.length() > 0){
+            StringBuffer sb = new StringBuffer(message);
+            sb.insert(0, "Master account ");
+            sb.append(diffInfo);
+            Toast.makeText(getContext(), sb.toString(), Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void setCardVisible(int index){
         mLayoutCards.get(index).setVisibility(View.VISIBLE);
     }
