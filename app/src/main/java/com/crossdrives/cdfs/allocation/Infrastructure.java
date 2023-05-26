@@ -23,8 +23,10 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -133,6 +135,7 @@ public class Infrastructure{
             baseFolderId[0] = result.folder;
             if(result.folder != null){
                 Log.d(TAG, "Check allocation file. Query:  " + query);
+                createBaseItemIfNone(driveName, result.folder);
                 client.list().buildRequest()
                         //sClient.get(0).list().buildRequest()
                         .setNextPage(null)
@@ -310,13 +313,15 @@ public class Infrastructure{
         CompletableFuture<CdfsItem> resultFuture =
         createFilesFuture.thenCompose(result->{
             CompletableFuture<CdfsItem> future = new CompletableFuture<>();
-            mCdfsItem.setFolder(true);
-            mCdfsItem.setName("");
-            mCdfsItem.setPath("");
-            future.complete(mCdfsItem);
+            if(mCdfsItem == null){
+                mCdfsItem = createBaseItemPlaceholder();
+            }
             ConcurrentHashMap map = mCdfsItem.getMap();
             map.put(driveName, result.folder);
             mCdfsItem.setMap(map);
+
+            future.complete(mCdfsItem);
+
             return future;
         });
 
@@ -467,42 +472,87 @@ public class Infrastructure{
         Get meta data of base folder in all available user's drives
         Return: meta data of the base folders
     */
-//    public CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(){
-//        CompletableFuture<HashMap<String, File>> metaDataFutures = new CompletableFuture<>();
-//        HashMap<String, CompletableFuture<File>> metaDataMap = new HashMap<>();
-//
-//        mDrives.keySet().stream().forEach((key)->{
-//            metaDataMap.put(key, getMetaDataBase(key));
-//        });
-//
-//        metaDataFutures = CompletableFuture.supplyAsync(()->{
-//          return Mapper.reValue(metaDataMap, (future)->{
-//              return future.join();
-//          });
-//        });
-//
-//        return metaDataFutures;
-//    }
+    private CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(ConcurrentHashMap<String, Drive> drives){
+        CompletableFuture<HashMap<String, File>> metaDataFutures = new CompletableFuture<>();
+        HashMap<String, CompletableFuture<File>> metaDataMap = new HashMap<>();
+
+        drives.keySet().stream().forEach((key)->{
+            metaDataMap.put(key, getMetaDataBase(key, drives));
+        });
+
+        metaDataFutures = CompletableFuture.supplyAsync(()->{
+          return Mapper.reValue(metaDataMap, (future)->{
+              return future.join();
+          });
+        });
+
+        return metaDataFutures;
+    }
 
 
     /*
         get metadata of base folder (CDFS) in user drive.
         Return: meta data of the base folder
      */
-//    public CompletableFuture<File> getMetaDataBase(String driveName){
-//        Fetcher fetcher= new Fetcher(mDrives);
-//        CompletableFuture<FileList> fileListFuture;
-//
-//        fileListFuture =  fetcher.list(driveName, "");
-//
-//        CompletableFuture<File> folder =
-//                CompletableFuture.supplyAsync(()->{
-//                    File f = Files.getFolder(fileListFuture.join(), Names.baseFolder());
-//                    Log.d(TAG, "CDFS folder found. ID: " + f.getId());
-//                    return f;
-//                });
-//
-//        return folder;
-//    }
-    public CdfsItem getBaseItem(){return mCdfsItem;}
+    private CompletableFuture<File> getMetaDataBase(String driveName, ConcurrentHashMap<String, Drive> drives){
+        Fetcher fetcher= new Fetcher(drives);
+        CompletableFuture<FileList> fileListFuture;
+
+        fileListFuture =  fetcher.list(driveName, "");
+
+        CompletableFuture<File> folder =
+                CompletableFuture.supplyAsync(()->{
+                    File f = Files.getFolder(fileListFuture.join(), Names.baseFolder());
+                    Log.d(TAG, "CDFS folder found. ID: " + f.getId());
+                    return f;
+                });
+
+        return folder;
+    }
+    public CompletableFuture<CdfsItem> getBaseItem(ConcurrentHashMap<String, Drive> drives){
+        CompletableFuture<CdfsItem> itemMetaDataFuture;
+        if(mCdfsItem == null){
+            Log.d(TAG, "Fetch remote base folders metadata...");
+            mCdfsItem = createBaseItemPlaceholder();
+            itemMetaDataFuture = CompletableFuture.supplyAsync(()->{
+                HashMap<String, List<String>> map =
+                Mapper.reValue(getMetaDataBaseAll(drives).join(), (file)->{
+                    List<String> list = new ArrayList<>();
+                    list.add(file.getId());
+                    return list;
+                });
+                mCdfsItem.setMap(new ConcurrentHashMap(map));
+                return mCdfsItem;
+            });
+        }
+        else{
+            Log.d(TAG, "base folder metadata exists. Simply put to the future.");
+            itemMetaDataFuture = new CompletableFuture<>();
+            itemMetaDataFuture.complete(mCdfsItem);
+        }
+        return itemMetaDataFuture;
+    }
+
+    /*
+
+     */
+    private void createBaseItemIfNone(String driveName, String folderDriveId){
+        if(mCdfsItem == null){
+            mCdfsItem = createBaseItemPlaceholder();
+        }
+        ConcurrentHashMap map = mCdfsItem.getMap();
+        map.put(driveName, folderDriveId);
+        mCdfsItem.setMap(map);
+
+    }
+
+    private CdfsItem createBaseItemPlaceholder(){
+        CdfsItem item = new CdfsItem();
+        item.setFolder(true);
+        item.setName("");
+        item.setPath("");
+        ConcurrentHashMap map = new ConcurrentHashMap();
+        item.setMap(map);
+        return item;
+    }
 }
