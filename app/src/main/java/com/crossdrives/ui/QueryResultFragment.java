@@ -43,6 +43,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.crossdrives.cdfs.allocation.Infrastructure;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
@@ -146,6 +147,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		List<CdfsItem> parentList = new ArrayList<>();
 		if(parentFromNavhost != null){
 			Log.d(TAG, "parentFromNavhost: " + parentFromNavhost);
+			Infrastructure infrastructure = new Infrastructure();
+			parentList.add(infrastructure.getBaseItem(CDFS.getCDFSService().getDrives()).join());
 		}else{
 			CdfsItem[] Args = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
 			if(Args != null){

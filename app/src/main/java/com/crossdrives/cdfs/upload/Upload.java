@@ -609,7 +609,7 @@ public class Upload {
 //            Infrastructure builder = new Infrastructure(driveName, mCDFS.getClient(driveName), mCDFS);
 //            idList.add(builder.getMetaDataBase(driveName).join().getId());
             Infrastructure builder = Infrastructure.getInstance();
-            idList.add(builder.getBaseItem().getMap().get(driveName).get(0));
+            idList.add(builder.getBaseItem(mCDFS.getDrives()).join().getMap().get(driveName).get(0));
         }else {
             Log.d(TAG, "Build id list for parents.");
             items.stream().forEachOrdered(item->{

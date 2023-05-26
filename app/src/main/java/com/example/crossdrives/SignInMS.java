@@ -26,6 +26,7 @@ import com.microsoft.identity.client.exception.MsalException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,8 +37,8 @@ public class SignInMS extends SignInManager{
     private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
     //https://docs.microsoft.com/en-us/graph/permissions-reference?context=graph%2Fapi%2F1.0&view=graph-rest-1.0
-    private final static String[] SCOPES = {"Files.ReadWrite.All"};
-    private final static List<String> scopes = new ArrayList<>();
+    private final static String[] SCOPES = {"Files.ReadWrite.All", "Files.ReadWrite.AppFolder"};
+    //private final static List<String> scopes = new ArrayList<>();
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
     OnSignInfinished mOnSignInfinished;
@@ -46,7 +47,8 @@ public class SignInMS extends SignInManager{
     private String mToken;
     private Object mObject;
 
-    public SignInMS(){; mContext = SnippetApp.getAppContext(); scopes.add("Files.Read");}
+    public SignInMS(){; mContext = SnippetApp.getAppContext(); //scopes.add("Files.Read");
+    }
 
     public static SignInMS getInstance(){
         if(mSignInMS == null){
@@ -228,6 +230,10 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "User name : " + authenticationResult.getAccount().getUsername());
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
+                Log.d(TAG, "Tenant ID : " + authenticationResult.getTenantId());
+                Arrays.stream(authenticationResult.getScope()).forEach((s)->{
+                    Log.d(TAG, "Scope : " + s);
+                        });
                 //Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
                 // save our auth token for REST API use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
