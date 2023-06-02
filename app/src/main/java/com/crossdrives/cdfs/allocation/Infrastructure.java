@@ -83,14 +83,11 @@ public class Infrastructure{
         return instance;
     }
 
-    public Infrastructure() {
+    private Infrastructure() {
 //        mClient = client;
 //        mDriveName = name;
 //        mCDFS = cdfs;
         //mDrives = cdfs.getDrives();
-
-        mCdfsItem = new CdfsItem();
-        mCdfsItem.setMap(new ConcurrentHashMap<>());
     }
 
     public CompletableFuture<CdfsItem> checkAndBuild(String driveName, IDriveClient client) {
@@ -135,7 +132,9 @@ public class Infrastructure{
             baseFolderId[0] = result.folder;
             if(result.folder != null){
                 Log.d(TAG, "Check allocation file. Query:  " + query);
+                //createBaseItemIfNone is protected by synchronized, we are safe in situation two sing in processes are running in parallel.
                 createBaseItemIfNone(driveName, result.folder);
+                setMapItem(driveName, result.folder);
                 client.list().buildRequest()
                         //sClient.get(0).list().buildRequest()
                         .setNextPage(null)
@@ -313,15 +312,7 @@ public class Infrastructure{
         CompletableFuture<CdfsItem> resultFuture =
         createFilesFuture.thenCompose(result->{
             CompletableFuture<CdfsItem> future = new CompletableFuture<>();
-            if(mCdfsItem == null){
-                mCdfsItem = createBaseItemPlaceholder();
-            }
-            ConcurrentHashMap map = mCdfsItem.getMap();
-            map.put(driveName, result.folder);
-            mCdfsItem.setMap(map);
-
             future.complete(mCdfsItem);
-
             return future;
         });
 
@@ -509,6 +500,14 @@ public class Infrastructure{
 
         return folder;
     }
+    //Use cases we have to deal with:
+    //1. mCdfsItem is null, user has not yet signed in. e.g. app is resumed after a long period of idle state. Token is expired.
+    //2. mCdfsItem is null, user has signed in. The created Infrastructure object is destroyed by GC.
+    //3. mCdfsItem is valid (not null).
+    /*
+        The method will always return the CdfsItem object. However, be careful the map could be still empty.
+        A typical case is there is no drive client (app is not signed in to any user drive)
+     */
     public CompletableFuture<CdfsItem> getBaseItem(ConcurrentHashMap<String, Drive> drives){
         CompletableFuture<CdfsItem> itemMetaDataFuture;
         if(mCdfsItem == null){
@@ -518,6 +517,7 @@ public class Infrastructure{
                 HashMap<String, List<String>> map =
                 Mapper.reValue(getMetaDataBaseAll(drives).join(), (file)->{
                     List<String> list = new ArrayList<>();
+                    //Log.d(TAG, "ID:" + file.getId());
                     list.add(file.getId());
                     return list;
                 });
@@ -536,14 +536,19 @@ public class Infrastructure{
     /*
 
      */
-    private void createBaseItemIfNone(String driveName, String folderDriveId){
+    private synchronized void createBaseItemIfNone(String driveName, String folderDriveId){
         if(mCdfsItem == null){
             mCdfsItem = createBaseItemPlaceholder();
+            ConcurrentHashMap map = mCdfsItem.getMap();
+            map.put(driveName, folderDriveId);
+            mCdfsItem.setMap(map);
         }
-        ConcurrentHashMap map = mCdfsItem.getMap();
-        map.put(driveName, folderDriveId);
-        mCdfsItem.setMap(map);
+    }
 
+    private void setMapItem(String driveName, String driveId){
+        ConcurrentHashMap map = mCdfsItem.getMap();
+        map.put(driveName, driveId);
+        mCdfsItem.setMap(map);
     }
 
     private CdfsItem createBaseItemPlaceholder(){

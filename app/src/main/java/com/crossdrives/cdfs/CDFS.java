@@ -75,28 +75,10 @@ public class CDFS extends BaseCDFS{
     }
 
     private void createBaseFolder(String name, IDriveClient client){
-        File fileMetadata = new File();
 
         Infrastructure builder = Infrastructure.getInstance();
 
-        //Check CDFS existing folder. We will do the creation in the callback
-        builder.checkAndBuild(name, client);
-
-        //Upload test only. For Google, folder cdfs is used. For MS, AAA is used.
-        //fileMetadata.setParents(Collections.singletonList("16IhpPc0_nrrDplc73YIevRI8C27ir1JG")); //cdfs
-        //fileMetadata.setParents(Collections.singletonList("CD26537079F955DF!5758"));  //AAA
-
-//        access.create(fileMetadata).addOnSuccessListener(new OnSuccessListener<String>() {
-//            @Override
-//            public void onSuccess(String s) {
-//                Log.d(TAG, "create OK. ID: " + s);
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception e) {
-//                Log.w(TAG, "Failed to create item: " + e.getMessage());
-//            }
-//        });
+        builder.checkAndBuild(name, client).join();
     }
 
     /*

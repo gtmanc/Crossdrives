@@ -2,6 +2,7 @@ package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.crossdrives.cdfs.data.Drive;
@@ -409,30 +410,24 @@ public class MapFetcher {
     }
 
     /*
-        Get drive meta data of a CDFS item for each drive
+        Get drive meta data of a CDFS item for each drive. The method simply read mata data from
+        the map in the given Cdfs item.
         Input:
-            CDFS parent item. Directly set to root if null is input.
+            item: cdfs item
      */
-    public HashMap<String, File> getMetaDataAll(@Nullable CdfsItem parent){
+    public HashMap<String, File> getMetaDataAll(@NonNull CdfsItem item){
         HashMap<String, File> file;
 
         Log.d(TAG, "Get meta data all.");
-        if(parent != null){
-            Log.d(TAG, "Not root.");
-            file = new HashMap<>();
-            //simply make api happy
-            parent.getMap().forEach((k, v)->{
-                File f = new File();
-                //Log.d(TAG, "map size: " + v.size());
-                f.setId(v.get(0));
-                Log.d(TAG, "drive: " + k + ". id[0]: " + v.get(0));
-                file.put(k, f);
-            });
-        }else
-        {   //base folder: directly fetch data from remote
-            //TODO: directly get meta data of base folder from infrastructure builder
-            file = getMetaDataRoot().join();
-        }
+
+        file = new HashMap<>();
+        item.getMap().forEach((k, v)->{
+            File f = new File();
+            f.setId(v.get(0));
+            Log.d(TAG, "drive: " + k + ". id[0]: " + v.get(0));
+            file.put(k, f);
+        });
+
         return file;
     }
 

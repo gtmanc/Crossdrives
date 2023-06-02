@@ -142,13 +142,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
 
-
+		//TODO: ensure the infrastracture builder has finished. Maybe a synchronization(wait) is needed.
 		String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
 		List<CdfsItem> parentList = new ArrayList<>();
 		if(parentFromNavhost != null){
-			Log.d(TAG, "parentFromNavhost: " + parentFromNavhost);
-			Infrastructure infrastructure = new Infrastructure();
-			parentList.add(infrastructure.getBaseItem(CDFS.getCDFSService().getDrives()).join());
+			Log.d(TAG, "Came from NavHost. Arg: " + parentFromNavhost);
+			parentList.add(Infrastructure.getInstance().getBaseItem(CDFS.getCDFSService().getDrives()).join());
 		}else{
 			CdfsItem[] Args = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
 			if(Args != null){
@@ -237,6 +236,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		//be sure to register the listener after layout manager is set to recyclerview
 		mRecyclerView.addOnScrollListener(onScrollListener);
+
+		//TODO: we may have to update the parent list stored in OpenTree viewmode because screen may transits from
+		//add account screen. also need to take care the situation that infrastructure buid has not yet finished.
 
 //		mItems = new ArrayList<>();
 //		mAdapter = new QueryFileAdapter(mItems, getContext());
