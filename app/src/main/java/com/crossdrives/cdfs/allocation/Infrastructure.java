@@ -539,15 +539,21 @@ public class Infrastructure{
     private synchronized void createBaseItemIfNone(String driveName, String folderDriveId){
         if(mCdfsItem == null){
             mCdfsItem = createBaseItemPlaceholder();
-            ConcurrentHashMap map = mCdfsItem.getMap();
-            map.put(driveName, folderDriveId);
+            ConcurrentHashMap<String, List<String>> map = mCdfsItem.getMap();
+            List<String> list = new ArrayList<>();
+
+            list.add(folderDriveId);
+            map.put(driveName, list);
             mCdfsItem.setMap(map);
         }
     }
 
     private void setMapItem(String driveName, String driveId){
-        ConcurrentHashMap map = mCdfsItem.getMap();
-        map.put(driveName, driveId);
+        ConcurrentHashMap<String, List<String>> map = mCdfsItem.getMap();
+        List<String> list = new ArrayList<>();
+
+        list.add(driveId);
+        map.put(driveName, list);
         mCdfsItem.setMap(map);
     }
 
@@ -555,8 +561,8 @@ public class Infrastructure{
         CdfsItem item = new CdfsItem();
         item.setFolder(true);
         item.setName("");
-        item.setPath("");
-        ConcurrentHashMap map = new ConcurrentHashMap();
+        item.setPath(IConstant.CDFS_PATH_BASE);
+        ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap();
         item.setMap(map);
         return item;
     }
