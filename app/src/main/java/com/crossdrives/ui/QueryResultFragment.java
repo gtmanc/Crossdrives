@@ -186,15 +186,20 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		mView = view;
 		mActivity = getActivity();
-		NavController navController = Navigation.findNavController(view);
+		/*NavController navController = Navigation.findNavController(view);*/
+
+
+		FloatingActionButton fab = view.findViewById(R.id.fab);
+
+		// calling setGraph will lead to the start destination gets invoked immediately.
+		// navController.setGraph(R.navigation.nav_graph);
+		/*
 		DrawerLayout drawerLayout = view.findViewById(R.id.layout_query_result);
 		mDrawer = drawerLayout;
 		drawerLayout.addDrawerListener(this);
-		FloatingActionButton fab = view.findViewById(R.id.fab);
-
 		AppBarConfiguration appBarConfiguration =
-				new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
-
+			new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
+		*/
 		mToolbar = view.findViewById(R.id.qr_toolbar);
 		mBottomAppBar = view.findViewById(R.id.bottomAppBar);
 		mProgressBar = view.findViewById(R.id.progressBar);
@@ -203,14 +208,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
 		Log.d(TAG, "Set toolbar done");
 
-		NavigationUI.setupWithNavController(
-				mToolbar, navController, appBarConfiguration);
+		/*NavigationUI.setupWithNavController(
+				mToolbar, navController, appBarConfiguration);*/
 
-		mNavigationView = view.findViewById(R.id.nav_view);
+		/*mNavigationView = view.findViewById(R.id.nav_view);
 		mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
 		mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
 		View hv = mNavigationView.getHeaderView(0);
 		hv.setOnClickListener(onHeaderClick);
+		*/
 		fab.setOnClickListener(onFabClick);
 
 		mBottomNavigationView = view.findViewById(R.id.bottomNavigationView);

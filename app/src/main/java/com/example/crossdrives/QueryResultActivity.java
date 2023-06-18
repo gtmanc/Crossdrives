@@ -11,12 +11,24 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.SearchView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.crossdrives.ui.QueryResultFragmentDirections;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 
@@ -39,8 +51,11 @@ public class QueryResultActivity extends AppCompatActivity {
     private String mState = STATE_NORMAL;
     private int mSelectedItemCount = 0;
     private RecyclerView.LayoutManager layoutManager;
+    NavController navController;
     Toolbar mToolbar_normal;
     Toolbar mToolbar_contextual;
+
+    DrawerLayout drawerLayout;
 
     static final public String KEY_PARENT_PATH = "parentPath";
 
@@ -50,28 +65,66 @@ public class QueryResultActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_query_result);
 
+        navController = Navigation.findNavController(this, R.id.main_content);
+
         Bundle bundle = new Bundle();
         bundle.putString(KEY_PARENT_PATH, "Root");
-        NavController navController = Navigation.findNavController(this, R.id.main_content);
         navController.setGraph(R.navigation.nav_graph, bundle);
+
+        drawerLayout = findViewById(R.id.layout_query_result);
+        Toolbar tooBar = findViewById(R.id.qr_toolbar);
+        AppBarConfiguration appBarConfiguration =
+                new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
+        NavigationUI.setupWithNavController(
+                tooBar, navController, appBarConfiguration);
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
+        navigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
+        View hv = navigationView.getHeaderView(0);
+        hv.setOnClickListener(onHeaderClick);
+
     }
 
-    private void switchContextualActionBar(){
+    NavigationView.OnNavigationItemSelectedListener OnNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            // Handle navigation view item clicks here.
+            int id = item.getItemId();
 
-        //Switch to contextual tool bar
-        mToolbar_normal.setVisibility(View.GONE);
-        mToolbar_contextual.setVisibility(View.VISIBLE);
-        setSupportActionBar(mToolbar_contextual);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-    }
+//			if(item.isChecked())
+//				Log.d(TAG, "checked!");
 
-    private void switchNormalActionBar(){
+            //close drawer right here. Otherwise, the drawer is still there if screen is switched back from next one
+            drawerLayout.closeDrawers();
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        mToolbar_contextual.setVisibility(View.GONE);
-        mToolbar_normal.setVisibility(View.VISIBLE);
-        setSupportActionBar(mToolbar_normal);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-    }
+            //The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
+            //drawer is closed exactly before screen proceed to next one
+            if (id == R.id.drawer_menu_item_master_account) {
+                Log.d(TAG, "Master account selected!");
+            }else if(id == R.id.drawer_menu_item_two){
+                Log.d(TAG, "nav_item_two selected!");
+            }else if(id == R.id.nav_item_hidden){
+                Log.d(TAG, "nav_item_three selected!");
+            }else{
+                Log.d(TAG, "Unknown selected!");
+            }
+            return true;
+        }
+    };
+
+    View.OnClickListener onHeaderClick = new View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            Log.d(TAG, "header is clicked");
+            //mCountPressDrawerHeader++;
+
+            NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.navigateToSystemTest();
+            navController.navigate(a);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }};
+
 
 
     /*public boolean onCreateOptionsMenu(Menu menu) {
