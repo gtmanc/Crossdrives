@@ -168,6 +168,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mAdapter = new RootItemsAdapter(getContext());
 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
 		//treeOpener.open(parentItem);
+
 	}
 
 	@Nullable
@@ -186,48 +187,47 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		mView = view;
 		mActivity = getActivity();
-		/*NavController navController = Navigation.findNavController(view);*/
+		NavController navController = Navigation.findNavController(view);
 
-
-		FloatingActionButton fab = view.findViewById(R.id.fab);
+		FloatingActionButton fab = getActivity().findViewById(R.id.fab);
+		fab.setVisibility(View.VISIBLE);
 
 		// calling setGraph will lead to the start destination gets invoked immediately.
 		// navController.setGraph(R.navigation.nav_graph);
-		/*
-		DrawerLayout drawerLayout = view.findViewById(R.id.layout_query_result);
+		DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
 		mDrawer = drawerLayout;
 		drawerLayout.addDrawerListener(this);
+		//Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
+		//Use getGraph will lead to null graph once configuration changes
 		AppBarConfiguration appBarConfiguration =
-			new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
-		*/
+			new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
+
 		mToolbar = view.findViewById(R.id.qr_toolbar);
-		mBottomAppBar = view.findViewById(R.id.bottomAppBar);
+		/*mBottomAppBar = view.findViewById(R.id.bottomAppBar);*/
 		mProgressBar = view.findViewById(R.id.progressBar);
 
 		//Note: drawer doesn't work if this line of code is added after setupWithNavController
-		((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
-		Log.d(TAG, "Set toolbar done");
+		/*((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);*/
 
-		/*NavigationUI.setupWithNavController(
-				mToolbar, navController, appBarConfiguration);*/
+		NavigationUI.setupWithNavController(
+				mToolbar, navController, appBarConfiguration);
 
-		/*mNavigationView = view.findViewById(R.id.nav_view);
-		mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
-		mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
-		View hv = mNavigationView.getHeaderView(0);
-		hv.setOnClickListener(onHeaderClick);
-		*/
-		fab.setOnClickListener(onFabClick);
+		mNavigationView = getActivity().findViewById(R.id.nav_view);
+		//mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
+		//mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
+		//fab.setOnClickListener(onFabClick);
 
-		mBottomNavigationView = view.findViewById(R.id.bottomNavigationView);
+		//The button sheet menu is only applicable in the fragment. So, we add the listener here.
+		mBottomNavigationView = getActivity().findViewById(R.id.bottomNavigationView);
 		mBottomNavigationView.setNavigationItemSelectedListener(OnBottomNavItemSelectedListener);
 		//mBottomAppBar.setNavigationOnClickListener(); //e.g. the drawer icon. We never use so far
-		mBottomAppBar.setOnMenuItemClickListener(onBottomAppBarMenuItemClickListener);
+		/*mBottomAppBar.setOnMenuItemClickListener(onBottomAppBarMenuItemClickListener);*/
 
-		View bottomSheet = view.findViewById(R.id.bottomNavigationView);
+		View bottomSheet = getActivity().findViewById(R.id.bottomNavigationView);
 		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 		bottomSheetBehavior.setHideable(true);//this one has been set to true in layout
 		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
 		//always register the callback because it is removed in onPause
 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 

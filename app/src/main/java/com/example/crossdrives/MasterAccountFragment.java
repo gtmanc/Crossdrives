@@ -18,14 +18,19 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import com.crossdrives.ui.account.MasterAccountVM;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +59,9 @@ public class MasterAccountFragment extends Fragment{
         super.onCreate(savedInstanceState);
 
         vm = new ViewModelProvider(this).get(MasterAccountVM.class);
+
+        FloatingActionButton fab = getActivity().findViewById(R.id.fab);
+        fab.setVisibility(View.GONE);
     }
 
     @Nullable
@@ -73,6 +81,16 @@ public class MasterAccountFragment extends Fragment{
             Toast.makeText(getContext(), "Master Account Added: " + MyArg, Toast.LENGTH_LONG).show();
 
         //readAllAccounts();
+        Toolbar toolbar = view.findViewById(R.id.master_accounts_toolbar);
+        NavController navController = Navigation.findNavController(view);
+        DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
+        //mDrawer = drawerLayout;
+        //Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
+        //Use getGraph will lead to null graph once configuration changes
+        AppBarConfiguration appBarConfiguration =
+                new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
+        NavigationUI.setupWithNavController(
+                toolbar, navController, appBarConfiguration);
 
         //build lists that we will use later
         CardView iv = view.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);
@@ -86,9 +104,9 @@ public class MasterAccountFragment extends Fragment{
         view.findViewById(R.id.add_account_btn).setOnClickListener(listener_account_add);
         mFragment = FragmentManager.findFragment(view);
 
-        Toolbar toolbar = view.findViewById(R.id.master_accounts_toolbar);
-        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
+
+        /*((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);*/
 
     }
 

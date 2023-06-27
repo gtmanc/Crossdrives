@@ -1,0 +1,559 @@
+diff --git a/app/src/main/java/com/crossdrives/ui/QueryResultFragment.java b/app/src/main/java/com/crossdrives/ui/QueryResultFragment.java
+index 3b9a1f9..98e938d 100644
+--- a/app/src/main/java/com/crossdrives/ui/QueryResultFragment.java
++++ b/app/src/main/java/com/crossdrives/ui/QueryResultFragment.java
+@@ -168,6 +168,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
+ 		mAdapter = new RootItemsAdapter(getContext());
+ 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
+ 		//treeOpener.open(parentItem);
++
+ 	}
+ 
+ 	@Nullable
+@@ -189,7 +190,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
+ 		/*NavController navController = Navigation.findNavController(view);*/
+ 
+ 
+-		FloatingActionButton fab = view.findViewById(R.id.fab);
++		FloatingActionButton fab = getActivity().findViewById(R.id.fab);
++		fab.setVisibility(View.VISIBLE);
+ 
+ 		// calling setGraph will lead to the start destination gets invoked immediately.
+ 		// navController.setGraph(R.navigation.nav_graph);
+@@ -201,33 +203,32 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
+ 			new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
+ 		*/
+ 		mToolbar = view.findViewById(R.id.qr_toolbar);
+-		mBottomAppBar = view.findViewById(R.id.bottomAppBar);
++		/*mBottomAppBar = view.findViewById(R.id.bottomAppBar);*/
+ 		mProgressBar = view.findViewById(R.id.progressBar);
+ 
+ 		//Note: drawer doesn't work if this line of code is added after setupWithNavController
+-		((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
+-		Log.d(TAG, "Set toolbar done");
++		/*((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
++		Log.d(TAG, "Set toolbar done");*/
+ 
+ 		/*NavigationUI.setupWithNavController(
+ 				mToolbar, navController, appBarConfiguration);*/
+ 
+-		/*mNavigationView = view.findViewById(R.id.nav_view);
+-		mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
+-		mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
+-		View hv = mNavigationView.getHeaderView(0);
+-		hv.setOnClickListener(onHeaderClick);
+-		*/
+-		fab.setOnClickListener(onFabClick);
++		mNavigationView = getActivity().findViewById(R.id.nav_view);
++		//mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
++		//mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
++		//fab.setOnClickListener(onFabClick);
+ 
+-		mBottomNavigationView = view.findViewById(R.id.bottomNavigationView);
++		//The button sheet menu is only applicable in the fragment. So, we add the listener here.
++		mBottomNavigationView = getActivity().findViewById(R.id.bottomNavigationView);
+ 		mBottomNavigationView.setNavigationItemSelectedListener(OnBottomNavItemSelectedListener);
+ 		//mBottomAppBar.setNavigationOnClickListener(); //e.g. the drawer icon. We never use so far
+-		mBottomAppBar.setOnMenuItemClickListener(onBottomAppBarMenuItemClickListener);
++		/*mBottomAppBar.setOnMenuItemClickListener(onBottomAppBarMenuItemClickListener);*/
+ 
+-		View bottomSheet = view.findViewById(R.id.bottomNavigationView);
++		View bottomSheet = getActivity().findViewById(R.id.bottomNavigationView);
+ 		bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+ 		bottomSheetBehavior.setHideable(true);//this one has been set to true in layout
+ 		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
++
+ 		//always register the callback because it is removed in onPause
+ 		requireActivity().getOnBackPressedDispatcher().addCallback(callback);
+ 
+diff --git a/app/src/main/java/com/example/crossdrives/AddAccountFragment.java b/app/src/main/java/com/example/crossdrives/AddAccountFragment.java
+index a6b9376..9fbe7b6 100644
+--- a/app/src/main/java/com/example/crossdrives/AddAccountFragment.java
++++ b/app/src/main/java/com/example/crossdrives/AddAccountFragment.java
+@@ -88,9 +88,9 @@ public class AddAccountFragment extends BaseFragment{
+ 
+         //requireActivity().getOnBackPressedDispatcher().addCallback(callback);
+ 
+-        Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
++        /*Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
+         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+-        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
++        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24); */
+     }
+ 
+     private View.OnClickListener listener_add_gdrive = new View.OnClickListener() {
+diff --git a/app/src/main/java/com/example/crossdrives/MasterAccountFragment.java b/app/src/main/java/com/example/crossdrives/MasterAccountFragment.java
+index cb0226a..adf8132 100644
+--- a/app/src/main/java/com/example/crossdrives/MasterAccountFragment.java
++++ b/app/src/main/java/com/example/crossdrives/MasterAccountFragment.java
+@@ -26,6 +26,7 @@ import androidx.navigation.NavDirections;
+ import androidx.navigation.fragment.NavHostFragment;
+ 
+ import com.crossdrives.ui.account.MasterAccountVM;
++import com.google.android.material.floatingactionbutton.FloatingActionButton;
+ 
+ import org.jetbrains.annotations.NotNull;
+ 
+@@ -54,6 +55,9 @@ public class MasterAccountFragment extends Fragment{
+         super.onCreate(savedInstanceState);
+ 
+         vm = new ViewModelProvider(this).get(MasterAccountVM.class);
++
++        FloatingActionButton fab = getActivity().findViewById(R.id.fab);
++        fab.setVisibility(View.GONE);
+     }
+ 
+     @Nullable
+@@ -86,9 +90,9 @@ public class MasterAccountFragment extends Fragment{
+         view.findViewById(R.id.add_account_btn).setOnClickListener(listener_account_add);
+         mFragment = FragmentManager.findFragment(view);
+ 
+-        Toolbar toolbar = view.findViewById(R.id.master_accounts_toolbar);
++        /*Toolbar toolbar = view.findViewById(R.id.master_accounts_toolbar);
+         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+-        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
++        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);*/
+ 
+     }
+ 
+diff --git a/app/src/main/java/com/example/crossdrives/QueryResultActivity.java b/app/src/main/java/com/example/crossdrives/QueryResultActivity.java
+index d97f8ea..039710a 100644
+--- a/app/src/main/java/com/example/crossdrives/QueryResultActivity.java
++++ b/app/src/main/java/com/example/crossdrives/QueryResultActivity.java
+@@ -2,15 +2,24 @@ package com.example.crossdrives;
+ 
+ import android.app.Activity;
+ import android.app.SearchManager;
++import android.content.ContentResolver;
+ import android.content.Context;
+ import android.content.Intent;
++import android.database.Cursor;
++import android.net.Uri;
+ import android.os.Bundle;
++import android.provider.MediaStore;
+ import android.util.Log;
+ import android.view.Menu;
+ import android.view.MenuItem;
+ import android.view.View;
+ import android.widget.SearchView;
++import android.widget.Toast;
+ 
++import androidx.activity.result.ActivityResult;
++import androidx.activity.result.ActivityResultCallback;
++import androidx.activity.result.ActivityResultLauncher;
++import androidx.activity.result.contract.ActivityResultContracts;
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+ import androidx.appcompat.app.AppCompatActivity;
+@@ -26,17 +35,34 @@ import androidx.navigation.ui.AppBarConfiguration;
+ import androidx.navigation.ui.NavigationUI;
+ import androidx.recyclerview.widget.RecyclerView;
+ 
++import com.crossdrives.cdfs.CDFS;
++import com.crossdrives.cdfs.Service;
++import com.crossdrives.cdfs.upload.IUploadProgressListener;
++import com.crossdrives.driveclient.model.File;
++import com.crossdrives.msgraph.SnippetApp;
+ import com.crossdrives.ui.QueryResultFragmentDirections;
++import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
++import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
++import com.crossdrives.ui.listener.ProgressUpdater;
++import com.crossdrives.ui.listener.ResultUpdater;
++import com.crossdrives.ui.notification.Notification;
++import com.google.android.gms.tasks.OnCompleteListener;
++import com.google.android.gms.tasks.OnFailureListener;
++import com.google.android.gms.tasks.OnSuccessListener;
++import com.google.android.gms.tasks.Task;
+ import com.google.android.material.bottomsheet.BottomSheetBehavior;
++import com.google.android.material.floatingactionbutton.FloatingActionButton;
+ import com.google.android.material.navigation.NavigationView;
+ 
++import java.io.FileNotFoundException;
++import java.io.InputStream;
+ import java.util.ArrayList;
+ 
+ //Good article for development of recycler view:
+ // From an expert: https://developer.android.com/guide/topics/ui/layout/recyclerview
+ // Google: https://www.journaldev.com/24041/android-recyclerview-load-more-endless-scrolling
+ 
+-public class QueryResultActivity extends AppCompatActivity {
++public class QueryResultActivity extends AppCompatActivity implements DrawerLayout.DrawerListener{
+     final String STATE_NORMAL = "state_normal";
+     final String STATE_ITEM_SELECTION = "state_selection";
+ 
+@@ -57,6 +83,10 @@ public class QueryResultActivity extends AppCompatActivity {
+ 
+     DrawerLayout drawerLayout;
+ 
++    private BottomSheetBehavior bottomSheetBehavior;
++
++    NavigationView mNavigationView, mBottomNavigationView;
++
+     static final public String KEY_PARENT_PATH = "parentPath";
+ 
+     @Override
+@@ -71,19 +101,31 @@ public class QueryResultActivity extends AppCompatActivity {
+         bundle.putString(KEY_PARENT_PATH, "Root");
+         navController.setGraph(R.navigation.nav_graph, bundle);
+ 
+-        drawerLayout = findViewById(R.id.layout_query_result);
++        FloatingActionButton fab = findViewById(R.id.fab);
++        fab.setOnClickListener(onFabClick);
++
++        drawerLayout = findViewById(R.id.layout_query_result_activity);
++        drawerLayout.addDrawerListener(this);
+         Toolbar tooBar = findViewById(R.id.qr_toolbar);
+         AppBarConfiguration appBarConfiguration =
+-                new AppBarConfiguration.Builder(navController.getGraph()).setOpenableLayout(drawerLayout).build();
++                new AppBarConfiguration.Builder(navController.getGraph()).setDrawerLayout(drawerLayout).build();
+         NavigationUI.setupWithNavController(
+                 tooBar, navController, appBarConfiguration);
+ 
+-        NavigationView navigationView = findViewById(R.id.nav_view);
+-        navigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
+-        navigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
+-        View hv = navigationView.getHeaderView(0);
++        mNavigationView = findViewById(R.id.nav_view);
++        mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
++        mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
++        View hv = mNavigationView.getHeaderView(0);
+         hv.setOnClickListener(onHeaderClick);
+ 
++//        mBottomNavigationView = findViewById(R.id.bottomNavigationView);
++//        mBottomNavigationView.setNavigationItemSelectedListener(OnBottomNavItemSelectedListener);
++
++        View bottomSheet = findViewById(R.id.bottomNavigationView);
++        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
++        bottomSheetBehavior.setHideable(true);//this one has been set to true in layout
++        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
++
+     }
+ 
+     NavigationView.OnNavigationItemSelectedListener OnNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+@@ -117,7 +159,7 @@ public class QueryResultActivity extends AppCompatActivity {
+     View.OnClickListener onHeaderClick = new View.OnClickListener(){
+         @Override
+         public void onClick(View v) {
+-            Log.d(TAG, "header is clicked");
++            Log.d(TAG, "header is clicked. View: " + v);
+             //mCountPressDrawerHeader++;
+ 
+             NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.navigateToSystemTest();
+@@ -125,10 +167,8 @@ public class QueryResultActivity extends AppCompatActivity {
+             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+         }};
+ 
+-
+-
+-    /*public boolean onCreateOptionsMenu(Menu menu) {
+-        Log.d(TAG, "onCreateOptionsMenu");*/
++    public boolean onCreateOptionsMenu(Menu menu) {
++        Log.d(TAG, "onCreateOptionsMenu");
+     // Inflate the menu; this adds items to the action bar if it is present.
+     /* getMenuInflater().inflate(R.menu.menu_option, menu); */
+ 
+@@ -144,8 +184,8 @@ public class QueryResultActivity extends AppCompatActivity {
+                 searchManager.getSearchableInfo(getComponentName()));*/
+ 
+     //searchView.setSubmitButtonEnabled(true);
+-        /*return true;
+-    }*/
++        return true;
++    }
+ 
+     private MenuItem.OnMenuItemClickListener OnMenuItemClickListener = new MenuItem.OnMenuItemClickListener(){
+         @Override
+@@ -191,4 +231,62 @@ public class QueryResultActivity extends AppCompatActivity {
+ 
+         return super.onOptionsItemSelected(item);
+     }
++
++    @Override
++    public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
++
++    }
++
++    @Override
++    public void onDrawerOpened(@NonNull View drawerView) {
++    }
++
++    @Override
++    public void onDrawerClosed(@NonNull View drawerView) {
++        MenuItem item = mNavigationView.getCheckedItem();
++        Log.d(TAG, "navigate to: ");
++        if(item != null){
++            if(item.getItemId() == R.id.drawer_menu_item_master_account) {
++                Log.d(TAG, "Master account fragment");
++//                QueryResultFragmentDirections.NavigateToMasterAccount action =
++//                        QueryResultFragmentDirections.navigateToMasterAccount();
++//                action.setMyArg(100);
++                NavDirections a = QueryResultFragmentDirections.navigateToMasterAccount(null);
++                Navigation.findNavController(this, R.id.main_content).navigate(a);
++            }
++            else if(item.getItemId() == R.id.drawer_menu_item_two){
++                Log.d(TAG, "delete file fragment");
++                NavDirections a = QueryResultFragmentDirections.navigateToDeleteFile();
++                Navigation.findNavController(this, R.id.main_content).navigate(a);
++            }
++            else{
++                Log.d(TAG, "Oops, unknown ID");
++            }
++        }
++        else{
++            Log.w(TAG, "drawer checked item is null");
++        }
++        //It's unclear how to clear(reset) a checked item once it is checked.
++        //A workaround is used: set to the hidden item so that we can avoid the unexpected transition
++        mNavigationView.setCheckedItem(R.id.nav_item_hidden);
++    }
++
++    @Override
++    public void onDrawerStateChanged(int newState) {
++
++    }
++
++    View.OnClickListener onFabClick = new View.OnClickListener(){
++        @Override
++        public void onClick(View v) {
++            Log.d(TAG, "fab is clicked");
++
++            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
++//			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
++//			//intent.putExtra("Brand", SignInManager.BRAND_MS);
++//			//mStartForResult.launch(intent);
++//			FABOptionAlertDialog dialog = new FABOptionAlertDialog();
++//			dialog.show(getParentFragmentManager(), "FABOptionAlertDialog");
++        }
++    };
+ }
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/activity_query_result.xml b/app/src/main/res/layout/activity_query_result.xml
+index 1bffabc..d5de4ba 100644
+--- a/app/src/main/res/layout/activity_query_result.xml
++++ b/app/src/main/res/layout/activity_query_result.xml
+@@ -4,40 +4,79 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     xmlns:tools="http://schemas.android.com/tools"
+-    android:id="@+id/layout_query_result"
++    android:id="@+id/layout_query_result_activity"
+     tools:openDrawer="start">
+ 
+-    <com.google.android.material.appbar.AppBarLayout
+-        android:id="@+id/appbar"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:fitsSystemWindows="true"
+-        android:theme="@style/AppTheme.AppBarOverlayMaterial"
+-        >
+-        <com.google.android.material.appbar.MaterialToolbar
+-            android:theme="@style/ToolBarOverlayMaterial"
+-            android:id="@+id/qr_toolbar"
+-            android:layout_width="match_parent"
+-            android:layout_height="48dp"
+-            android:layout_gravity="center"
+-            app:layout_scrollFlags="scroll|enterAlways"
+-            app:title="CDS"
+-            app:navigationIcon="@drawable/ic_navigation_toolbar"
+-            app:popupTheme="@style/AppTheme.PopupOverlay">
+-        </com.google.android.material.appbar.MaterialToolbar>
+-    </com.google.android.material.appbar.AppBarLayout>
+-
+     <fragment
+         android:id="@+id/main_content"
+         android:name="androidx.navigation.fragment.NavHostFragment"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         app:defaultNavHost="true"
+-         />
++    />
+     <!-- Must not use the attribute if you call setGraph manually. i.e in host activity
+     See https://developer.android.com/guide/navigation/use-graph/pass-data-->
+     <!-- app:navGraph="@navigation/nav_graph" -->
+ 
++    <!-- Layout to contain contents of main body of screen (drawer will slide over this) -->
++    <androidx.coordinatorlayout.widget.CoordinatorLayout
++        android:layout_width="match_parent"
++        android:layout_height="match_parent">
++
++        <com.google.android.material.appbar.AppBarLayout
++            android:id="@+id/appbar"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:fitsSystemWindows="true"
++            android:theme="@style/AppTheme.AppBarOverlayMaterial">
++            <com.google.android.material.appbar.MaterialToolbar
++                android:theme="@style/ToolBarOverlayMaterial"
++                android:id="@+id/qr_toolbar"
++                android:layout_width="match_parent"
++                android:layout_height="48dp"
++                android:layout_gravity="center"
++                app:layout_scrollFlags="scroll|enterAlways"
++                app:popupTheme="@style/AppTheme.PopupOverlay">
++            </com.google.android.material.appbar.MaterialToolbar>
++            <!--app:title="CDS"
++            app:navigationIcon="@drawable/ic_navigation_toolbar" -->
++        </com.google.android.material.appbar.AppBarLayout>
++        <com.google.android.material.floatingactionbutton.FloatingActionButton
++            android:id="@+id/fab"
++            style = "@style/Widget.App.FloatingActionButton"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            app:layout_constraintRight_toRightOf="parent"
++            app:layout_constraintBottom_toBottomOf="parent"
++            android:layout_gravity="bottom|end"
++            android:layout_margin="@dimen/fab_margin"
++            app:srcCompat="@android:drawable/ic_input_add"
++            />
++
++        <!--<FrameLayout
++            android:id="@+id/scrim"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent" /> -->
++        <com.google.android.material.navigation.NavigationView
++                android:id = "@+id/bottomNavigationView"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                app:layout_behavior="@string/bottom_sheet_behavior"
++                app:behavior_hideable="true"
++            app:menu="@menu/menu_bottom_sheet" />
++        <!--<com.google.android.material.bottomappbar.BottomAppBar
++                android:id = "@+id/bottomAppBar"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_gravity="bottom"
++                style="@style/Widget.MaterialComponents.BottomAppBar"
++                app:menu="@menu/menu_bottom_appbar"
++                android:visibility="invisible"
++               />-->
++    </androidx.coordinatorlayout.widget.CoordinatorLayout>
++    <!-- The view contains the content of the nagivation drawer must be placed following the view contatins
++    the main UI contents.
++    https://developer.android.com/guide/navigation/integrations/ui#add_a_navigation_drawer-->
+     <com.google.android.material.navigation.NavigationView
+         android:id="@+id/nav_view"
+         style="@style/Widget.Custom.NavigationView"
+@@ -47,7 +86,4 @@
+         app:headerLayout="@layout/drawer_header"
+         app:menu="@menu/menu_main_drawer"
+         android:fitsSystemWindows="true" />
+-
+-
+-
+ </androidx.drawerlayout.widget.DrawerLayout>
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/add_account_fragment.xml b/app/src/main/res/layout/add_account_fragment.xml
+index 428d9e4..c335a3d 100644
+--- a/app/src/main/res/layout/add_account_fragment.xml
++++ b/app/src/main/res/layout/add_account_fragment.xml
+@@ -3,7 +3,7 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     xmlns:app="http://schemas.android.com/apk/res-auto">
+-    <com.google.android.material.appbar.AppBarLayout
++    <!--<com.google.android.material.appbar.AppBarLayout
+         android:id="@+id/add_account_appbar"
+         android:layout_width="match_parent"
+         android:layout_height="48dp"
+@@ -21,7 +21,7 @@
+             app:popupTheme="@style/AppTheme.PopupOverlay"
+             app:title="Add Account">
+         </com.google.android.material.appbar.MaterialToolbar>
+-    </com.google.android.material.appbar.AppBarLayout>
++    </com.google.android.material.appbar.AppBarLayout>-->
+     <TextView
+         android:id="@+id/title_add_account"
+         android:layout_width="wrap_content"
+diff --git a/app/src/main/res/layout/master_account_fragment.xml b/app/src/main/res/layout/master_account_fragment.xml
+index 365ad28..646864f 100644
+--- a/app/src/main/res/layout/master_account_fragment.xml
++++ b/app/src/main/res/layout/master_account_fragment.xml
+@@ -5,7 +5,7 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools">
+ 
+-    <com.google.android.material.appbar.AppBarLayout
++    <!--<com.google.android.material.appbar.AppBarLayout
+         android:id="@+id/master_accounts_appbar"
+         android:layout_width="match_parent"
+         android:layout_height="48dp"
+@@ -22,7 +22,7 @@
+             app:layout_scrollFlags="scroll|enterAlways"
+             app:title="@string/master_account_toolbar_title">
+         </com.google.android.material.appbar.MaterialToolbar>
+-    </com.google.android.material.appbar.AppBarLayout>
++    </com.google.android.material.appbar.AppBarLayout> -->
+     <TextView
+         android:id="@+id/title_master_account"
+         android:layout_width="wrap_content"
+diff --git a/app/src/main/res/layout/query_result_fragment.xml b/app/src/main/res/layout/query_result_fragment.xml
+index 6ded478..1a86b95 100644
+--- a/app/src/main/res/layout/query_result_fragment.xml
++++ b/app/src/main/res/layout/query_result_fragment.xml
+@@ -75,7 +75,7 @@
+             android:visibility="visible"
+             />
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <!--<com.google.android.material.floatingactionbutton.FloatingActionButton
+                 android:id="@+id/fab"
+                 style = "@style/Widget.App.FloatingActionButton"
+                 android:layout_width="wrap_content"
+@@ -85,10 +85,10 @@
+                 android:layout_gravity="bottom|end"
+                 android:layout_margin="@dimen/fab_margin"
+                 app:srcCompat="@android:drawable/ic_input_add"
+-                />
++                />-->
+                 <!-- app:layout_anchor="@id/bottomAppBar" -->
+         <!--</androidx.constraintlayout.widget.ConstraintLayout> -->
+-        <FrameLayout
++        <!--<FrameLayout
+             android:id="@+id/scrim"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent" />
+@@ -107,7 +107,7 @@
+             style="@style/Widget.MaterialComponents.BottomAppBar"
+             app:menu="@menu/menu_bottom_appbar"
+             android:visibility="invisible"
+-            />
++            />-->
+         <!--app:navigationIcon="@drawable/ic_menu_24dp"-->
+     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+ 
+diff --git a/app/src/main/res/navigation/nav_graph.xml b/app/src/main/res/navigation/nav_graph.xml
+index 0e0ff35..c05a878 100644
+--- a/app/src/main/res/navigation/nav_graph.xml
++++ b/app/src/main/res/navigation/nav_graph.xml
+@@ -11,6 +11,7 @@
+     <fragment
+         android:id="@+id/query_result_fragment"
+         android:name="com.crossdrives.ui.QueryResultFragment"
++        android:label = ""
+         tools:layout="@layout/query_result_fragment" >
+     <!-- android:label="DFF"-->
+         <!--<argument
+@@ -42,6 +43,7 @@
+     <fragment
+         android:id="@+id/drawer_menu_item_master_account"
+         android:name="com.example.crossdrives.MasterAccountFragment"
++        android:label = "Master Account"
+         tools:layout="@layout/master_account_fragment">
+         <argument
+             android:name="CreateAccountName"
+@@ -70,6 +72,7 @@
+     <fragment
+         android:id="@+id/add_account_fragment"
+         android:name="com.example.crossdrives.AddAccountFragment"
++        android:label = "Add Account"
+         tools:layout="@layout/add_account_fragment">
+         <action
+             android:id="@+id/navigate_back_to_master_account"
+@@ -99,6 +102,7 @@
+     <fragment
+         android:id="@+id/system_test_fragment"
+         android:name="com.example.crossdrives.SystemTestFragment"
++        android:label = "System Test"
+         tools:layout="@layout/system_test_fragment"/>
+ 
+     <fragment

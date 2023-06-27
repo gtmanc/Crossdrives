@@ -11,6 +11,7 @@
     <fragment
         android:id="@+id/query_result_fragment"
         android:name="com.crossdrives.ui.QueryResultFragment"
+        android:label = ""
         tools:layout="@layout/query_result_fragment" >
     <!-- android:label="DFF"-->
         <!--<argument
@@ -42,6 +43,7 @@
     <fragment
         android:id="@+id/drawer_menu_item_master_account"
         android:name="com.example.crossdrives.MasterAccountFragment"
+        android:label = "Master Account"
         tools:layout="@layout/master_account_fragment">
         <argument
             android:name="CreateAccountName"
@@ -70,6 +72,7 @@
     <fragment
         android:id="@+id/add_account_fragment"
         android:name="com.example.crossdrives.AddAccountFragment"
+        android:label = "Add Account"
         tools:layout="@layout/add_account_fragment">
         <action
             android:id="@+id/navigate_back_to_master_account"
@@ -99,6 +102,7 @@
     <fragment
         android:id="@+id/system_test_fragment"
         android:name="com.example.crossdrives.SystemTestFragment"
+        android:label = "System Test"
         tools:layout="@layout/system_test_fragment"/>
 
     <fragment

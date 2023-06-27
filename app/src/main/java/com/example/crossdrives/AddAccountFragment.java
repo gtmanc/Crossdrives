@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
@@ -28,6 +29,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.driveclient.GoogleDriveClient;
@@ -81,6 +84,18 @@ public class AddAccountFragment extends BaseFragment{
     @Override
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
+        NavController navController = Navigation.findNavController(view);
+        DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
+        //mDrawer = drawerLayout;
+        //Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
+        //Use getGraph will lead to null graph once configuration changes
+        AppBarConfiguration appBarConfiguration =
+                new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
+        NavigationUI.setupWithNavController(
+                toolbar, navController, appBarConfiguration);
+
         Log.d(TAG, "onViewCreated. View: " + view);
         view.findViewById(R.id.add_account_btn_google).setOnClickListener(listener_add_gdrive);
         view.findViewById(R.id.add_account_btn_ms).setOnClickListener(listener_add_onedrive);
@@ -88,9 +103,9 @@ public class AddAccountFragment extends BaseFragment{
 
         //requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
-        Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
+        /*Toolbar toolbar = view.findViewById(R.id.add_account_toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24); */
     }
 
     private View.OnClickListener listener_add_gdrive = new View.OnClickListener() {
