@@ -59,9 +59,6 @@ public class MasterAccountFragment extends Fragment{
         super.onCreate(savedInstanceState);
 
         vm = new ViewModelProvider(this).get(MasterAccountVM.class);
-
-        FloatingActionButton fab = getActivity().findViewById(R.id.fab);
-        fab.setVisibility(View.GONE);
     }
 
     @Nullable
@@ -91,6 +88,10 @@ public class MasterAccountFragment extends Fragment{
                 new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
+
+        //fab object is null if called in onCreate
+        FloatingActionButton fab = getActivity().findViewById(R.id.fab);
+        fab.setVisibility(View.GONE);
 
         //build lists that we will use later
         CardView iv = view.findViewById(R.id.account_list1); mLayoutCards.add(0, iv);

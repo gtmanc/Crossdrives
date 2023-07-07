@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
@@ -168,7 +169,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mAdapter = new RootItemsAdapter(getContext());
 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
 		//treeOpener.open(parentItem);
-
 	}
 
 	@Nullable
@@ -203,11 +203,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
 
 		mToolbar = view.findViewById(R.id.qr_toolbar);
-		/*mBottomAppBar = view.findViewById(R.id.bottomAppBar);*/
-		mProgressBar = view.findViewById(R.id.progressBar);
-
+		//When using a fragment-owned app bar, Google recommends using the Toolbar APIs directly.
+		//Do not use setSupportActionBar() and the Fragment menu APIs, which are appropriate only for activity-owned app bars.
+		//https://developer.android.com/guide/fragments/appbar#fragment
+		mToolbar.inflateMenu(R.menu.menu_option);
 		//Note: drawer doesn't work if this line of code is added after setupWithNavController
 		/*((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);*/
+
+		/*mBottomAppBar = view.findViewById(R.id.bottomAppBar);*/
+
+		mProgressBar = view.findViewById(R.id.progressBar);
 
 		NavigationUI.setupWithNavController(
 				mToolbar, navController, appBarConfiguration);
@@ -238,6 +243,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//Reason why we need to set layout manager: https://stackoverflow.com/questions/50171647/recyclerview-setlayoutmanager
 		mRecyclerView.setLayoutManager(mLayoutManager);
 		mRecyclerView.setAdapter(mAdapter);
+		mRecyclerView.setOnTouchListener(onTouchListener);
 		mAdapter.setNotifier(AdapterNotifier);
 
 		//be sure to register the listener after layout manager is set to recyclerview
@@ -916,13 +922,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			mActionMode.setTitle(Integer.toString(mSelectedItemCount)+" Selected");
 	}
 
-	@Override
-	public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-		Log.d(TAG, "onCreateOptionsMenu...");
-		super.onCreateOptionsMenu(menu, inflater);
-
-		inflater.inflate(R.menu.menu_option, menu);
-
+	private void associateSearchConfig(Menu menu){
 		// Associate searchable configuration with the SearchView
 		SearchManager searchManager =
 				(SearchManager) getActivity().getSystemService(getContext().SEARCH_SERVICE);
@@ -930,6 +930,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				(SearchView) menu.findItem(R.id.search).getActionView();
 		searchView.setSearchableInfo(
 				searchManager.getSearchableInfo(getActivity().getComponentName()));
+	}
+
+	@Override
+	public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+		Log.d(TAG, "onCreateOptionsMenu...");
+		super.onCreateOptionsMenu(menu, inflater);
+
+		inflater.inflate(R.menu.menu_option, menu);
+
+		associateSearchConfig(menu);
 		//searchView.setSubmitButtonEnabled(true);
 	}
 
@@ -1068,6 +1078,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//YourActivity.this.someFunctionInYourActivity();
 			Log.d(TAG, "Bottom app bar menu item action pressed!!");
 			return true;
+		}
+	};
+
+	private View.OnTouchListener onTouchListener = new View.OnTouchListener(){
+
+		@Override
+		public boolean onTouch(View view, MotionEvent motionEvent){
+			//Log.d(TAG, "onTouchListener is called.");
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+			return false;
 		}
 	};
 
