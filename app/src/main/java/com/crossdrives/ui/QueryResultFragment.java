@@ -28,13 +28,14 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -54,6 +55,7 @@ import com.crossdrives.ui.document.OpenTree;
 import com.crossdrives.ui.document.OpenTreeFactory;
 import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
 import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
+import com.crossdrives.ui.listener.PopupMenuListener;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -64,7 +66,6 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.msgraph.SnippetApp;
 import com.example.crossdrives.DriveServiceHelper;
-import com.example.crossdrives.MasterAccountFragmentArgs;
 import com.example.crossdrives.QueryResultActivity;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
@@ -78,10 +79,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.model.File;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -137,6 +135,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	OpenTree treeOpener;
 
+	GlobalUiStateVm globalVm;
+
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -163,12 +163,17 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		treeOpener = new ViewModelProvider(this, new OpenTreeFactory(parentList)).get(OpenTree.class);
 		treeOpener.setListener(treeOpenListener);
-//		treeOpener.getItems().observe(this, listChangeObserver);
+//		treeOpener.getItems().observe(this, listChangeObserver)
 		Log.d(TAG, "TreeOpen object: " + treeOpener);
 
 		mAdapter = new RootItemsAdapter(getContext());
 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
 		//treeOpener.open(parentItem);
+
+		NavController navController = NavHostFragment.findNavController(this);
+		NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.nav_graph);
+		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
+		globalVm.getMoveDestStateLd().observe(this, moveItemStateObserver);
 	}
 
 	@Nullable
@@ -302,6 +307,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //			mProgressBar.setVisibility(View.INVISIBLE);
 //		}
 //	};
+
+	final Observer<GlobalUiStateVm.MoveItemState> moveItemStateObserver = new Observer<GlobalUiStateVm.MoveItemState>() {
+		@Override
+		public void onChanged(GlobalUiStateVm.MoveItemState moveItemState) {
+			Log.d(TAG, "moveItemStateObserver onChanged called.");
+
+			NavController navController = Navigation.findNavController(getActivity(), R.id.nav_view);
+			navController.navigate(QueryResultFragmentDirections.navigateToMyself(produceCompleteParentArray()));
+		}
+	};
 
 	private void queryFileContinue(){
 		ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
@@ -540,16 +555,16 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			if (mState == STATE_NORMAL) {
 				if(item.getCdfsItem().isFolder()){
-					int size = 0;
-					List<CdfsItem> plist = treeOpener.getParentList();
-					if( plist != null){	size = plist.size();}
-					CdfsItem[] itemArray = new CdfsItem[size + 1];
-					itemArray = plist.toArray(itemArray);
-					CdfsItem cdfsItem = item.getCdfsItem();
-					itemArray[size] = cdfsItem;
+//					int size = 0;
+//					List<CdfsItem> plist = treeOpener.getParentList();
+//					if( plist != null){	size = plist.size();}
+//					CdfsItem[] itemArray = new CdfsItem[size + 1];
+//					itemArray = plist.toArray(itemArray);
+//					CdfsItem cdfsItem = item.getCdfsItem();
+//					itemArray[size] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
 					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
-					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
+					navController.navigate(QueryResultFragmentDirections.navigateToMyself(produceCompleteParentArray(item.getCdfsItem())));
 					//navController.navigate(QueryResultFragmentDirections.navigateToSystemTest());
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
@@ -601,6 +616,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
+		private CdfsItem[] produceCompleteParentArray(CdfsItem item){
+			int size = 0;
+			List<CdfsItem> plist = treeOpener.getParentList();
+			if( plist != null){	size = plist.size();}
+			CdfsItem[] itemArray = new CdfsItem[size + 1];
+			itemArray = plist.toArray(itemArray);
+			itemArray[size] = item;
+			return itemArray;
+		}
 		/*
 			Once user selected "never ask again" checkbox, nothing is shown even the requestPermissionLauncher.launch
             is called. Besides, the callback is called with negative isGranted (false).
@@ -676,7 +700,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.i(TAG, "onImageItemClick:" + position);
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
-			popup.setOnMenuItemClickListener(com.crossdrives.ui.listener.PopupMenu.create());
+			//popup.setOnMenuItemClickListener(PopupMenuListener.create(globalVm, treeOpener.getParent()));
+			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm, treeOpener.getParent()));
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			popup.show();
