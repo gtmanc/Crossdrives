@@ -10,7 +10,7 @@
     app:startDestination="@id/query_result_fragment">
     <fragment
         android:id="@+id/query_result_fragment"
-        android:name="com.crossdrives.ui.QueryResultFragment"
+        android:name="com.crossdrives.ui.ItemListFragment"
         android:label = ""
         tools:layout="@layout/query_result_fragment" >
     <!-- android:label="DFF"-->

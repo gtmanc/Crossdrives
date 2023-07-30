@@ -19,7 +19,7 @@ public class PopupMenuListener implements PopupMenu.OnMenuItemClickListener {
     public boolean onMenuItemClick(MenuItem menuItem) {
         int id = menuItem.getItemId();
         if( id == R.id.omiMove){
-            vm.getMoveDestStateLd().launch(startDest);
+            vm.getMoveItemStateLd().launch(startDest);
         }else if (id == R.id.omiInfo){
 
         }

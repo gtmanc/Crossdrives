@@ -332,6 +332,19 @@ public class OpenTree extends ViewModel {
     public List<CdfsItem> getParentList() {
         return mParents;
     }
+    /*
+        holder: set to true if a parent holder is needed.
+     */
+    public CdfsItem[] getParentArray(boolean holder){
+        int size = 0;
+
+        if( mParents != null){	size = mParents.size();}
+        if(holder){size = size + 1;}
+        CdfsItem[] itemArray = new CdfsItem[size];
+        itemArray = mParents.toArray(itemArray);
+        return itemArray;
+    }
+
     @Nullable
     public CdfsItem getParent() {
         return getParent(mParents);

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel;
 import com.crossdrives.cdfs.model.CdfsItem;
 
 public class GlobalUiStateVm extends ViewModel {
-    private MoveItemStateLd moveDestStateLd = new MoveItemStateLd();
+    private MoveItemStateLd moveItemStateLd = new MoveItemStateLd();
 
     public class MoveItemStateLd extends LiveData<MoveItemState> {
         CdfsItem startDest;
@@ -18,6 +18,8 @@ public class GlobalUiStateVm extends ViewModel {
             moveState.atStartDest = true;
             postValue(moveState);
         }
+
+        public MoveItemState getMoveItemState(){return moveState;}
     }
 
     class MoveItemState {
@@ -31,5 +33,5 @@ public class GlobalUiStateVm extends ViewModel {
 
     }
 
-    public MoveItemStateLd getMoveDestStateLd(){return moveDestStateLd;}
+    public MoveItemStateLd getMoveItemStateLd(){return moveItemStateLd;}
 }

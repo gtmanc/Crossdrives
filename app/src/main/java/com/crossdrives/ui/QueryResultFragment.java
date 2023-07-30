@@ -173,7 +173,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		NavController navController = NavHostFragment.findNavController(this);
 		NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.nav_graph);
 		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
-		globalVm.getMoveDestStateLd().observe(this, moveItemStateObserver);
+		//Only set the observer only if move item state is not in progress. Otherwise, the observer is
+		//called right after the observer is set.
+		//if(!globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
+		//	globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
+		//}
 	}
 
 	@Nullable
@@ -313,8 +317,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onChanged(GlobalUiStateVm.MoveItemState moveItemState) {
 			Log.d(TAG, "moveItemStateObserver onChanged called.");
 
-			NavController navController = Navigation.findNavController(getActivity(), R.id.nav_view);
-			navController.navigate(QueryResultFragmentDirections.navigateToMyself(produceCompleteParentArray()));
+			NavController navController = Navigation.findNavController(mView);
+			navController.navigate(QueryResultFragmentDirections.navigateToMyself(treeOpener.getParentArray(false)));
 		}
 	};
 
@@ -555,16 +559,18 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			if (mState == STATE_NORMAL) {
 				if(item.getCdfsItem().isFolder()){
-//					int size = 0;
 //					List<CdfsItem> plist = treeOpener.getParentList();
 //					if( plist != null){	size = plist.size();}
 //					CdfsItem[] itemArray = new CdfsItem[size + 1];
 //					itemArray = plist.toArray(itemArray);
 //					CdfsItem cdfsItem = item.getCdfsItem();
 //					itemArray[size] = cdfsItem;
+					CdfsItem[] itemArray = treeOpener.getParentArray(true);
+					CdfsItem cdfsItem = item.getCdfsItem();
+					itemArray[itemArray.length-1] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
 					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
-					navController.navigate(QueryResultFragmentDirections.navigateToMyself(produceCompleteParentArray(item.getCdfsItem())));
+					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
 					//navController.navigate(QueryResultFragmentDirections.navigateToSystemTest());
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
@@ -616,15 +622,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
 
-		private CdfsItem[] produceCompleteParentArray(CdfsItem item){
-			int size = 0;
-			List<CdfsItem> plist = treeOpener.getParentList();
-			if( plist != null){	size = plist.size();}
-			CdfsItem[] itemArray = new CdfsItem[size + 1];
-			itemArray = plist.toArray(itemArray);
-			itemArray[size] = item;
-			return itemArray;
-		}
 		/*
 			Once user selected "never ask again" checkbox, nothing is shown even the requestPermissionLauncher.launch
             is called. Besides, the callback is called with negative isGranted (false).
@@ -913,11 +910,18 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //			homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 //			startActivity(homeIntent);
 			NavController navController = Navigation.findNavController(mView);
+
+//			if(!navController.popBackStack(R.id.query_result_fragment, false)){
+//				Log.w(TAG, "no stack can be popup!");
+//			}
+
+
 			if (!navController.popBackStack()) {
 				// Call finish() on your Activity
 				Log.w(TAG, "no stack can be popup!");
 				getActivity().finish();
 			}
+
 		}
 	};
 
