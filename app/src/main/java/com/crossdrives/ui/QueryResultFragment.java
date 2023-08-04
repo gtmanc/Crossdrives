@@ -175,9 +175,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
 		//Only set the observer only if move item state is not in progress. Otherwise, the observer is
 		//called right after the observer is set.
-		//if(!globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
-		//	globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
-		//}
+		if(!globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
+			globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
+		}
 	}
 
 	@Nullable
@@ -317,8 +317,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onChanged(GlobalUiStateVm.MoveItemState moveItemState) {
 			Log.d(TAG, "moveItemStateObserver onChanged called.");
 
-			NavController navController = Navigation.findNavController(mView);
-			navController.navigate(QueryResultFragmentDirections.navigateToMyself(treeOpener.getParentArray(false)));
+			if(globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
+				CdfsItem[] itemArray = treeOpener.getParentArray(false);
+				//Concatenate the dir we will go to produce a complete dir for the need of the destination
+
+				NavController navController = Navigation.findNavController(mView);
+				//navController.navigate(QueryResultFragmentDirections.navigateToMyself(treeOpener.getParentArray(false)));
+				navController.navigate(QueryResultFragmentDirections.navigateToMoveItemWorkflowGraph(itemArray));
+			}
 		}
 	};
 
@@ -559,19 +565,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			if (mState == STATE_NORMAL) {
 				if(item.getCdfsItem().isFolder()){
-//					List<CdfsItem> plist = treeOpener.getParentList();
-//					if( plist != null){	size = plist.size();}
-//					CdfsItem[] itemArray = new CdfsItem[size + 1];
-//					itemArray = plist.toArray(itemArray);
-//					CdfsItem cdfsItem = item.getCdfsItem();
-//					itemArray[size] = cdfsItem;
 					CdfsItem[] itemArray = treeOpener.getParentArray(true);
+					//Concatenate the dir we will go to produce a complete dir for the need of the destination
 					CdfsItem cdfsItem = item.getCdfsItem();
 					itemArray[itemArray.length-1] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
-					//NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.NavigateToMyself();
 					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
-					//navController.navigate(QueryResultFragmentDirections.navigateToSystemTest());
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
 					requestPermissionFuture.thenAccept((isGranted)->{

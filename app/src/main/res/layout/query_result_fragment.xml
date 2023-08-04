@@ -98,7 +98,7 @@
             android:layout_height="wrap_content"
             app:layout_behavior="@string/bottom_sheet_behavior"
             app:behavior_hideable="true"
-            app:menu="@menu/menu_bottom_sheet" />
+            app:menu="@menu/menu_bottom_sheet" />-->
         <com.google.android.material.bottomappbar.BottomAppBar
             android:id = "@+id/bottomAppBar"
             android:layout_width="match_parent"
@@ -107,7 +107,7 @@
             style="@style/Widget.MaterialComponents.BottomAppBar"
             app:menu="@menu/menu_bottom_appbar"
             android:visibility="invisible"
-            />-->
+            />
         <!--app:navigationIcon="@drawable/ic_menu_24dp"-->
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

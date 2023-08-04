@@ -31,6 +31,10 @@ public class GlobalUiStateVm extends ViewModel {
             this.atStartDest = atStartDest;
         }
 
+        public boolean isInProgress(){return isInProgress;}
+
+        public boolean setProgress(boolean progress){return isInProgress = progress;}
+
     }
 
     public MoveItemStateLd getMoveItemStateLd(){return moveItemStateLd;}

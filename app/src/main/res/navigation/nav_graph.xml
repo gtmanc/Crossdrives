@@ -10,7 +10,7 @@
     app:startDestination="@id/query_result_fragment">
     <fragment
         android:id="@+id/query_result_fragment"
-        android:name="com.crossdrives.ui.ItemListFragment"
+        android:name="com.crossdrives.ui.QueryResultFragment"
         android:label = ""
         tools:layout="@layout/query_result_fragment" >
     <!-- android:label="DFF"-->
@@ -36,7 +36,12 @@
         <action
             android:id="@+id/navigate_to_myself"
             app:destination="@id/query_result_fragment">
-            </action>
+        </action>
+
+        <action
+            android:id="@+id/navigate_to_move_item_workflow_graph"
+            app:destination="@id/moveItemWorkflowGraph">
+        </action>
 
     </fragment>
 
@@ -117,4 +122,21 @@
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             />
         </fragment>
+
+    <navigation android:id="@+id/moveItemWorkflowGraph" app:startDestination="@id/move_item_fragment">
+        <fragment
+            android:id="@+id/move_item_fragment"
+            android:name="com.crossdrives.ui.MoveItemFragment"
+            android:label = "Move Item"
+            tools:layout="@layout/query_result_fragment"/>
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+
+            app:nullable="true" />
+        <action
+            android:id="@+id/navigate_to_myself"
+            app:destination="@id/move_item_fragment">
+        </action>
+    </navigation>
 </navigation>
