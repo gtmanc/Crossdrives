@@ -9,8 +9,8 @@ import com.example.crossdrives.R;
 
 public class PopupMenuListener implements PopupMenu.OnMenuItemClickListener {
     GlobalUiStateVm vm;
-    CdfsItem startDest;
-    public PopupMenuListener(GlobalUiStateVm vm, CdfsItem startDest) {
+    CdfsItem startDest[];
+    public PopupMenuListener(GlobalUiStateVm vm, CdfsItem[] startDest) {
         this.vm = vm;
         this.startDest = startDest;
     }

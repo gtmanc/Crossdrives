@@ -697,7 +697,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
 			//popup.setOnMenuItemClickListener(PopupMenuListener.create(globalVm, treeOpener.getParent()));
-			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm, treeOpener.getParent()));
+			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm, treeOpener.getParentArray(false)));
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			popup.show();

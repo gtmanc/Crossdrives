@@ -104,11 +104,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            style="@style/Widget.MaterialComponents.BottomAppBar"
             app:menu="@menu/menu_bottom_appbar"
             android:visibility="invisible"
             />
-        <!--app:navigationIcon="@drawable/ic_menu_24dp"-->
+        <!--
+        style="@style/Widget.MaterialComponents.BottomAppBar"
+        app:navigationIcon="@drawable/ic_menu_24dp"-->
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <!--<com.google.android.material.navigation.NavigationView

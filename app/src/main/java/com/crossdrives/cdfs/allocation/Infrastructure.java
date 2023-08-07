@@ -24,6 +24,7 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -514,14 +515,18 @@ public class Infrastructure{
             Log.d(TAG, "Fetch remote base folders metadata...");
             mCdfsItem = createBaseItemPlaceholder();
             itemMetaDataFuture = CompletableFuture.supplyAsync(()->{
+                Collection<String> idList = new ArrayList<>();
                 HashMap<String, List<String>> map =
                 Mapper.reValue(getMetaDataBaseAll(drives).join(), (file)->{
                     List<String> list = new ArrayList<>();
                     //Log.d(TAG, "ID:" + file.getId());
                     list.add(file.getId());
+                    idList.add(file.getId());
                     return list;
                 });
+                mCdfsItem.setId(IDProducer.deriveID(idList));
                 mCdfsItem.setMap(new ConcurrentHashMap(map));
+
                 return mCdfsItem;
             });
         }

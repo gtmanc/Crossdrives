@@ -9,13 +9,12 @@ public class GlobalUiStateVm extends ViewModel {
     private MoveItemStateLd moveItemStateLd = new MoveItemStateLd();
 
     public class MoveItemStateLd extends LiveData<MoveItemState> {
-        CdfsItem startDest;
-        private MoveItemState moveState = new MoveItemState(false, false);
 
-        public void launch(CdfsItem startDest){
-            startDest = startDest;
+        private MoveItemState moveState = new MoveItemState();
+
+        public void launch(CdfsItem[] startDest){
             moveState.isInProgress = true;
-            moveState.atStartDest = true;
+            moveState.startDest = startDest;
             postValue(moveState);
         }
 
@@ -24,11 +23,11 @@ public class GlobalUiStateVm extends ViewModel {
 
     class MoveItemState {
         boolean isInProgress;
-        boolean atStartDest;
+        CdfsItem[] startDest;
 
-        MoveItemState(boolean isInProgress, boolean atStartDest) {
-            this.isInProgress = isInProgress;
-            this.atStartDest = atStartDest;
+        MoveItemState() {
+            this.isInProgress = false;
+            this.startDest = null;
         }
 
         public boolean isInProgress(){return isInProgress;}
