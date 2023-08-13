@@ -7,6 +7,7 @@ import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.driveclient.IDriveClient;
 import com.google.api.services.drive.model.File;
 
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CDFS extends BaseCDFS{
@@ -70,7 +71,7 @@ public class CDFS extends BaseCDFS{
         return mDrives.get(name).getClient();
     }
 
-    public ConcurrentHashMap<String, Drive> getDrives(){
+    public HashMap<String, Drive> getDrives(){
         return mDrives;
     }
 

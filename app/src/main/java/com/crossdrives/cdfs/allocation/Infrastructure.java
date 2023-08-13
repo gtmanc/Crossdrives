@@ -1,5 +1,7 @@
 package com.crossdrives.cdfs.allocation;
 
+import static com.example.crossdrives.GlobalConstants.supporttedSignin;
+
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
@@ -29,11 +31,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 public class Infrastructure{
     final private static String TAG = "CD.Infrastructure";
@@ -77,6 +83,8 @@ public class Infrastructure{
     private boolean mResponseGot = false;
     static private Infrastructure instance;
 
+    HashMap<String, CompletableFuture<String>> Futures = new HashMap<>();
+
     public static Infrastructure getInstance(){
         if(instance == null){
             instance = new Infrastructure();
@@ -91,7 +99,32 @@ public class Infrastructure{
         //mDrives = cdfs.getDrives();
     }
 
-    public CompletableFuture<CdfsItem> checkAndBuild(String driveName, IDriveClient client) {
+    public CompletableFuture<CdfsItem> buildAsync(HashMap<String, IDriveClient> clients){
+        clients.entrySet().stream().forEach((entry)->{
+            CompletableFuture<String> future = checkAndBuild(entry.getKey(), entry.getValue());
+            Futures.put(entry.getKey(), future);
+        });
+
+        CompletableFuture<CdfsItem> resultFuture =
+        CompletableFuture.supplyAsync(()->{
+            HashMap<String, String> joined = new HashMap<>();
+            Mapper.reValue(Futures, f->{
+                return f.join();
+            });
+//            Futures.entrySet().stream().forEach((set)->{
+//                joined.put(set.getKey(), set.getValue().join());}
+//            );
+            mCdfsItem = createBaseItem(joined);
+            return mCdfsItem;
+        });
+
+        return resultFuture;
+    }
+
+    /*
+        return: CompletableFuture that will return the base folder ID.
+     */
+    public CompletableFuture<String> checkAndBuild(String driveName, IDriveClient client) {
         CompletableFuture<Result> checkFolderFuture = new CompletableFuture<>();
         final String[] baseFolderId = new String[1];
 
@@ -133,9 +166,6 @@ public class Infrastructure{
             baseFolderId[0] = result.folder;
             if(result.folder != null){
                 Log.d(TAG, "Check allocation file. Query:  " + query);
-                //createBaseItemIfNone is protected by synchronized, we are safe in situation two sing in processes are running in parallel.
-                createBaseItemIfNone(driveName, result.folder);
-                setMapItem(driveName, result.folder);
                 client.list().buildRequest()
                         //sClient.get(0).list().buildRequest()
                         .setNextPage(null)
@@ -310,10 +340,10 @@ public class Infrastructure{
             return future;
         });
 
-        CompletableFuture<CdfsItem> resultFuture =
+        CompletableFuture<String> resultFuture =
         createFilesFuture.thenCompose(result->{
-            CompletableFuture<CdfsItem> future = new CompletableFuture<>();
-            future.complete(mCdfsItem);
+            CompletableFuture<String> future = new CompletableFuture<>();
+            future.complete(result.folder);
             return future;
         });
 
@@ -464,7 +494,7 @@ public class Infrastructure{
         Get meta data of base folder in all available user's drives
         Return: meta data of the base folders
     */
-    private CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(ConcurrentHashMap<String, Drive> drives){
+    private CompletableFuture<HashMap<String, File>> getMetaDataBaseAll(HashMap<String, Drive> drives){
         CompletableFuture<HashMap<String, File>> metaDataFutures = new CompletableFuture<>();
         HashMap<String, CompletableFuture<File>> metaDataMap = new HashMap<>();
 
@@ -486,7 +516,7 @@ public class Infrastructure{
         get metadata of base folder (CDFS) in user drive.
         Return: meta data of the base folder
      */
-    private CompletableFuture<File> getMetaDataBase(String driveName, ConcurrentHashMap<String, Drive> drives){
+    private CompletableFuture<File> getMetaDataBase(String driveName, HashMap<String, Drive> drives){
         Fetcher fetcher= new Fetcher(drives);
         CompletableFuture<FileList> fileListFuture;
 
@@ -501,6 +531,10 @@ public class Infrastructure{
 
         return folder;
     }
+
+    public @Nullable CdfsItem getBaseItem(){return mCdfsItem;}
+
+
     //Use cases we have to deal with:
     //1. mCdfsItem is null, user has not yet signed in. e.g. app is resumed after a long period of idle state. Token is expired.
     //2. mCdfsItem is null, user has signed in. The created Infrastructure object is destroyed by GC.
@@ -509,26 +543,27 @@ public class Infrastructure{
         The method will always return the CdfsItem object. However, be careful the map could be still empty.
         A typical case is there is no drive client (app is not signed in to any user drive)
      */
-    public CompletableFuture<CdfsItem> getBaseItem(ConcurrentHashMap<String, Drive> drives){
+    public CompletableFuture<CdfsItem> getBaseItemAsync(HashMap<String, IDriveClient> clients){
         CompletableFuture<CdfsItem> itemMetaDataFuture;
         if(mCdfsItem == null){
-            Log.d(TAG, "Fetch remote base folders metadata...");
-            mCdfsItem = createBaseItemPlaceholder();
-            itemMetaDataFuture = CompletableFuture.supplyAsync(()->{
-                Collection<String> idList = new ArrayList<>();
-                HashMap<String, List<String>> map =
-                Mapper.reValue(getMetaDataBaseAll(drives).join(), (file)->{
-                    List<String> list = new ArrayList<>();
-                    //Log.d(TAG, "ID:" + file.getId());
-                    list.add(file.getId());
-                    idList.add(file.getId());
-                    return list;
-                });
-                mCdfsItem.setId(IDProducer.deriveID(idList));
-                mCdfsItem.setMap(new ConcurrentHashMap(map));
-
-                return mCdfsItem;
-            });
+//            Log.d(TAG, "Fetch remote base folders metadata...");
+//            mCdfsItem = createBaseItemPlaceholder();
+//            itemMetaDataFuture = CompletableFuture.supplyAsync(()->{
+//                Collection<String> idList = new ArrayList<>();
+//                HashMap<String, List<String>> map =
+//                Mapper.reValue(getMetaDataBaseAll(drives).join(), (file)->{
+//                    List<String> list = new ArrayList<>();
+//                    //Log.d(TAG, "ID:" + file.getId());
+//                    list.add(file.getId());
+//                    idList.add(file.getId());
+//                    return list;
+//                });
+//                mCdfsItem.setId(IDProducer.deriveID(idList));
+//                mCdfsItem.setMap(new ConcurrentHashMap(map));
+//
+//                return mCdfsItem;
+//            });
+            itemMetaDataFuture = buildAsync(clients);
         }
         else{
             Log.d(TAG, "base folder metadata exists. Simply put to the future.");
@@ -538,6 +573,29 @@ public class Infrastructure{
         return itemMetaDataFuture;
     }
 
+    private CdfsItem createBaseItem(HashMap<String, String> ids){
+        CdfsItem item = new CdfsItem();
+        item.setFolder(true);
+        item.setName("");
+        item.setPath(IConstant.CDFS_PATH_BASE);
+
+        //Create Map
+        //We have to covert the hashmap to the concurrent one.
+        ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
+        ids.entrySet().stream().forEach((set)->{
+            List<String> list = new ArrayList<>();
+            list.add(set.getValue());
+            map.put(set.getKey(), list);
+        });
+        item.setMap(map);
+
+        //Calculate CDFS ID.
+        //We have to transform the id Hashmap to Collection
+        Collection<String> idCollection =
+        ids.values().stream().collect(Collectors.toCollection(TreeSet<String>::new));
+        item.setId(IDProducer.deriveID(idCollection));
+        return item;
+    }
     /*
 
      */

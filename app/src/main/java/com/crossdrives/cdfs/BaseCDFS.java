@@ -8,12 +8,13 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BaseCDFS {
     final private String TAG = "CD.BaseCDFS";
 
-    ConcurrentHashMap<String, Drive> mDrives = new ConcurrentHashMap<>();
+    HashMap<String, Drive> mDrives = new HashMap<>();
 
     public BaseCDFS() {
     }

@@ -148,7 +148,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		List<CdfsItem> parentList = new ArrayList<>();
 		if(parentFromNavhost != null){
 			Log.d(TAG, "Came from NavHost. Arg: " + parentFromNavhost);
-			parentList.add(Infrastructure.getInstance().getBaseItem(CDFS.getCDFSService().getDrives()).join());
+			//parentList.add(Infrastructure.getInstance().getBaseItem(CDFS.getCDFSService().getDrives()).join());
+			CdfsItem cdfsItem =Infrastructure.getInstance().getBaseItem();
+			Log.d(TAG, "Base item: " + cdfsItem);
+			parentList.add(cdfsItem);
 		}else{
 			CdfsItem[] Args = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
 			if(Args != null){

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 public class MapFetcher {
     private final String TAG = "CD.MapFetcher";
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
     /*
@@ -70,7 +70,7 @@ public class MapFetcher {
 
     }
 
-    public MapFetcher(ConcurrentHashMap<String, Drive> drives) {
+    public MapFetcher(HashMap<String, Drive> drives) {
         super();
 
         mDrives = drives; }

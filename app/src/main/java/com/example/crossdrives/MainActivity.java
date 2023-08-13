@@ -8,11 +8,11 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.crossdrives.cdfs.CDFS;
+import com.crossdrives.cdfs.allocation.Infrastructure;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.GoogleDriveClient;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.OneDriveClient;
-import com.crossdrives.msgraph.SnippetApp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -62,13 +62,13 @@ public class MainActivity extends AppCompatActivity{
 //        });
         mActivity = this;
 
-        silenceSignin();
+        silenceSigninAsync();
     }
 
     /*
         TODO: Ticket #14
      */
-    private void silenceSignin() {
+    private CompletableFuture<HashMap<String, String>> silenceSigninAsync() {
 
         //Clean the sign in state
         //for(String b: mBrands){ mSignInState.put(b, false);}
@@ -88,19 +88,31 @@ public class MainActivity extends AppCompatActivity{
 //        SignInMS onedrive = SignInMS.getInstance();
 //        onedrive.silenceSignIn(this, onSigninFinishedOnedrive);
 //        Futures.put(BRAND_MS, MicrosoftFuture);
-        CompletableFuture<String> joinFuture = CompletableFuture.supplyAsync(()->{
-            Log.d(TAG, "Wait for silence results...");
+        CompletableFuture<HashMap<String, String>> joinFuture = CompletableFuture.supplyAsync(()->{
+            Log.d(TAG, "Wait for silence signin results...");
             HashMap<String, String> tokenMap = Mapper.reValue(Futures, (f)->{
                 String r = f.join();
                 return r;});
 
-            //Log.d(TAG, "result: " + tokenMap);
-            Collection<String> failedBrands;
-            failedBrands = mBrands.stream().filter((brand)->{
-            String token;
-            token = tokenMap.get(brand);
-                return token.equals(IVALID_TOKEN) ? true : false;
-            }).collect(Collectors.toCollection(ArrayList::new));
+            //Now we should get the result of silence sign in. Start to build infrastructure.
+            //First of all, made input accepted by infrastructure builder
+            Map<String, String> tokenMapReduced =
+            tokenMap.entrySet().stream().filter(set->{
+                return !set.getValue().equals(IVALID_TOKEN);
+            }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+
+            Log.d(TAG, "Reduced tokenMap: " + tokenMapReduced);
+            HashMap<String, IDriveClient> clients = Mapper.reValue(new HashMap<>(tokenMapReduced), (k,v)->{
+                return supporttedDriveClient.get(k).build(v);
+            });
+
+            //We wait here until the infra builder finishes
+            Infrastructure infrastructure = Infrastructure.getInstance();
+            infrastructure.buildAsync(clients).join();
+
+            //Show warning message for the not yet signed in brand
+            Collection<String> failedBrands =
+            getFailedSigninCollecton(mBrands, tokenMap);
 
             //https://stackoverflow.com/questions/3875184/cant-create-handler-inside-thread-that-has-not-called-looper-prepare
             this.runOnUiThread(()->{
@@ -118,7 +130,7 @@ public class MainActivity extends AppCompatActivity{
                 startActivity(intent);
             });
 
-            return null;
+            return tokenMap;
         });
 
         joinFuture.exceptionally((e)->{
@@ -135,6 +147,16 @@ public class MainActivity extends AppCompatActivity{
 //            Log.w(TAG, "Microsoft silence sign in failed!");
 //            return null;
 //        });
+        return joinFuture;
+    }
+
+    private Collection<String> getFailedSigninCollecton(List<String> brands, HashMap<String, String> tokenMap){
+        //Log.d(TAG, "result: " + tokenMap);
+        return brands.stream().filter((brand)->{
+            String token;
+            token = tokenMap.get(brand);
+            return token.equals(IVALID_TOKEN) ? true : false;
+        }).collect(Collectors.toCollection(ArrayList::new));
     }
 
     SignInManager.OnSignInfinished onSigninFinished = new SignInManager.OnSignInfinished(){
@@ -195,20 +217,12 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onFinished(SignInManager.Profile profile, String token) {
             String brand = profile.Brand;
-            //mSignInState.put(BRAND_MS, true);
-                //Write user profile to database
-            IDriveClient dc = (IDriveClient)supporttedDriveClient.get(brand);
-            dc = dc.build(token);
-            CDFS.getCDFSService().addClient(brand, dc);
-//            GoogleDriveClient gdc
-//                    (GoogleDriveClient) GoogleDriveClient.builder(token).buildClient();
-            CDFS.getCDFSService().addClient(brand, dc);
-                //GraphDriveClient onedrive = new GraphDriveClient();
-                //addOneDriveClient(token);
-                //Log.d(TAG, "Onedrive silence sign in works");
-                Futures.get(profile.Brand).complete(token);
-                //MicrosoftFuture.complete(token);
-            //ProceedNextScreen();
+
+//            IDriveClient dc = (IDriveClient)supporttedDriveClient.get(brand);
+//            dc = dc.build(token);
+//            CDFS.getCDFSService().addClient(brand, dc);
+            Futures.get(profile.Brand).complete(token);
+
         }
 
         @Override

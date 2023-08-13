@@ -16,9 +16,9 @@ public class GlobalConstants {
     static final String BRAND_GOOGLE = SignInManager.BRAND_GOOGLE;
     static final String BRAND_MS = SignInManager.BRAND_MS;
 
-    static List<String> BrandList= new ArrayList<>();
-    public static HashMap<String, SignInManager> supporttedSignin= new HashMap<>();
-    public static HashMap<String, IDriveClient> supporttedDriveClient = new HashMap<>();
+    static final List<String> BrandList= new ArrayList<>();
+    public static final HashMap<String, SignInManager> supporttedSignin= new HashMap<>();
+    public static final HashMap<String, IDriveClient> supporttedDriveClient = new HashMap<>();
     static{
         BrandList.add(BRAND_GOOGLE);
         BrandList.add(BRAND_MS);

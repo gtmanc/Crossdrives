@@ -21,9 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MapUpdater {
     final String TAG = "CD.MapFetcher";
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
 
-    public MapUpdater(ConcurrentHashMap<String, Drive> mDrives) {
+    public MapUpdater(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 

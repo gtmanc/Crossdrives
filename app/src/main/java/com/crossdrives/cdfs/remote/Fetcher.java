@@ -36,14 +36,14 @@ import java.util.stream.Collectors;
 
 public class Fetcher {
     final String TAG = "CD.Fetcher";
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
     HashMap<String, CompletableFuture<FileList>> fileListFutures = new HashMap<>();
     HashMap<String, CompletableFuture<OutputStream>> ContentFutures = new HashMap<>();
 
     ICallBackLocker<HashMap<String, String>> mCallback;
 
-    public Fetcher(ConcurrentHashMap<String, Drive> mDrives) {
+    public Fetcher(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
     CompletableFuture<FileList> blockedFuture;

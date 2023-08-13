@@ -118,7 +118,7 @@ public class Upload {
     public CompletableFuture<File> upload(InputStream ins, String CdfsName, @NonNull List<CdfsItem> parents, IUploadProgressListener listener)  {
         CompletableFuture<File> resultFuture = new CompletableFuture<>();
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
-            ConcurrentHashMap<String, Drive> drives = mCDFS.getDrives();
+            HashMap<String, Drive> drives = mCDFS.getDrives();
             Log.d(TAG, "Signed in drives:" + drives);
             mListener = listener;
             CdfsItem whereWeAre = parents.isEmpty() ? null : parents.get(parents.size()-1);
@@ -447,7 +447,7 @@ public class Upload {
             /*
                 build up the drive list only contains the drive which we need to continue
              */
-            ConcurrentHashMap<String, Drive> reducedDriveList = new ConcurrentHashMap<>();
+            HashMap<String, Drive> reducedDriveList = new HashMap<>();
             uploadedItems.entrySet().stream().forEach((set)->{
                 reducedDriveList.put(set.getKey(), drives.get(set.getKey()));
             });
@@ -609,7 +609,7 @@ public class Upload {
 //            Infrastructure builder = new Infrastructure(driveName, mCDFS.getClient(driveName), mCDFS);
 //            idList.add(builder.getMetaDataBase(driveName).join().getId());
             Infrastructure builder = Infrastructure.getInstance();
-            idList.add(builder.getBaseItem(mCDFS.getDrives()).join().getMap().get(driveName).get(0));
+            idList.add(builder.getBaseItem().getMap().get(driveName).get(0));
         }else {
             Log.d(TAG, "Build id list for parents.");
             items.stream().forEachOrdered(item->{

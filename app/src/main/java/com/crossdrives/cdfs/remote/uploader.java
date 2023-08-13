@@ -14,9 +14,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class uploader {
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
 
-    public uploader(ConcurrentHashMap<String, Drive> mDrives) {
+    public uploader(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 

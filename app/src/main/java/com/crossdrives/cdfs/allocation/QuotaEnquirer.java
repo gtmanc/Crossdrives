@@ -16,11 +16,11 @@ import java.util.concurrent.Executors;
 
 public class QuotaEnquirer {
     private final String TAG = "CD.QuotaEnquirer";
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
 
     private final ExecutorService sExecutor = Executors.newCachedThreadPool();
 
-    public QuotaEnquirer(ConcurrentHashMap<String, Drive> mDrives) {
+    public QuotaEnquirer(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 

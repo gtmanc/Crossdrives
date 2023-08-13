@@ -13,10 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Enquirer {
     private final String TAG = "CD.Enquirer";
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
 
 
-    public Enquirer(ConcurrentHashMap<String, Drive> drives) {
+    public Enquirer(HashMap<String, Drive> drives) {
         this.mDrives = drives;
     }
 

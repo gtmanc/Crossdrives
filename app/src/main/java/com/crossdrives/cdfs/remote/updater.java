@@ -23,10 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class updater {
 
     final String TAG = "CD.Locker";
-    ConcurrentHashMap<String, Drive> mDrives;
+    HashMap<String, Drive> mDrives;
 
 
-    public updater(ConcurrentHashMap<String, Drive> mDrives) {
+    public updater(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
     }
 
