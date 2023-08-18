@@ -107,7 +107,7 @@ public class Infrastructure{
 
         CompletableFuture<CdfsItem> resultFuture =
         CompletableFuture.supplyAsync(()->{
-            HashMap<String, String> joined = new HashMap<>();
+            HashMap<String, String> joined =
             Mapper.reValue(Futures, f->{
                 return f.join();
             });
@@ -623,7 +623,7 @@ public class Infrastructure{
     private CdfsItem createBaseItemPlaceholder(){
         CdfsItem item = new CdfsItem();
         item.setFolder(true);
-        item.setName("");
+        item.setName(IConstant.CDFS_NAME_ROOT);
         item.setPath(IConstant.CDFS_PATH_BASE);
         ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap();
         item.setMap(map);

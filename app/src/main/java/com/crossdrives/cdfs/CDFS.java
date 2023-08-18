@@ -4,10 +4,14 @@ import android.util.Log;
 
 import com.crossdrives.cdfs.allocation.Infrastructure;
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.model.CdfsItem;
+import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.IDriveClient;
 import com.google.api.services.drive.model.File;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CDFS extends BaseCDFS{
@@ -41,11 +45,21 @@ public class CDFS extends BaseCDFS{
 
     public void addClient(String name, IDriveClient client){
         Log.d(TAG, "Add client. Client: " + client.toString());
-        //sClient.add(client);
-        Drive drive = new Drive(client);
-        mDrives.put(name, drive);
-        //return getClient(client);
-        createBaseFolder(name, client);
+        HashMap<String, IDriveClient> clients = Mapper.reValue(mDrives, drive->{
+            return drive.getClient();
+        });
+
+        //We have to ensure the infrastructure has been finished before the client is added.
+        //Reason is that mDrives is a shared resource and a cdfs operation might be performed while
+        //adding client is ongoing.
+        Infrastructure builder = Infrastructure.getInstance();
+        CompletableFuture<CdfsItem> future = builder.buildAsync(clients);
+        //CompletableFuture<Map.Entry<String, String>> future = builder.checkAndBuild(name, client);
+        future.thenAccept((entry)->{
+            Drive drive = new Drive(client);
+            mDrives.put(name, drive);
+        });
+
         //createAllocationFile();
         //deleteObseleteFile();
     }
@@ -73,13 +87,6 @@ public class CDFS extends BaseCDFS{
 
     public HashMap<String, Drive> getDrives(){
         return mDrives;
-    }
-
-    private void createBaseFolder(String name, IDriveClient client){
-
-        Infrastructure builder = Infrastructure.getInstance();
-
-        builder.checkAndBuild(name, client).join();
     }
 
     /*

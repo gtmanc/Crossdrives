@@ -8,8 +8,9 @@ public interface IConstant {
     final String NAME_CDFS_FOLDER = "CDFS";
 
     /*
-        CDFS display path for Root
+        CDFS abstract
      */
+    final String CDFS_NAME_ROOT = "";
     final String CDFS_PATH_BASE = "\\";
 
     /*

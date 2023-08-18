@@ -94,15 +94,17 @@ public class MainActivity extends AppCompatActivity{
                 String r = f.join();
                 return r;});
 
+            //add token to CDFS
+
             //Now we should get the result of silence sign in. Start to build infrastructure.
             //First of all, made input accepted by infrastructure builder
-            Map<String, String> tokenMapReduced =
+            Map<String, String> tokenMapFiltered =
             tokenMap.entrySet().stream().filter(set->{
                 return !set.getValue().equals(IVALID_TOKEN);
             }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
 
-            Log.d(TAG, "Reduced tokenMap: " + tokenMapReduced);
-            HashMap<String, IDriveClient> clients = Mapper.reValue(new HashMap<>(tokenMapReduced), (k,v)->{
+            Log.d(TAG, "Reduced tokenMap: " + tokenMapFiltered);
+            HashMap<String, IDriveClient> clients = Mapper.reValue(new HashMap<>(tokenMapFiltered), (k,v)->{
                 return supporttedDriveClient.get(k).build(v);
             });
 

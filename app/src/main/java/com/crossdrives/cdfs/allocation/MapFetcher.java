@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.exception.ItemNotFoundException;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -325,7 +326,7 @@ public class MapFetcher {
             //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
             HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
                 File f = null;
-                String id = parent == null? null : parent.getId();
+                String id = parent.getName().equals(IConstant.CDFS_NAME_ROOT) ? null : parent.getId();
                 if(list != null) {
                     f = getFromFiles(list, Names.allocFile(id));
                 }
