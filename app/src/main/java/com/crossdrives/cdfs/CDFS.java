@@ -43,25 +43,58 @@ public class CDFS extends BaseCDFS{
 
     public Service getService(){return mService;};
 
-    public void addClient(String name, IDriveClient client){
+    public CompletableFuture<CdfsItem> addClient(String name, IDriveClient client){
         Log.d(TAG, "Add client. Client: " + client.toString());
-        HashMap<String, IDriveClient> clients = Mapper.reValue(mDrives, drive->{
-            return drive.getClient();
-        });
+        HashMap<String, IDriveClient> clients = getClientsFromDrive();
+        clients.put(name, client);
 
         //We have to ensure the infrastructure has been finished before the client is added.
-        //Reason is that mDrives is a shared resource and a cdfs operation might be performed while
-        //adding client is ongoing.
+        //Reason is that mDrives is a shared resource and a cdfs operation might be performed before
+        //the basement has not yet built.
         Infrastructure builder = Infrastructure.getInstance();
-        CompletableFuture<CdfsItem> future = builder.buildAsync(clients);
+        CompletableFuture<CdfsItem> InfBuildFuture = builder.buildAsync(clients);
         //CompletableFuture<Map.Entry<String, String>> future = builder.checkAndBuild(name, client);
-        future.thenAccept((entry)->{
+        return InfBuildFuture.thenCompose((cdfsItem)->{
+            CompletableFuture<CdfsItem> future = new CompletableFuture<>();
             Drive drive = new Drive(client);
             mDrives.put(name, drive);
+            future.complete(cdfsItem);
+            return future;
         });
 
         //createAllocationFile();
         //deleteObseleteFile();
+    }
+
+    public CompletableFuture<CdfsItem> addClients(HashMap<String, IDriveClient> clientsToAdd){
+
+        Log.d(TAG, "Add clients. Clients: " + clientsToAdd);
+        HashMap<String, IDriveClient> clients = getClientsFromDrive();
+        clients.putAll(clientsToAdd);
+
+        //We have to ensure the infrastructure has been finished before the client is added.
+        //Reason is that mDrives is a shared resource and a cdfs operation might be performed before
+        //the basement has not yet built.
+        Infrastructure builder = Infrastructure.getInstance();
+        CompletableFuture<CdfsItem> InfBuildFuture = builder.buildAsync(clients);
+        //CompletableFuture<Map.Entry<String, String>> future = builder.checkAndBuild(name, client);
+        return InfBuildFuture.thenCompose((cdfsItem)->{
+            CompletableFuture<CdfsItem> future = new CompletableFuture<>();
+            HashMap<String, Drive> drives = Mapper.reValue(clientsToAdd, client->{
+                return new Drive(client);
+            });
+            mDrives.putAll(drives);
+            future.complete(cdfsItem);
+            return future;
+        });
+
+        //createAllocationFile();
+        //deleteObseleteFile();
+    }
+    private HashMap<String, IDriveClient> getClientsFromDrive(){
+        return Mapper.reValue(mDrives, drive->{
+            return drive.getClient();
+        });
     }
 
     //public void removeClient(int i){

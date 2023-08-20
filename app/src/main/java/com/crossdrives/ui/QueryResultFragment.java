@@ -137,30 +137,57 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	GlobalUiStateVm globalVm;
 
+	CdfsItem[] parentArray;
+
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Log.d(TAG, "onCreate");
 		setHasOptionsMenu(true);
+		CdfsItem[] parentArrayRestored = null;
+		Bundle bundleRestored = null;
 
-		//TODO: ensure the infrastracture builder has finished. Maybe a synchronization(wait) is needed.
-		String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
+		NavController navController = NavHostFragment.findNavController(this);
+		if (savedInstanceState != null && savedInstanceState.containsKey("nav_state") == true) {
+			Bundle bundle = savedInstanceState.getBundle("nav_state");
+			Log.d(TAG, "Restore nav state. bundle: " + bundle);
+			//navController.setGraph(R.id.nav_graph);
+			navController.restoreState(bundle);
+			parentArrayRestored = (CdfsItem[]) savedInstanceState.getParcelableArray("Args");
+			bundleRestored = savedInstanceState.getBundle("nav_bundle");
+		}
+
+		//String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
 		List<CdfsItem> parentList = new ArrayList<>();
-		if(parentFromNavhost != null){
-			Log.d(TAG, "Came from NavHost. Arg: " + parentFromNavhost);
+		if(navController.getPreviousBackStackEntry() == null){
+		//if(parentFromNavhost != null){
 			//parentList.add(Infrastructure.getInstance().getBaseItem(CDFS.getCDFSService().getDrives()).join());
+			//We are ok to get base foler meta data because a block wait has been performed before in MainActivity
 			CdfsItem cdfsItem =Infrastructure.getInstance().getBaseItem();
 			Log.d(TAG, "Base item: " + cdfsItem);
 			parentList.add(cdfsItem);
 		}else{
-			CdfsItem[] Args = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(getArguments()).getParentsPath();
-			if(Args != null){
-				parentList.addAll(new ArrayList<>(Arrays.asList(Args)));
-				CdfsItem parentItem = Args[0];
+			QueryResultFragmentArgs fragmentArgs;
+			Bundle bundle = getArguments();
+			if(bundleRestored != null){
+				Log.d(TAG, "bundleRestored applied!");
+				bundle = bundleRestored;
+			}
+			fragmentArgs = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(bundle);
+			//The case that fragmentArgs is null must be configuration changed. Restore the state saved.
+			if(fragmentArgs == null){
+				parentList.addAll(new ArrayList<>(Arrays.asList(parentArrayRestored)));
+			}else{
+				parentList.addAll(new ArrayList<>(Arrays.asList(fragmentArgs.getParentsPath())));
+			}
+			//https://stackoverflow.com/questions/4042434/converting-arrayliststring-to-string-in-java
+			parentArray = parentList.toArray(new CdfsItem[0]);
+
+			if(!parentList.isEmpty()){
 				Log.d(TAG, "parentList[0]: Name: " + parentList.get(0).getName() + ". Path: " + parentList.get(0).getPath());
 			}
 			else{
-				Log.w(TAG, "Args is null!");
+				Log.w(TAG, "parent is miissing!");
 			}
 		}
 
@@ -173,7 +200,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
 		//treeOpener.open(parentItem);
 
-		NavController navController = NavHostFragment.findNavController(this);
+		//Log.d(TAG, "Current graph: " + navController.getGraph());
 		NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.nav_graph);
 		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
 		//Only set the observer only if move item state is not in progress. Otherwise, the observer is
@@ -181,6 +208,17 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		if(!globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
 			globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
 		}
+	}
+
+	@Override
+	public void onSaveInstanceState(@NonNull Bundle outState) {
+		super.onSaveInstanceState(outState);
+		NavController navController = NavHostFragment.findNavController(this);
+		Bundle bundle = navController.saveState();
+		Log.d(TAG, "Save nav state. Bundle:" + bundle);
+		outState.putBundle("nav_state", bundle);
+		outState.putParcelableArray("parents", parentArray);
+		outState.putBundle("nav_bundle", getArguments());
 	}
 
 	@Nullable

@@ -98,12 +98,12 @@ public class QueryResultActivity extends AppCompatActivity implements DrawerLayo
         // Crashes if Navigation.findNavController is used because androidx.fragment.app.FragmentContainerView
         // is used as the layout to contain contents of main body of screen.
         //https://developer.android.com/guide/navigation/get-started#navigate
-        navController =
-                //Navigation.findNavController(this, R.id.main_content);
-                NavHostFragment.findNavController(getSupportFragmentManager().findFragmentById(R.id.main_content));
-        Bundle bundle = new Bundle();
-        bundle.putString(KEY_PARENT_PATH, "Root");
-        navController.setGraph(R.navigation.nav_graph, bundle);
+//        navController =
+//                //Navigation.findNavController(this, R.id.main_content);
+//                NavHostFragment.findNavController(getSupportFragmentManager().findFragmentById(R.id.main_content));
+//        Bundle bundle = new Bundle();
+//        bundle.putString(KEY_PARENT_PATH, "Root");
+//        navController.setGraph(R.navigation.nav_graph, bundle);
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(onFabClick);

@@ -109,8 +109,9 @@ public class MainActivity extends AppCompatActivity{
             });
 
             //We wait here until the infra builder finishes
-            Infrastructure infrastructure = Infrastructure.getInstance();
-            infrastructure.buildAsync(clients).join();
+//            Infrastructure infrastructure = Infrastructure.getInstance();
+//            infrastructure.buildAsync(clients).join();
+            CDFS.getCDFSService().addClients(clients).join();
 
             //Show warning message for the not yet signed in brand
             Collection<String> failedBrands =
@@ -170,7 +171,7 @@ public class MainActivity extends AppCompatActivity{
 
             IDriveClient dc = supporttedDriveClient.get(brand).build(token);
 
-            CDFS.getCDFSService().addClient(brand, dc);
+            //CDFS.getCDFSService().addClient(brand, dc);
             CompletableFuture<String> future = Futures.get(brand);
             future.complete(token);
         }
