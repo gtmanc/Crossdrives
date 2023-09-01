@@ -33,6 +33,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavBackStackEntry;
@@ -142,54 +143,52 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.d(TAG, "onCreate");
+		Log.d(TAG, "onCreate: " + this + " :" + this.getLifecycle().getCurrentState());
 		setHasOptionsMenu(true);
 		CdfsItem[] parentArrayRestored = null;
-		Bundle bundleRestored = null;
 
 		NavController navController = NavHostFragment.findNavController(this);
-		if (savedInstanceState != null && savedInstanceState.containsKey("nav_state") == true) {
-			Bundle bundle = savedInstanceState.getBundle("nav_state");
-			Log.d(TAG, "Restore nav state. bundle: " + bundle);
-			//navController.setGraph(R.id.nav_graph);
-			navController.restoreState(bundle);
-			parentArrayRestored = (CdfsItem[]) savedInstanceState.getParcelableArray("Args");
-			bundleRestored = savedInstanceState.getBundle("nav_bundle");
+		if (savedInstanceState != null && savedInstanceState.containsKey("parentArray") == true) {
+			Log.d(TAG, "Restore parent array");
+			parentArrayRestored = (CdfsItem[]) savedInstanceState.getParcelableArray("parentArray");
 		}
 
 		//String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
 		List<CdfsItem> parentList = new ArrayList<>();
+		//If we reach here from NavHost, simply get base folder metadata from CDFS infrastructure
 		if(navController.getPreviousBackStackEntry() == null){
 		//if(parentFromNavhost != null){
 			//parentList.add(Infrastructure.getInstance().getBaseItem(CDFS.getCDFSService().getDrives()).join());
 			//We are ok to get base foler meta data because a block wait has been performed before in MainActivity
 			CdfsItem cdfsItem =Infrastructure.getInstance().getBaseItem();
-			Log.d(TAG, "Base item: " + cdfsItem);
+			//Log.d(TAG, "Base item: " + cdfsItem);
 			parentList.add(cdfsItem);
 		}else{
 			QueryResultFragmentArgs fragmentArgs;
 			Bundle bundle = getArguments();
-			if(bundleRestored != null){
-				Log.d(TAG, "bundleRestored applied!");
-				bundle = bundleRestored;
-			}
-			fragmentArgs = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(bundle);
-			//The case that fragmentArgs is null must be configuration changed. Restore the state saved.
-			if(fragmentArgs == null){
-				parentList.addAll(new ArrayList<>(Arrays.asList(parentArrayRestored)));
-			}else{
+			Log.d(TAG, "arguments bundle: " + bundle);
+			Log.d(TAG, "parentArrayRestored: " + parentArrayRestored);
+			if(parentArrayRestored == null){
+				if (bundle == null) {Log.w(TAG, "arguments bundle is null");}
+				fragmentArgs = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(bundle);
 				parentList.addAll(new ArrayList<>(Arrays.asList(fragmentArgs.getParentsPath())));
-			}
-			//https://stackoverflow.com/questions/4042434/converting-arrayliststring-to-string-in-java
-			parentArray = parentList.toArray(new CdfsItem[0]);
-
-			if(!parentList.isEmpty()){
-				Log.d(TAG, "parentList[0]: Name: " + parentList.get(0).getName() + ". Path: " + parentList.get(0).getPath());
-			}
-			else{
-				Log.w(TAG, "parent is miissing!");
+				//Log.d(TAG, "parentPath from bundle: " + fragmentArgs.getParentsPath());
+			}else{
+				//Log.d(TAG, "parentArrayRestored: " + parentArrayRestored);
+				parentList.addAll(new ArrayList<>(Arrays.asList(parentArrayRestored)));
 			}
 		}
+
+		if(!parentList.isEmpty()){
+			Log.d(TAG, "parentList[0]: Name: " + parentList.get(0).getName() + ". Path: " + parentList.get(0).getPath());
+		}
+		else{
+			Log.w(TAG, "parent is miissing!");
+		}
+
+		//https://stackoverflow.com/questions/4042434/converting-arrayliststring-to-string-in-java
+		parentArray = parentList.toArray(new CdfsItem[0]);
+		Log.d(TAG, "parentArray converted: " + parentArray);
 
 		treeOpener = new ViewModelProvider(this, new OpenTreeFactory(parentList)).get(OpenTree.class);
 		treeOpener.setListener(treeOpenListener);
@@ -201,6 +200,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//treeOpener.open(parentItem);
 
 		//Log.d(TAG, "Current graph: " + navController.getGraph());
+
 		NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.nav_graph);
 		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
 		//Only set the observer only if move item state is not in progress. Otherwise, the observer is
@@ -210,21 +210,18 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	}
 
+
 	@Override
 	public void onSaveInstanceState(@NonNull Bundle outState) {
 		super.onSaveInstanceState(outState);
-		NavController navController = NavHostFragment.findNavController(this);
-		Bundle bundle = navController.saveState();
-		Log.d(TAG, "Save nav state. Bundle:" + bundle);
-		outState.putBundle("nav_state", bundle);
-		outState.putParcelableArray("parents", parentArray);
-		outState.putBundle("nav_bundle", getArguments());
+		//Log.d(TAG, "parentArray to save: " + parentArray);
+		outState.putParcelableArray("parentArray", parentArray);
 	}
 
 	@Nullable
 	@Override
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		Log.i(TAG, "onCreateView");
+		Log.d(TAG, "onCreateView");
 
 		View v = inflater.inflate(R.layout.query_result_fragment, container, false);
 		return v;
@@ -302,15 +299,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//TODO: we may have to update the parent list stored in OpenTree viewmode because screen may transits from
 		//add account screen. also need to take care the situation that infrastructure buid has not yet finished.
 
-//		mItems = new ArrayList<>();
-//		mAdapter = new QueryFileAdapter(mItems, getContext());
-//		mAdapter.setOnItemClickListener(itemClickListener);
-//		mRecyclerView.setAdapter(mAdapter);
 
-		//view.findViewById(R.id.scrim).setOnClickListener(onScrimClick);
-
-//		initialQuery();
-//		queryFile();
+		//Retrieve the destination the item will be moved to that the move item workflow returned
+		MutableLiveData<CdfsItem[]> liveData = navController.getCurrentBackStackEntry()
+				.getSavedStateHandle()
+				.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
+		liveData.observe(getViewLifecycleOwner(), BackEntryStateObserver);
+		Log.d(TAG, "Current stack entry: " + navController.getCurrentBackStackEntry().getId());
 	}
 
 	/*
@@ -366,6 +361,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				//navController.navigate(QueryResultFragmentDirections.navigateToMyself(treeOpener.getParentArray(false)));
 				navController.navigate(QueryResultFragmentDirections.navigateToMoveItemWorkflowGraph(itemArray));
 			}
+		}
+	};
+
+	final Observer<CdfsItem[]> BackEntryStateObserver = new Observer<CdfsItem[]>() {
+
+		@Override
+		public void onChanged(CdfsItem[] parentArray) {
+			Log.d(TAG, "length of selected dest: " + parentArray.length);
+			Log.d(TAG, "1st ID of selected dest: " + parentArray[0].getId());
 		}
 	};
 

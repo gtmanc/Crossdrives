@@ -7,6 +7,10 @@
     android:id="@+id/layout_query_result_activity"
     tools:openDrawer="start">
 
+    <!-- Caution: Avoid using the <fragment> tag to add a fragment using XML, as the <fragment> tag
+    allows a fragment to move beyond the state of its FragmentManager.
+    Instead, always use FragmentContainerView for adding a fragment using XML.
+    https://developer.android.com/guide/fragments/lifecycle#states-->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/main_content"
         android:name="androidx.navigation.fragment.NavHostFragment"

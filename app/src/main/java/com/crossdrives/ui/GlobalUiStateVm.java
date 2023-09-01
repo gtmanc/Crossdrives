@@ -22,6 +22,8 @@ public class GlobalUiStateVm extends ViewModel {
     }
 
     class MoveItemState {
+        //True: app is in move item workflow.
+        //False: app has exited move item workflow but the move may has not yet done.
         boolean isInProgress;
         CdfsItem[] startDest;
 

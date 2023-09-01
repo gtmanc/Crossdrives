@@ -252,6 +252,11 @@ public class MasterAccountFragment extends Fragment{
         });
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState:" + this + "LF state: " + this.getLifecycle().getCurrentState());
+    }
 //    private class UpdatePhoto extends AsyncTask<String, Void, Bitmap> {
 //
 //        @Override
