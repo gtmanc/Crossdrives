@@ -6,6 +6,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
+import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -25,15 +26,19 @@ import java.util.stream.Collectors;
 
 public class Move {
     final String TAG = "CD.Move";
-    CDFS mCDFS;
+    final CDFS mCDFS;
     final String mFileID;
-    CdfsItem mParent;
+    final CdfsItem mSource, mDest;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
-    public Move(CDFS cdfs, String id, CdfsItem parent) {
+    final String CONTAINER_UPDATE_ADD = "container_update_add";
+    final String CONTAINER_UPDATE_REMOVE = "container_update_remove";
+
+    public Move(CDFS cdfs, String itemCdfsId, CdfsItem source, CdfsItem dest) {
         this.mCDFS = cdfs;
-        this.mFileID = id;
-        this.mParent = parent;
+        this.mFileID = itemCdfsId;
+        this.mSource = source;
+        this.mDest = dest;
     }
 
     public Task<File> execute() {
@@ -47,32 +52,23 @@ public class Move {
                 com.google.api.services.drive.model.File file = new com.google.api.services.drive.model.File();
                 file.setId(mFileID);
                 result.setFile(file);
-                //Collection<Throwable> exceptions = new ArrayList<>();
-                HashMap<String, CompletableFuture<String>> futures = new HashMap<>();
-                Log.d(TAG, "Fetch map...");
-                //callback(Delete.State.GET_MAP_STARTED);
-                MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(mParent);
-                HashMap<String, OutputStream> maps = mapsFuture.join();
-                Log.d(TAG, "map fetched");
-                //callback(Delete.State.GET_MAP_COMPLETE);
 
-                //map to allocation container so that we can easily process later
-                HashMap<String, AllocContainer> mapped = Mapper.reValue(maps, (stream)->{
-                    return AllocManager.toContainer(stream);
-                });
+                //get the maps for both source and destination because we will need to update the maps according to
+                //the change we will made
+                HashMap<String, AllocContainer> containerSrc = getMapContainers(mCDFS.getDrives(), mSource);
+                HashMap<String, AllocContainer> containerDest = getMapContainers(mCDFS.getDrives(), mDest);
 
                 //extract the allocation items we are interested
-                HashMap<String, AllocContainer> filteredContainers = Mapper.reValue(mapped, (container)->{
-                    List<AllocationItem> list =
-                            container.getAllocItem().stream().filter((item)->{
-                                return item.getCdfsId().equals(mFileID);
-                            }).collect(Collectors.toList());
-
-                    AllocContainer newContainer = AllocManager.newAllocContainer();
-                    newContainer.addItems(list);
-                    return newContainer;
-                });
+//                HashMap<String, AllocContainer> filteredContainers = Mapper.reValue(mapped, (container)->{
+//                    List<AllocationItem> list =
+//                            container.getAllocItem().stream().filter((item)->{
+//                                return item.getCdfsId().equals(mFileID);
+//                            }).collect(Collectors.toList());
+//
+//                    AllocContainer newContainer = AllocManager.newAllocContainer();
+//                    newContainer.addItems(list);
+//                    return newContainer;
+//                });
 
                 //replace the parent with the specified
                 HashMap<String, AllocContainer> containers = Mapper.reValue(filteredContainers, (container)->{
@@ -81,7 +77,7 @@ public class Move {
                     List<AllocationItem> itemList= container.getAllocItem();
                     List<AllocationItem> items = itemList.stream().map((item)->{
                         AllocationItem ai = AllocationItem.clone(item);
-                        ai.setPath(mParent.getPath());
+                        ai.setPath(mDest.getPath());
                         return ai;
                     }).collect(Collectors.toList());
                     return container;
@@ -90,12 +86,46 @@ public class Move {
                 MapUpdater updater = new MapUpdater(mCDFS.getDrives());
 
                 CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(containers, mParent);
+                        = updater.updateAll(containers, mDest);
                 updateFuture.join();
 
                 return result;
                 }
         });
         return task;
+    }
+
+    private HashMap<String, AllocContainer> getMapContainers(HashMap<String, Drive> drives, CdfsItem parent){
+        HashMap<String, CompletableFuture<String>> futures = new HashMap<>();
+        HashMap<String, OutputStream> maps;
+
+        //callback(Delete.State.GET_MAP_STARTED);
+        MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
+        CompletableFuture<HashMap<String, OutputStream>> mapsFuture = mapFetcher.pullAll(parent);
+        maps = mapsFuture.join();
+
+        //map to allocation container so that we can easily process later
+        return Mapper.reValue(maps, (stream)->{
+            return AllocManager.toContainer(stream);
+        });
+    }
+
+    private List<AllocationItem> getAllocItems(AllocContainer container, String id){
+        return container.getAllocItem().stream().filter((item)->{
+                                return item.getCdfsId().equals(id);
+                            }).collect(Collectors.toList());
+    }
+
+    private List<AllocationItem> updateParentPath(List<AllocationItem> items, final String parentPath){
+        return items.stream().map(item->{
+            return item.setPath(parentPath);
+        })
+    }
+
+    private HashMap<String, AllocContainer> updateContainers(HashMap<String, AllocContainer> containers,
+                                                             final String CdfsID, final String action) {
+        return Mapper.reValue(containers, container -> {
+            container.
+        });
     }
 }

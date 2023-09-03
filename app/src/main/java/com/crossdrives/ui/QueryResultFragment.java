@@ -305,7 +305,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				.getSavedStateHandle()
 				.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
 		liveData.observe(getViewLifecycleOwner(), BackEntryStateObserver);
-		Log.d(TAG, "Current stack entry: " + navController.getCurrentBackStackEntry().getId());
 	}
 
 	/*
@@ -370,6 +369,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onChanged(CdfsItem[] parentArray) {
 			Log.d(TAG, "length of selected dest: " + parentArray.length);
 			Log.d(TAG, "1st ID of selected dest: " + parentArray[0].getId());
+			CDFS.getCDFSService().getService().move();
 		}
 	};
 
