@@ -1,21 +1,14 @@
 package com.crossdrives.cdfs.remote;
 
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.model.updateFile;
+import com.crossdrives.cdfs.model.UpdateFile;
 import com.crossdrives.cdfs.util.Mapper;
-import com.crossdrives.driveclient.model.File;
 import com.crossdrives.driveclient.update.IUpdateCallBack;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.InputStreamContent;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 /*
     update meta data or content of file for user's drives
@@ -30,7 +23,7 @@ public class updater {
         this.mDrives = mDrives;
     }
 
-    public CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateAll(HashMap<String, updateFile> files){
+    public CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateAll(HashMap<String, UpdateFile> files){
         HashMap<String, CompletableFuture<com.google.api.services.drive.model.File>> Futures = new HashMap<>();
 
         files.forEach((driveName, file)->{

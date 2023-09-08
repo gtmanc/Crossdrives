@@ -1,17 +1,11 @@
 package com.crossdrives.cdfs.remote;
 
 import com.crossdrives.cdfs.data.Drive;
-import com.crossdrives.cdfs.model.updateFile;
 import com.crossdrives.cdfs.util.Mapper;
-import com.crossdrives.driveclient.update.IUpdateCallBack;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
-import com.google.api.client.http.FileContent;
-import com.google.api.services.drive.model.File;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class uploader {
     HashMap<String, Drive> mDrives;

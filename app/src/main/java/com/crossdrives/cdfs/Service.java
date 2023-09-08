@@ -255,13 +255,13 @@ public class Service{
         deleteProgressListener = listener;
     }
 
-    public Task<com.crossdrives.driveclient.model.File> move(String fileID, CdfsItem parent) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> move(CdfsItem fileID, CdfsItem src, CdfsItem dest) throws MissingDriveClientException, PermissionException {
 
 //        IDeleteProgressListener listener = defaultDeleteProgressListener;
 //        if (deleteProgressListener != null)
 //            listener = deleteProgressListener;
 
-        Move mover = new Move(mCDFS, fileID, parent);
+        Move mover = new Move(mCDFS, fileID, src, dest);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: move");

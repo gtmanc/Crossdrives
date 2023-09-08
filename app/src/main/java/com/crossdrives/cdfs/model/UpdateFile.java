@@ -3,7 +3,7 @@ package com.crossdrives.cdfs.model;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
 
-public class updateFile {
+public class UpdateFile {
     String ID;
     File metadata;
     FileContent mediaContent;

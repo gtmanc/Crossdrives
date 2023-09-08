@@ -7,7 +7,7 @@ import com.crossdrives.cdfs.data.LocalFileCreator;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.model.UpdateContent;
-import com.crossdrives.cdfs.model.updateFile;
+import com.crossdrives.cdfs.model.UpdateFile;
 import com.crossdrives.cdfs.remote.updater;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.msgraph.SnippetApp;
@@ -17,7 +17,6 @@ import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class MapUpdater {
     final String TAG = "CD.MapFetcher";
@@ -32,8 +31,8 @@ public class MapUpdater {
         updater updater = new updater(mDrives);
 
         //map UpdateContent to UpdateFile
-        HashMap<String, updateFile> files = Mapper.reValue(contents,(in)->{
-            updateFile file = new updateFile();
+        HashMap<String, UpdateFile> files = Mapper.reValue(contents,(in)->{
+            UpdateFile file = new UpdateFile();
             FileContent fileContent = new FileContent("application/octet-stream", in.getMediaContent());
             file.setID(in.getID());
             file.setMediaContent(fileContent);
