@@ -7,7 +7,9 @@ import com.crossdrives.driveclient.update.IUpdateCallBack;
 import com.google.api.client.http.FileContent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /*
@@ -46,6 +48,36 @@ public class updater {
 
         return resultFuture;
     }
+
+    public CompletableFuture<List<com.google.api.services.drive.model.File>> updateAll(
+            String driveName,
+            List<String> idList,
+            com.google.api.services.drive.model.File metaData,
+            FileContent mediaContent) {
+        List<CompletableFuture<com.google.api.services.drive.model.File>> futures = new ArrayList<>();
+
+        idList.stream().forEach((id)->{
+            CompletableFuture<com.google.api.services.drive.model.File> future = null;
+            try {
+                future = update(driveName, id, metaData, mediaContent);
+            } catch (IOException e) {
+                future = new CompletableFuture<>();
+                future.completeExceptionally(e);
+            }
+            futures.add(future);
+        });
+
+        CompletableFuture<List<com.google.api.services.drive.model.File>> resultFuture = CompletableFuture.supplyAsync(()->{
+            List<com.google.api.services.drive.model.File> result = new ArrayList<>();
+
+            futures.stream().forEach((future)->{
+                result.add(future.join());
+            });
+            return result;
+
+        });
+
+    };
 
     CompletableFuture<com.google.api.services.drive.model.File> update(
             String driveName,

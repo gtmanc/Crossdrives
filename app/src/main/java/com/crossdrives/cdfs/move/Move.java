@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -146,4 +147,39 @@ public class Move {
         }
     }
 
+    CompletableFuture updateParent(HashMap<String, Drive> drives, HashMap<String, List<String>> items, String parent){
+
+        HashMap<String, List<UpdateFile>> updateFiles = Mapper.reValue(items, list->{
+            List<UpdateFile> files = new ArrayList<>();
+
+            Iterator<String> iterator = list.iterator();
+            while(iterator.hasNext()) {
+                com.google.api.services.drive.model.File metaData = new com.google.api.services.drive.model.File();
+                List<String> parents = new ArrayList<>();
+                UpdateFile f = new UpdateFile();
+                parents.add(parent);
+                metaData.setId(iterator.next());
+                metaData.setParents(parents);
+                f.setMetadata(metaData);
+                files.add(f);
+            }
+            return files;
+        });
+
+
+        return
+        CompletableFuture.supplyAsync(()->{
+            updateFiles.entrySet().stream().forEach((set)->{
+                MapUpdater updater = new MapUpdater(drives);
+                List<UpdateFile> list = set.getValue();
+                Iterator<UpdateFile> iterator = list.iterator();
+                while (iterator.hasNext()){
+                    updater.updateAll(iterator.next(), );
+                }
+            });
+
+           return null;
+        });
+
+    }
 }
