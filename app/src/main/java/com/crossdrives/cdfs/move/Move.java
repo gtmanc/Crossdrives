@@ -4,6 +4,7 @@ import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
+import com.crossdrives.cdfs.allocation.MetaDataUpdater;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -62,29 +63,20 @@ public class Move {
 
                 //following are critical process which must be atomic. However, we can't guarantee this.
                 //A recovery process will be employed to solve the issue.
-                com.google.api.services.drive.model.File metaData = new com.google.api.services.drive.model.File();
-                metaData.setId(mFileID.getId());
-                metaData.setParents(new ArrayList<>(mDest.));
+                MetaDataUpdater metaDataUpdater = new MetaDataUpdater(mCDFS.getDrives());
+                metaDataUpdater.parent(mDest.getMap()).run(mFileID.getMap()).join();
 
+                MapUpdater mapUpdater1 = new MapUpdater(mCDFS.getDrives());
+                MapUpdater mapUpdater2 = new MapUpdater(mCDFS.getDrives());
+                Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
+                new ArrayList<>();
+                futures.add(mapUpdater1.updateAll(newContainerSrc, mSource));
+                futures.add(mapUpdater2.updateAll(newContainerSrc, mDest));
+                futures.stream().forEach((future)->{
+                    future.join();
+                });
 
-
-                UpdateFile updateFile = new UpdateFile();
-
-
-
-                updateFile.setMetadata(metaData);
-
-
-
-                MapUpdater updater = new MapUpdater(mCDFS.getDrives());
-
-                CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateFuture
-                        = updater.updateAll(newContainerSrc, mDest);
-                updateFuture.join();
-                updateFuture = updater.updateAll(newContainerDest, mDest);
-                updateFuture.join();
-
-                return result;
+                return null;
                 }
         });
         return task;
@@ -145,41 +137,5 @@ public class Move {
                 return container;
             });
         }
-    }
-
-    CompletableFuture updateParent(HashMap<String, Drive> drives, HashMap<String, List<String>> items, String parent){
-
-        HashMap<String, List<UpdateFile>> updateFiles = Mapper.reValue(items, list->{
-            List<UpdateFile> files = new ArrayList<>();
-
-            Iterator<String> iterator = list.iterator();
-            while(iterator.hasNext()) {
-                com.google.api.services.drive.model.File metaData = new com.google.api.services.drive.model.File();
-                List<String> parents = new ArrayList<>();
-                UpdateFile f = new UpdateFile();
-                parents.add(parent);
-                metaData.setId(iterator.next());
-                metaData.setParents(parents);
-                f.setMetadata(metaData);
-                files.add(f);
-            }
-            return files;
-        });
-
-
-        return
-        CompletableFuture.supplyAsync(()->{
-            updateFiles.entrySet().stream().forEach((set)->{
-                MapUpdater updater = new MapUpdater(drives);
-                List<UpdateFile> list = set.getValue();
-                Iterator<UpdateFile> iterator = list.iterator();
-                while (iterator.hasNext()){
-                    updater.updateAll(iterator.next(), );
-                }
-            });
-
-           return null;
-        });
-
     }
 }

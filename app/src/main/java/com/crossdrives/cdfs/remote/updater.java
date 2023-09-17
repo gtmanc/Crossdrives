@@ -77,6 +77,8 @@ public class updater {
 
         });
 
+        return resultFuture;
+
     };
 
     CompletableFuture<com.google.api.services.drive.model.File> update(
