@@ -67,7 +67,6 @@ import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.msgraph.SnippetApp;
 import com.example.crossdrives.DriveServiceHelper;
-import com.example.crossdrives.QueryResultActivity;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -139,6 +138,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	GlobalUiStateVm globalVm;
 
 	CdfsItem[] parentArray;
+
+	CdfsItem itemOverflowMenuExpaned;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -369,7 +370,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onChanged(CdfsItem[] parentArray) {
 			Log.d(TAG, "length of selected dest: " + parentArray.length);
 			Log.d(TAG, "1st ID of selected dest: " + parentArray[0].getId());
-			CDFS.getCDFSService().getService().move();
+			try {
+				CDFS.getCDFSService().getService().move(itemOverflowMenuExpaned, treeOpener.getParent(), parentArray[parentArray.length-1]);
+			} catch (PermissionException e) {
+				Log.w(TAG, e.getMessage());
+				Log.w(TAG, e.getCause());
+				mProgressBar.setVisibility(View.INVISIBLE);
+				Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+			}
 		}
 	};
 
@@ -738,13 +746,20 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onImageItemClick(RootItemsAdapter adapter, View view, int position) {
-			Log.i(TAG, "onImageItemClick:" + position);
+			Log.d(TAG, "onImageItemClick:" + position);
+			List<SerachResultItemModel> list = adapter.getCurrentList();
+			itemOverflowMenuExpaned = list.get(position).getCdfsItem();
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
 			//popup.setOnMenuItemClickListener(PopupMenuListener.create(globalVm, treeOpener.getParent()));
 			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm, treeOpener.getParentArray(false)));
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
+			//We only show the option item Move if the item is not a folder
+			if(list.get(position).getCdfsItem().isFolder()){
+				Log.d(TAG, "hide item Move since it's a folder");
+				popup.getMenu().findItem(R.id.omiMove).setVisible(false);
+			}
 			popup.show();
 		}
 

@@ -1,5 +1,7 @@
 package com.crossdrives.cdfs.move;
 
+import android.util.Log;
+
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
@@ -43,6 +45,7 @@ public class Move {
 
     public Task<File> execute() {
         Task<com.crossdrives.driveclient.model.File> task;
+        DebugPrintOut po = new DebugPrintOut();
 
         task = Tasks.call(mExecutor, new Callable<File>() {
 
@@ -52,15 +55,38 @@ public class Move {
                 //the change we will made
                 HashMap<String, AllocContainer> containerSrc = getMapContainers(mCDFS.getDrives(), mSource);
                 HashMap<String, AllocContainer> containerDest = getMapContainers(mCDFS.getDrives(), mDest);
-                //get the items we are interest according to the item cdfs id. Then update the field parentPath of the items with the dest parent path
+                po.out("Container source:", containerSrc);
+                po.out("Container destination:", containerDest);
+
+                //Get the items we are interest according to the CDFS item that to be moved.
+                //Then update the field parentPath of the items with the dest parent path
                 HashMap<String, Collection<AllocationItem>> updatedItemLists = updateParentPathAll(getAllocItemsAllById(containerSrc, mFileID.getId()), mDest.getPath());
+                //print out for debug
+                updatedItemLists.entrySet().stream().forEach((set)->{
+                    Log.d(TAG, "Items that parentPath updated. drive: " + set.getKey());
+                    set.getValue().forEach((item)-> Log.d(TAG, "name: " + item.getName() + " parent: " + item.getPath()));
+                });
 
                 //build up the new containers for source and destination that we will use to update the
                 //allocation maps in both source and dest parent.
                 ContainerUtil containerUtil = new ContainerUtil();
                 HashMap<String, AllocContainer> newContainerSrc = containerUtil.removeItems(containerSrc, updatedItemLists);
                 HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(containerDest, updatedItemLists);
-
+                //print out for debug
+                newContainerSrc.entrySet().stream().forEach((set)->{
+                    Log.d(TAG, "Container that will be updated to the source:");
+                    Log.d(TAG, "drive: " + set.getKey());
+                    set.getValue().getAllocItem().stream().forEach((item)->{
+                        Log.d(TAG, "name: " + item.getName() + "seq: " + item.getSequence() + " parent: " + item.getPath());
+                    });
+                });
+                newContainerDest.entrySet().stream().forEach((set)->{
+                    Log.d(TAG, "Container that will be updated to the estination:");
+                    Log.d(TAG, "drive: " + set.getKey());
+                    set.getValue().getAllocItem().stream().forEach((item)->{
+                        Log.d(TAG, "name: " + item.getName() + "seq: " + item.getSequence() + " parent: " + item.getPath());
+                    });
+                });
                 //following are critical process which must be atomic. However, we can't guarantee this.
                 //A recovery process will be employed to solve the issue.
                 MetaDataUpdater metaDataUpdater = new MetaDataUpdater(mCDFS.getDrives());
@@ -71,7 +97,7 @@ public class Move {
                 Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
                 new ArrayList<>();
                 futures.add(mapUpdater1.updateAll(newContainerSrc, mSource));
-                futures.add(mapUpdater2.updateAll(newContainerSrc, mDest));
+                futures.add(mapUpdater2.updateAll(newContainerDest, mDest));
                 futures.stream().forEach((future)->{
                     future.join();
                 });
@@ -136,6 +162,19 @@ public class Move {
                 container.removeItems(items.get(key));
                 return container;
             });
+        }
+    }
+
+    class DebugPrintOut{
+        void out(String head, HashMap<String, AllocContainer> container){
+            Log.d(TAG, head);
+            container.entrySet().stream().forEach((set)->{
+                Log.d(TAG, "drive: " + set.getKey());
+                set.getValue().getAllocItem().stream().forEach((item)->{
+                    Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
+                });
+            });
+
         }
     }
 }
