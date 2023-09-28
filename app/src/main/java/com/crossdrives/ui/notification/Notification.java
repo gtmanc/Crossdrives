@@ -24,7 +24,8 @@ public class Notification {
         NOTIFY_UPLOAD (0),
         NOTIFY_DOWNLOAD(1),
         NOTIFY_DELETE(2),
-        NOTIFY_MESSAGE(3);
+        NOTIFY_MOVE(3),
+        NOTIFY_MESSAGE(4);
 
         int mChannelID;
 

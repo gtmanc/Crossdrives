@@ -65,11 +65,14 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
                 com.google.api.services.drive.model.File file;
 
                 files = mClient.getGoogleDriveService().files();
+
                 if(mMediaContent != null){
                     update = files.update(mfileID, mMetaData, mMediaContent);
                 }else{
                     update = files.update(mfileID, mMetaData);
                 }
+
+
                 file = update.setFields("id, name, contentRestrictions")
                 //.setFields("id, name")
                 .execute();
@@ -89,4 +92,9 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
             }
         });
     }
+
+    Drive.Files.Update updateParents(){
+
+    }
+
 }

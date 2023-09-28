@@ -89,6 +89,14 @@
     <string name="notification_content_delete_complete">Delete successfully</string>
     <string name="notification_content_delete_complete_exceptionally">Oops... Something wrong during Delete</string>
 
+    <string name="notification_title_item_moving">Move in progress</string>
+    <string name="notification_title_move_item_completed">Move Completed</string>
+    <string name="notification_content_moving_file">Moving file</string>
+    <string name="notification_content_move_item_start_fetch_maps">Check...</string>
+    <string name="notification_content_move_item_fetch_maps_done">Check OK!</string>
+    <string name="notification_content_move_item_complete">Moved successfully</string>
+    <string name="notification_content_move_item_complete_exceptionally">Oops... Something wrong during moving a file</string>
+
     <!-- Toast messages -->
     <string name="toast_create_file_success">Create file OK!</string>
     <string name="toast_create_file_failure">Failed to create file!</string>

@@ -36,9 +36,9 @@ public class Move {
     final CdfsItem mSource, mDest;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
-    public Move(CDFS cdfs, CdfsItem itemCdfsId, CdfsItem source, CdfsItem dest) {
+    public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest) {
         this.mCDFS = cdfs;
-        this.mFileID = itemCdfsId;
+        this.mFileID = item;
         this.mSource = source;
         this.mDest = dest;
     }
@@ -55,8 +55,8 @@ public class Move {
                 //the change we will made
                 HashMap<String, AllocContainer> containerSrc = getMapContainers(mCDFS.getDrives(), mSource);
                 HashMap<String, AllocContainer> containerDest = getMapContainers(mCDFS.getDrives(), mDest);
-                po.out("Container source:", containerSrc);
-                po.out("Container destination:", containerDest);
+                //po.out("Container source:", containerSrc);
+                //po.out("Container destination:", containerDest);
 
                 //Get the items we are interest according to the CDFS item that to be moved.
                 //Then update the field parentPath of the items with the dest parent path
@@ -72,21 +72,9 @@ public class Move {
                 ContainerUtil containerUtil = new ContainerUtil();
                 HashMap<String, AllocContainer> newContainerSrc = containerUtil.removeItems(containerSrc, updatedItemLists);
                 HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(containerDest, updatedItemLists);
-                //print out for debug
-                newContainerSrc.entrySet().stream().forEach((set)->{
-                    Log.d(TAG, "Container that will be updated to the source:");
-                    Log.d(TAG, "drive: " + set.getKey());
-                    set.getValue().getAllocItem().stream().forEach((item)->{
-                        Log.d(TAG, "name: " + item.getName() + "seq: " + item.getSequence() + " parent: " + item.getPath());
-                    });
-                });
-                newContainerDest.entrySet().stream().forEach((set)->{
-                    Log.d(TAG, "Container that will be updated to the estination:");
-                    Log.d(TAG, "drive: " + set.getKey());
-                    set.getValue().getAllocItem().stream().forEach((item)->{
-                        Log.d(TAG, "name: " + item.getName() + "seq: " + item.getSequence() + " parent: " + item.getPath());
-                    });
-                });
+
+                po.out("New container to source:", newContainerSrc);
+                po.out("New container to dest", newContainerDest);
                 //following are critical process which must be atomic. However, we can't guarantee this.
                 //A recovery process will be employed to solve the issue.
                 MetaDataUpdater metaDataUpdater = new MetaDataUpdater(mCDFS.getDrives());

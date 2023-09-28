@@ -368,15 +368,23 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onChanged(CdfsItem[] parentArray) {
+			Task<com.crossdrives.driveclient.model.File> task = null;
 			Log.d(TAG, "length of selected dest: " + parentArray.length);
 			Log.d(TAG, "1st ID of selected dest: " + parentArray[0].getId());
 			try {
-				CDFS.getCDFSService().getService().move(itemOverflowMenuExpaned, treeOpener.getParent(), parentArray[parentArray.length-1]);
-			} catch (PermissionException e) {
+				task = CDFS.getCDFSService().getService().move(itemOverflowMenuExpaned, treeOpener.getParent(), parentArray[parentArray.length-1]);
+			} catch (PermissionException | MissingDriveClientException e) {
 				Log.w(TAG, e.getMessage());
 				Log.w(TAG, e.getCause());
 				mProgressBar.setVisibility(View.INVISIBLE);
 				Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+			}
+			if(task != null){
+				Notification notification
+						= new Notification(Notification.Category.NOTIFY_MOVE, R.drawable.ic_baseline_cloud_circle_24);
+				ResultUpdater updater = new ResultUpdater();
+				task.addOnSuccessListener(updater.createMoveItemSuccessListener(notification)).
+						addOnFailureListener(updater.createCreateFailureListener(notification));
 			}
 		}
 	};

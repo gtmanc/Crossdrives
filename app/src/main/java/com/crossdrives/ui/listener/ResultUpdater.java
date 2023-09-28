@@ -75,6 +75,21 @@ public class ResultUpdater {
         return listener;
     }
 
+    public OnSuccessListener<File> createMoveItemSuccessListener(Notification notification){
+        OnSuccessListener<File> listener = new OnSuccessListener<File>() {
+
+            @Override
+            public void onSuccess(File file) {
+                //Notification notification = mDownloadSuccessListener.get(this);
+                notification.removeProgressBar();
+                notification.updateContentTitle(context.getString(R.string.notification_title_move_item_completed));
+                notification.updateContentText(context.getString(R.string.notification_content_move_item_complete));
+                Log.d(TAG, "file moved: " + file);
+            }
+        };
+        return listener;
+    }
+
     public OnCompleteListener<Task> createUploadCompleteListener(InputStream finalIn){
         OnCompleteListener<Task> listener = new OnCompleteListener() {
             @Override
@@ -185,6 +200,24 @@ public class ResultUpdater {
     }
 
     public OnFailureListener createCreateFailureListener(Notification notification) {
+        OnFailureListener listener = new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //Notification notification = mDownloadFailedListener.get(this);
+                //Notification notification = mNotificationsByUploadSuccessListener.get(this);
+                if(notification != null){
+//                    notification.removeProgressBar();
+//                    notification.updateContentTitle(context.getString(R.string.notification_title_upload_completed));
+//                    notification.updateContentText(context.getString(R.string.notification_content_upload_complete));
+                }
+                Toast.makeText(context, context.getString(R.string.toast_create_file_failure) +
+                        " " +e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        };
+        return listener;
+    }
+
+    public OnFailureListener createMoveFailureListener(Notification notification) {
         OnFailureListener listener = new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {

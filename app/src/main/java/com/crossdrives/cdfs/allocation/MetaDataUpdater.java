@@ -11,39 +11,70 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public class MetaDataUpdater
 {
     HashMap<String, Drive> mDrives;
-//    class MetaData{
-//        UpdateFile updateFile;
-//
-//        public MetaData() {}
-//
-//        public MetaData(MetaData metaData) {
-//            updateFile = metaData.updateFile;
-//        }
-//        public MetaData clone(){return new MetaData(this);}
-//    }
 
     public MetaDataUpdater(HashMap<String, Drive> drives) {
         mDrives = drives;
     }
 
-    HashMap<String, com.google.api.services.drive.model.File> metaData = new HashMap<>();
+    private class MetaData{
+        HashMap<String, com.google.api.services.drive.model.File> toUpdated = new HashMap<>();
+        HashMap<String, com.google.api.services.drive.model.File> original = new HashMap<>();
+    }
 
-    public MetaDataUpdater parent(ConcurrentHashMap<String, List<String>> parent){
-        parent.entrySet().stream().forEach(set->{
+    MetaData metaData = new MetaData();
+
+    /*
+        set parents.
+        @param: parentSrc   parents will be removed from the specified item to be moved.
+        @param: parentDest  parents will be added to the specified item to be moved.
+        @return: the updated MetaDataUpdater object
+     */
+    public MetaDataUpdater parent(ConcurrentHashMap<String, List<String>> parentSrc, ConcurrentHashMap<String, List<String>> parentDest){
+        parentSrc.entrySet().stream().forEach(set->{
             String driveName = set.getKey();
             //Always take first element as a folder only contains only one drive item.
             String id = set.getValue().get(0);
             List<String> parentList = new ArrayList<>();
             parentList.add(id);
-            //metaData.get(driveName).updateFile.getMetadata().setParents(parentList);
-            metaData.get(driveName).setParents(parentList);
+            if(metaData.toUpdated.get(driveName) == null){
+                File file = new File();
+                file.setParents(parentList);
+                metaData.toUpdated.put(driveName, file);
+            }else{
+                metaData.get(driveName).setParents(parentList);
+            }
+
         });
         return this;
     }
+
+    private <T, R> void setParent(ConcurrentHashMap<String, List<String>> parentSrc,
+                             com.google.api.services.drive.model.File metaData,
+                                  Function<com.google.api.services.drive.model.File, com.google.api.services.drive.model.File> function ){
+        parentSrc.entrySet().stream().forEach(set->{
+            String driveName = set.getKey();
+            //Always take first element as a folder only contains only one drive item.
+            String id = set.getValue().get(0);
+            List<String> parentList = new ArrayList<>();
+            parentList.add(id);
+            if(metaData.get(driveName) == null){
+                File file = new File();
+                file = function.apply(file);   //file.setParents(parentList);
+                metaData.put(driveName, file);
+            }else{
+                metaData.get(driveName).setParents(parentList);
+            }
+
+        });
+    }
+
+    <T, R> copy()
+
 
     public CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> run(String id){
         //Not yet implemented
