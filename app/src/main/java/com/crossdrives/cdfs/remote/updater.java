@@ -4,6 +4,7 @@ import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.UpdateFile;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.update.IUpdateCallBack;
+import com.crossdrives.driveclient.update.IUpdateRequest;
 import com.google.api.client.http.FileContent;
 
 import java.io.IOException;
@@ -17,12 +18,24 @@ import java.util.concurrent.CompletableFuture;
 */
 public class updater {
 
-    final String TAG = "CD.Locker";
+    final String TAG = "CD.updater";
     HashMap<String, Drive> mDrives;
 
+    HashMap<String, List<String>> oldParents;
 
     public updater(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
+    }
+
+    public updater parentsToRemoved(HashMap<String, List<String>> parents){
+        this.oldParents = parents;
+        return this;
+    }
+
+    public updater parentsToRemoved(String driveName, List<String> parents){
+        if(oldParents == null){oldParents = new HashMap<>();}
+        this.oldParents.put(driveName, parents);
+        return this;
     }
 
     public CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateAll(HashMap<String, UpdateFile> files){
@@ -89,8 +102,15 @@ public class updater {
         CompletableFuture<com.google.api.services.drive.model.File> future = new CompletableFuture<>();
         //Log.d(TAG, "local file to upload: " + localFile.getName());
 
+        IUpdateRequest updateRequest =
         this.mDrives.get(driveName).getClient().update().
-                buildRequest(fileID, metaData, mediaContent).run(new IUpdateCallBack<com.google.api.services.drive.model.File>() {
+                buildRequest(fileID, metaData, mediaContent);
+
+        if(oldParents != null){
+            updateRequest.parentsToRemoved(oldParents.get(driveName));
+        }
+
+        updateRequest.run(new IUpdateCallBack<com.google.api.services.drive.model.File>() {
                     @Override
                     public void success(com.google.api.services.drive.model.File file) {
                         future.complete(file);

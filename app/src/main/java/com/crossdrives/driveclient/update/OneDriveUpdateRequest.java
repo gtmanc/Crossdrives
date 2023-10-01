@@ -19,6 +19,7 @@ import com.microsoft.graph.tasks.LargeFileUploadTask;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest {
@@ -39,6 +40,11 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
         this.mfileID = id;
         this.mMetaData = metaData;
         this.mMediaContent = mediaContent;
+    }
+
+    @Override
+    public IUpdateRequest parentsToRemoved(List<String> parents) {
+        return null;
     }
 
     @Override

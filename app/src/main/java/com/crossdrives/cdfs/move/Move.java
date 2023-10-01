@@ -36,6 +36,8 @@ public class Move {
     final CdfsItem mSource, mDest;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
+    DebugPrintOut po = new DebugPrintOut();
+
     public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest) {
         this.mCDFS = cdfs;
         this.mFileID = item;
@@ -45,7 +47,6 @@ public class Move {
 
     public Task<File> execute() {
         Task<com.crossdrives.driveclient.model.File> task;
-        DebugPrintOut po = new DebugPrintOut();
 
         task = Tasks.call(mExecutor, new Callable<File>() {
 
@@ -78,18 +79,20 @@ public class Move {
                 //following are critical process which must be atomic. However, we can't guarantee this.
                 //A recovery process will be employed to solve the issue.
                 MetaDataUpdater metaDataUpdater = new MetaDataUpdater(mCDFS.getDrives());
-                metaDataUpdater.parent(mDest.getMap()).run(mFileID.getMap()).join();
+                metaDataUpdater.parent(mSource.getMap(), mDest.getMap()).run(mFileID.getMap()).join();
 
                 MapUpdater mapUpdater1 = new MapUpdater(mCDFS.getDrives());
                 MapUpdater mapUpdater2 = new MapUpdater(mCDFS.getDrives());
-                Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
-                new ArrayList<>();
-                futures.add(mapUpdater1.updateAll(newContainerSrc, mSource));
-                futures.add(mapUpdater2.updateAll(newContainerDest, mDest));
-                futures.stream().forEach((future)->{
-                    future.join();
-                });
+//                Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
+//                new ArrayList<>();
+//                futures.add(mapUpdater1.updateAll(newContainerSrc, mSource));
+//                futures.add(mapUpdater2.updateAll(newContainerDest, mDest));
+//                futures.stream().forEach((future)->{
+//                    future.join();
+//                });
 
+                mapUpdater1.updateAll(newContainerSrc, mSource).join();
+                mapUpdater2.updateAll(newContainerDest, mDest).join();
                 return null;
                 }
         });
@@ -139,7 +142,12 @@ public class Move {
         public HashMap<String, AllocContainer> addItems(HashMap<String, AllocContainer> containers,
                                                          HashMap<String, Collection<AllocationItem>> items) {
             return Mapper.reValue(containers, (key,container) -> {
+                Log.d(TAG, "Remove items: " + items.get(key));
                 container.addItems(items.get(key));
+                Log.d(TAG, container.toString());
+
+                po.out("New container to dest: ", container);
+                Log.d(TAG, "version: " + container.getVersion());
                 return container;
             });
         }
@@ -147,7 +155,10 @@ public class Move {
         public HashMap<String, AllocContainer> removeItems(HashMap<String, AllocContainer> containers,
                                                             HashMap<String, Collection<AllocationItem>> items) {
             return Mapper.reValue(containers, (key,container) -> {
+                Log.d(TAG, "Remove items: " + items.get(key));
                 container.removeItems(items.get(key));
+                po.out("New container to source: ", container);
+                Log.d(TAG, "version: " + container.getVersion());
                 return container;
             });
         }
@@ -162,7 +173,13 @@ public class Move {
                     Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
                 });
             });
+        }
 
+        void out(String head, AllocContainer container){
+            Log.d(TAG, head);
+            container.getAllocItem().stream().forEach((item)->{
+                Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
+            });
         }
     }
 }

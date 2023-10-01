@@ -64,10 +64,11 @@ public class MapUpdater {
                 content.setID(mapIDFuture.join().get(driveName).getId());
                 String localMapName = driveName + "_map.txt";
                 content.setMediaContent(creator.create(localMapName, gson.toJson(container)));
+                //Log.d(TAG, "container: " + gson.toJson(container));
                 return content;
             });
 
-            Log.d(TAG, "update local map files...");
+            Log.d(TAG, "update using local map files...");
             MapUpdater updater = new MapUpdater(mDrives);
 
             //TODO: what will happen if two source update the same file in remote?
