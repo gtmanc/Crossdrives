@@ -382,6 +382,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			if(task != null){
 				Notification notification
 						= new Notification(Notification.Category.NOTIFY_MOVE, R.drawable.ic_baseline_cloud_circle_24);
+				notification.setContentTitle(getString(R.string.notification_title_item_moving));
+				notification.setContentText(getString(R.string.notification_content_default));
+				notification.build();
 				ResultUpdater updater = new ResultUpdater();
 				task.addOnSuccessListener(updater.createMoveItemSuccessListener(notification)).
 						addOnFailureListener(updater.createCreateFailureListener(notification));

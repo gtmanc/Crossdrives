@@ -1,18 +1,19 @@
 package com.crossdrives.cdfs.model;
 
+import com.crossdrives.driveclient.update.MetaData;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
 
 public class UpdateFile {
     String ID;
-    File metadata;
+    MetaData metadata;
     FileContent mediaContent;
 
     public String getID() {
         return ID;
     }
 
-    public File getMetadata() {
+    public MetaData getMetadata() {
         return metadata;
     }
 
@@ -24,7 +25,7 @@ public class UpdateFile {
         this.ID = ID;
     }
 
-    public void setMetadata(File metadata) {
+    public void setMetadata(MetaData metadata) {
         this.metadata = metadata;
     }
 

@@ -39,7 +39,6 @@ public class MapUpdater {
             return file;
         });
 
-
         return updater.updateAll(files);
     }
 

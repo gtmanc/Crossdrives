@@ -6,6 +6,8 @@ import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.driveclient.get.IGetCallBack;
 import com.crossdrives.driveclient.update.IUpdateCallBack;
 import com.crossdrives.driveclient.update.IUpdateRequest;
+import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
+import com.crossdrives.driveclient.update.MetaData;
 import com.google.api.services.drive.model.ContentRestriction;
 import com.google.api.services.drive.model.File;
 
@@ -149,7 +151,7 @@ public class Locker {
 
     void changeLock(final Drive drive, final String fileID, final String operation, ICallBackLocker<File> callback) throws IOException {
         IUpdateRequest request;
-        File file = new File();
+        MetaData metaData = new MetaData();
         List<ContentRestriction> restrictions = new ArrayList<>();
         ContentRestriction restriction = new ContentRestriction();
 
@@ -167,10 +169,10 @@ public class Locker {
         }
 
         restrictions.add(restriction);
-        file.setContentRestrictions(restrictions);
+        metaData.setRestrictions(restrictions);
 
         Log.d(TAG, "Lock file. ID: " + fileID);
-        request = drive.getClient().update().buildRequest(fileID, file);
+        request = drive.getClient().update().buildRequest(fileID, metaData);
         request.run(new IUpdateCallBack<File>() {
             @Override
             public void success(File file) {

@@ -21,30 +21,30 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
     final String TAG = "CD.GoogleDriveUpdateRequest";
     GoogleDriveClient mClient;
     String mfileID;
-    com.google.api.services.drive.model.File mMetaData;
+    MetaData mMetaData;
     AbstractInputStreamContent mMediaContent;
 
-    public List<String> oldParents;
+    //public List<String> oldParents;
 
-    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, com.google.api.services.drive.model.File file) {
+    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, MetaData metaData) {
         this.mClient = mClient;
         mfileID = fileID;
-        mMetaData = file;
+        mMetaData = metaData;
     }
 
-    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, com.google.api.services.drive.model.File file,
+    public GoogleDriveUpdateRequest(GoogleDriveClient mClient, String fileID, MetaData metaData,
                                     AbstractInputStreamContent mediaContent) {
         this.mClient = mClient;
         mfileID = fileID;
-        mMetaData = file;
+        mMetaData = metaData;
         mMediaContent = mediaContent;
     }
 
-    @Override
-    public IUpdateRequest parentsToRemoved(List<String> parents) {
-        oldParents = parents;
-        return this;
-    }
+//    @Override
+//    public IUpdateRequest parentsToRemoved(List<String> parents) {
+//        oldParents = parents;
+//        return this;
+//    }
 
     @Override
     public void run(IUpdateCallBack callback) {
@@ -66,7 +66,7 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
             public com.google.api.services.drive.model.File call() throws Exception {
                 Drive.Files files;
                 Drive.Files.Update update;
-                com.google.api.services.drive.model.File file;
+                com.google.api.services.drive.model.File file = new com.google.api.services.drive.model.File();
 
                 files = mClient.getGoogleDriveService().files();
 
@@ -80,11 +80,13 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
                 if(mMediaContent != null){
                     // Exception will be thrown if the 3rd parameter (mMediaContent) is null. This is not
                     // the java doc tells...
-                    update = files.update(mfileID, mMetaData, mMediaContent);
+                    update = files.update(mfileID, file, mMediaContent);
                 }else{
-                    update = files.update(mfileID, mMetaData);
+                    update = files.update(mfileID, file);
                 }
 
+                // The parents must be null because it's not allowed to write directly. Otherwise, exception with 403 Forbidden with reason
+                // fieldNotWritable is thrown.
                 update = updateParentsIfNeed(update);
 
                 file = update.setFields("id, name, parents, contentRestrictions")
@@ -109,29 +111,31 @@ public class GoogleDriveUpdateRequest extends BaseRequest implements IUpdateRequ
     }
 
     Drive.Files.Update updateParentsIfNeed(Drive.Files.Update update){
-
-        if(oldParents != null) {
-            StringBuilder oldParents = new StringBuilder();
-            for (String parent : this.oldParents) {
-                oldParents.append(parent);
-                oldParents.append(',');
-            }
-            Log.d(TAG, "oldParents: " + oldParents.toString());
-            update.setRemoveParents(oldParents.toString());
-        }
+        List<String> list;
 
         if(mMetaData == null) {return update;}
 
-        if(mMetaData.getParents() != null) {
+        if(mMetaData.getParents() == null) {return update;}
+
+        list = mMetaData.getParents().toRemove;
+        if( list != null) {
+            StringBuilder oldParents = new StringBuilder();
+            for (String parent : list) {
+                oldParents.append(parent);
+                oldParents.append(',');
+            }
+            Log.d(TAG, "oldParents to remove: " + oldParents.toString());
+            update.setRemoveParents(oldParents.toString());
+        }
+
+        list = mMetaData.getParents().toAdd;
+        if(list != null) {
             StringBuilder newParents = new StringBuilder();
-            for (String parent : mMetaData.getParents()) {
+            for (String parent : list) {
                 newParents.append(parent);
                 newParents.append(',');
             }
-            Log.d(TAG, "newParents: " + newParents.toString());
-            // We have to remove the parents from the metadata. Otherwise, exception with 403 Forbidden with reason
-            // fieldNotWritable is thrown.
-            mMetaData.setParents(null);
+            Log.d(TAG, "newParents to add: " + newParents.toString());
             update.setAddParents(newParents.toString());
         }
 

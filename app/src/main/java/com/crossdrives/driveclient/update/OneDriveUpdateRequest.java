@@ -26,25 +26,20 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
     final String TAG = "CD.OneDriveUpdateRequest";
     OneDriveClient mClient;
     String mfileID;
-    com.google.api.services.drive.model.File mMetaData;
+    MetaData mMetaData;
     AbstractInputStreamContent mMediaContent;
 
-    public OneDriveUpdateRequest(OneDriveClient client, String id, File metaData) {
+    public OneDriveUpdateRequest(OneDriveClient client, String id, MetaData metaData) {
         this.mClient = client;
         this.mfileID = id;
         this.mMetaData = metaData;
     }
 
-    public OneDriveUpdateRequest(OneDriveClient client, String id, File metaData, AbstractInputStreamContent mediaContent) {
+    public OneDriveUpdateRequest(OneDriveClient client, String id, MetaData metaData, AbstractInputStreamContent mediaContent) {
         this.mClient = client;
         this.mfileID = id;
         this.mMetaData = metaData;
         this.mMediaContent = mediaContent;
-    }
-
-    @Override
-    public IUpdateRequest parentsToRemoved(List<String> parents) {
-        return null;
     }
 
     @Override

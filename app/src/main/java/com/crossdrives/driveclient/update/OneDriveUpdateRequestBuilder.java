@@ -13,12 +13,12 @@ public class OneDriveUpdateRequestBuilder extends BaseRequestBuilder implements 
     }
 
     @Override
-    public IUpdateRequest buildRequest(String fileID, File file) {
-        return new OneDriveUpdateRequest(mClient, fileID, file);
+    public IUpdateRequest buildRequest(String fileID, MetaData metaData) {
+        return new OneDriveUpdateRequest(mClient, fileID, metaData);
     }
 
     @Override
-    public IUpdateRequest buildRequest(String fileID, File file, AbstractInputStreamContent mediaContent) {
-        return new OneDriveUpdateRequest(mClient, fileID, file, mediaContent);
+    public IUpdateRequest buildRequest(String fileID, MetaData metaData, AbstractInputStreamContent mediaContent) {
+        return new OneDriveUpdateRequest(mClient, fileID, metaData, mediaContent);
     }
 }

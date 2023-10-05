@@ -10,7 +10,7 @@ public interface IUpdateRequest {
 
      * @param callback gets called when response got from remote
      */
-    public IUpdateRequest parentsToRemoved(List<String> parents);
+    //public IUpdateRequest parentsToRemoved(List<String> parents);
 
     public void run(IUpdateCallBack callback) throws IOException;
 }

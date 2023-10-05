@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.remote.updater;
+import com.crossdrives.driveclient.update.MetaData;
 import com.google.api.services.drive.model.File;
 
 import java.util.ArrayList;
@@ -22,12 +23,7 @@ public class MetaDataUpdater
         mDrives = drives;
     }
 
-    private class MetaData{
-        HashMap<String, com.google.api.services.drive.model.File> newData = new HashMap<>();
-        HashMap<String, com.google.api.services.drive.model.File> oldData = new HashMap<>();
-    }
-
-    MetaData metaData = new MetaData();
+    HashMap<String, MetaData> metaData = new HashMap<>();
 
     /*
         set parents.
@@ -54,25 +50,24 @@ public class MetaDataUpdater
 //        return this;
 //    }
 
-    public <T, R> MetaDataUpdater parent(ConcurrentHashMap<String, List<String>> oldParents, ConcurrentHashMap<String, List<String>> newParents){
-        forEachValue(newParents, metaData.newData, (list, metadata)->{
+    public MetaDataUpdater parent(ConcurrentHashMap<String, List<String>> oldParents, ConcurrentHashMap<String, List<String>> newParents){
+        forEachValue(newParents, metaData, (list, metadata)->{
             String id = list.get(0);
             Log.d(TAG, "new parent: " + id);
             List<String> parentList = new ArrayList<>();
             parentList.add(id);
-            metadata.setParents(parentList);
+            metadata.setParentsToAdded(parentList);
             return metadata;
         });
 
-        forEachValue(oldParents, metaData.oldData, (list, metadata)->{
+        forEachValue(oldParents, metaData, (list, metadata)->{
             String id = list.get(0);
             Log.d(TAG, "old parent: " + id);
             List<String> parentList = new ArrayList<>();
             parentList.add(id);
-            metadata.setParents(parentList);
+            metadata.setParentsToRemoved(parentList);
             return metadata;
         });
-
         return this;
     }
 
@@ -80,8 +75,8 @@ public class MetaDataUpdater
 
     */
     private <T> void forEachValue(ConcurrentHashMap<String, T> from,
-                                  HashMap<String, com.google.api.services.drive.model.File> to,
-                                  BiFunction<T, File, File> function)
+                                  HashMap<String, com.crossdrives.driveclient.update.MetaData> to,
+                                  BiFunction<T, com.crossdrives.driveclient.update.MetaData, com.crossdrives.driveclient.update.MetaData> function)
     {
         from.entrySet().stream().forEach(set->{
             String driveName = set.getKey();
@@ -90,9 +85,9 @@ public class MetaDataUpdater
             //List<String> parentList = new ArrayList<>();
             //parentList.add(id);
             if(to.get(driveName) == null){
-                File file = new File();
-                file = function.apply(v, file);   //file.setParents(parentList);
-                to.put(driveName, file);
+                com.crossdrives.driveclient.update.MetaData metaData = new com.crossdrives.driveclient.update.MetaData();
+                metaData = function.apply(v, metaData);   //file.setParents(parentList);
+                to.put(driveName, metaData);
             }else{
                 to.put(driveName,function.apply(v, to.get(driveName)));//If the map previously contained a mapping for the key, the old value is replaced.
             }
@@ -112,15 +107,9 @@ public class MetaDataUpdater
             String driveName = set.getKey();
             List<String> list = set.getValue();
             updater updater = new updater(mDrives);
-            //future = updater.updateAll(driveName, list, metaData.get(driveName).updateFile.getMetadata(), null);
 
-            List<String> parents = metaData.oldData.get(driveName).getParents();
-            //Log.d(TAG, "old parent: " + parents.get(0));
-            if(parents != null){
-                updater.parentsToRemoved(driveName, parents);
-            }
             //Log.d(TAG, "new parent: " + metaData.newData.get(driveName).getParents().get(0));
-            future = updater.updateAll(driveName, list, metaData.newData.get(driveName), null);
+            future = updater.updateAll(driveName, list, metaData.get(driveName), null);
             futures.put(driveName, future);
         });
 

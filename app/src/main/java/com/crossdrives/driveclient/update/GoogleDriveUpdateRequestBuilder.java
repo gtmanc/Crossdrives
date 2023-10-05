@@ -13,12 +13,12 @@ public class GoogleDriveUpdateRequestBuilder extends BaseRequestBuilder implemen
     }
 
     @Override
-    public IUpdateRequest buildRequest(String fileID, com.google.api.services.drive.model.File metaData) {
+    public IUpdateRequest buildRequest(String fileID, MetaData metaData) {
         return new GoogleDriveUpdateRequest(mClient, fileID, metaData);
     }
 
     @Override
-    public IUpdateRequest buildRequest(String fileID, com.google.api.services.drive.model.File metaData, AbstractInputStreamContent mediaContent) {
+    public IUpdateRequest buildRequest(String fileID, MetaData metaData, AbstractInputStreamContent mediaContent) {
         return new GoogleDriveUpdateRequest(mClient, fileID, metaData, mediaContent);
     }
 }

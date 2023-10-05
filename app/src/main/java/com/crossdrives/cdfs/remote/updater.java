@@ -1,10 +1,15 @@
 package com.crossdrives.cdfs.remote;
 
+import android.util.Log;
+
+import androidx.annotation.Nullable;
+
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.model.UpdateFile;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.driveclient.update.IUpdateCallBack;
 import com.crossdrives.driveclient.update.IUpdateRequest;
+import com.crossdrives.driveclient.update.MetaData;
 import com.google.api.client.http.FileContent;
 
 import java.io.IOException;
@@ -25,17 +30,6 @@ public class updater {
 
     public updater(HashMap<String, Drive> mDrives) {
         this.mDrives = mDrives;
-    }
-
-    public updater parentsToRemoved(HashMap<String, List<String>> parents){
-        this.oldParents = parents;
-        return this;
-    }
-
-    public updater parentsToRemoved(String driveName, List<String> parents){
-        if(oldParents == null){oldParents = new HashMap<>();}
-        this.oldParents.put(driveName, parents);
-        return this;
     }
 
     public CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> updateAll(HashMap<String, UpdateFile> files){
@@ -65,7 +59,7 @@ public class updater {
     public CompletableFuture<List<com.google.api.services.drive.model.File>> updateAll(
             String driveName,
             List<String> idList,
-            com.google.api.services.drive.model.File metaData,
+            @Nullable MetaData metaData,
             FileContent mediaContent) {
         List<CompletableFuture<com.google.api.services.drive.model.File>> futures = new ArrayList<>();
 
@@ -94,21 +88,20 @@ public class updater {
 
     };
 
-    CompletableFuture<com.google.api.services.drive.model.File> update(
+    private CompletableFuture<com.google.api.services.drive.model.File> update(
             String driveName,
              String fileID,
-             com.google.api.services.drive.model.File metaData,
+             @Nullable MetaData metaData,
              FileContent mediaContent) throws IOException {
         CompletableFuture<com.google.api.services.drive.model.File> future = new CompletableFuture<>();
-        //Log.d(TAG, "local file to upload: " + localFile.getName());
+        Log.d(TAG, "metaData: " + metaData);
+        if(metaData != null) {
+            Log.d(TAG, "original parents: " + metaData.getParents());
+        }
 
         IUpdateRequest updateRequest =
         this.mDrives.get(driveName).getClient().update().
                 buildRequest(fileID, metaData, mediaContent);
-
-        if(oldParents != null){
-            updateRequest.parentsToRemoved(oldParents.get(driveName));
-        }
 
         updateRequest.run(new IUpdateCallBack<com.google.api.services.drive.model.File>() {
                     @Override
@@ -121,6 +114,10 @@ public class updater {
                         future.completeExceptionally(new Throwable(ex));
                     }
                 });
+
+        if(metaData != null) {
+            Log.d(TAG, "parents altered: " + metaData.getParents());
+        }
         return future;
     }
 }
