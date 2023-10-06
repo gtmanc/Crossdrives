@@ -42,6 +42,9 @@ public class MapUpdater {
         return updater.updateAll(files);
     }
 
+    /*
+     Note: #53 If two or more threads in the same drive go here, the local file is altered unexpectedly.
+     */
     public CompletableFuture<HashMap<String, File>> updateAll(HashMap<String, AllocContainer> containers
         , CdfsItem parent){
         CompletableFuture<HashMap<String, File>> resultFuture = new CompletableFuture<>();
@@ -61,6 +64,7 @@ public class MapUpdater {
                 LocalFileCreator creator = new LocalFileCreator(SnippetApp.getAppContext());
                 UpdateContent content = new UpdateContent();
                 content.setID(mapIDFuture.join().get(driveName).getId());
+                //#53 If two or more threads in the same drive go here, the local file is altered unexpectedly.
                 String localMapName = driveName + "_map.txt";
                 content.setMediaContent(creator.create(localMapName, gson.toJson(container)));
                 //Log.d(TAG, "container: " + gson.toJson(container));

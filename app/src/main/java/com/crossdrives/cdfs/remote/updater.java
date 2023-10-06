@@ -95,9 +95,6 @@ public class updater {
              FileContent mediaContent) throws IOException {
         CompletableFuture<com.google.api.services.drive.model.File> future = new CompletableFuture<>();
         Log.d(TAG, "metaData: " + metaData);
-        if(metaData != null) {
-            Log.d(TAG, "original parents: " + metaData.getParents());
-        }
 
         IUpdateRequest updateRequest =
         this.mDrives.get(driveName).getClient().update().
@@ -114,10 +111,6 @@ public class updater {
                         future.completeExceptionally(new Throwable(ex));
                     }
                 });
-
-        if(metaData != null) {
-            Log.d(TAG, "parents altered: " + metaData.getParents());
-        }
         return future;
     }
 }

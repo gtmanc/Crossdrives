@@ -156,6 +156,22 @@ public class ResultUpdater {
         return listener;
     }
 
+    public OnFailureListener createMoveItemFailureListener(Notification notification) {
+        OnFailureListener listener = new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //Notification notification = mDownloadFailedListener.get(this);
+                Log.w(TAG, "move item failed: " + e.getMessage() + e.getCause());
+                Toast.makeText(SnippetApp.getAppContext(), "move item Failed: "
+                        + e.getMessage(), Toast.LENGTH_SHORT).show();
+                notification.removeProgressBar();
+                notification.updateContentTitle(context.getString(R.string.notification_title_move_item_completed));
+                notification.updateContentText(context.getString(R.string.notification_content_move_item_complete_exceptionally));
+            }
+        };
+        return listener;
+    }
+
     public void downloadIntegrityCheck(String name){
         TestFileIntegrityChecker checker;
         FileInputStream fis = null;

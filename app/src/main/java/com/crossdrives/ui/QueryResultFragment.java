@@ -51,6 +51,7 @@ import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.model.CdfsItem;
+import com.crossdrives.cdfs.move.IMoveItemProgressListener;
 import com.crossdrives.ui.document.Open;
 import com.crossdrives.ui.document.OpenTree;
 import com.crossdrives.ui.document.OpenTreeFactory;
@@ -369,6 +370,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void onChanged(CdfsItem[] parentArray) {
 			Task<com.crossdrives.driveclient.model.File> task = null;
+			IMoveItemProgressListener progressListener;
 			Log.d(TAG, "length of selected dest: " + parentArray.length);
 			Log.d(TAG, "1st ID of selected dest: " + parentArray[0].getId());
 			try {
@@ -386,8 +388,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				notification.setContentText(getString(R.string.notification_content_default));
 				notification.build();
 				ResultUpdater updater = new ResultUpdater();
+				notification.setContentTitle(getString(R.string.notification_title_item_moving));
+				notification.setContentText(getString(R.string.notification_content_default));
+				notification.build();
+				progressListener = new ProgressUpdater().createMoveItemListener(notification);
 				task.addOnSuccessListener(updater.createMoveItemSuccessListener(notification)).
-						addOnFailureListener(updater.createCreateFailureListener(notification));
+						addOnFailureListener(updater.createMoveItemFailureListener(notification));
 			}
 		}
 	};

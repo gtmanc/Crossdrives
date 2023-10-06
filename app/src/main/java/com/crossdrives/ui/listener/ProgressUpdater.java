@@ -7,6 +7,8 @@ import com.crossdrives.cdfs.delete.Delete;
 import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.download.Download;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
+import com.crossdrives.cdfs.move.IMoveItemProgressListener;
+import com.crossdrives.cdfs.move.Move;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
@@ -104,6 +106,31 @@ public class ProgressUpdater {
                     int max = deleter.getProgressMax();
                     Log.d(TAG, "[Notification]:delete in progress. Current " + current + " Max: " + max);
                     notification.updateContentText(context.getString(R.string.notification_content_deleting_file));
+                    notification.updateProgress(current, max);
+                }
+            }
+        };
+        return lisener;
+    }
+
+    public IMoveItemProgressListener createMoveItemListener(Notification notification){
+
+        IMoveItemProgressListener lisener = new IMoveItemProgressListener() {
+            @Override
+            public void progressChanged(Move mover) {
+                //Log.d(TAG, "delete progressChanged!");
+                //Notification notification;
+                Move.State state = mover.getState();
+                //notification = mNotificationsByDownloadListener.get(this);
+                if (state == Move.State.GET_MAP_STARTED) {
+                    Log.d(TAG, "[Notification]:fetching remote maps...");
+                    notification.updateContentText(context.getString(R.string.notification_content_move_item_start_fetch_maps));
+                }
+                else if(state == Move.State.MOVE_IN_PROGRESS){
+                    int current = mover.getProgressCurrent();
+                    int max = mover.getProgressMax();
+                    Log.d(TAG, "[Notification]:move in progress. Current " + current + " Max: " + max);
+                    notification.updateContentText(context.getString(R.string.notification_content_moving_file));
                     notification.updateProgress(current, max);
                 }
             }

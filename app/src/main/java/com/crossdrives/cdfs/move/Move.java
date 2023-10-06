@@ -8,6 +8,8 @@ import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.MetaDataUpdater;
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.delete.Delete;
+import com.crossdrives.cdfs.delete.IDeleteProgressListener;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -36,6 +38,20 @@ public class Move {
     final CdfsItem mSource, mDest;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
+    public enum State{
+        GET_MAP_STARTED,
+        GET_MAP_COMPLETE,
+        MAP_UPDATE_STARTED,
+        MAP_UPDATE_COMPLETE,
+        MOVE_IN_PROGRESS,
+        MOVE_COMPLETE,
+    }
+
+    Move.State mState;
+    IMoveItemProgressListener mListener;
+    int progressTotalSegment = 0;
+    int progressTotalDeleted = 0;
+
     DebugPrintOut po = new DebugPrintOut();
 
     public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest) {
@@ -61,7 +77,9 @@ public class Move {
 
                 //Get the items we are interest according to the CDFS item that to be moved.
                 //Then update the field parentPath of the items with the dest parent path
-                HashMap<String, Collection<AllocationItem>> updatedItemLists = updateParentPathAll(getAllocItemsAllById(containerSrc, mFileID.getId()), mDest.getPath());
+                String destParent = mDest.getPath().concat(mDest.getName());
+                Log.d(TAG, "Dest path:" + destParent);
+                HashMap<String, Collection<AllocationItem>> updatedItemLists = updateParentPathAll(getAllocItemsAllById(containerSrc, mFileID.getId()), destParent);
                 //print out for debug
                 updatedItemLists.entrySet().stream().forEach((set)->{
                     Log.d(TAG, "Items that parentPath updated. drive: " + set.getKey());
@@ -83,6 +101,8 @@ public class Move {
 
                 MapUpdater mapUpdater1 = new MapUpdater(mCDFS.getDrives());
                 MapUpdater mapUpdater2 = new MapUpdater(mCDFS.getDrives());
+
+                //MapFetcher is not thread safe. #54
 //                Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
 //                new ArrayList<>();
 //                futures.add(mapUpdater1.updateAll(newContainerSrc, mSource));
@@ -142,12 +162,9 @@ public class Move {
         public HashMap<String, AllocContainer> addItems(HashMap<String, AllocContainer> containers,
                                                          HashMap<String, Collection<AllocationItem>> items) {
             return Mapper.reValue(containers, (key,container) -> {
-                Log.d(TAG, "Remove items: " + items.get(key));
                 container.addItems(items.get(key));
-                Log.d(TAG, container.toString());
 
-                po.out("New container to dest: ", container);
-                Log.d(TAG, "version: " + container.getVersion());
+                //po.out("New container to dest: ", container);
                 return container;
             });
         }
@@ -155,14 +172,18 @@ public class Move {
         public HashMap<String, AllocContainer> removeItems(HashMap<String, AllocContainer> containers,
                                                             HashMap<String, Collection<AllocationItem>> items) {
             return Mapper.reValue(containers, (key,container) -> {
-                Log.d(TAG, "Remove items: " + items.get(key));
                 container.removeItems(items.get(key));
-                po.out("New container to source: ", container);
-                Log.d(TAG, "version: " + container.getVersion());
+                //po.out("New container to source: ", container);
                 return container;
             });
         }
     }
+
+    public Move.State getState(){return mState;}
+
+    public int getProgressMax(){return progressTotalSegment;}
+
+    public int getProgressCurrent(){return progressTotalDeleted;}
 
     class DebugPrintOut{
         void out(String head, HashMap<String, AllocContainer> container){

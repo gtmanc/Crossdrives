@@ -60,7 +60,9 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
                     Log.w(TAG, e.toString());
                     callback.failure(e.getMessage());
                 }
-            } else {    //update meta data (properties of item)
+            } else {
+                //update meta data (properties of item)
+                //Microsoft sdk reference: https://learn.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0&tabs=java
                 DriveItemRequest request;
                 DriveItem item = new DriveItem();
                 request = mClient.getGraphServiceClient().me().drive().items(mfileID).buildRequest();
