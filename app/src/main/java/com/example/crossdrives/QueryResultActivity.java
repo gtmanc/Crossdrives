@@ -30,32 +30,15 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
+
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.Service;
-import com.crossdrives.cdfs.upload.IUploadProgressListener;
-import com.crossdrives.driveclient.model.File;
-import com.crossdrives.msgraph.SnippetApp;
-import com.crossdrives.ui.QueryResultFragmentDirections;
-import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
-import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
-import com.crossdrives.ui.listener.ProgressUpdater;
-import com.crossdrives.ui.listener.ResultUpdater;
-import com.crossdrives.ui.notification.Notification;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.crossdrives.ui.MainListFragment;
+import com.crossdrives.ui.MainListFragmentDirections;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 //Good article for development of recycler view:
@@ -166,7 +149,7 @@ public class QueryResultActivity extends AppCompatActivity implements DrawerLayo
             Log.d(TAG, "header is clicked. View: " + v);
             //mCountPressDrawerHeader++;
 
-            NavDirections a = com.crossdrives.ui.QueryResultFragmentDirections.navigateToSystemTest();
+            NavDirections a = com.crossdrives.ui.MainListFragmentDirections.navigateToSystemTest();
             navController.navigate(a);
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         }};
@@ -255,12 +238,12 @@ public class QueryResultActivity extends AppCompatActivity implements DrawerLayo
 //                QueryResultFragmentDirections.NavigateToMasterAccount action =
 //                        QueryResultFragmentDirections.navigateToMasterAccount();
 //                action.setMyArg(100);
-                NavDirections a = QueryResultFragmentDirections.navigateToMasterAccount(null);
+                NavDirections a = MainListFragmentDirections.navigateToMasterAccount(null);
                 Navigation.findNavController(this, R.id.main_content).navigate(a);
             }
             else if(item.getItemId() == R.id.drawer_menu_item_two){
                 Log.d(TAG, "delete file fragment");
-                NavDirections a = QueryResultFragmentDirections.navigateToDeleteFile();
+                NavDirections a = MainListFragmentDirections.navigateToDeleteFile();
                 Navigation.findNavController(this, R.id.main_content).navigate(a);
             }
             else{

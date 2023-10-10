@@ -39,7 +39,7 @@ public class CreateFolderAlertDialog extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Fragment fragment =
-        getParentFragmentManager().findFragmentById(R.id.query_result_fragment);
+        getParentFragmentManager().findFragmentById(R.id.main_list_fragment);
 
         Log.d(TAG, "onViewCreated gets called.");
         // Verify that the host activity implements the callback interface

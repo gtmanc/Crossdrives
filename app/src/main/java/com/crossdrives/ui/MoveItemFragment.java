@@ -59,6 +59,15 @@ public class MoveItemFragment extends QueryResultFragment {
 
         FloatingActionButton fab = getActivity().findViewById(R.id.fab);
         fab.setVisibility(View.INVISIBLE);
+
+        Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
+        toolbar.setTitle("Move item");
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "setNavigationOnClickListener called.");
+            }
+        });
     }
 
     OnBackPressedCallback backPressCallback = new OnBackPressedCallback(true /* enabled by default */) {
@@ -87,7 +96,7 @@ public class MoveItemFragment extends QueryResultFragment {
             if(item.getItemId() == R.id.bottomAppBarItemMove){
                 Log.d(TAG, "Bottom app bar: ok button is pressed.");
                 exitWorkflow(navController, globalVm);
-                NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.query_result_fragment);
+                NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.main_list_fragment);
                 backStackEntry.getSavedStateHandle().set(KEY_SELECTED_DEST, treeOpener.getParentArray(false));
             }else if(item.getItemId() == R.id.bottomAppBarItemCancel){
                 Log.d(TAG, "Bottom app bar: cancel button is pressed.");

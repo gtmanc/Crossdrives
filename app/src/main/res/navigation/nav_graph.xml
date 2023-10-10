@@ -7,10 +7,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/query_result_fragment">
+    app:startDestination="@id/main_list_fragment">
     <fragment
-        android:id="@+id/query_result_fragment"
-        android:name="com.crossdrives.ui.QueryResultFragment"
+        android:id="@+id/main_list_fragment"
+        android:name="com.crossdrives.ui.MainListFragment"
         android:label = ""
         tools:layout="@layout/query_result_fragment" >
     <!-- android:label="DFF"-->
@@ -25,7 +25,7 @@
             app:nullable="true" />
         <action
             android:id="@+id/navigate_to_master_account"
-            app:destination="@id/drawer_menu_item_master_account">
+            app:destination="@id/master_account_fragment">
         </action>
         <action
             android:id="@+id/navigate_to_delete_file"
@@ -35,7 +35,7 @@
             app:destination="@id/system_test_fragment" />
         <action
             android:id="@+id/navigate_to_myself"
-            app:destination="@id/query_result_fragment">
+            app:destination="@id/main_list_fragment">
         </action>
 
         <action
@@ -46,7 +46,7 @@
     </fragment>
 
     <fragment
-        android:id="@+id/drawer_menu_item_master_account"
+        android:id="@+id/master_account_fragment"
         android:name="com.example.crossdrives.MasterAccountFragment"
         android:label = "Master Account"
         tools:layout="@layout/master_account_fragment">
@@ -63,13 +63,13 @@
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"/>
         <action
-            android:id="@+id/navigate_back_to_query_result"
-            app:destination="@id/query_result_fragment"
+            android:id="@+id/navigate_back_to_main_list_result"
+            app:destination="@id/main_list_fragment"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
-            app:popUpTo="@+id/query_result_fragment"
+            app:popUpTo="@+id/main_list_fragment"
             app:popUpToInclusive="false">
         </action>
     </fragment>
@@ -142,7 +142,7 @@
         we have specified in popUpTo() should not pop off back stack. -->
         <action
             android:id="@+id/exit_move_workflow"
-            app:popUpTo="@+id/query_result_fragment"
+            app:popUpTo="@+id/main_list_fragment"
             app:popUpToInclusive="false">
         </action>
     </navigation>

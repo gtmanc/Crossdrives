@@ -74,7 +74,7 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
            //Test for pop up back stack
            NavController navController = Navigation.findNavController(mView);
 
-           if(!navController.popBackStack(R.id.query_result_fragment, true)){
+           if(!navController.popBackStack(R.id.delete_file_fragment, true)){
                Log.w(TAG, "no stack can be popup!");
            }
 

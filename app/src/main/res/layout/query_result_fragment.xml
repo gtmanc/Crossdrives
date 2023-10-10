@@ -19,7 +19,7 @@
                 android:layout_gravity="center"
                 app:layout_scrollFlags="scroll|enterAlways"
                 app:title="CDS"
-                app:navigationIcon="@drawable/ic_navigation_toolbar"
+                app:navigationIcon="@drawable/baseline_arrow_back_24"
                 app:popupTheme="@style/AppTheme.PopupOverlay">
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>

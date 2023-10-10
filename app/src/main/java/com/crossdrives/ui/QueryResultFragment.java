@@ -166,13 +166,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//Log.d(TAG, "Base item: " + cdfsItem);
 			parentList.add(cdfsItem);
 		}else{
-			QueryResultFragmentArgs fragmentArgs;
+			MainListFragmentArgs fragmentArgs;
 			Bundle bundle = getArguments();
 			Log.d(TAG, "arguments bundle: " + bundle);
 			Log.d(TAG, "parentArrayRestored: " + parentArrayRestored);
 			if(parentArrayRestored == null){
 				if (bundle == null) {Log.w(TAG, "arguments bundle is null");}
-				fragmentArgs = com.crossdrives.ui.QueryResultFragmentArgs.fromBundle(bundle);
+				fragmentArgs = com.crossdrives.ui.MainListFragmentArgs.fromBundle(bundle);
 				parentList.addAll(new ArrayList<>(Arrays.asList(fragmentArgs.getParentsPath())));
 				//Log.d(TAG, "parentPath from bundle: " + fragmentArgs.getParentsPath());
 			}else{
@@ -246,10 +246,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
 		mDrawer = drawerLayout;
 		drawerLayout.addDrawerListener(this);
-		//Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
-		//Use getGraph will lead to null graph once configuration changes
-		AppBarConfiguration appBarConfiguration =
-			new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
+
 
 		mToolbar = view.findViewById(R.id.qr_toolbar);
 		//When using a fragment-owned app bar, Google recommends using the Toolbar APIs directly.
@@ -262,9 +259,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		/*mBottomAppBar = view.findViewById(R.id.bottomAppBar);*/
 
 		mProgressBar = view.findViewById(R.id.progressBar);
-
-		NavigationUI.setupWithNavController(
-				mToolbar, navController, appBarConfiguration);
 
 		mNavigationView = getActivity().findViewById(R.id.nav_view);
 		//mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
@@ -360,7 +354,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 				NavController navController = Navigation.findNavController(mView);
 				//navController.navigate(QueryResultFragmentDirections.navigateToMyself(treeOpener.getParentArray(false)));
-				navController.navigate(QueryResultFragmentDirections.navigateToMoveItemWorkflowGraph(itemArray));
+				navController.navigate(MainListFragmentDirections.navigateToMoveItemWorkflowGraph(itemArray));
 			}
 		}
 	};
@@ -640,7 +634,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					CdfsItem cdfsItem = item.getCdfsItem();
 					itemArray[itemArray.length-1] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
-					navController.navigate(QueryResultFragmentDirections.navigateToMyself(itemArray));
+					navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
 					requestPermissionFuture.thenAccept((isGranted)->{
@@ -823,7 +817,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.d(TAG, "header is clicked");
 			mCountPressDrawerHeader++;
 
-			NavDirections a = QueryResultFragmentDirections.navigateToSystemTest();
+			NavDirections a = MainListFragmentDirections.navigateToSystemTest();
 			NavHostFragment.findNavController(f).navigate(a);
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 	}};
@@ -878,12 +872,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //                QueryResultFragmentDirections.NavigateToMasterAccount action =
 //                        QueryResultFragmentDirections.navigateToMasterAccount();
 //                action.setMyArg(100);
-				NavDirections a = QueryResultFragmentDirections.navigateToMasterAccount(null);
+				NavDirections a = MainListFragmentDirections.navigateToMasterAccount(null);
 				NavHostFragment.findNavController(this).navigate(a);
 			}
 			else if(item.getItemId() == R.id.drawer_menu_item_two){
 				Log.d(TAG, "delete file fragment");
-				NavDirections a = QueryResultFragmentDirections.navigateToDeleteFile();
+				NavDirections a = MainListFragmentDirections.navigateToDeleteFile();
 				NavHostFragment.findNavController(this).navigate(a);
 			}
 			else{

@@ -92,7 +92,7 @@ public class AddAccountFragment extends BaseFragment{
         //Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
         //Use getGraph will lead to null graph once configuration changes
         AppBarConfiguration appBarConfiguration =
-                new AppBarConfiguration.Builder(R.id.query_result_fragment).setOpenableLayout(drawerLayout).build();
+                new AppBarConfiguration.Builder(R.id.add_account_fragment).setOpenableLayout(drawerLayout).build();
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
 
