@@ -62,13 +62,15 @@ public class MoveItemFragment extends QueryResultFragment {
 
         Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
         toolbar.setTitle("Move item");
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "setNavigationOnClickListener called.");
-            }
-        });
+        toolbar.setNavigationOnClickListener(onNavIconClickListener);
     }
+
+    private View.OnClickListener onNavIconClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Log.d(TAG, "setNavigationOnClickListener called.");
+        }
+    };
 
     OnBackPressedCallback backPressCallback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
@@ -140,6 +142,7 @@ public class MoveItemFragment extends QueryResultFragment {
         return  identical;
     }
 
+    private UpEvent
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);

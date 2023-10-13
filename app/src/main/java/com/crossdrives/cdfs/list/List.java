@@ -56,7 +56,7 @@ public class List {
     }
 
 
-    public Task<ListResult> execute(@Nullable CdfsItem parent){
+    public Task<ListResult> execute(@Nullable java.util.List<CdfsItem> parents){
         Task<ListResult> task;
 
 

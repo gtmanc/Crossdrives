@@ -61,8 +61,8 @@ public class OpenTree extends ViewModel {
         }else{
             Log.d(TAG, "Empty parent list.");
         }
-        mItems = new ItemLiveData(getParent());
-
+        //mItems = new ItemLiveData(getParent());
+        mItems = new ItemLiveData(mParents);
     }
 
     public interface Listener {
@@ -77,12 +77,12 @@ public class OpenTree extends ViewModel {
 
         private boolean firstTimeCreated = true;
 
-        public ItemLiveData(CdfsItem parent) {
-            reset(parent);
+        public ItemLiveData(List<CdfsItem> parents) {
+            reset(parents);
         }
 
-        public void reset(CdfsItem parent) {
-            mQuerier = new Querier(parent);
+        public void reset(List<CdfsItem> parents) {
+            mQuerier = new Querier(parents);
         }
 
         public void fetch() throws GeneralServiceException, MissingDriveClientException {
@@ -230,10 +230,10 @@ public class OpenTree extends ViewModel {
 
         class Querier {
             State state;
-            CdfsItem mParent;
+            List<CdfsItem> mParents;
 
-            public Querier(CdfsItem parent) {
-                mParent = parent;
+            public Querier(List<CdfsItem> parents) {
+                mParents = parents;
                 resetState();
             }
 
@@ -252,7 +252,7 @@ public class OpenTree extends ViewModel {
             }
 
             void fetchAsync() throws GeneralServiceException, MissingDriveClientException {
-                CDFS.getCDFSService().getService().list(mParent)
+                CDFS.getCDFSService().getService().list(mParents)
                         .addOnSuccessListener(onSuccessListener)
                         .addOnFailureListener(onFailureListener)
                         .addOnCompleteListener(onCompleteListener);

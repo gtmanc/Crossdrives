@@ -35,5 +35,6 @@ public class MainListFragment extends QueryResultFragment{
         //Do not use setSupportActionBar() and the Fragment menu APIs, which are appropriate only for activity-owned app bars.
         //https://developer.android.com/guide/fragments/appbar#fragment
         NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration);
+
     }
 }

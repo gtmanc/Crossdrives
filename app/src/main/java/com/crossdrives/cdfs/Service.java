@@ -58,7 +58,7 @@ public class Service{
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
 
-    public Task<ListResult> list(@Nullable CdfsItem parent) throws MissingDriveClientException, GeneralServiceException {
+    public Task<ListResult> list(@Nullable java.util.List<CdfsItem> parents) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS);
         final FileList[] fileList = {null};
         final Throwable[] throwables = {null};
@@ -71,7 +71,7 @@ public class Service{
 
         mCDFS.requiresDriveClientNonNull();
 
-        task = list.execute(parent);
+        task = list.execute(parents);
 
 //        task = Tasks.call(mExecutor, new Callable<Object>() {
 //            @Override
