@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.crossdrives.base.Parent;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.MapFetcher;
@@ -37,6 +38,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class List {
     final String TAG = "CD.List";
     CDFS mCDFS;
+
+    java.util.List<CdfsItem> mParents;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
 
     //Columns
@@ -51,12 +54,13 @@ public class List {
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
     final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
 
-    public List(CDFS cdfs) {
+    public List(CDFS cdfs, @Nullable java.util.List<CdfsItem> parents) {
         mCDFS = cdfs;
+        mParents = parents;
     }
 
 
-    public Task<ListResult> execute(@Nullable java.util.List<CdfsItem> parents){
+    public Task<ListResult> execute(){
         Task<ListResult> task;
 
 
@@ -68,14 +72,15 @@ public class List {
                 ListResult result = new ListResult();
                 //ConcurrentHashMap<String, Drive> drives = ApplicableDriveListBuilder.build(mCDFS.getDrives(), parent);
                 MapFetcher mapFetcher = new MapFetcher(mCDFS.getDrives());
-                CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture = mapFetcher.pullAll(parent);
+                CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture =
+                        mapFetcher.pullAll(Parent.getCurrent(mParents));
                 final String pathParent;
                 java.util.List<CdfsItem> items;
 
                 //Prepare the path string that we will use to query database items
 //                if(parent != null) {pathParent = parent.getPath() + parent.getName();}
 //                else{pathParent = IConstant.CDFS_PATH_BASE;}
-                pathParent = Names.CompletePath(parent);
+                pathParent = Names.CompletePath(Parent.getCurrent(mParents));
                 Log.d(TAG, "pathParent: " + pathParent);
 
                 HashMap<String, OutputStream> allocations = fetchMapFuture.join();
@@ -219,6 +224,9 @@ public class List {
             item.setName(cursor.getString(indexName));
             item.setId(cursor.getString(indexCDFSId));
             item.setPath(cursor.getString(indexPath));
+            java.util.List<String> list = Parent.toIdList(mParents);
+            list.add(Parent.getCurrent(mParents).getId());
+            item.setParents(list);
             //Solution for get a boolean from db:
             //https://stackoverflow.com/questions/4088080/get-boolean-from-database-using-android-and-sqlite
             item.setFolder(cursor.getInt(indexAttrFolder) > 0 );

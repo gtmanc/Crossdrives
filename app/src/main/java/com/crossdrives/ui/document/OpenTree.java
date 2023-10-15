@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.crossdrives.base.Parent;
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
@@ -57,7 +58,7 @@ public class OpenTree extends ViewModel {
         }
         CdfsItem item = getParent();
         if(item != null){
-            Log.d(TAG, "Parent: " + getParent(parentList).getName());
+            Log.d(TAG, "Parent: " + getParent().getName());
         }else{
             Log.d(TAG, "Empty parent list.");
         }
@@ -336,30 +337,12 @@ public class OpenTree extends ViewModel {
         holder: set to true if a parent holder is needed.
      */
     public CdfsItem[] getParentArray(boolean holder){
-        int size = 0;
-
-        if( mParents != null){	size = mParents.size();}
-        if(holder){size = size + 1;}
-        CdfsItem[] itemArray = new CdfsItem[size];
-        itemArray = mParents.toArray(itemArray);
-        return itemArray;
+        return Parent.toArray(mParents, holder);
     }
 
     @Nullable
     public CdfsItem getParent() {
-        return getParent(mParents);
-    }
-
-    private CdfsItem getParent(List<CdfsItem> plist){
-        CdfsItem item = null;
-
-        if(!plist.isEmpty()){
-            item = plist.get(plist.size() - 1);
-            Log.d(TAG, "Name of item: " + item.getName());
-        }
-
-        return item;
-    }
+        return Parent.getCurrent(mParents);}
 
     public boolean endOfList() {
         //We assume CDFS list always gives full list

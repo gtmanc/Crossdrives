@@ -142,7 +142,10 @@ public class MoveItemFragment extends QueryResultFragment {
         return  identical;
     }
 
-    private UpEvent
+    private void handleUpEvent(){
+
+    }
+
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
