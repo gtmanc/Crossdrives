@@ -32,7 +32,12 @@ public class Parent {
         if(!plist.isEmpty()){
             item = plist.get(plist.size() - 1);
             Log.d(TAG, "Current parent: " + item.getName() );
-
+            Log.d(TAG, "Print out parent list:");
+            plist.stream().forEach((cdfsItem)->{
+                Log.d(TAG, "" + cdfsItem.getId());
+            });
+        }else{
+            Log.d(TAG, "parent list is empty!");
         }
 
         return item;

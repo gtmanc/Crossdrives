@@ -224,7 +224,9 @@ public class List {
             item.setName(cursor.getString(indexName));
             item.setId(cursor.getString(indexCDFSId));
             item.setPath(cursor.getString(indexPath));
+            //if we are in root, the list is null or empty. In this case, we have to create a list.
             java.util.List<String> list = Parent.toIdList(mParents);
+            if(list == null){list= new ArrayList<>();}
             list.add(Parent.getCurrent(mParents).getId());
             item.setParents(list);
             //Solution for get a boolean from db:

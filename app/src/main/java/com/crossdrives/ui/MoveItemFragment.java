@@ -52,6 +52,9 @@ public class MoveItemFragment extends QueryResultFragment {
         atStartDest = distinguish( globalVm.getMoveItemStateLd().getMoveItemState().startDest,
                 treeOpener.getParentArray(false));
         this.atStartDest = atStartDest;
+
+
+
         setMoveButtonBehavior(mBottomAppBar.getMenu().findItem(R.id.bottomAppBarItemMove),
               atStartDest);
         mBottomAppBar.setVisibility(View.VISIBLE);
@@ -123,23 +126,25 @@ public class MoveItemFragment extends QueryResultFragment {
         }
     }
 
-    private boolean distinguish(CdfsItem[] startDest, CdfsItem[] currentDest){
+    private boolean distinguish(CdfsItem[] startDest, CdfsItem[] currentDest) {
         //sizes are equivalent?
         Log.d(TAG, "length of start dest: " + startDest.length);
         Log.d(TAG, "length of current dest: " + currentDest.length);
         Log.d(TAG, "1st ID of start dest: " + startDest[0].getId());
         Log.d(TAG, "1st of current dest: " + currentDest[0].getId());
-        if(startDest.length != currentDest.length)
+        if (startDest.length != currentDest.length)
             return false;
 
         //Because we ensure the length of the two array are equivalent, so we can do the exhaustively check
         Iterator<CdfsItem> i1 = Arrays.stream(startDest).iterator();
         Iterator<CdfsItem> i2 = Arrays.stream(currentDest).iterator();
         boolean identical = true;
-        while(i1.hasNext() && i2.hasNext()){
-            if(!i1.next().getId().equals(i2.next().getId())){identical = false;}
+        while (i1.hasNext() && i2.hasNext()) {
+            if (!i1.next().getId().equals(i2.next().getId())) {
+                identical = false;
+            }
         }
-        return  identical;
+        return identical;
     }
 
     private void handleUpEvent(){

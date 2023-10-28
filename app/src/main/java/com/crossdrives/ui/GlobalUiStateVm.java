@@ -25,10 +25,18 @@ public class GlobalUiStateVm extends ViewModel {
         //True: app is in move item workflow.
         //False: app has exited move item workflow but the move may has not yet done.
         boolean isInProgress;
+
+        //Only valid when isInProgress is true.
+        //TRUE: location of app is in children of start dest.
+        //FALSE: location of app is in parent of start dest.
+        //Used when move item workflow needs to determine whether it needs to open a new lsit screen or not.
+        boolean atParentOfStartDest;
         CdfsItem[] startDest;
+
 
         MoveItemState() {
             this.isInProgress = false;
+            this.atParentOfStartDest = false;
             this.startDest = null;
         }
 
