@@ -28,6 +28,7 @@ public class MoveItemFragment extends QueryResultFragment {
 
     private Toolbar mBottomAppBar;
 
+    //Only set when the screen is created. i.e. in onViewCreated
     private boolean atStartDest = false;
 
     public static String KEY_SELECTED_DEST = "key_selected_dest";
