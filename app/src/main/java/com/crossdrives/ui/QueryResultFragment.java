@@ -99,7 +99,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	//private QueryFileAdapter mAdapter;
-	RootItemsAdapter mAdapter;
+	private RootItemsAdapter mAdapter;
 
 	private Toolbar mToolbar, mBottomAppBar;
 	private View mView = null;
@@ -138,7 +138,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 	GlobalUiStateVm globalVm;
 
-	List<CdfsItem> parentList = new ArrayList<>();
+	CdfsItem[] parentArray;
 
 	CdfsItem itemOverflowMenuExpaned;
 
@@ -156,7 +156,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 
 		//String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
-
+		List<CdfsItem> parentList = new ArrayList<>();
 		//If we reach here from NavHost, simply get base folder metadata from CDFS infrastructure
 		if(navController.getPreviousBackStackEntry() == null){
 		//if(parentFromNavhost != null){
@@ -188,6 +188,21 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.w(TAG, "parent is miissing!");
 		}
 
+		//https://stackoverflow.com/questions/4042434/converting-arrayliststring-to-string-in-java
+		parentArray = parentList.toArray(new CdfsItem[0]);
+		Log.d(TAG, "parentArray converted: " + parentArray);
+
+		treeOpener = new ViewModelProvider(this, new OpenTreeFactory(parentList)).get(OpenTree.class);
+		treeOpener.setListener(treeOpenListener);
+//		treeOpener.getItems().observe(this, listChangeObserver)
+		Log.d(TAG, "TreeOpen object: " + treeOpener);
+
+		mAdapter = new RootItemsAdapter(getContext());
+		treeOpener.getItems().observe(this, list -> mAdapter.submitList(list));
+		//treeOpener.open(parentItem);
+
+		//Log.d(TAG, "Current graph: " + navController.getGraph());
+
 		NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.nav_graph);
 		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
 		//Only set the observer only if move item state is not in progress. Otherwise, the observer is
@@ -197,13 +212,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	}
 
+
 	@Override
 	public void onSaveInstanceState(@NonNull Bundle outState) {
 		super.onSaveInstanceState(outState);
-		CdfsItem[] parentArray;
-		//https://stackoverflow.com/questions/4042434/converting-arrayliststring-to-string-in-java
-		parentArray = parentList.toArray(new CdfsItem[0]);
-		Log.d(TAG, "parentArray converted: " + parentArray);
 		//Log.d(TAG, "parentArray to save: " + parentArray);
 		outState.putParcelableArray("parentArray", parentArray);
 	}
@@ -273,7 +285,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//It is observed each time null is got if view.getLayoutManager is called
 		//Reason why we need to set layout manager: https://stackoverflow.com/questions/50171647/recyclerview-setlayoutmanager
 		mRecyclerView.setLayoutManager(mLayoutManager);
-		mAdapter = new RootItemsAdapter(getContext());
 		mRecyclerView.setAdapter(mAdapter);
 		mRecyclerView.setOnTouchListener(onTouchListener);
 		mAdapter.setNotifier(AdapterNotifier);
@@ -623,7 +634,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					CdfsItem cdfsItem = item.getCdfsItem();
 					itemArray[itemArray.length-1] = cdfsItem;
 					NavController navController = Navigation.findNavController(view);
-					navController.navigate(MoveItemFragmentDirections.navigateToMyself(itemArray));
+					navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
 					requestPermissionFuture.thenAccept((isGranted)->{
