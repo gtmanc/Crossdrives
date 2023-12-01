@@ -124,26 +124,30 @@
         </fragment>
 
     <navigation android:id="@+id/moveItemWorkflowGraph" app:startDestination="@id/move_item_fragment">
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+            app:nullable="true" />
         <fragment
             android:id="@+id/move_item_fragment"
             android:name="com.crossdrives.ui.MoveItemFragment"
             android:label = "Move Item"
-            tools:layout="@layout/query_result_fragment"/>
-        <argument
-            android:name="parentsPath"
-            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
-
-            app:nullable="true" />
-        <action
-            android:id="@+id/navigate_to_myself"
-            app:destination="@id/move_item_fragment">
-        </action>
-        <!-- Setting the inclusive parameter with a value of false to indicate that the destination
-        we have specified in popUpTo() should not pop off back stack. -->
-        <action
-            android:id="@+id/exit_move_workflow"
-            app:popUpTo="@+id/main_list_fragment"
-            app:popUpToInclusive="false">
-        </action>
+            tools:layout="@layout/query_result_fragment">
+            <argument
+                android:name="parentsPath"
+                app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+                app:nullable="true" />
+            <action
+                android:id="@+id/navigate_to_myself"
+                app:destination="@id/move_item_fragment">
+            </action>
+            <!-- Setting the inclusive parameter with a value of false to indicate that the destination
+            we have specified in popUpTo() should not pop off back stack. -->
+            <action
+                android:id="@+id/exit_move_workflow"
+                app:popUpTo="@+id/main_list_fragment"
+                app:popUpToInclusive="false">
+            </action>
+        </fragment>
     </navigation>
 </navigation>

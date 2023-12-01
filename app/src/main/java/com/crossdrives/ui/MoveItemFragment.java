@@ -66,6 +66,9 @@ public class MoveItemFragment extends QueryResultFragment {
         Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
         toolbar.setTitle("Move item");
         toolbar.setNavigationOnClickListener(onNavIconClickListener);
+
+
+        mAdapter.setNotifier(AdapterNotifier);
     }
 
     private View.OnClickListener onNavIconClickListener = new View.OnClickListener() {

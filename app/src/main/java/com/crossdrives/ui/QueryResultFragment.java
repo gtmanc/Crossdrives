@@ -99,7 +99,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	//private QueryFileAdapter mAdapter;
-	private RootItemsAdapter mAdapter;
+	RootItemsAdapter mAdapter;
 
 	private Toolbar mToolbar, mBottomAppBar;
 	private View mView = null;
@@ -139,6 +139,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	GlobalUiStateVm globalVm;
 
 	CdfsItem[] parentArray;
+	List<CdfsItem> parentList = new ArrayList<>();
 
 	CdfsItem itemOverflowMenuExpaned;
 
@@ -156,7 +157,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 
 		//String parentFromNavhost = getArguments().getString(QueryResultActivity.KEY_PARENT_PATH);
-		List<CdfsItem> parentList = new ArrayList<>();
 		//If we reach here from NavHost, simply get base folder metadata from CDFS infrastructure
 		if(navController.getPreviousBackStackEntry() == null){
 		//if(parentFromNavhost != null){
