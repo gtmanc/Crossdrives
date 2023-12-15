@@ -13,7 +13,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
 
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.R;
@@ -21,6 +20,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MoveItemFragment extends QueryResultFragment {
     private String TAG = "CD.MoveItemFragment";
@@ -36,6 +37,8 @@ public class MoveItemFragment extends QueryResultFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate:" + this + "LF state: " + this.getLifecycle().getCurrentState());
+        FragmentManager fm = getActivity().getSupportFragmentManager();
+        Log.d(TAG, "Count of back stack entry: " + fm.getBackStackEntryCount());
     }
 
 
@@ -68,7 +71,7 @@ public class MoveItemFragment extends QueryResultFragment {
         toolbar.setNavigationOnClickListener(onNavIconClickListener);
 
 
-        mAdapter.setNotifier(AdapterNotifier);
+        //mAdapter.setNotifier(AdapterNotifier);
     }
 
     private View.OnClickListener onNavIconClickListener = new View.OnClickListener() {
@@ -81,21 +84,52 @@ public class MoveItemFragment extends QueryResultFragment {
     OnBackPressedCallback backPressCallback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
         public void handleOnBackPressed() {
-            //Test for back stack
+            final String DOWNWARD = "Downward";
+            final String UPWARD = "Upward";
+            boolean atTopMost = false;
+            String action = DOWNWARD;
+            GlobalUiStateVm.MoveItemState state = globalVm.getMoveItemStateLd().getMoveItemState();
+
+            CdfsItem[] itemArray = treeOpener.getParentArray(false);
+            List<CdfsItem> list = new LinkedList<CdfsItem>(Arrays.asList(itemArray));
+
 //            globalVm.getMoveItemStateLd().getMoveItemState().isInProgress = false;
             NavController navController = Navigation.findNavController(mView);
 //            if(!navController.popBackStack(R.id.query_result_fragment, false)){
             if(atStartDest){
-                Log.d(TAG, "We are at start dest. exit moveItem flow.");
-                globalVm.getMoveItemStateLd().getMoveItemState().isInProgress = false;
+                Log.d(TAG, "We are at start dest. open the parent");
+                state.MoveUpward = true;
             }
 
-            if(!navController.popBackStack()){
-                Log.w(TAG, "no stack can be popup!");
+            if(state.MoveUpward){
+                // Use a linkedList so that we can remove the last item easier later
+                // https://stackoverflow.com/questions/2965747/why-do-i-get-an-unsupportedoperationexception-when-trying-to-remove-an-element-f
+                list.remove(list.size()-1);
+                list.stream().forEach((cdfsItem)->{
+                    Log.d(TAG, cdfsItem.getName());
+                });
             }
 
+            //At top most?
+            if(list.isEmpty()) {
+                atTopMost = true;
+            }
+
+            if(atTopMost){
+                globalVm.getMoveItemStateLd().getMoveItemState().InProgress = false;
+                navController.navigate(MoveItemFragmentDirections.exitMoveWorkflow());
+            }else if(state.MoveUpward){
+                navController.navigate(MoveItemFragmentDirections.navigateToMyself(list.toArray(new CdfsItem[0])));
+            }else{
+                if (!navController.popBackStack()) {Log.w(TAG, "no stack can be popup!");}
+            }
         }
     };
+    private void popupStack(NavController navController){
+        if(!navController.popBackStack()){
+            Log.w(TAG, "no stack can be popup!");
+        }
+    }
 
     private Toolbar.OnMenuItemClickListener onBottomAppBarMenuItemClickListener = new Toolbar.OnMenuItemClickListener() {
         @Override
@@ -117,7 +151,7 @@ public class MoveItemFragment extends QueryResultFragment {
     };
     private void exitWorkflow(NavController navController, GlobalUiStateVm stateVm){
         navController.navigate(MoveItemFragmentDirections.exitMoveWorkflow());
-        stateVm.getMoveItemStateLd().getMoveItemState().isInProgress = false;
+        stateVm.getMoveItemStateLd().getMoveItemState().InProgress = false;
     }
 
     private void setMoveButtonBehavior(MenuItem item, boolean atStartDest){

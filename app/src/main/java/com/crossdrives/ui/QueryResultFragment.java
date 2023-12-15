@@ -41,8 +41,6 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -207,7 +205,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
 		//Only set the observer only if move item state is not in progress. Otherwise, the observer is
 		//called right after the observer is set.
-		if(!globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
+		if(!globalVm.getMoveItemStateLd().getMoveItemState().InProgress) {
 			globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
 		}
 	}
@@ -348,7 +346,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onChanged(GlobalUiStateVm.MoveItemState moveItemState) {
 			Log.d(TAG, "moveItemStateObserver onChanged called.");
 
-			if(globalVm.getMoveItemStateLd().getMoveItemState().isInProgress) {
+			if(globalVm.getMoveItemStateLd().getMoveItemState().InProgress) {
 				CdfsItem[] itemArray = treeOpener.getParentArray(false);
 				//Concatenate the dir we will go to produce a complete dir for the need of the destination
 
