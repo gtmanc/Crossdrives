@@ -15,6 +15,7 @@ public class GlobalUiStateVm extends ViewModel {
         public void launch(CdfsItem[] startDest){
             moveState.InProgress = true;
             moveState.startDest = startDest;
+            moveState.setBackstackEntryCount(0);
             postValue(moveState);
         }
 
@@ -31,6 +32,11 @@ public class GlobalUiStateVm extends ViewModel {
         //FALSE: location of app is in parent of start dest.
         //Used when move item workflow needs to determine whether it needs to open a new lsit screen or not.
         boolean MoveUpward;
+        // This is a workaround
+        // Ideally we should use FragmentManager.getBackStackEntryCount instead of creating a parameter for
+        // maintaining the count of back stack entry. However, I encountered an issue that the count is
+        // always 0 when I call FragmentManager.getBackStackEntryCount. Not yet figure out why it happens.
+        int backstackEntryCount;
         CdfsItem[] startDest;
 
 
@@ -44,6 +50,27 @@ public class GlobalUiStateVm extends ViewModel {
 
         public boolean setProgress(boolean progress){return InProgress = progress;}
 
+        public void setStartDest(CdfsItem[] startDest) {
+            this.startDest = startDest;
+        }
+
+        public CdfsItem[] getStartDest() {
+            return startDest;
+        }
+        public int getBackstackEntryCount() {
+            return backstackEntryCount;
+        }
+        public void setBackstackEntryCount(int backstackEntryCount) {
+            this.backstackEntryCount = backstackEntryCount;
+        }
+        public int increaseBackstackEntryCount(){
+            this.backstackEntryCount++;
+            return this.backstackEntryCount;
+        }
+        public int decreaseBackstackEntryCount(){
+            this.backstackEntryCount--;
+            return this.backstackEntryCount;
+        }
     }
 
     public MoveItemStateLd getMoveItemStateLd(){return moveItemStateLd;}

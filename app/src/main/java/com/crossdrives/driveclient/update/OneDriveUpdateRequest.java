@@ -9,6 +9,7 @@ import com.google.api.services.drive.model.File;
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
+import com.microsoft.graph.models.ItemReference;
 import com.microsoft.graph.models.UploadSession;
 import com.microsoft.graph.requests.DriveItemRequest;
 import com.microsoft.graph.requests.DriveItemRequestBuilder;
@@ -52,6 +53,14 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
         */
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()-> {
             File file = null;
+
+            if(mMediaContent == null){
+                Log.d(TAG, "Update meta data only.");
+            }
+            if(mMetaData == null){
+                Log.d(TAG, "Update content only.");
+            }
+
             if (mMediaContent != null) {    //update content of an existing file with known ID
                 try {
                     file = doUploadBlocked(mClient.getGraphServiceClient(), mfileID, mMediaContent);
@@ -65,6 +74,12 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
                 //Microsoft sdk reference: https://learn.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0&tabs=java
                 DriveItemRequest request;
                 DriveItem item = new DriveItem();
+                ItemReference parentReference = new ItemReference();
+                parentReference.id = mMetaData.getParents().toAdd.get(0);
+                Log.d(TAG, "new parent id: " + parentReference.id);
+                item.parentReference = parentReference;
+                //driveItem.name = "new-item-name.txt";
+
                 request = mClient.getGraphServiceClient().me().drive().items(mfileID).buildRequest();
                 request.patch(item);
             }

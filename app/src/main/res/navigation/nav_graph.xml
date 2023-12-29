@@ -144,6 +144,11 @@
             <!-- Setting the inclusive parameter with a value of false to indicate that the destination
             we have specified in popUpTo() should not pop off back stack. -->
             <action
+                android:id="@+id/navigate_to_myself_popupTo"
+                app:destination="@id/move_item_fragment"
+                app:popUpToInclusive="true">
+            </action>
+            <action
                 android:id="@+id/exit_move_workflow"
                 app:popUpTo="@+id/main_list_fragment"
                 app:popUpToInclusive="false">

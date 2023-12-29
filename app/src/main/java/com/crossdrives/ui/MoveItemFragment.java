@@ -33,12 +33,15 @@ public class MoveItemFragment extends QueryResultFragment {
 
     public static String KEY_SELECTED_DEST = "key_selected_dest";
 
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate:" + this + "LF state: " + this.getLifecycle().getCurrentState());
-        FragmentManager fm = getActivity().getSupportFragmentManager();
-        Log.d(TAG, "Count of back stack entry: " + fm.getBackStackEntryCount());
+        GlobalUiStateVm.MoveItemState state = globalVm.getMoveItemStateLd().getMoveItemState();
+        int count = state.increaseBackstackEntryCount();
+        Log.d(TAG, "Increased backstack entry count: " + count);
     }
 
 
@@ -70,7 +73,8 @@ public class MoveItemFragment extends QueryResultFragment {
         toolbar.setTitle("Move item");
         toolbar.setNavigationOnClickListener(onNavIconClickListener);
 
-
+//        FragmentManager fm = getActivity().getSupportFragmentManager();
+//        Log.d(TAG, "Back stack entry count: " + fm.getBackStackEntryCount());
         //mAdapter.setNotifier(AdapterNotifier);
     }
 
@@ -88,7 +92,10 @@ public class MoveItemFragment extends QueryResultFragment {
             final String UPWARD = "Upward";
             boolean atTopMost = false;
             String action = DOWNWARD;
+
             GlobalUiStateVm.MoveItemState state = globalVm.getMoveItemStateLd().getMoveItemState();
+            int backstackEntryCount = state.getBackstackEntryCount();
+            Log.d(TAG, "handleOnBackPressed. Current backstack entry count: " + backstackEntryCount);
 
             CdfsItem[] itemArray = treeOpener.getParentArray(false);
             List<CdfsItem> list = new LinkedList<CdfsItem>(Arrays.asList(itemArray));
@@ -97,40 +104,41 @@ public class MoveItemFragment extends QueryResultFragment {
             NavController navController = Navigation.findNavController(mView);
 //            if(!navController.popBackStack(R.id.query_result_fragment, false)){
             if(atStartDest){
-                Log.d(TAG, "We are at start dest. open the parent");
-                state.MoveUpward = true;
+                Log.d(TAG, "We are at start dest.");
+//                NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.moveItemWorkflowGraph);
+//                Log.w(TAG, "backStackEntry: " + backStackEntry);
+//                state.MoveUpward = true;
             }
 
-            if(state.MoveUpward){
-                // Use a linkedList so that we can remove the last item easier later
-                // https://stackoverflow.com/questions/2965747/why-do-i-get-an-unsupportedoperationexception-when-trying-to-remove-an-element-f
-                list.remove(list.size()-1);
-                list.stream().forEach((cdfsItem)->{
-                    Log.d(TAG, cdfsItem.getName());
-                });
-            }
+            if(backstackEntryCount == 1){Log.d(TAG, "Only one entry exists in back stack");}
 
-            //At top most?
+            // Use a linkedList so that we can remove the last item easier later
+            // https://stackoverflow.com/questions/2965747/why-do-i-get-an-unsupportedoperationexception-when-trying-to-remove-an-element-f
+            list.remove(list.size()-1);
+            Log.d(TAG, "Dump parent list:");
+            list.stream().forEach((cdfsItem)->{
+                Log.d(TAG, cdfsItem.getName());
+            });
+
+            // Determine the route
+            // There are three cases we have to handle. If
+            // 1. We are at root: exit workflow
+            // 2. Topmost of the backstack: open new parent. The back stack count is decreased by 1
+            // 3. All the others: pop up backstack. The back stack count is decreased by 1
+            // The back stack count is always increased in onCreate()
+            backstackEntryCount = state.decreaseBackstackEntryCount();
             if(list.isEmpty()) {
-                atTopMost = true;
-            }
-
-            if(atTopMost){
+                Log.d(TAG, "We are at root. Exit Move item flow");
                 globalVm.getMoveItemStateLd().getMoveItemState().InProgress = false;
                 navController.navigate(MoveItemFragmentDirections.exitMoveWorkflow());
-            }else if(state.MoveUpward){
-                navController.navigate(MoveItemFragmentDirections.navigateToMyself(list.toArray(new CdfsItem[0])));
+            }else if(backstackEntryCount == 0){
+                Log.d(TAG, "Open new parent");
+                navController.navigate(MoveItemFragmentDirections.navigateToMyselfPopupTo(list.toArray(new CdfsItem[0])));
             }else{
                 if (!navController.popBackStack()) {Log.w(TAG, "no stack can be popup!");}
             }
         }
     };
-    private void popupStack(NavController navController){
-        if(!navController.popBackStack()){
-            Log.w(TAG, "no stack can be popup!");
-        }
-    }
-
     private Toolbar.OnMenuItemClickListener onBottomAppBarMenuItemClickListener = new Toolbar.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item) {

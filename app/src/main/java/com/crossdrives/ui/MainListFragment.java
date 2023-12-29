@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -45,6 +46,5 @@ public class MainListFragment extends QueryResultFragment{
 
         //always register the callback because it is removed in onPause
         requireActivity().getOnBackPressedDispatcher().addCallback(callback);
-
     }
 }
