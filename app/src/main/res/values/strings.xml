@@ -5,6 +5,11 @@
 
     <string name="search_hint">search drives</string>
 
+    <!--            Tool bar            -->
+    <string name="titleDefault">My Drive</string>
+    <string name="titleChildListFragment">Folder</string>
+    <string name="titleMoveItem">Move Item</string>
+
     <!--            menu items          -->
     <!-- Action bar -->
     <string name="actionModeDelete">Delete</string>

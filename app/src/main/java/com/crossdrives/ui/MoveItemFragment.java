@@ -12,10 +12,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.R;
+import com.example.crossdrives.SerachResultItemModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.Arrays;
@@ -70,95 +72,105 @@ public class MoveItemFragment extends QueryResultFragment {
         fab.setVisibility(View.INVISIBLE);
 
         Toolbar toolbar = view.findViewById(R.id.qr_toolbar);
-        toolbar.setTitle("Move item");
+//        toolbar.setTitle("Move item");
         toolbar.setNavigationOnClickListener(onNavIconClickListener);
 
 //        FragmentManager fm = getActivity().getSupportFragmentManager();
 //        Log.d(TAG, "Back stack entry count: " + fm.getBackStackEntryCount());
-        //mAdapter.setNotifier(AdapterNotifier);
+
     }
 
     private View.OnClickListener onNavIconClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Log.d(TAG, "setNavigationOnClickListener called.");
+            handleOnUpButton();
         }
     };
 
     OnBackPressedCallback backPressCallback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
         public void handleOnBackPressed() {
-            final String DOWNWARD = "Downward";
-            final String UPWARD = "Upward";
-            boolean atTopMost = false;
-            String action = DOWNWARD;
+            handleOnUpButton();
+        }
+    };
 
-            GlobalUiStateVm.MoveItemState state = globalVm.getMoveItemStateLd().getMoveItemState();
-            int backstackEntryCount = state.getBackstackEntryCount();
-            Log.d(TAG, "handleOnBackPressed. Current backstack entry count: " + backstackEntryCount);
+    private void handleOnUpButton(){
+        final String DOWNWARD = "Downward";
+        final String UPWARD = "Upward";
+        boolean atTopMost = false;
+        String action = DOWNWARD;
 
-            CdfsItem[] itemArray = treeOpener.getParentArray(false);
-            List<CdfsItem> list = new LinkedList<CdfsItem>(Arrays.asList(itemArray));
+        GlobalUiStateVm.MoveItemState state = globalVm.getMoveItemStateLd().getMoveItemState();
+        int backstackEntryCount = state.getBackstackEntryCount();
+        Log.d(TAG, "handleOnBackPressed. Current backstack entry count: " + backstackEntryCount);
+
+        CdfsItem[] itemArray = treeOpener.getParentArray(false);
+        List<CdfsItem> list = new LinkedList<CdfsItem>(Arrays.asList(itemArray));
 
 //            globalVm.getMoveItemStateLd().getMoveItemState().isInProgress = false;
-            NavController navController = Navigation.findNavController(mView);
+        NavController navController = Navigation.findNavController(mView);
 //            if(!navController.popBackStack(R.id.query_result_fragment, false)){
-            if(atStartDest){
-                Log.d(TAG, "We are at start dest.");
+        if(atStartDest){
+            Log.d(TAG, "We are at start dest.");
 //                NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.moveItemWorkflowGraph);
 //                Log.w(TAG, "backStackEntry: " + backStackEntry);
 //                state.MoveUpward = true;
-            }
-
-            if(backstackEntryCount == 1){Log.d(TAG, "Only one entry exists in back stack");}
-
-            // Use a linkedList so that we can remove the last item easier later
-            // https://stackoverflow.com/questions/2965747/why-do-i-get-an-unsupportedoperationexception-when-trying-to-remove-an-element-f
-            list.remove(list.size()-1);
-            Log.d(TAG, "Dump parent list:");
-            list.stream().forEach((cdfsItem)->{
-                Log.d(TAG, cdfsItem.getName());
-            });
-
-            // Determine the route
-            // There are three cases we have to handle. If
-            // 1. We are at root: exit workflow
-            // 2. Topmost of the backstack: open new parent. The back stack count is decreased by 1
-            // 3. All the others: pop up backstack. The back stack count is decreased by 1
-            // The back stack count is always increased in onCreate()
-            backstackEntryCount = state.decreaseBackstackEntryCount();
-            if(list.isEmpty()) {
-                Log.d(TAG, "We are at root. Exit Move item flow");
-                globalVm.getMoveItemStateLd().getMoveItemState().InProgress = false;
-                navController.navigate(MoveItemFragmentDirections.exitMoveWorkflow());
-            }else if(backstackEntryCount == 0){
-                Log.d(TAG, "Open new parent");
-                navController.navigate(MoveItemFragmentDirections.navigateToMyselfPopupTo(list.toArray(new CdfsItem[0])));
-            }else{
-                if (!navController.popBackStack()) {Log.w(TAG, "no stack can be popup!");}
-            }
         }
-    };
+
+        if(backstackEntryCount == 1){Log.d(TAG, "Only one entry exists in back stack");}
+
+        // Use a linkedList so that we can remove the last item easier later
+        // https://stackoverflow.com/questions/2965747/why-do-i-get-an-unsupportedoperationexception-when-trying-to-remove-an-element-f
+        list.remove(list.size()-1);
+        Log.d(TAG, "Dump parent list:");
+        list.stream().forEach((cdfsItem)->{
+            Log.d(TAG, cdfsItem.getName());
+        });
+
+        // Determine the route
+        // There are three cases we have to handle. If
+        // 1. We are at root: exit workflow
+        // 2. Topmost of the backstack: open new parent. The back stack count is decreased by 1
+        // 3. All the others: pop up backstack. The back stack count is decreased by 1
+        // The back stack count is always increased in onCreate()
+        backstackEntryCount = state.decreaseBackstackEntryCount();
+        if(list.isEmpty()) {
+            Log.d(TAG, "We are at root. Exit Move item flow");
+            exitWorkflow(navController, globalVm, state.srcDestId);
+
+        }else if(backstackEntryCount == 0){
+            Log.d(TAG, "Open new parent");
+            navController.navigate(MoveItemFragmentDirections.navigateToMyselfPopupTo(list.toArray(new CdfsItem[0])));
+        }else{
+            if (!navController.popBackStack()) {Log.w(TAG, "no stack can be popup!");}
+        }
+    }
+
     private Toolbar.OnMenuItemClickListener onBottomAppBarMenuItemClickListener = new Toolbar.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item) {
             NavController navController = Navigation.findNavController(mView);
+            GlobalUiStateVm.MoveItemState state = globalVm.getMoveItemStateLd().getMoveItemState();
             if(item.getItemId() == R.id.bottomAppBarItemMove){
                 Log.d(TAG, "Bottom app bar: ok button is pressed.");
-                exitWorkflow(navController, globalVm);
+                exitWorkflow(navController, globalVm, state.srcDestId);
                 NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.main_list_fragment);
                 backStackEntry.getSavedStateHandle().set(KEY_SELECTED_DEST, treeOpener.getParentArray(false));
             }else if(item.getItemId() == R.id.bottomAppBarItemCancel){
                 Log.d(TAG, "Bottom app bar: cancel button is pressed.");
-                exitWorkflow(navController, globalVm);
+                exitWorkflow(navController, globalVm, state.srcDestId);
             }else{
                 Log.w(TAG, "Bottom app bar: Unknown action item");
             }
             return true;
         }
     };
-    private void exitWorkflow(NavController navController, GlobalUiStateVm stateVm){
-        navController.navigate(MoveItemFragmentDirections.exitMoveWorkflow());
+    private void exitWorkflow(NavController navController, GlobalUiStateVm stateVm, int serDestId ){
+        //navController.navigate(MoveItemFragmentDirections.exitMoveWorkflow());
+//        navController.navigate(serDestId, null, new NavOptions.Builder()
+//                .setPopUpTo(serDestId, false, true)
+//                .build());
+        navController.popBackStack(serDestId, false);
         stateVm.getMoveItemStateLd().getMoveItemState().InProgress = false;
     }
 
@@ -192,13 +204,11 @@ public class MoveItemFragment extends QueryResultFragment {
         return identical;
     }
 
-    private void handleUpEvent(){
-
-    }
-
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         //Log.d(TAG, "onSaveInstanceState:" + this + "LF state: " + this.getLifecycle().getCurrentState());
     }
+
+
 }

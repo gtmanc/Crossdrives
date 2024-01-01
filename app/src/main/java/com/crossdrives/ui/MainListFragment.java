@@ -17,7 +17,11 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.R;
+import com.example.crossdrives.SerachResultItemModel;
+
+import java.util.List;
 
 public class MainListFragment extends QueryResultFragment{
     private String TAG = "CD.MainListFragment";
@@ -46,5 +50,12 @@ public class MainListFragment extends QueryResultFragment{
 
         //always register the callback because it is removed in onPause
         requireActivity().getOnBackPressedDispatcher().addCallback(callback);
+
+    }
+    @Override
+    void navigateToOpenFolder(View view, CdfsItem[] itemArray){
+        Log.d(TAG, "navigateToItemShortPress");
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(MainListFragmentDirections.navigateToChildListFragment(itemArray));
     }
 }

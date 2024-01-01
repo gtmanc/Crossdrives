@@ -41,6 +41,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -83,6 +85,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -94,12 +97,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	private DriveServiceHelper mDriveServiceHelper;
 	private RecyclerView.LayoutManager mLayoutManager;
 	//private List<SerachResultItemModel> mItems;	//items used to render UI
-	private RecyclerView mRecyclerView = null;
+	RecyclerView mRecyclerView = null;
 	private View mProgressBar = null;
 	//private QueryFileAdapter mAdapter;
 	RootItemsAdapter mAdapter;
 
-	private Toolbar mToolbar, mBottomAppBar;
+	Toolbar mToolbar, mBottomAppBar;
 	private View mView = null;
 	private BottomSheetBehavior bottomSheetBehavior;
 
@@ -245,12 +248,35 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		mDrawer = drawerLayout;
 		drawerLayout.addDrawerListener(this);
 
-
 		mToolbar = view.findViewById(R.id.qr_toolbar);
+
+		//Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
+		//Use getGraph will lead to null graph once configuration changes
+		AppBarConfiguration appBarConfiguration =
+				new AppBarConfiguration.Builder(R.id.main_list_fragment).setOpenableLayout(drawerLayout).build();
+
+		//When using a fragment-owned app bar, Google recommends using the Toolbar APIs directly.
+		//Do not use setSupportActionBar() and the Fragment menu APIs, which are appropriate only for activity-owned app bars.
+		//https://developer.android.com/guide/fragments/appbar#fragment
+		NavigationUI.setupWithNavController(mToolbar, navController, appBarConfiguration);
+
+
 		//When using a fragment-owned app bar, Google recommends using the Toolbar APIs directly.
 		//Do not use setSupportActionBar() and the Fragment menu APIs, which are appropriate only for activity-owned app bars.
 		//https://developer.android.com/guide/fragments/appbar#fragment
 		mToolbar.inflateMenu(R.menu.menu_option);
+
+		//CdfsItem[] itemArray = treeOpener.getParentArray(false);
+		//List<CdfsItem> list = new LinkedList<CdfsItem>(Arrays.asList(itemArray));
+		CdfsItem cdfsItem = treeOpener.getParent();
+		List<String> list = cdfsItem.getParents();
+		String title = cdfsItem.getName();
+		if (list == null || list.isEmpty()) {
+			Log.d(TAG, "Show default title");
+			title = getContext().getString(R.string.titleDefault);
+		}
+		mToolbar.setTitle(title);
+
 		//Note: drawer doesn't work if this line of code is added after setupWithNavController
 		/*((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);*/
 
@@ -611,6 +637,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	HashMap<OnFailureListener, Notification> mDownloadFailedListener = new HashMap<>();
 	CompletableFuture<Boolean> requestPermissionFuture;
 	Permission permission;
+
+	void navigateToOpenFolder(View view, CdfsItem[] itemArray){
+		NavController navController = Navigation.findNavController(view);
+		navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
+	}
+
 	private RootItemsAdapter.Notifier AdapterNotifier = new RootItemsAdapter.Notifier() {
 	//private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
@@ -631,8 +663,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					//Concatenate the dir we will go to produce a complete dir for the need of the destination
 					CdfsItem cdfsItem = item.getCdfsItem();
 					itemArray[itemArray.length-1] = cdfsItem;
-					NavController navController = Navigation.findNavController(view);
-					navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
+					navigateToOpenFolder(view, itemArray);
 				}else{
 					requestPermissionFuture = new CompletableFuture<>();
 					requestPermissionFuture.thenAccept((isGranted)->{
@@ -761,7 +792,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
 			//popup.setOnMenuItemClickListener(PopupMenuListener.create(globalVm, treeOpener.getParent()));
-			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm, treeOpener.getParentArray(false)));
+			NavController navController = Navigation.findNavController(view);
+
+			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm,
+					treeOpener.getParentArray(false), navController.getCurrentDestination().getId()));
+
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			//We only show the option item Move if the item is not a folder

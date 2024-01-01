@@ -76,7 +76,8 @@ https://stackoverflow.com/questions/72596066/error-package-r-does-not-exist-in-n
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="msauth"
                     android:host="com.example.crossdrives"
-                    android:path="//BmHxih5wIsyO7pdgz0voBWbMzE=" />
+                    android:path="/yuA+nLjqHb+lo8n78AI7ZAgEens=" />
+                <!-- android:path="//BmHxih5wIsyO7pdgz0voBWbMzE= -->
             </intent-filter>
         </activity>
         <provider android:name=".SearchSuggestionProvider"

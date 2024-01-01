@@ -85,7 +85,7 @@ public class MasterAccountFragment extends Fragment{
         //Do not use graph because we set the graph manually in QueryResultActivity's onCreate().
         //Use getGraph will lead to null graph once configuration changes
         AppBarConfiguration appBarConfiguration =
-                new AppBarConfiguration.Builder(R.id.master_account_fragment).setOpenableLayout(drawerLayout).build();
+                new AppBarConfiguration.Builder(R.id.main_list_fragment).setOpenableLayout(drawerLayout).build();
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
 

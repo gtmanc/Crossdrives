@@ -12,9 +12,10 @@ public class GlobalUiStateVm extends ViewModel {
 
         private MoveItemState moveState = new MoveItemState();
 
-        public void launch(CdfsItem[] startDest){
+        public void launch(CdfsItem[] startDest, int srcDestId){
             moveState.InProgress = true;
             moveState.startDest = startDest;
+            moveState.srcDestId = srcDestId;
             moveState.setBackstackEntryCount(0);
             postValue(moveState);
         }
@@ -39,6 +40,7 @@ public class GlobalUiStateVm extends ViewModel {
         int backstackEntryCount;
         CdfsItem[] startDest;
 
+        int srcDestId;
 
         MoveItemState() {
             this.InProgress = false;
