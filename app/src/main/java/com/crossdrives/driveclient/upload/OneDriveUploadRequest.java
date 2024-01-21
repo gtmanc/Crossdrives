@@ -6,6 +6,7 @@ import com.crossdrives.driveclient.BaseRequest;
 import com.crossdrives.driveclient.OneDriveClient;
 import com.google.api.services.drive.model.File;
 import com.google.gson.JsonPrimitive;
+import com.microsoft.graph.models.Drive;
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
@@ -16,10 +17,14 @@ import com.microsoft.graph.tasks.IProgressCallback;
 import com.microsoft.graph.tasks.LargeFileUploadResult;
 import com.microsoft.graph.tasks.LargeFileUploadTask;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -58,7 +63,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
             File f = null;
             try {
-                f = doUploadBlocked();
+                f = doSmallUploadBlocked();
                 fileToClient.setFile(f);
                 fileToClient.setOriginalLocalFile(mPath);
                 callback.success(fileToClient);
@@ -75,6 +80,52 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
             return null;
         });
 
+    }
+
+    private File doSmallUploadBlocked() throws IOException, FileNotFoundException {
+        List<String> parents;
+        DriveRequestBuilder rb;
+        DriveItemRequestBuilder irb;
+        DriveItem uploadedItem;
+        InputStream fileStream = null;
+        File f = new File();
+
+        //Not clear how to specify the conflict behavior (@microsoft.graph.conflictBehavior) so far
+        // because no example is found in internet.
+        // The default conflict behavior seems to be replacing existing according to what I test.
+
+        // How do I read / convert an InputStream into a String in Java?
+        // https://stackoverflow.com/questions/309424/how-do-i-read-convert-an-inputstream-into-a-string-in-java
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(new FileInputStream(mPath), writer, StandardCharsets.US_ASCII);
+        byte[] stream = writer.toString().getBytes();
+
+        //build ItemRequestBuilder according to the given parent
+        rb = mClient.getGraphServiceClient().me().drive();
+        parents = mMetaData.getParents();
+
+        irb = buildItemRequest(rb, parents);
+
+        uploadedItem = irb
+//            uploadSession = mClient.getGraphServiceClient()
+//                    .me()
+//                    .drive()
+//                    .items("CD26537079F955DF!5758")
+                //.root()
+                // itemPath like "/Folder/file.txt"
+                // does not need to be a path to an existing item
+                .itemWithPath("/" + mMetaData.getName())
+                .content()
+                //.createUploadSession(uploadParams)
+                .buildRequest()
+                .put(stream);
+//        }catch (ClientException e){
+//            Log.w(TAG, "create upload session: " + e.toString());
+//        }
+        Log.d(TAG, "uploaded item: " + uploadedItem.name + " ID: " + uploadedItem.id);
+        f.setName(uploadedItem.name);
+        f.setId(uploadedItem.id);
+        return f;
     }
 
     private File doUploadBlocked() throws IOException, FileNotFoundException {
@@ -104,6 +155,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
             }
         };
         //https://github.com/microsoftgraph/msgraph-sdk-java/blob/dev/src/test/java/com/microsoft/graph/functional/OneDriveTests.java#L92
+        // https://github.com/microsoftgraph/msgraph-sdk-java/issues/393
         DriveItemUploadableProperties property = new DriveItemUploadableProperties();
         property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
         DriveItemCreateUploadSessionParameterSet uploadParams =

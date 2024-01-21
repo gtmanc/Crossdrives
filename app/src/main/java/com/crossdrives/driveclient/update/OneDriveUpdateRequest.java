@@ -11,6 +11,8 @@ import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
 import com.microsoft.graph.models.ItemReference;
 import com.microsoft.graph.models.UploadSession;
+import com.microsoft.graph.requests.DriveItemContentStreamRequest;
+import com.microsoft.graph.requests.DriveItemContentStreamRequestBuilder;
 import com.microsoft.graph.requests.DriveItemRequest;
 import com.microsoft.graph.requests.DriveItemRequestBuilder;
 import com.microsoft.graph.requests.GraphServiceClient;
@@ -18,8 +20,13 @@ import com.microsoft.graph.tasks.IProgressCallback;
 import com.microsoft.graph.tasks.LargeFileUploadResult;
 import com.microsoft.graph.tasks.LargeFileUploadTask;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -63,7 +70,7 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
 
             if (mMediaContent != null) {    //update content of an existing file with known ID
                 try {
-                    file = doUploadBlocked(mClient.getGraphServiceClient(), mfileID, mMediaContent);
+                    file = doSmallUploadBlocked(mClient.getGraphServiceClient(), mfileID, mMediaContent);
                     callback.success(file);
                 } catch (IOException e) {
                     Log.w(TAG, e.toString());
@@ -92,6 +99,34 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
             return null;
         });
 
+    }
+    File doSmallUploadBlocked(GraphServiceClient client, String fileID, AbstractInputStreamContent mediaContent) throws IOException {
+        DriveItemContentStreamRequestBuilder contentRequestBuilder;
+        DriveItem item;
+        File f = new File();
+
+        //Not clear how to specify the conflict behavior (@microsoft.graph.conflictBehavior) so far
+        // because no example is found in internet.
+        // The default conflict behavior seems to be replacing existing according to what I test.
+
+        // How do I read / convert an InputStream into a String in Java?
+        // https://stackoverflow.com/questions/309424/how-do-i-read-convert-an-inputstream-into-a-string-in-java
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(mediaContent.getInputStream(), writer, StandardCharsets.US_ASCII);
+        //Log.d(TAG, "copied: " + writer.toString());
+        //String theString = writer.toString();
+        byte[] stream = writer.toString().getBytes();
+//        = Base64.getDecoder().decode("aaabbbccc");
+//        Log.d(TAG, "decode done");
+//        Log.d(TAG, "decoded text: " + stream.toString());
+        //byte[] stream = Base64.getDecoder().decode(theString.toString());
+        //stream = new String("hello").getBytes();
+        item = client.me().drive().items(fileID).content().buildRequest().put(stream);
+
+        Log.d(TAG, "uploaded item: " + item.name + " ID: " + item.id);
+        f.setName(item.name);
+        f.setId(item.id);
+        return f;
     }
 
     File doUploadBlocked(GraphServiceClient client, String fileID, AbstractInputStreamContent mediaContent) throws IOException {
@@ -123,7 +158,11 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
                 .createUploadSession(uploadParams)
                 .buildRequest()
                 .post();
-
+        if (null == uploadSession) {
+            fileStream.close();
+            Log.d(TAG, "Could not create upload session");
+            //throw new Exception("Could not create upload session");
+        }
         Log.d(TAG, "create upload task");
         /*
             upload will get blocked util upload is completed.

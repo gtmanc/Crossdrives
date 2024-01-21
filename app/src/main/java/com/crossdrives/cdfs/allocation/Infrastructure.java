@@ -71,8 +71,9 @@ public class Infrastructure{
      */
     private final String NAME_CDFS_FOLDER = IConstant.NAME_CDFS_FOLDER;
     private final String MINETYPE_FOLDER = IConstant.MIMETYPE_FOLDER;
-    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
-            "' and name = '" + NAME_CDFS_FOLDER + "'";
+//    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER  +
+//            "' and name = '" + NAME_CDFS_FOLDER + "'";
+    private final String FILTERCLAUSE_CDFS_FOLDER = "mimeType = '" + MINETYPE_FOLDER + "'";
 
     private CDFS mCDFS;
     //private ConcurrentHashMap<String, Drive> mDrives;

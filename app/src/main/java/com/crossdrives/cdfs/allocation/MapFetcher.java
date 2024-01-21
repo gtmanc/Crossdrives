@@ -422,7 +422,7 @@ public class MapFetcher {
         Log.d(TAG, "Get meta data all.");
 
         file = new HashMap<>();
-        Log.d(TAG, "length: " + item.getMap().get("Google").size());
+        //Log.d(TAG, "length: " + item.getMap().get("Google").size());
         item.getMap().forEach((k, v)->{
             File f = new File();
             Log.d(TAG, "ID: " + v.get(0));
