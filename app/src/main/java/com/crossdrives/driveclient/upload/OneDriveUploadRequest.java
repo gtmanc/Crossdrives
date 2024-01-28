@@ -93,6 +93,13 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         //Not clear how to specify the conflict behavior (@microsoft.graph.conflictBehavior) so far
         // because no example is found in internet.
         // The default conflict behavior seems to be replacing existing according to what I test.
+        //https://github.com/microsoftgraph/msgraph-sdk-java/blob/dev/src/test/java/com/microsoft/graph/functional/OneDriveTests.java#L92
+        // https://github.com/microsoftgraph/msgraph-sdk-java/issues/393
+        DriveItemUploadableProperties property = new DriveItemUploadableProperties();
+        property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
+        DriveItemCreateUploadSessionParameterSet uploadParams =
+                DriveItemCreateUploadSessionParameterSet.newBuilder()
+                        .withItem(property).build();
 
         // How do I read / convert an InputStream into a String in Java?
         // https://stackoverflow.com/questions/309424/how-do-i-read-convert-an-inputstream-into-a-string-in-java
@@ -115,6 +122,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 // itemPath like "/Folder/file.txt"
                 // does not need to be a path to an existing item
                 .itemWithPath("/" + mMetaData.getName())
+                //.createUploadSession(uploadParams)
                 .content()
                 //.createUploadSession(uploadParams)
                 .buildRequest()

@@ -6,6 +6,7 @@ import com.crossdrives.driveclient.BaseRequest;
 import com.crossdrives.driveclient.OneDriveClient;
 import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.services.drive.model.File;
+import com.google.gson.JsonPrimitive;
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
@@ -86,6 +87,7 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
                 Log.d(TAG, "new parent id: " + parentReference.id);
                 item.parentReference = parentReference;
                 //driveItem.name = "new-item-name.txt";
+                item.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
 
                 request = mClient.getGraphServiceClient().me().drive().items(mfileID).buildRequest();
                 request.patch(item);
