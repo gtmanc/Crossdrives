@@ -11,6 +11,8 @@ import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
 import com.microsoft.graph.models.DriveItemUploadableProperties;
 import com.microsoft.graph.models.UploadSession;
+import com.microsoft.graph.options.FunctionOption;
+import com.microsoft.graph.options.Option;
 import com.microsoft.graph.requests.DriveItemRequestBuilder;
 import com.microsoft.graph.requests.DriveRequestBuilder;
 import com.microsoft.graph.tasks.IProgressCallback;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -63,7 +66,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
             File f = null;
             try {
-                f = doSmallUploadBlocked();
+                f = doUploadBlocked();
                 fileToClient.setFile(f);
                 fileToClient.setOriginalLocalFile(mPath);
                 callback.success(fileToClient);
@@ -111,7 +114,11 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         rb = mClient.getGraphServiceClient().me().drive();
         parents = mMetaData.getParents();
 
+
         irb = buildItemRequest(rb, parents);
+
+        FunctionOption option = new FunctionOption("@microsoft.graph.conflictBehavior",new JsonPrimitive("rename"));
+        //Option option = new Option("@microsoft.graph.conflictBehavior","rename");
 
         uploadedItem = irb
 //            uploadSession = mClient.getGraphServiceClient()
@@ -125,7 +132,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 //.createUploadSession(uploadParams)
                 .content()
                 //.createUploadSession(uploadParams)
-                .buildRequest()
+                .buildRequest(option)
                 .put(stream);
 //        }catch (ClientException e){
 //            Log.w(TAG, "create upload session: " + e.toString());
@@ -165,7 +172,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         //https://github.com/microsoftgraph/msgraph-sdk-java/blob/dev/src/test/java/com/microsoft/graph/functional/OneDriveTests.java#L92
         // https://github.com/microsoftgraph/msgraph-sdk-java/issues/393
         DriveItemUploadableProperties property = new DriveItemUploadableProperties();
-        property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
+        //property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
         DriveItemCreateUploadSessionParameterSet uploadParams =
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
                         .withItem(property).build();
@@ -214,6 +221,10 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
     DriveItemRequestBuilder buildItemRequest(DriveRequestBuilder rb, List<String> parents){
         DriveItemRequestBuilder irb = null;
 
+        Log.d(TAG, "[buildItemRequest]parents size: " + parents.size());
+        parents.stream().forEach((pid)->{
+            Log.d("TAG", "pid: " + pid);
+        });
         irb = rb.root();
         if(parents == null){
             Log.d(TAG, "PID is null, upload file to root");
@@ -229,3 +240,4 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
     }
 
 }
+

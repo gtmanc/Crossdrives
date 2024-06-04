@@ -30,6 +30,7 @@ public class Splitter {
     byte[] bf = new byte[1024];
     InputStream fIn = null;
     final int chunkSize = 10 * 1024 * 1024; //10 Mega Byes
+    //final int chunkSize = 260 * 1024 * 1024;
     HashMap<String, Long> Allocation;
     String sliceName;
     int maxChunkSize;

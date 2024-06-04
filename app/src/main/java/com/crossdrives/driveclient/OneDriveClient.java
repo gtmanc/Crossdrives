@@ -19,9 +19,7 @@ import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
 import com.crossdrives.driveclient.update.OneDriveUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.crossdrives.driveclient.upload.OneDriveUploadRequestBuilder;
-import com.microsoft.graph.authentication.IAuthenticationProvider;;
-import com.microsoft.graph.requests.GraphServiceClient;
-
+import com.microsoft.graph.serviceclient.GraphServiceClient;
 
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;

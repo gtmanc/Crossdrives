@@ -5,11 +5,11 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'dagger.hilt.android.plugin'
 
 android {
-    compileSdkVersion 31
+    compileSdk 32
     defaultConfig {
         applicationId "com.example.crossdrives"
         minSdkVersion 26
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -33,7 +33,6 @@ android {
             excludes += ['META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST', 'META-INF/AL2.0', 'META-INF/LGPL2.1', 'META-INF/LICENSE.md', 'META-INF/NOTICE.md', 'META-INF/io.netty.versions.properties', 'META-INF/jersey-module-version']
         }
     }
-
     //Jenson added for avoiding error message "More than one file was found ..."
 
     //disable asset compression for certain extensions.
@@ -45,6 +44,14 @@ android {
         }
     }
     namespace 'com.example.crossdrives'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 }
 
 dependencies {
@@ -68,8 +75,9 @@ dependencies {
     //implementation group: 'com.google.api-client', name: 'google-api-client-jackson2', version: '1.31.3'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
     implementation "androidx.cardview:cardview:1.0.0"
-    implementation 'com.microsoft.identity.client:msal:2.1.0'
-    implementation ('com.microsoft.graph:microsoft-graph:3.1.0'){
+    implementation 'com.microsoft.identity.client:msal:4.10.0'
+    //implementation 'com.azure:azure-identity:1.2.3'
+    implementation ('com.microsoft.graph:microsoft-graph:5.80.0'){
         exclude group: 'javax.activation'
     }
 
