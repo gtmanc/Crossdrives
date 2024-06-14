@@ -6,6 +6,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.crossdrives.R;
 import com.microsoft.graph.authentication.BaseAuthenticationProvider;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAuthenticationResult;
@@ -25,7 +26,7 @@ public class AuthenticationHelper extends BaseAuthenticationProvider {
     private final static String[] mScopes = {"Files.ReadWrite.All", "Files.ReadWrite.AppFolder"};
     private ISingleAccountPublicClientApplication mPCA = null;
     private AuthenticationHelper(Context ctx, final IAuthenticationHelperCreatedListener listener) {
-        PublicClientApplication.createSingleAccountPublicClientApplication(ctx, R.raw.msal_config,
+        PublicClientApplication.createSingleAccountPublicClientApplication(ctx, R.raw.auth_config_single_account,
                 new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
                     public void onCreated(ISingleAccountPublicClientApplication application) {

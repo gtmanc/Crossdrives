@@ -8,10 +8,10 @@ import com.crossdrives.driveclient.create.ICreateCallBack;
 import com.crossdrives.driveclient.create.ICreateRequest;
 import com.google.api.services.drive.model.File;
 import com.google.gson.JsonPrimitive;
-import com.microsoft.graph.drives.item.DriveItemRequestBuilder;
-import com.microsoft.graph.drives.item.list.drive.DriveRequestBuilder;
 import com.microsoft.graph.models.DriveItem;
 import com.microsoft.graph.models.Folder;
+import com.microsoft.graph.requests.DriveItemRequestBuilder;
+import com.microsoft.graph.requests.DriveRequestBuilder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +35,7 @@ public class OneDriveCreateRequest extends BaseRequest implements ICreateRequest
         Folder createdFolder;
         File file = new File();
         DriveItem driveItem = new DriveItem();
-        driveItem.setName(mMetaData.getName());
+        //driveItem.setName(mMetaData.getName());
         Folder folder = new Folder();
         driveItem.setFolder(folder);
         HashMap map = new HashMap();

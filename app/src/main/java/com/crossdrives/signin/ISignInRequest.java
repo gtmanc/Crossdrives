@@ -19,7 +19,7 @@ public interface ISignInRequest {
 
     //Operations provided
     //start interactive sign in flow. Mainly start the sign in activity.
-    public boolean Start(Activity activity, ISignInFinihedListener callback);
+    public boolean interactivelySignIn(Activity activity, ISignInFinihedListener callback);
 
     //Silence Sign in.
     public void silenceSignIn(Activity activity, ISignInFinihedListener callback);

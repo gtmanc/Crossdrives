@@ -10,14 +10,14 @@ import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.crossdrives.msgraph.SnippetApp;
 import com.crossdrives.signin.IPhotoDownloadedListener;
 import com.crossdrives.signin.ISignInFinihedListener;
-import com.crossdrives.signin.ISignOutFinishedListener;
 import com.crossdrives.signin.ISignInRequest;
-import com.example.crossdrives.SignInMS;
+import com.crossdrives.signin.ISignOutFinishedListener;
 import com.microsoft.identity.client.IAuthenticationResult;
+import com.microsoft.identity.client.exception.MsalClientException;
+import com.microsoft.identity.client.exception.MsalServiceException;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class SignInRequest implements ISignInRequest {
     private String TAG = "Signin.MS.SignInRequest";
@@ -39,7 +39,7 @@ public class SignInRequest implements ISignInRequest {
         return mSignInRequest;
     }
     @Override
-    public boolean Start(Activity activity, ISignInFinihedListener callback) {
+    public boolean interactivelySignIn(Activity activity, ISignInFinihedListener callback) {
         mAuthHelper = AuthenticationHelperCreatedFuture.join();
         mActivity = activity;
         mSignInFinishedListener = callback;
@@ -76,7 +76,7 @@ public class SignInRequest implements ISignInRequest {
         // Log the token for debug purposes
         String accessToken = authenticationResult.getAccessToken();
         Profile profile = new Profile();
-        Log.d("AUTH", String.format("Access token: %s", accessToken));
+        //Log.d("AUTH", String.format("Access token: %s", accessToken));
 
         // Get Graph client and get user
 //        GraphHelper graphHelper = GraphHelper.getInstance();
@@ -116,7 +116,7 @@ public class SignInRequest implements ISignInRequest {
         Arrays.stream(authenticationResult.getScope()).forEach((s)->{
             Log.d(TAG, "Scope : " + s);
         });
-        //Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
+        Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
         // save our auth token for REST API use later
         SharedPrefsUtil.persistAuthToken(authenticationResult);
         //Let's set the profile data using the information got. The missing filed will be set
@@ -126,5 +126,17 @@ public class SignInRequest implements ISignInRequest {
         profile.PhotoUri = null;
 
         mSignInFinishedListener.onFinished(profile, accessToken);
+    }
+
+    private void handleSignInFailure(Throwable exception) {
+        if (exception instanceof MsalServiceException) {
+            // Exception when communicating with the auth server, likely config issue
+            Log.e(TAG, "Service error authenticating", exception);
+        } else if (exception instanceof MsalClientException) {
+            // Exception inside MSAL, more info inside MsalError.java
+            Log.e(TAG, "Client error authenticating", exception);
+        } else {
+            Log.e(TAG, "Unhandled exception authenticating", exception);
+        }
     }
 }

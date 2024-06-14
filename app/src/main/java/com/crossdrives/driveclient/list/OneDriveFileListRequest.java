@@ -11,11 +11,13 @@ import com.crossdrives.transcode.GraphTranscoder;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-
-import com.microsoft.graph.models.Drive;
-import com.microsoft.graph.models.DriveCollectionResponse;
 import com.microsoft.graph.models.DriveItem;
-import com.microsoft.graph.users.item.drive.DriveRequestBuilder;
+import com.microsoft.graph.options.Option;
+import com.microsoft.graph.requests.DriveCollectionResponse;
+import com.microsoft.graph.requests.DriveItemCollectionRequest;
+import com.microsoft.graph.requests.DriveItemCollectionRequestBuilder;
+import com.microsoft.graph.requests.DriveItemRequestBuilder;
+import com.microsoft.graph.requests.DriveRequestBuilder;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -89,12 +91,12 @@ public class OneDriveFileListRequest extends BaseRequest implements IFileListReq
                     .drive();
 
 
-            DriveCollectionResponse result = mClient.getGraphServiceClient()
-                    .me()
-                    .drives()
-                    .get();
-            result.getValue().get(0).getId();
 
+//            DriveCollectionResponse result = mClient.getGraphServiceClient()
+//                    .me()
+//                    .drives()
+
+//            result.getValue().get(0).getId();
 
             parent = getParent(mfilterClause);
 
