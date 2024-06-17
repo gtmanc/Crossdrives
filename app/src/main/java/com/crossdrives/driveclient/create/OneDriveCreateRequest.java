@@ -35,12 +35,15 @@ public class OneDriveCreateRequest extends BaseRequest implements ICreateRequest
         Folder createdFolder;
         File file = new File();
         DriveItem driveItem = new DriveItem();
-        //driveItem.setName(mMetaData.getName());
+        driveItem.name = mMetaData.getName();
         Folder folder = new Folder();
-        driveItem.setFolder(folder);
-        HashMap map = new HashMap();
-        map.put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
-        driveItem.setAdditionalData(map);
+        driveItem.folder=folder;
+        driveItem.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
+        //Following snippet is for sdk v6
+        //driveItem.setName(mMetaData.getName());
+        //driveItem.setFolder(folder);
+        //HashMap map = new HashMap();
+        //map.put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
 
         rb = mClient.getGraphServiceClient().me().drive();
         irb = buildItemRequest(rb, mMetaData.getParents());

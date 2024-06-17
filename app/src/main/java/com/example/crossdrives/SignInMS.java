@@ -12,7 +12,8 @@ import androidx.annotation.Nullable;
 import com.crossdrives.msgraph.SharedPrefsUtil;
 import com.crossdrives.msgraph.SnippetApp;
 
-import com.microsoft.graph.serviceclient.GraphServiceClient;
+import com.microsoft.graph.authentication.IAuthenticationProvider;
+import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;

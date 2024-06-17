@@ -5,7 +5,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'dagger.hilt.android.plugin'
 
 android {
-    compileSdk 32
+    compileSdk 34
     defaultConfig {
         applicationId "com.example.crossdrives"
         minSdkVersion 26
@@ -75,7 +75,7 @@ dependencies {
     //implementation group: 'com.google.api-client', name: 'google-api-client-jackson2', version: '1.31.3'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
     implementation "androidx.cardview:cardview:1.0.0"
-    implementation 'com.microsoft.identity.client:msal:4.10.0'
+    implementation 'com.microsoft.identity.client:msal:5.1.0'
     //implementation 'com.azure:azure-identity:1.2.3'
     implementation ('com.microsoft.graph:microsoft-graph:5.80.0'){
         exclude group: 'javax.activation'
@@ -106,9 +106,9 @@ dependencies {
     // Optional -- Mockito framework
     testImplementation "org.mockito:mockito-core:4.11.0"
     // Optional -- mockito-kotlin
-    testImplementation "org.mockito.kotlin:mockito-kotlin:"
+    //testImplementation "org.mockito.kotlin:mockito-kotlin"
     // Optional -- Mockk framework
-    testImplementation "io.mockk:mockk:"
+    //testImplementation "io.mockk:mockk"
 
     // Core library
     testImplementation "androidx.test:core:1.5.0"
