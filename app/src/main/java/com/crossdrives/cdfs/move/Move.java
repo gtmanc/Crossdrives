@@ -93,7 +93,7 @@ public class Move {
                 HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(containerDest, updatedItemLists);
 
                 po.out("New container to source:", newContainerSrc);
-                po.out("New container to dest", newContainerDest);
+                po.out("New container to dest:", newContainerDest);
                 //following are critical process which must be atomic. However, we can't guarantee this.
                 //A recovery process will be employed to solve the issue.
                 MetaDataUpdater metaDataUpdater = new MetaDataUpdater(mCDFS.getDrives());
@@ -111,7 +111,9 @@ public class Move {
 //                    future.join();
 //                });
 
+                Log.d(TAG, "Update new container to source");
                 mapUpdater1.updateAll(newContainerSrc, mSource).join();
+                Log.d(TAG, "Update new container to dest");
                 mapUpdater2.updateAll(newContainerDest, mDest).join();
                 return null;
                 }

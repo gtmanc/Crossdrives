@@ -66,7 +66,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
             File f = null;
             try {
-                f = doUploadBlocked();
+                f = doSmallUploadBlocked();
                 fileToClient.setFile(f);
                 fileToClient.setOriginalLocalFile(mPath);
                 callback.success(fileToClient);
@@ -132,7 +132,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 //.createUploadSession(uploadParams)
                 .content()
                 //.createUploadSession(uploadParams)
-                .buildRequest(option)
+                //.buildRequest(option)
+                .buildRequest()
                 .put(stream);
 //        }catch (ClientException e){
 //            Log.w(TAG, "create upload session: " + e.toString());
@@ -172,6 +173,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         //https://github.com/microsoftgraph/msgraph-sdk-java/blob/dev/src/test/java/com/microsoft/graph/functional/OneDriveTests.java#L92
         // https://github.com/microsoftgraph/msgraph-sdk-java/issues/393
         DriveItemUploadableProperties property = new DriveItemUploadableProperties();
+        property.name = mMetaData.getName();
         //property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
         DriveItemCreateUploadSessionParameterSet uploadParams =
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
@@ -184,7 +186,8 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         irb = buildItemRequest(rb, parents);
 
         // Create an upload session
-        Log.d(TAG, "create upload session");
+        Log.d(TAG, "Create upload session...");
+        Log.d(TAG, "itemWithPath: " + mMetaData.getName());
         uploadSession = irb
 //            uploadSession = mClient.getGraphServiceClient()
 //                    .me()
@@ -193,15 +196,20 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                     //.root()
                     // itemPath like "/Folder/file.txt"
                     // does not need to be a path to an existing item
-                    .itemWithPath("/" + mMetaData.getName())
+                    .itemWithPath(mMetaData.getName())
                     .createUploadSession(uploadParams)
                     .buildRequest()
                     .post();
 //        }catch (ClientException e){
 //            Log.w(TAG, "create upload session: " + e.toString());
 //        }
+//        Log.d(TAG, "UploadUrl: " + uploadSession.uploadUrl);
+//        Log.d(TAG, "oDataType: " + uploadSession.oDataType);
 
+//        Log.d(TAG, "expirationDateTime: " + uploadSession.expirationDateTime);
+//        Log.d(TAG, "nextExpectedRanges: " + uploadSession.nextExpectedRanges);
         Log.d(TAG, "create upload task");
+//        Log.d(TAG, "file size: " + streamSize);
         LargeFileUploadTask<DriveItem> largeFileUploadTask =
                 new LargeFileUploadTask<DriveItem>
                         (uploadSession, mClient.getGraphServiceClient(), fileStream, streamSize, DriveItem.class);
@@ -212,7 +220,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
             upload will get blocked util upload is completed.
         */
         result = largeFileUploadTask.upload(0, null, Progress_callback);
-        //Log.d(TAG, "returned result: " + result.responseBody.name + " ID: " + result.responseBody.id);
+        Log.d(TAG, "returned result: " + result.responseBody.name + " ID: " + result.responseBody.id);
         f.setName(result.responseBody.name);
         f.setId(result.responseBody.id);
         return f;
@@ -221,18 +229,18 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
     DriveItemRequestBuilder buildItemRequest(DriveRequestBuilder rb, List<String> parents){
         DriveItemRequestBuilder irb = null;
 
-        Log.d(TAG, "[buildItemRequest]parents size: " + parents.size());
-        parents.stream().forEach((pid)->{
-            Log.d("TAG", "pid: " + pid);
-        });
-        irb = rb.root();
         if(parents == null){
             Log.d(TAG, "PID is null, upload file to root");
-        }
-        else if(parents.size() == 0) {
-            Log.d(TAG, "No PID is given, upload file to root");
+            irb = rb.root();
+        }else if(parents.size() == 0){
+
+            irb = rb.root();
         }
         else{
+            Log.d(TAG, "parents size: " + parents.size() + " Parent IDs: " + parents.get(0));
+            parents.stream().forEach((pid)->{
+                Log.d("TAG", "pid: " + pid);
+            });
             irb = rb.items(parents.get(0));
         }
 

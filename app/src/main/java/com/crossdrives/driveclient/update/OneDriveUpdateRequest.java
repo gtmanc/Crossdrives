@@ -90,7 +90,17 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
                 item.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
 
                 request = mClient.getGraphServiceClient().me().drive().items(mfileID).buildRequest();
-                request.patch(item);
+                DriveItem updatedItem = new DriveItem();
+                updatedItem = request.patch(item);
+                if(updatedItem == null){
+                    callback.failure("Patch request returned a NULL item!");
+                }else{
+                    Log.d(TAG, "PATCH completed. Item Name: " + updatedItem.name);
+                    file = new File();
+                    file.setName(updatedItem.name);
+                    file.setId(updatedItem.id);
+                    callback.success(file);
+                }
             }
             return file;
         });

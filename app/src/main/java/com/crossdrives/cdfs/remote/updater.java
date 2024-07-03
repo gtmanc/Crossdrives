@@ -103,6 +103,7 @@ public class updater {
         updateRequest.run(new IUpdateCallBack<com.google.api.services.drive.model.File>() {
                     @Override
                     public void success(com.google.api.services.drive.model.File file) {
+                        Log.d(TAG, "Update success. Name: " + file.getName() + " ID: " + file.getId());
                         future.complete(file);
                     }
 

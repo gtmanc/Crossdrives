@@ -19,8 +19,11 @@ import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
 import com.crossdrives.driveclient.update.OneDriveUpdateRequestBuilder;
 import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.crossdrives.driveclient.upload.OneDriveUploadRequestBuilder;
+import com.crossdrives.signin.microsoft.DebugHandler;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
+import com.microsoft.graph.httpcore.HttpClients;
 import com.microsoft.graph.requests.GraphServiceClient;
+import okhttp3.OkHttpClient;
 
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
@@ -82,14 +85,14 @@ public class OneDriveClient implements IDriveClient {
     public static class Builder{
         public IDriveClient buildClient(){
 
-            return OneDriveClient.fromConfig();
+            return OneDriveClient.fromConfigWithDebugger();
         }
     }
 
     @Override
     public IDriveClient build(String token) {
         mToken = token;
-        return OneDriveClient.fromConfig();
+        return OneDriveClient.fromConfigWithDebugger();
     }
 
     /*
@@ -146,6 +149,28 @@ public class OneDriveClient implements IDriveClient {
     @Override
     public IGetRequestBuilder get() {
         return null;    //TODO: not yet implemented
+    }
+
+    public static OneDriveClient fromConfigWithDebugger(){
+        OneDriveClient oClient  = new OneDriveClient();
+        final OkHttpClient okHttpClient = HttpClients.createDefault(new IAuthenticationProvider() {
+                    @NonNull
+                    @Override
+                    public CompletableFuture<String> getAuthorizationTokenAsync(@NonNull URL requestUrl) {
+                        CompletableFuture<String> future = null;
+                        future = new CompletableFuture<>();
+                        future.complete(mToken);
+                        return future;
+                    }
+                })
+                .newBuilder()
+                .addInterceptor(new DebugHandler())
+                .build();
+        final GraphServiceClient<okhttp3.Request> graphClient = GraphServiceClient.builder()
+                .httpClient(okHttpClient)
+                .buildClient();
+        oClient.setGraphServiceClient(graphClient);
+        return oClient;
     }
 
     public static OneDriveClient fromConfig(){
