@@ -23,6 +23,7 @@ import com.microsoft.graph.tasks.LargeFileUploadTask;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -121,13 +122,17 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
         // because no example is found in internet.
         // The default conflict behavior seems to be replacing existing according to what I test.
 
+        //Java InputStream to Byte Array and ByteBuffer: https://www.baeldung.com/convert-input-stream-to-array-of-bytes
+        InputStream is = mediaContent.getInputStream();
+        byte[] stream = new byte[is.available()];
+        is.read(stream);
+
         // How do I read / convert an InputStream into a String in Java?
         // https://stackoverflow.com/questions/309424/how-do-i-read-convert-an-inputstream-into-a-string-in-java
-        StringWriter writer = new StringWriter();
-        IOUtils.copy(mediaContent.getInputStream(), writer, StandardCharsets.US_ASCII);
-        //Log.d(TAG, "copied: " + writer.toString());
-        //String theString = writer.toString();
-        byte[] stream = writer.toString().getBytes();
+//        StringWriter writer = new StringWriter();
+//        IOUtils.copy(mediaContent.getInputStream(), writer, StandardCharsets.US_ASCII);
+//        byte[] stream = writer.toString().getBytes();
+
 //        = Base64.getDecoder().decode("aaabbbccc");
 //        Log.d(TAG, "decode done");
 //        Log.d(TAG, "decoded text: " + stream.toString());

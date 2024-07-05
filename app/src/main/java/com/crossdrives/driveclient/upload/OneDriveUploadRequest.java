@@ -104,11 +104,16 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
                         .withItem(property).build();
 
-        // How do I read / convert an InputStream into a String in Java?
+        //Java InputStream to Byte Array and ByteBuffer: https://www.baeldung.com/convert-input-stream-to-array-of-bytes
+        InputStream is = new FileInputStream(mPath);
+        byte[] stream = new byte[is.available()];
+        is.read(stream);
+
+        //How do I read / convert an InputStream into a String in Java?
         // https://stackoverflow.com/questions/309424/how-do-i-read-convert-an-inputstream-into-a-string-in-java
-        StringWriter writer = new StringWriter();
-        IOUtils.copy(new FileInputStream(mPath), writer, StandardCharsets.US_ASCII);
-        byte[] stream = writer.toString().getBytes();
+//        StringWriter writer = new StringWriter();
+//        IOUtils.copy(new FileInputStream(mPath), writer, StandardCharsets.US_ASCII);
+//        byte[] stream = writer.toString().getBytes();
 
         //build ItemRequestBuilder according to the given parent
         rb = mClient.getGraphServiceClient().me().drive();
