@@ -66,7 +66,7 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
         CompletableFuture<File> workingFuture = CompletableFuture.supplyAsync(()->{
             File f = null;
             try {
-                f = doSmallUploadBlocked();
+                f = doUploadBlocked();
                 fileToClient.setFile(f);
                 fileToClient.setOriginalLocalFile(mPath);
                 callback.success(fileToClient);

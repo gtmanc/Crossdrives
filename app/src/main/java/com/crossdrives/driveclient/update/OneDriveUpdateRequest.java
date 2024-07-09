@@ -72,7 +72,7 @@ public class OneDriveUpdateRequest extends BaseRequest implements IUpdateRequest
 
             if (mMediaContent != null) {    //update content of an existing file with known ID
                 try {
-                    file = doSmallUploadBlocked(mClient.getGraphServiceClient(), mfileID, mMediaContent);
+                    file = doUploadBlocked(mClient.getGraphServiceClient(), mfileID, mMediaContent);
                     callback.success(file);
                 } catch (IOException e) {
                     Log.w(TAG, e.toString());
