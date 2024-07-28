@@ -2,12 +2,19 @@ package com.crossdrives.cdfs.allocation;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.google.api.services.drive.model.About;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
     Allocation strategy
@@ -15,36 +22,55 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Allocator {
     final String TAG = "CD.Allocator";
     HashMap<String, About.StorageQuota> mQuotas;
-    long sizeUpload;
+    long sizeToAllocate;
+
+    HashMap<String, List<AllocationItem>> mItems;
+
 
     public Allocator(HashMap<String, About.StorageQuota> quotas, long size) {
         mQuotas = quotas;
-        sizeUpload = size;
+        sizeToAllocate = size;
+    }
+
+    public Allocator(HashMap<String, About.StorageQuota> quotas, HashMap<String, List<AllocationItem>> items) {
+        mQuotas = quotas;
+        mItems = items;
+        sizeToAllocate = toSizeToAllocate(items);
     }
 
     public HashMap<String, Long> getAllocationResult(){
-        final long remoteFree;
-        AtomicLong sizeAllocated = new AtomicLong();
 
-        remoteFree = totalRemoteFree(mQuotas);
+        checkRemoteFree();
 
-        if(sizeUpload > remoteFree){
-            Log.w(TAG, "available remote space is not enough for allocation");
-            throw new CompletionException("available remote space is not enough for allocation", new Throwable(""));
-        }
+        //make sure the size of free space is bigger than the slice size
+
+        //
 
         //return new MethodFillFully().allocate(sizeUpload, mQuotas);
-        return new MethodAverage().allocate(sizeUpload, mQuotas);
+        return new MethodAverage().allocate(sizeToAllocate, mQuotas);
+    }
+
+    public HashMap<String, List<AllocationItem>> allocateItems(){
+        HashMap<String, AllocationItem> items;
+
+        checkRemoteFree();
+
+        return new MethodAllocateItemsAverage().allocate(mItems, mQuotas);
     }
 
     /*
-        Allocation strategy:
+        Allocation strategy for determining the size:
         1. fill the free space of a drive
         2. Average
     */
     interface Method{
 
         HashMap<String, Long> allocate(long sizeUpload, HashMap<String, About.StorageQuota> quota);
+    }
+
+    interface IMethodAllocateItems{
+
+        HashMap<String, List<AllocationItem>> allocate(HashMap<String, List<AllocationItem>> items, HashMap<String, About.StorageQuota> quota);
     }
 
     class MethodFillFully implements Method{
@@ -143,9 +169,108 @@ public class Allocator {
         }
     }
 
-    long totalRemoteFree(HashMap<String, About.StorageQuota> quota){
+    class MethodAllocateItemsAverage implements IMethodAllocateItems{
+
+        @Override
+        public HashMap<String, List<AllocationItem>> allocate(HashMap<String, List<AllocationItem>> items, HashMap<String, About.StorageQuota> quota) {
+            //merge the lists
+            List<AllocationItem> mergedList = items.values().stream().reduce((even,odd)->{
+                List<AllocationItem> merged = new ArrayList<>();
+                merged.addAll(even);
+                merged.addAll(odd);
+                return merged;}).get();
+
+            HashMap<String, Long> remainingFree = Mapper.reValue(quota, (q)->{return q.getLimit() - q.getUsage();});
+            List<String> listDrive = quota.keySet().stream().collect(Collectors.toList());
+            ListIterator<String> listIterator = listDrive.listIterator();
+            final int size = listDrive.size();
+            final String theFirst = listDrive.get(0);
+
+            Map<String, AllocationItem> map = mergedList.stream().map((item)->{
+                final String[] sectedDrive = {};
+
+                //get a drive that the remaining size is enough
+                while(listIterator.hasNext()){
+                    sectedDrive[0] = listIterator.next();
+                    if(remainingFree.get(sectedDrive) > item.getSize()) break;
+                }
+
+                //It looks ugly because we implemented a circular list. Unfortunately, there is no choice
+                //becuase I don't find a java implementation
+                if(listIterator.nextIndex() > size){
+                    listIterator.set(theFirst);
+                }
+
+                Map.Entry<String, AllocationItem> e = new Map.Entry<String, AllocationItem>() {
+                    @Override
+                    public String getKey() {
+                        return sectedDrive[0];
+                    }
+
+                    @Override
+                    public AllocationItem getValue() {
+                        return item;
+                    }
+
+                    @Override
+                    public AllocationItem setValue(AllocationItem o) {
+                        return null;
+                    }
+                };
+                return e;
+            }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+
+            //remap to the format we like to provide
+            //HashMap<String, List<AllocationItem>> map2 =
+            return Mapper.reValue(new HashMap<>(map), (k, v)->{
+                List<Map.Entry<String, AllocationItem>> entryList = map.entrySet().stream().filter((set)->{
+                    return set.getKey() == k;
+                }).collect(Collectors.toList());
+
+                List<AllocationItem> itemList =
+                entryList.stream().map((entry)->{
+                    return entry.getValue();
+                }).collect(Collectors.toList());
+                return itemList;
+            });
+        }
+    }
+
+    private void checkRemoteFree(){
+        final long remoteFree;
+
+        remoteFree = totalRemoteFree(mQuotas);
+
+        if(sizeToAllocate > remoteFree){
+            Log.w(TAG, "available remote space is not enough for allocation");
+            throw new CompletionException("available remote space is not enough for allocation", new Throwable(""));
+        }
+    }
+
+    private long totalRemoteFree(HashMap<String, About.StorageQuota> quota){
         return quota.values().stream().mapToLong((q)->
                 {return (q.getLimit()- q.getUsage());})
                 .sum();
+    }
+
+    //Calculate the size to allocate
+    //Input: allocation items in drives
+    //Output: size in byte
+    long toSizeToAllocate(HashMap<String, List<AllocationItem>> items) {
+        long sum =
+                //map to Long stream
+                items.values().stream().map((list -> {
+                    return list.stream().map((ai) -> {
+                        return ai.getSize();
+                    });
+                })).reduce((prev, curr) -> {
+                    //merge streams
+                    return Stream.concat(prev, curr);
+                }).get().reduce(new Long(0), (even, odd) -> {
+                    //do the summing
+                    return even + odd;
+                });
+
+        return sum;
     }
 }
