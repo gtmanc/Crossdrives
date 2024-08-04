@@ -3,7 +3,6 @@ package com.crossdrives.cdfs.move;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
 import com.crossdrives.cdfs.allocation.MapFetcher;
@@ -24,12 +23,12 @@ import com.google.api.services.drive.model.About;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -83,63 +82,83 @@ public class Move {
             public com.crossdrives.driveclient.model.File call() throws Exception {
                 //get the maps for both source and destination because we will need to update the maps according to
                 //the change we will made
-                HashMap<String, AllocContainer> containerSrc = getMapContainers(mCDFS.getDrives(), mSource);
-                HashMap<String, AllocContainer> containerDest = getMapContainers(mCDFS.getDrives(), mDest);
+                HashMap<String, AllocContainer> containerSrc = getMapContainers(mSource);
+                HashMap<String, AllocContainer> containerDest = getMapContainers(mDest);
                 //po.out("Container source:", containerSrc);
                 //po.out("Container destination:", containerDest);
 
-                //if the drive clients of source and dest item are identical, simply,
-                //get the items we are interested according to the CDFS item that to be moved.
-                //Then update the field parentPath of the items with the dest parent path.
-                //Otherwise, the further handling needs to be taken
                 String destParent = mDest.getPath().concat(mDest.getName());
                 Log.d(TAG, "Dest path:" + destParent);
-
-                //process the items where the drives are covered by destintion
-                Collection<String> covered = driveCoveredByDest(mSource.getMap(), mDest.getMap());
-                Collection<String> notCovered = driveCoveredByDest(mSource.getMap(), mDest.getMap());
-
-                if(isIdentical(mSource.getMap(), mDest.getMap())){
-                    HashMap<String, Collection<AllocationItem>> updatedItemLists = updateParentPathAll(getAllocItemsAllById(containerSrc, mFileID.getId()), destParent);
-                    //print out for debug
-                    updatedItemLists.entrySet().stream().forEach((set)->{
-                        Log.d(TAG, "Items that parentPath updated. drive: " + set.getKey());
-                        set.getValue().forEach((item)-> Log.d(TAG, "name: " + item.getName() + " parent: " + item.getPath()));
-                    });
-                }else{
-                    //Number of client of the source is more than the dest. Create the missing drive folder in.
-                    //Prepare the input for allocation
-                    HashMap<String, Drive> destDrives = new HashMap<>();
-                    mDest.getMap().keySet().stream().forEach((key)->{
-                        destDrives.put(key, mCDFS.getDrives().get(key));
-                    });
-                    HashMap<String, List<AllocationItem>> items = Mapper.reValue(containerSrc, (key, container)->{
-                        return container.getAllocItem();
-                    });
-
-                    HashMap<String, List<AllocationItem>> allocResult =
-                            allocate(destDrives, items);
-
-                    //Once we have the allocated result, we handle the next in the two cases:
-
-                }
-
+                //Build up the list for the items that are moved.
+                HashMap<String, Collection<AllocationItem>> updatedItemLists = updateParentPathAll(getAllocItemsAllById(containerSrc, mFileID.getId()), destParent);
+                //print out for debug
+                updatedItemLists.entrySet().stream().forEach((set)->{
+                    Log.d(TAG, "Items that parentPath updated. drive: " + set.getKey());
+                    set.getValue().forEach((item)-> Log.d(TAG, "name: " + item.getName() + " parent: " + item.getPath()));
+                });
 
                 //build up the new containers for source and destination that we will use to update the
                 //allocation maps in both source and dest parent.
                 ContainerUtil containerUtil = new ContainerUtil();
                 HashMap<String, AllocContainer> newContainerSrc = containerUtil.removeItems(containerSrc, updatedItemLists);
+                //The dest containers need further modification once the IDs of new transferred items are available after the
+                // transfer finishes if the drive of source and destination is not the same.
                 HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(containerDest, updatedItemLists);
 
                 po.out("New container to source:", newContainerSrc);
                 po.out("New container to dest:", newContainerDest);
+
+                Collection<String> srcDrivesDestContained = drivesContained(mSource.getMap().keySet(), mDest.getMap().keySet());
+                Collection<String> srcDrivesDestNotContained = driveNotContained(mSource.getMap().keySet(), mDest.getMap().keySet());
+
+                //======================================================================================
                 //following are critical process which must be atomic. However, we can't guarantee this.
                 //A recovery process will be employed to solve the issue.
-                MetaDataUpdater metaDataUpdater = new MetaDataUpdater(drivesInvolved);
-                metaDataUpdater.parent(mSource.getMap(), mDest.getMap()).run(mFileID.getMap()).join();
 
-                MapUpdater mapUpdater1 = new MapUpdater(drivesInvolved);
-                MapUpdater mapUpdater2 = new MapUpdater(drivesInvolved);
+                //if the drive clients of source and dest item are identical, simply,
+                //get the items we are interested according to the CDFS item that to be moved.
+                //Then update the field parentPath of the items with the dest parent path.
+                //Otherwise, the further handling needs to be taken
+                MapUpdater mapUpdater2 = null;
+                MapUpdater mapUpdater3 = null;
+                if(!srcDrivesDestContained.isEmpty()){
+                    //
+                    // The drives of source and destination are identical. Simply modify the metedata
+                    //
+                    HashMap<String, AllocContainer> containers = new HashMap<>();
+                    containerSrc.entrySet().stream().forEach((set)->{
+                        containers.put(set.getKey(), set.getValue());
+                    });
+
+                    HashMap<String, Drive> drivesInvolved = getDriveClientInvolved(srcDrivesDestContained);
+                    MetaDataUpdater metaDataUpdater = new MetaDataUpdater(drivesInvolved);
+                    metaDataUpdater.parent(mSource.getMap(), mDest.getMap()).run(mFileID.getMap()).join();
+                    mapUpdater2 = new MapUpdater(getDriveClientInvolved(srcDrivesDestContained));
+                }
+                
+                if(!srcDrivesDestNotContained.isEmpty()){
+                    //
+                    // Deal with the case that there are items in drives of the source which are missing in the destination.
+                    //
+                    Collection<String> drivesUsedAllocate = driveNotContained(mDest.getMap().keySet(), mSource.getMap().keySet());
+                    //Filter out the items that has been processed in previous operation
+                    Map<String, List<AllocationItem>> items = Mapper.reValue(containerSrc, (key, container)->{
+                        return container.getAllocItem();
+                    }).entrySet().stream().filter((set)->{
+                        return drivesUsedAllocate.contains(set.getKey());
+                    }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+
+                    HashMap<String, List<AllocationItem>> itemsToAllocated= new HashMap<>(items);
+                    HashMap<String, List<AllocationItem>> allocResult =
+                            allocate(getDriveClientInvolved(drivesUsedAllocate), itemsToAllocated);
+
+                    // Now, we can do the transfer according to the allocation result
+                    transfer(itemsToAllocated, allocResult).join();
+
+                    mapUpdater3 = new MapUpdater(getDriveClientInvolved(srcDrivesDestNotContained));
+                }
+
+                MapUpdater mapUpdater1 = new MapUpdater(getDriveClientInvolved(mSource.getMap().keySet()));
 
                 //MapFetcher is not thread safe. #54
 //                Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
@@ -160,15 +179,11 @@ public class Move {
         return task;
     }
 
-    private HashMap<String, AllocContainer> getMapContainers(HashMap<String, Drive> drives, CdfsItem parent){
-        HashMap<String, CompletableFuture<String>> futures = new HashMap<>();
+    private HashMap<String, AllocContainer> getMapContainers(CdfsItem parent){
         HashMap<String, OutputStream> maps;
 
-        // remove the drive client not involved
-        HashMap<String, Drive> drivesInvolved = new HashMap<>();
-        parent.getMap().keySet().stream().forEach((key)->{
-            drivesInvolved.put(key, mCDFS.getDrives().get(key));
-        });
+        HashMap<String, Drive> drivesInvolved =
+        getDriveClientInvolved(parent.getMap().keySet());
 
         //No drive client to continue. Simply stop right here
         if(drivesInvolved.size()==0){
@@ -225,6 +240,15 @@ public class Move {
         return allocator.allocateItems();
     }
 
+
+    private HashMap<String, List<AllocationItem>>> transfer(
+            HashMap<String, List<AllocationItem>> items, HashMap<String, List<AllocationItem>> allocation){
+
+        return
+            ArrayBlockingQueue
+
+    }
+
     class ContainerUtil{
         public HashMap<String, AllocContainer> addItems(HashMap<String, AllocContainer> containers,
                                                          HashMap<String, Collection<AllocationItem>> items) {
@@ -256,19 +280,19 @@ public class Move {
         return m1.keySet().equals(m2.keySet());
     }
 
-    private Collection<String> driveNotCoveredByDest(ConcurrentHashMap<String, List<String>> src,
-                                                     ConcurrentHashMap<String, List<String>> dest){
+    private Collection<String> driveNotContained(Collection<String> src,
+                                                 Collection<String> dest){
 
-        return dest.keySet().stream().filter((key)->{
-            return !src.keySet().contains(key);
+        return dest.stream().filter((key)->{
+            return !src.contains(key);
         }).collect(Collectors.toList());
     }
 
-    private Collection<String> driveCoveredByDest(ConcurrentHashMap<String, List<String>> src,
-                                                     ConcurrentHashMap<String, List<String>> dest){
+    private Collection<String> drivesContained(Collection<String> src,
+                                               Collection<String> dest){
 
-        return dest.keySet().stream().filter((key)->{
-            return src.keySet().contains(key);
+        return dest.stream().filter((key)->{
+            return src.contains(key);
         }).collect(Collectors.toList());
     }
 
@@ -277,6 +301,13 @@ public class Move {
           return Diff.between(m1.keySet().stream().collect(Collectors.toList()),
                 m2.keySet().stream().collect(Collectors.toList()),  (e1, e2)->{
             return e1.equals(e2);
+        });
+    }
+
+    private HashMap<String, Drive> getDriveClientInvolved(Collection<String> drives){
+        HashMap<String, Drive> drivesInvolved = new HashMap<>();
+        drives.stream().forEach((key)->{
+            drivesInvolved.put(key, mCDFS.getDrives().get(key));
         });
     }
 
