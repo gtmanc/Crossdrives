@@ -11,6 +11,7 @@ import com.crossdrives.cdfs.allocation.MetaDataUpdater;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
+import com.crossdrives.cdfs.function.SliceSupplier;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -240,9 +241,24 @@ public class Move {
         return allocator.allocateItems();
     }
 
-
-    private HashMap<String, List<AllocationItem>>> transfer(
+    //
+    // A blocking process
+    // Input:
+    //      items: source items to be transferred
+    //      allocation: allocation
+    private void transfer(
             HashMap<String, List<AllocationItem>> items, HashMap<String, List<AllocationItem>> allocation){
+        SliceSupplier<AllocationItem, AllocationItem> supplier = new SliceSupplier<AllocationItem, AllocationItem>(
+                getDriveClientInvolved(items.keySet().stream().collect(Collectors.toCollection(ArrayList::new))),
+                        items,
+                        (ai)->{
+                    CompletableFuture<AllocationItem> result = new CompletableFuture<>();
+                            return result;
+                        });
+
+        while(true){
+
+        }
 
         return
             ArrayBlockingQueue
