@@ -2,31 +2,40 @@ package com.crossdrives.cdfs.drivehelper;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.model.MediaData;
 
+import java.io.OutputStream;
 import java.util.concurrent.CompletableFuture;
 
 public class Download {
     final String TAG = "CD.drivehelp.download";
     private IDriveClient mClient;
 
+    public class Downloaded{
+        public OutputStream os;
+        public AllocationItem item;
+    }
+
     public Download(IDriveClient client) {
         mClient = client;
     }
 
-    CompletableFuture<MediaData> runAsync(String id, int seq){
-        CompletableFuture<MediaData> future = new CompletableFuture<>();
+    public CompletableFuture<Downloaded> runAsync(AllocationItem ai){
+        CompletableFuture<Downloaded> future = new CompletableFuture<>();
 
-        mClient.download().buildRequest(id).setAdditionInt(seq)
+        mClient.download().buildRequest(ai.getItemId())
                 .run(new IDownloadCallBack<MediaData>() {
                     //sClient.get(0).download().buildRequest(id).run(new IDownloadCallBack<OutputStream>() {
                     @Override
                     public void success(MediaData mediaData) {
+                        Downloaded downloaded = new Downloaded();
+                        downloaded.item = ai;
+                        downloaded.os = mediaData.getOs();
                         Log.d(TAG, "download finished. Seq: " + mediaData.getAdditionInt());
-                        future.complete(mediaData);
-
+                        future.complete(downloaded);
                     }
 
                     @Override

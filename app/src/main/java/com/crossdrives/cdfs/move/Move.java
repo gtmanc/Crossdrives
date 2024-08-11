@@ -1,5 +1,8 @@
 package com.crossdrives.cdfs.move;
 
+import android.app.Activity;
+import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
 import com.crossdrives.cdfs.CDFS;
@@ -10,7 +13,10 @@ import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.MetaDataUpdater;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.drivehelper.Download;
+import com.crossdrives.cdfs.drivehelper.Upload;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
+import com.crossdrives.cdfs.function.SliceConsumer;
 import com.crossdrives.cdfs.function.SliceSupplier;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
@@ -18,13 +24,21 @@ import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.collection.Diff;
 import com.crossdrives.driveclient.model.File;
+import com.crossdrives.driveclient.model.MediaData;
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.drive.model.About;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 public class Move {
@@ -60,6 +75,17 @@ public class Move {
     int progressTotalDeleted = 0;
 
     DebugPrintOut po = new DebugPrintOut();
+    private class ConsumeModel{
+        public Drive drive;
+        public com.google.api.services.drive.model.File fileMetadata;
+        public java.io.File localFile;
+    }
+
+    ConsumeModel poison_pill = new ConsumeModel();
+    final String POISON_PILL = "PoisonPill";
+    {
+        poison_pill.fileMetadata.setName(POISON_PILL);
+    }
 
     public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest) {
         this.mCDFS = cdfs;
@@ -122,6 +148,10 @@ public class Move {
                 //Otherwise, the further handling needs to be taken
                 MapUpdater mapUpdater2 = null;
                 MapUpdater mapUpdater3 = null;
+
+                Log.d(TAG, "Update new container to source");
+                MapUpdater mapUpdater1 = new MapUpdater(getDriveClientInvolved(mSource.getMap().keySet()));
+                mapUpdater1.updateAll(newContainerSrc, mSource).join();
                 if(!srcDrivesDestContained.isEmpty()){
                     //
                     // The drives of source and destination are identical. Simply modify the metedata
@@ -135,6 +165,8 @@ public class Move {
                     MetaDataUpdater metaDataUpdater = new MetaDataUpdater(drivesInvolved);
                     metaDataUpdater.parent(mSource.getMap(), mDest.getMap()).run(mFileID.getMap()).join();
                     mapUpdater2 = new MapUpdater(getDriveClientInvolved(srcDrivesDestContained));
+                    Log.d(TAG, "Update new container to dest");
+                    mapUpdater2.updateAll(newContainerDest, mDest).join();
                 }
                 
                 if(!srcDrivesDestNotContained.isEmpty()){
@@ -156,10 +188,8 @@ public class Move {
                     // Now, we can do the transfer according to the allocation result
                     transfer(itemsToAllocated, allocResult).join();
 
-                    mapUpdater3 = new MapUpdater(getDriveClientInvolved(srcDrivesDestNotContained));
-                }
 
-                MapUpdater mapUpdater1 = new MapUpdater(getDriveClientInvolved(mSource.getMap().keySet()));
+                }
 
                 //MapFetcher is not thread safe. #54
 //                Collection<CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>>> futures =
@@ -170,10 +200,8 @@ public class Move {
 //                    future.join();
 //                });
 
-                Log.d(TAG, "Update new container to source");
-                mapUpdater1.updateAll(newContainerSrc, mSource).join();
-                Log.d(TAG, "Update new container to dest");
-                mapUpdater2.updateAll(newContainerDest, mDest).join();
+
+
                 return null;
                 }
         });
@@ -246,23 +274,111 @@ public class Move {
     // Input:
     //      items: source items to be transferred
     //      allocation: allocation
-    private void transfer(
+    private CompletableFuture transfer(
             HashMap<String, List<AllocationItem>> items, HashMap<String, List<AllocationItem>> allocation){
-        SliceSupplier<AllocationItem, AllocationItem> supplier = new SliceSupplier<AllocationItem, AllocationItem>(
-                getDriveClientInvolved(items.keySet().stream().collect(Collectors.toCollection(ArrayList::new))),
-                        items,
+        LinkedBlockingQueue<ConsumeModel> queue = new LinkedBlockingQueue<>();
+        Boolean[] finished = new Boolean[0];
+        finished[0] = false;
+        HashMap<String, Drive> clients = getDriveClientInvolved(items.keySet().stream().collect(Collectors.toCollection(ArrayList::new)));
+        SliceSupplier<AllocationItem, Download.Downloaded> supplier = new SliceSupplier<AllocationItem, Download.Downloaded>(clients, items,
                         (ai)->{
-                    CompletableFuture<AllocationItem> result = new CompletableFuture<>();
-                            return result;
-                        });
+            Download downloader = new Download(mCDFS.getDrives().get(ai.getDrive()).getClient());
+            return downloader.runAsync(ai);
+                        }).setCallback(new SliceSupplier.ISliceConsumerCallback<Download.Downloaded>() {
+            @Override
+            public void onStart() {
 
-        while(true){
+            }
 
+            @Override
+            public void onSupplied(Download.Downloaded downloaded) throws IOException {
+                String driveName = downloaded.item.getDrive();
+                String sliceName = downloaded.item.getName();
+                OutputStream os = downloaded.os;
+                ConsumeModel model = new ConsumeModel();
+                model.drive = mCDFS.getDrives().get(driveName);
+                com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(driveName).get(0)));
+                fileMetadata.setName(sliceName);
+                model.fileMetadata = fileMetadata;
+                model.localFile = toFile(os, sliceName, downloaded.item.getSequence());
+                queue.add(model);
+            }
+
+            @Override
+            public void onCompleted(int totalSliceSupplied) {
+                queue.add(poison_pill);
+            }
+
+            @Override
+            public void onFailure(String reason) {
+
+            }
+        });
+
+        SliceConsumer<ConsumeModel, com.crossdrives.driveclient.model.File> consumer = new SliceConsumer<ConsumeModel, com.crossdrives.driveclient.model.File>(clients,
+                (cm)->{
+                    Drive drive = cm.drive;
+                    Upload uploader = new Upload(drive.getClient());
+                    return uploader.runAsync(cm.fileMetadata, cm.localFile);
+                }).setCallback(new SliceConsumer.ISliceConsumerCallback<ConsumeModel, com.crossdrives.driveclient.model.File>() {
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public ConsumeModel onRequested() {
+                ConsumeModel cm = queue.peek();
+                if(cm.fileMetadata.getName().equals(POISON_PILL)){return null;}
+                return cm;
+            }
+
+            @Override
+            public void onConsumed(com.crossdrives.driveclient.model.File o) {
+
+            }
+
+            @Override
+            public void onCompleted(int totalSliceSupplied) {
+                finished[0] = true;
+            }
+
+            @Override
+            public void onFailure(String reason) {
+
+            }
+        });
+
+        //fire!
+        supplier.run();
+        consumer.run();
+
+        return CompletableFuture.supplyAsync(()->{
+            while(!finished[0]);
+            return null;
+        });
+    }
+
+    private java.io.File toFile(OutputStream os, String sliceName, int sliceNo) throws IOException {
+        Context context = SnippetApp.getAppContext();
+        FileOutputStream fOut = context.openFileOutput(sliceName, Activity.MODE_PRIVATE);
+        ByteArrayOutputStream bos = (ByteArrayOutputStream)os;
+        ByteArrayInputStream bis = new ByteArrayInputStream( bos.toByteArray());
+
+        int rd_len, offset = 0;
+        byte[] buf = new byte[1024];
+        while ( (rd_len = bis.read(buf)) >= 0){
+            fOut.write(buf, 0, rd_len);
+            offset += rd_len;
         }
 
-        return
-            ArrayBlockingQueue
+        bis.close();
+        bos.close();
+        os.close();
+        fOut.close();
 
+        return new java.io.File(context.getFilesDir().getPath() + "/" + sliceName);
     }
 
     class ContainerUtil{

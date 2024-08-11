@@ -17,7 +17,7 @@ public class Upload {
         mClient = client;
     }
 
-    CompletableFuture<com.crossdrives.driveclient.model.File> runAsync(
+    public CompletableFuture<com.crossdrives.driveclient.model.File> runAsync(
             com.google.api.services.drive.model.File fileMetadata, File localFile){
         CompletableFuture<com.crossdrives.driveclient.model.File> future = new CompletableFuture<>();
         mClient.upload().buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {

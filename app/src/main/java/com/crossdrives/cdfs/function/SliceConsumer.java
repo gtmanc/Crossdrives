@@ -1,50 +1,56 @@
 package com.crossdrives.cdfs.function;
 
+import android.util.Log;
+
 import com.crossdrives.cdfs.data.Drive;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class SliceConsumer<T, R> {
-    interface ISliceConsumerCallback<R>{
+    final String TAG ="CD.SliceConsumer";
+    public interface ISliceConsumerCallback<T, R>{
         void onStart();
 
         //Only called if the requested items are not fill at once. i.e. mItems is not null.
-        //A returned null indicates there is no further requested. However, user needs to take care
-        //the ongoing operation threads.
-        R onRequested();
+        //A returned null indicates there is no slice to consume anymore.
+        T onRequested();
 
         void onConsumed(R r);
 
-        //Only called if the requested items are filled when the constructor is invoked
         void onCompleted(int totalSliceSupplied);
 
-        void onFailure();
+        void onFailure(String reason);
     }
     private HashMap<String, Drive> mDrives;
 
     //Only used and valid when the requested items are not provided at once
     HashMap<String, List<T>> mItems;
-    private int mNoOfThread = 3;
+    private int mMaxThread = 3;
+    ArrayBlockingQueue<CompletableFuture<R>> mQueue;
     private boolean mStarted = false;
 
     //The flag is only used and valid when the requested items are not provided at once
     private boolean mStop = false;
 
-    private ISliceConsumerCallback<R> mCallback;
+    private ISliceConsumerCallback<T, R> mCallback;
 
-    private Function<? super R, CompletableFuture<R>> mOperation;
+    private Function<? super T, CompletableFuture<R>> mOperation;
 
     public SliceConsumer(HashMap<String, Drive> mDrives,
-                         Function<? super R, CompletableFuture<R>> mOperation) {
+                         Function<? super T, CompletableFuture<R>> mOperation) {
         this.mDrives = mDrives;
         this.mOperation = mOperation;
     }
 
     public SliceConsumer maxOngoingThread(int noOfT){
-        mNoOfThread = noOfT;
+        //mNoOfThread = noOfT;
         return this;
     }
 
@@ -53,20 +59,41 @@ public class SliceConsumer<T, R> {
         return this;
     }
 
-    void run(){
-        int[] cntOfT = new int[0];
+    public void fillBlocking(T item){
 
+    }
+
+    public void run(){
+        int[] cntOfT = new int[0];
+        mQueue = new ArrayBlockingQueue<CompletableFuture<R>>(mMaxThread);
+
+        //TODO: may add some checks before the onStarted is called
         if(mStarted){mCallback.onStart();}
 
         CompletableFuture.supplyAsync(()->{
             boolean stop = false;
-            R requestedSlice;
 
-            while(mStop){
+            while(stop){
+                T requestedSlice = mCallback.onRequested();
+                if(requestedSlice == null){stop = true;}
+                CompletableFuture<R> future =
+                        mOperation.apply(requestedSlice);
+                if(!put(future)){
+                    Log.e(TAG, "failed to add element to the queue!");
+                    mCallback.onFailure("error occurred whiling adding item to the queue!");
+                 }
+                future.thenAccept((r) -> {
+                    mCallback.onConsumed(r);
+                    if(mQueue.isEmpty()){return;}
+                    boolean successRemoval = mQueue.remove(this);
+                    if(!successRemoval){
+                        Log.d(TAG, "fail to remove element in queue!");}
+                });
+/*
                 if(cntOfT[0] < mNoOfThread) {
                     requestedSlice = mCallback.onRequested();
                     if(requestedSlice != null) {
-                        CompletableFuture<R> opFuture = new CompletableFuture<>();
+                        CompletableFuture<R> opFuture;
                         opFuture = mOperation.apply(requestedSlice);
                         opFuture.thenAccept((r) -> {
                             mCallback.onConsumed(r);
@@ -77,9 +104,35 @@ public class SliceConsumer<T, R> {
                         mStop = true;
                     }
                 }
+ */
             }
 
+            //take care the rest of ongoing futures
+            Collection<CompletableFuture<R>> futures = new ArrayList<CompletableFuture<R>>();
+            mQueue.drainTo(futures);
+            futures.forEach((f->{f.join();}));
+
+            mCallback.onCompleted(mItems.size());
             return null;
         });
+    }
+
+    /*
+       A helper to add element to the queue.
+       Input:
+       element: the element to add to the queue
+
+       Output:
+       Result[boolean]:
+       delegate the responsibility of handling exception to the caller
+    */
+    private boolean put(CompletableFuture<R> element){
+        boolean result = true;
+        try {
+            mQueue.put(element);
+        } catch (InterruptedException e) {
+            result = false;
+        }
+        return result;
     }
 }
