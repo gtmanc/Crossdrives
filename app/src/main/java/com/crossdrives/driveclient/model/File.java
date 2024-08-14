@@ -10,11 +10,20 @@ public class File {
      */
     java.io.File originalLocalFile;
 
+    String driveName;
     /*
         Additional user data
      */
     Integer integer;
     String string;
+
+    public String getDriveName() {
+        return driveName;
+    }
+
+    public void setDriveName(String driveName) {
+        this.driveName = driveName;
+    }
 
     public com.google.api.services.drive.model.File getFile() {
         return file;

@@ -2,6 +2,7 @@ package com.crossdrives.cdfs.drivehelper;
 
 import android.util.Log;
 
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.model.MediaData;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
@@ -13,14 +14,20 @@ public class Upload {
     final String TAG = "CD.drivehelp.download";
     private IDriveClient mClient;
 
+    public class Uploaded{
+        AllocationItem ai;
+        File localSlice;
+    }
+
     public Upload(IDriveClient client) {
         mClient = client;
     }
 
     public CompletableFuture<com.crossdrives.driveclient.model.File> runAsync(
-            com.google.api.services.drive.model.File fileMetadata, File localFile){
+            com.crossdrives.driveclient.model.File file){
         CompletableFuture<com.crossdrives.driveclient.model.File> future = new CompletableFuture<>();
-        mClient.upload().buildRequest(fileMetadata, localFile).run(new IUploadCallBack() {
+
+        mClient.upload().buildRequest(file.getFile(), file.getOriginalLocalFile()).run(new IUploadCallBack() {
             @Override
             public void success(com.crossdrives.driveclient.model.File file) {
                 future.complete(file);

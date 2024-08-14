@@ -43,6 +43,8 @@ public class SliceConsumer<T, R> {
 
     private Function<? super T, CompletableFuture<R>> mOperation;
 
+    private Collection<R> mConsumedSlices = new ArrayList<>();
+
     public SliceConsumer(HashMap<String, Drive> mDrives,
                          Function<? super T, CompletableFuture<R>> mOperation) {
         this.mDrives = mDrives;
@@ -59,8 +61,8 @@ public class SliceConsumer<T, R> {
         return this;
     }
 
-    public void fillBlocking(T item){
-
+    public Collection<R> getConsumed(){
+        return mConsumedSlices;
     }
 
     public void run(){
@@ -83,6 +85,7 @@ public class SliceConsumer<T, R> {
                     mCallback.onFailure("error occurred whiling adding item to the queue!");
                  }
                 future.thenAccept((r) -> {
+                    mConsumedSlices.add(r);
                     mCallback.onConsumed(r);
                     if(mQueue.isEmpty()){return;}
                     boolean successRemoval = mQueue.remove(this);
