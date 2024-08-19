@@ -201,7 +201,7 @@ public class Allocator {
                     listIterator.set(theFirst);
                 }
 
-                Map.Entry<String, AllocationItem> e = new Map.Entry<String, AllocationItem>() {
+                Map.Entry<String, AllocationItem> e = new Map.Entry<>() {
                     @Override
                     public String getKey() {
                         return sectedDrive[0];
@@ -222,17 +222,21 @@ public class Allocator {
 
             //remap to the format we like to provide
             //HashMap<String, List<AllocationItem>> map2 =
-            return Mapper.reValue(new HashMap<>(map), (k, v)->{
-                List<Map.Entry<String, AllocationItem>> entryList = map.entrySet().stream().filter((set)->{
-                    return set.getKey() == k;
-                }).collect(Collectors.toList());
 
-                List<AllocationItem> itemList =
-                entryList.stream().map((entry)->{
-                    return entry.getValue();
-                }).collect(Collectors.toList());
-                return itemList;
-            });
+            return com.crossdrives.cdfs.util.map.Mapper.toList(map);
+//
+//
+//            Mapper.reValue(new HashMap<>(map), (k, v)->{
+//                List<Map.Entry<String, AllocationItem>> entryList = map.entrySet().stream().filter((set)->{
+//                    return set.getKey() == k;
+//                }).collect(Collectors.toList());
+//
+//                List<AllocationItem> itemList =
+//                entryList.stream().map((entry)->{
+//                    return entry.getValue();
+//                }).collect(Collectors.toList());
+//                return itemList;
+//            });
         }
     }
 

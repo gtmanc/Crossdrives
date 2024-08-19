@@ -24,7 +24,7 @@ public class SliceConsumer<T, R> {
 
         void onConsumed(R r);
 
-        void onCompleted(int totalSliceSupplied);
+        void onCompleted(Collection<R> consumed);
 
         void onFailure(String reason);
     }
@@ -115,7 +115,7 @@ public class SliceConsumer<T, R> {
             mQueue.drainTo(futures);
             futures.forEach((f->{f.join();}));
 
-            mCallback.onCompleted(mItems.size());
+            mCallback.onCompleted(mConsumedSlices);
             return null;
         });
     }

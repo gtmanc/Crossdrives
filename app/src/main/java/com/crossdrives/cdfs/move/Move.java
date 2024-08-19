@@ -163,7 +163,7 @@ public class Move {
                     HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, itemsParentPathUpdated);
                     po.out("New container to dest:", newContainerDest);
 
-                    mapUpdater2 = new MapUpdater(NameMatchedDrives(srcDrivesDestContained);
+                    mapUpdater2 = new MapUpdater(NameMatchedDrives(srcDrivesDestContained));
                     Log.d(TAG, "Update new container to dest");
                     mapUpdater2.updateAll(newContainerDest, mDest).join();
                 }
@@ -185,16 +185,19 @@ public class Move {
                             allocate(NameMatchedDrives(drivesUsedAllocate), itemsToAllocated);
 
                     // Now, we can do the transfer according to the allocation result
-                    HashMap<String, Collection<AllocationItem>> trandferResult = transfer(itemsToAllocated, allocResult).join();
+                    Collection<File> transferResult = transfer(itemsToAllocated, allocResult).join();
 
                     //Take out the containers we don't need to proceed
                     HashMap<String, AllocContainer> container = toKeyMatched(srcDrivesDestNotContained, containerDest);
 
                     //update the properties according to the result the transfer.
                     // The result should be identical to allocation result pass to the transfer at beginning
-                    HashMap<String, Collection<AllocationItem>> updateItems = updateproperty(itemsParentPathUpdated, trandferResult);
+                    HashMap<String, Collection<AllocationItem>> updateItems = updateProperty(itemsParentPathUpdated, transferResult);
                     HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, updateItems);
 
+                    mapUpdater3 = new MapUpdater(NameMatchedDrives(srcDrivesDestNotContained));
+                    Log.d(TAG, "Update new container to dest");
+                    mapUpdater3.updateAll(newContainerDest, mDest).join();
                 }
 
                 //MapFetcher is not thread safe. #54
@@ -214,7 +217,7 @@ public class Move {
         return task;
     }
 
-    private HashMap<String, AllocContainer> getMapContainers(CdfsItem parent){
+    private HashMap<String, AllocContainer> getMapContainers(CdfsItem parent) throws InvalidArgumentException {
         HashMap<String, OutputStream> maps;
 
         HashMap<String, Drive> drivesInvolved =
@@ -280,7 +283,7 @@ public class Move {
     // Input:
     //      items: source items to be transferred
     //      allocation: allocation
-    private CompletableFuture<HashMap<String, Collection<AllocationItem>>> transfer(
+    private CompletableFuture<Collection<File>> transfer(
             HashMap<String, List<AllocationItem>> items, HashMap<String, List<AllocationItem>> allocation){
         LinkedBlockingQueue<File> queue = new LinkedBlockingQueue<>();
         Boolean[] finished = new Boolean[0];
@@ -307,6 +310,9 @@ public class Move {
                 fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(driveName).get(0)));
                 fileMetadata.setName(sliceName);
                 file.setFile(fileMetadata);
+                //This is necessary. The number will provide the information so that we can update correct items
+                // in propertu update.
+                file.setInteger(downloaded.item.getSequence());
                 file.setOriginalLocalFile(toFile(os, sliceName, downloaded.item.getSequence()));
                 queue.add(file);
             }
@@ -346,7 +352,7 @@ public class Move {
             }
 
             @Override
-            public void onCompleted(int totalSliceSupplied) {
+            public void onCompleted(Collection<File> consumed) {
                 finished[0] = true;
             }
 
@@ -385,6 +391,45 @@ public class Move {
         fOut.close();
 
         return new java.io.File(context.getFilesDir().getPath() + "/" + sliceName);
+    }
+
+    /*
+        The properties in the input items will be updated according to the transferred items:
+        1. drive (drive name)
+        2. Item ID (item id in user drive)
+
+        Input:
+        items:          items will get updated
+        transferred:    items transferred
+
+     */
+    HashMap<String, Collection<AllocationItem>> updateProperty(HashMap<String, Collection<AllocationItem>> items, Collection<File> transferred){
+        //remap the result to a Map so that we can easily proceed in next step
+        Map<String, AllocationItem> remaped = transferred.stream().map((f)->{
+            Map.Entry<String, AllocationItem> e = new Map.Entry<String, AllocationItem>() {
+                @Override
+                public String getKey() {
+                    return f.getDriveName();
+                }
+
+                @Override
+                public AllocationItem getValue() {
+                    AllocationItem ai = new AllocationItem();
+                    ai.setName(f.getDriveName());
+                    ai.setItemId(f.getFile().getId());
+                    ai.setSequence(f.getInteger());
+                    return null;
+                }
+
+                @Override
+                public AllocationItem setValue(AllocationItem allocationItem) {
+                    return null;
+                }
+            };
+            return e;
+        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+
+        return com.crossdrives.cdfs.util.map.Mapper.toColletion(remaped);
     }
 
     /*
