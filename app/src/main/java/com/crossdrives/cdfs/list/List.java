@@ -241,6 +241,7 @@ public class List {
             Fill the map we created in previous step. Read out the entries which has the same CDFS ID and then put the
             drive item ID to the map according to the drive name.
          */
+        Log.d(TAG, "Start to fill map...");
         dh.GroupBy(null);   //remove the group clause we setup in previous step
         items.stream().forEach((item)->{    //each cdfs item
             String clause2 = ALLOCITEMS_LIST_COL_CDFSID;
@@ -249,17 +250,24 @@ public class List {
             cursor2 = dh.query(clause1, clause2);
             if(!queryResultCheck(cursor2)){return;}
             ConcurrentHashMap<String, java.util.List<String>> map = item.getMap();
+            Log.d(TAG, "Count of cursor: " + cursor2.getCount());
             cursor2.moveToFirst();
             for(int i = 0 ; i < cursor2.getCount(); i++){
                 String driveName = cursor2.getString(indexDrive);
+                Log.d(TAG, "drive name: " + cursor2.getString(indexDrive));
                 // Add ID first time?
                 if(map.get(driveName) == null){
                     java.util.List<String> list = new ArrayList<>();
                     map.put(driveName, list);
                 }
                 map.get(driveName).add(cursor2.getString(indexItemId));
+                Log.d(TAG, "drive id: " + cursor2.getString(indexItemId));
                 cursor2.moveToNext();
             }
+            map.entrySet().stream().forEach((set)->{
+                Log.d(TAG, set.getKey());
+                set.getValue().stream().forEach((v)->Log.d(TAG, v));
+            });
         });
 
         return items;

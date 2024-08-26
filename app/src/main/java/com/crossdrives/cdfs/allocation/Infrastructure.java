@@ -147,6 +147,7 @@ public class Infrastructure{
                         public void success(FileList fileList, Object o) {
                             Result result = new Result();
                             result.folder = handleResultGetCDFSFolder(fileList);
+                            Log.d(TAG, "Search CDFS folder ID:" + result.folder);
                             checkFolderFuture.complete(result);
                         }
 
@@ -416,12 +417,15 @@ public class Infrastructure{
 //          fileList.getFiles().get(i).getName().compareToIgnoreCase("cdfs");
 //      }
         if(fileList.getFiles().size() > 0) {
-            if (fileList.getFiles().get(0).getName().compareToIgnoreCase("cdfs") == 0) {
-                id = fileList.getFiles().get(0).getId();
+            id = fileList.getFiles().stream().filter((f)->{
+                return f.getName().compareToIgnoreCase(IConstant.NAME_CDFS_FOLDER) == 0;
+            }).findAny().get().getId();
+            if(id == null){
+                Log.w(TAG, "No CDFS folder!");
             }
         }
         else{
-            Log.w(TAG, "No CDFS folder!");
+            Log.w(TAG, "no item to search CDFS folder!");
             //Terminate the flow and start to create the necessary files.
         }
 

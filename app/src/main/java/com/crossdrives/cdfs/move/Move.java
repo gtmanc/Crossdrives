@@ -23,6 +23,7 @@ import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.collection.Diff;
+import com.crossdrives.cdfs.util.strings.Strings;
 import com.crossdrives.driveclient.model.File;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Task;
@@ -78,17 +79,19 @@ public class Move {
 //        public java.io.File localFile;
 //    }
 
-    File poison_pill = new File();
+    File poison_pill;
     final String POISON_PILL = "PoisonPill";
-    {
-        poison_pill.getFile().setName(POISON_PILL);
-    }
+
 
     public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest) {
         this.mCDFS = cdfs;
         this.mFileID = item;
         this.mSource = source;
         this.mDest = dest;
+
+        poison_pill = new File();
+        poison_pill.setFile(new com.google.api.services.drive.model.File());
+        poison_pill.getFile().setName(POISON_PILL);
     }
 
     /*
@@ -120,15 +123,25 @@ public class Move {
                     Log.d(TAG, "Items that parentPath updated. drive: " + set.getKey());
                     set.getValue().forEach((item)-> Log.d(TAG, "name: " + item.getName() + " parent: " + item.getPath()));
                 });
+                Log.d(TAG, "");
 
                 //build up the new containers only for source right here. Simply remove all of the items.
                 //The containers of destination will be processed later because they are more complicated.
                 ContainerUtil containerUtil = new ContainerUtil();
-                HashMap<String, AllocContainer> newContainerSrc = containerUtil.removeItems(containerSrc, itemsParentPathUpdated);
-                po.out("New container to source:", newContainerSrc);
+                containerSrc = containerUtil.removeItems(containerSrc, itemsParentPathUpdated);;
+                //po.out("new container to source:", newContainerSrc);
+                //po.out("original source container:", containerSrc);
 
-                Collection<String> srcDrivesDestContained = stringsContained(mSource.getMap().keySet(), mDest.getMap().keySet());
-                Collection<String> srcDrivesDestNotContained = stringsNotContained(mSource.getMap().keySet(), mDest.getMap().keySet());
+                Log.d(TAG, "drives of dest:");
+                mDest.getMap().keySet().stream().forEach((k)->Log.d(TAG, k));
+                Log.d(TAG, "drives of source:");
+                mSource.getMap().entrySet().stream().forEach((set)->{
+                    Log.d(TAG, set.getKey());
+                    set.getValue().stream().forEach((v)->Log.d(TAG, v));
+                });
+                Strings destDriveNames = new Strings(mDest.getMap().keySet());
+                Collection<String> srcDrivesDestContained = destDriveNames.contains(mSource.getMap().keySet());
+                Collection<String> srcDrivesDestNotContained = destDriveNames.notContains(mSource.getMap().keySet());
 
                 //======================================================================================
                 //following are critical process which must be atomic. However, we can't guarantee this.
@@ -141,10 +154,28 @@ public class Move {
                 MapUpdater mapUpdater2 = null;
                 MapUpdater mapUpdater3 = null;
 
-                Log.d(TAG, "Update new container to source");
+                Log.d(TAG, "Update new container to source. We are in debugging. skip");
                 MapUpdater mapUpdater1 = new MapUpdater(NameMatchedDrives(mSource.getMap().keySet()));
-                mapUpdater1.updateAll(newContainerSrc, mSource).join();
+                //mapUpdater1.updateAll(newContainerSrc, mSource).join();
+                //mapUpdater1.updateAll(containerSrc, mSource).join();
+
+                Log.d(TAG, "Drives identical:");
+                srcDrivesDestContained.stream().forEach((s)->{
+                    Log.d(TAG, s);
+                });
+                Log.d(TAG, "");
+                Log.d(TAG, "Drives NOT identical:");
+                srcDrivesDestNotContained.stream().forEach((s)->{
+                    Log.d(TAG, s);
+                });
+                Log.d(TAG, "");
+
+
+                srcDrivesDestContained.clear();
+                srcDrivesDestNotContained.clear();
+
                 if(!srcDrivesDestContained.isEmpty()){
+                    Log.d(TAG, "Proceed with drives identical");
                     //
                     // The drives of source and destination are identical. Simply modify the metedata
                     //
@@ -169,6 +200,7 @@ public class Move {
                 }
                 
                 if(!srcDrivesDestNotContained.isEmpty()){
+                    Log.d(TAG, "Proceed with drives NOT identical");
                     //
                     // Deal with the case that there are items in drives of the source which are missing in the destination.
                     //
@@ -451,6 +483,7 @@ public class Move {
 
         public HashMap<String, AllocContainer> removeItems(HashMap<String, AllocContainer> containers,
                                                             HashMap<String, Collection<AllocationItem>> items) {
+
             return Mapper.reValue(containers, (key,container) -> {
                 if(items.get(key) == null){
                     throw new ItemNotFoundException("Items not found while removing items from a container ", new Throwable());}
@@ -516,6 +549,7 @@ public class Move {
                     Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
                 });
             });
+            Log.d(TAG, "");
         }
 
         void out(String head, AllocContainer container){

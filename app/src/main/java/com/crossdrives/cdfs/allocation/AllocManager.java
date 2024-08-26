@@ -19,6 +19,7 @@ import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -145,7 +146,11 @@ public class AllocManager implements IAllocManager {
             String key = set.getKey();
             OutputStream value = set.getValue();
 
+//            ByteArrayOutputStream bos = (ByteArrayOutputStream)value;
+//            Log.d(TAG, "Raw of container: " + new String(bos.toByteArray()));
+//
             ac.set(toContainer(value));
+//            Log.d(TAG, "size of items: " + ac.get().getAllocItem().size());
 
             /*
                 Check allocation item traversely and save to database if the item is valid
