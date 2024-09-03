@@ -173,12 +173,27 @@ public class Allocator {
 
         @Override
         public HashMap<String, List<AllocationItem>> allocate(HashMap<String, List<AllocationItem>> items, HashMap<String, About.StorageQuota> quota) {
+
+            Log.d(TAG, "items to allocate:");
+            items.entrySet().stream().forEach(set ->{
+                Log.d(TAG, "drive: " + set.getKey());
+                set.getValue().stream().forEach(item->{Log.d(TAG, item.getName());});
+            });
+
             //merge the lists
+            Log.d(TAG, "merge item list...");
             List<AllocationItem> mergedList = items.values().stream().reduce((even,odd)->{
+                Log.d(TAG, "even:");
+                even.stream().forEach((item)->{Log.d(TAG, item.getName());});
+                Log.d(TAG, "odd:");
+                odd.stream().forEach((item)->{Log.d(TAG, item.getName());});
                 List<AllocationItem> merged = new ArrayList<>();
                 merged.addAll(even);
                 merged.addAll(odd);
                 return merged;}).get();
+
+            Log.d(TAG, "Merged item list:");
+            mergedList.stream().forEach((item -> {Log.d(TAG, item.getName());}));
 
             HashMap<String, Long> remainingFree = Mapper.reValue(quota, (q)->{return q.getLimit() - q.getUsage();});
             List<String> listDrive = quota.keySet().stream().collect(Collectors.toList());
@@ -200,6 +215,8 @@ public class Allocator {
                 if(listIterator.nextIndex() > size){
                     listIterator.set(theFirst);
                 }
+
+                Log.d(TAG, "Picked drive: " + sectedDrive[0] + " item: " + item.getName());
 
                 Map.Entry<String, AllocationItem> e = new Map.Entry<>() {
                     @Override
