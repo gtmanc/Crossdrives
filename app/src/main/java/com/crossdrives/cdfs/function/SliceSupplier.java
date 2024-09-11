@@ -20,7 +20,7 @@ public class SliceSupplier<T, R> {
     public interface ISliceConsumerCallback<R>{
         void onStart();
 
-        void onSupplied(R r) throws IOException;
+        void onSupplied(R r) throws IOException, InterruptedException;
 
         void onCompleted(int totalSliceSupplied);
 
@@ -32,7 +32,6 @@ public class SliceSupplier<T, R> {
     private int mMaxThread = 3;
     ArrayBlockingQueue<CompletableFuture<R>> mQueue;
     Collection<CompletableFuture<R>> mFutures = new ArrayList<CompletableFuture<R>>();
-    private boolean mStarted = false;
 
     private ISliceConsumerCallback mCallback;
 
@@ -61,12 +60,15 @@ public class SliceSupplier<T, R> {
     public void run(){
         mQueue = new ArrayBlockingQueue<CompletableFuture<R>>(mMaxThread);
 
+        //TODO: may add some checks before the onStarted is called
+        mCallback.onStart();
+
         CompletableFuture.supplyAsync(()->{
-            //TODO: may add some checks before the onStarted is called
-            if(mStarted){mCallback.onStart();}
 
             mItems.entrySet().stream().forEach((set)->{
+                //Log.d(TAG, "SliceSupply: drive: " + set.getKey());
                 set.getValue().stream().forEach((ai)->{
+                    //Log.d(TAG, "SliceSupply: Item: " + ai);
                     CompletableFuture<R> opFuture = new CompletableFuture<>();
                     opFuture = mOperation.apply(ai);
                     //If queue is full, the add is blocked until element in queue is free

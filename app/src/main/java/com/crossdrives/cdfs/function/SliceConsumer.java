@@ -34,7 +34,6 @@ public class SliceConsumer<T, R> {
     HashMap<String, List<T>> mItems;
     private int mMaxThread = 3;
     ArrayBlockingQueue<CompletableFuture<R>> mQueue;
-    private boolean mStarted = false;
 
     //The flag is only used and valid when the requested items are not provided at once
     private boolean mStop = false;
@@ -70,14 +69,13 @@ public class SliceConsumer<T, R> {
         mQueue = new ArrayBlockingQueue<CompletableFuture<R>>(mMaxThread);
 
         //TODO: may add some checks before the onStarted is called
-        if(mStarted){mCallback.onStart();}
+        mCallback.onStart();
 
         CompletableFuture.supplyAsync(()->{
-            boolean stop = false;
 
-            while(stop){
+            while(true){
                 T requestedSlice = mCallback.onRequested();
-                if(requestedSlice == null){stop = true;}
+                if(requestedSlice == null){break;}
                 CompletableFuture<R> future =
                         mOperation.apply(requestedSlice);
                 if(!put(future)){

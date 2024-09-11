@@ -224,16 +224,16 @@ public class Move {
                     HashMap<String, List<AllocationItem>> allocResult =
                             allocate(NameMatchedDrives(drivesUsedAllocate), itemsToAllocated);
 
-                    Log.d(TAG, "Allocation result:");
-                    allocResult.entrySet().stream().forEach((set)->{
-                        Log.d(TAG, "drive: " + set.getKey());
-                        set.getValue().stream().forEach((item)->{Log.d(TAG, item.getName());});
-                    });
+                    Log.d(TAG, "Allocation result: " + allocResult);
+//                    allocResult.entrySet().stream().forEach((set)->{
+//                        Log.d(TAG, "drive: " + set.getKey());
+//                        set.getValue().stream().forEach((item)->{Log.d(TAG, item.getName());});
+//                    });
 
                     // Now, we can do the transfer according to the allocation result
                     Log.d(TAG, "Transfer items... We are in debugging. skip!");
                     Collection<File> transferResult = new ArrayList<>();
-                    // transfer(itemsToAllocated, allocResult).join();
+                    transfer(itemsToAllocated, allocResult).join();
 
                     //Take out the containers we don't need to proceed
                     HashMap<String, AllocContainer> container = toKeyMatched(srcDrivesDestNotContained, containerDest);
@@ -334,11 +334,12 @@ public class Move {
     private CompletableFuture<Collection<File>> transfer(
             HashMap<String, List<AllocationItem>> items, HashMap<String, List<AllocationItem>> allocation){
         LinkedBlockingQueue<File> queue = new LinkedBlockingQueue<>();
-        Boolean[] finished = new Boolean[0];
+        Boolean[] finished = new Boolean[1];
         finished[0] = false;
         HashMap<String, Drive> clients = NameMatchedDrives(items.keySet().stream().collect(Collectors.toCollection(ArrayList::new)));
         SliceSupplier<AllocationItem, Download.Downloaded> supplier = new SliceSupplier<AllocationItem, Download.Downloaded>(clients, items,
                         (ai)->{
+            Log.d(TAG, "Transfer downloading item: " + ai.getName());
             Download downloader = new Download(mCDFS.getDrives().get(ai.getDrive()).getClient());
             return downloader.runAsync(ai);
                         }).setCallback(new SliceSupplier.ISliceConsumerCallback<Download.Downloaded>() {
@@ -348,26 +349,48 @@ public class Move {
             }
 
             @Override
-            public void onSupplied(Download.Downloaded downloaded) throws IOException {
+            public void onSupplied(Download.Downloaded downloaded) {
+                Log.d(TAG, "onSupplied: " + downloaded.item.getName());
                 String driveName = downloaded.item.getDrive();
                 String sliceName = downloaded.item.getName();
                 OutputStream os = downloaded.os;
                 File file = new File();
                 file.setDriveName(driveName);
                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                Log.d(TAG, "onSupplied: set Parent. drivename: " + driveName);
+                Log.d(TAG, "Parent: " + mDest.getMap());
                 fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(driveName).get(0)));
+                Log.d(TAG, "onSupplied: set slie name!");
                 fileMetadata.setName(sliceName);
                 file.setFile(fileMetadata);
                 //This is necessary. The number will provide the information so that we can update correct items
                 // in propertu update.
                 file.setInteger(downloaded.item.getSequence());
-                file.setOriginalLocalFile(toFile(os, sliceName, downloaded.item.getSequence()));
-                queue.add(file);
+                Log.d(TAG, "onSupplied: set file!");
+                try {
+                    file.setOriginalLocalFile(toFile(os, sliceName, downloaded.item.getSequence()));
+                } catch (IOException e) {
+                    Log.w(TAG, e.getMessage());
+                    throw new RuntimeException(e);
+                }
+                Log.d(TAG, "onSupplied: put item!");
+                try {
+                    queue.put(file);
+                } catch (InterruptedException e) {
+                    Log.w(TAG, e.getMessage());
+                    throw new RuntimeException(e);
+                }
+                Log.d(TAG, "size of queue: " + queue.size());
             }
 
             @Override
             public void onCompleted(int totalSliceSupplied) {
-                queue.add(poison_pill);
+                Log.d(TAG, "add poison. size of queue: " + queue.size());
+                try {
+                    queue.put(poison_pill);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
@@ -388,8 +411,17 @@ public class Move {
             }
 
             @Override
-            public File onRequested() {
-                File file = queue.peek();
+            public File onRequested(){
+                Log.d(TAG, "onRequested");
+                File file = null;
+
+                try {
+                    file = queue.take();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                Log.d(TAG, "uploading item: " + file.getFile().getName());
                 if(file.getFile().getName().equals(POISON_PILL)){return null;}
                 return file;
             }
@@ -411,6 +443,7 @@ public class Move {
         });
 
         //fire!
+        Log.d(TAG, "FIRE!!!");
         supplier.run();
         consumer.run();
 

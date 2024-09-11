@@ -174,18 +174,17 @@ public class Allocator {
         @Override
         public HashMap<String, List<AllocationItem>> allocate(HashMap<String, List<AllocationItem>> items, HashMap<String, About.StorageQuota> quota) {
 
-            Log.d(TAG, "items to allocate:");
-            items.entrySet().stream().forEach(set ->{
-                Log.d(TAG, "drive: " + set.getKey());
-                set.getValue().stream().forEach(item->{Log.d(TAG, item.getName());});
-            });
+//            Log.d(TAG, "items to allocate:");
+//            items.entrySet().stream().forEach(set ->{
+//                Log.d(TAG, "drive: " + set.getKey());
+//                set.getValue().stream().forEach(item->{Log.d(TAG, item.getName());});
+//            });
 
             //merge the lists
-            Log.d(TAG, "merge item list...");
             List<AllocationItem> mergedList = items.values().stream().reduce((even,odd)->{
-                Log.d(TAG, "even:");
+                //Log.d(TAG, "even:");
                 even.stream().forEach((item)->{Log.d(TAG, item.getName());});
-                Log.d(TAG, "odd:");
+                //Log.d(TAG, "odd:");
                 odd.stream().forEach((item)->{Log.d(TAG, item.getName());});
                 List<AllocationItem> merged = new ArrayList<>();
                 merged.addAll(even);
@@ -196,27 +195,42 @@ public class Allocator {
             mergedList.stream().forEach((item -> {Log.d(TAG, item.getName());}));
 
             HashMap<String, Long> remainingFree = Mapper.reValue(quota, (q)->{return q.getLimit() - q.getUsage();});
+            //HashMap<String, Boolean> fullMarked = Mapper.reValue(quota, (q)->{return false;});
             List<String> listDrive = quota.keySet().stream().collect(Collectors.toList());
-            ListIterator<String> listIterator = listDrive.listIterator();
-            final int size = listDrive.size();
-            final String theFirst = listDrive.get(0);
 
+            ListIterator<String> driveListIterator = listDrive.listIterator();
+
+            Log.d(TAG, "starting allocate...");
             Map<String, AllocationItem> map = mergedList.stream().map((item)->{
-                final String[] sectedDrive = {};
+                final String[] sectedDrive = new String[1];
 
+                //Log.d(TAG, "Item: " + item.getDrive() + ", " + item.getName());
                 //get a drive that the remaining size is enough
-                while(listIterator.hasNext()){
-                    sectedDrive[0] = listIterator.next();
-                    if(remainingFree.get(sectedDrive) > item.getSize()) break;
+                //A loop is employed. The loop is breaked in the two cases:
+                //1. A drive which has enough space to store the item
+                //2. The drive list is traversed, but no drive with enough big space is found
+                boolean rollovered = false;
+                while(true) {
+                    //It looks ugly because we implemented a circular list. Unfortunately, there is no choice
+                    //because I don't find a java implementation
+                    if (!driveListIterator.hasNext()) {
+                        Log.d(TAG, "set drive list to beginning...");
+                        //leared from https://www.baeldung.com/java-reset-listiterator
+                        //We are fine with the approach because the list supposes be short
+                        while (driveListIterator.hasPrevious()) {
+                            driveListIterator.previous();
+                        }
+                        rollovered = true;
+                    }
+                    sectedDrive[0] = driveListIterator.next();
+                    if (remainingFree.get(sectedDrive[0]) > item.getSize()) {
+                        Log.d(TAG, "target drive: " + sectedDrive[0] + "; allocated item: " + item.getName());
+                        break;
+                    } else if (rollovered == true) {
+                        //The drive list has been traversed once, stop the allocation process
+                        throw new com.crossdrives.cdfs.exception.ItemNotFoundException("no space can be used for allocation", new Throwable());
+                    }
                 }
-
-                //It looks ugly because we implemented a circular list. Unfortunately, there is no choice
-                //becuase I don't find a java implementation
-                if(listIterator.nextIndex() > size){
-                    listIterator.set(theFirst);
-                }
-
-                Log.d(TAG, "Picked drive: " + sectedDrive[0] + " item: " + item.getName());
 
                 Map.Entry<String, AllocationItem> e = new Map.Entry<>() {
                     @Override
@@ -257,6 +271,9 @@ public class Allocator {
         }
     }
 
+    /*
+        Check whether the total available size of remote drives is bigger than the one of items to allocated.
+     */
     private void checkRemoteFree(){
         final long remoteFree;
 
