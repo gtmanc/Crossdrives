@@ -50,7 +50,8 @@ public class MapUpdater {
         CompletableFuture<HashMap<String, File>> resultFuture = new CompletableFuture<>();
         CompletableFuture.supplyAsync(()->{
             MapFetcher mapFetcher = new MapFetcher(mDrives);
-            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
+            //CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.listAll(parent);
+            CompletableFuture<HashMap<String, com.google.api.services.drive.model.File>> mapIDFuture = mapFetcher.list(parent, containers.keySet());
             HashMap<String, com.google.api.services.drive.model.File> mapIDs = mapIDFuture.join();
             if(mapIDs.values().stream().anyMatch((v)->v==null)){
                 Log.w(TAG, "map is missing!");

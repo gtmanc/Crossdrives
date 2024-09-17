@@ -64,19 +64,18 @@ public class SliceConsumer<T, R> {
         return mConsumedSlices;
     }
 
-    public void run(){
-        int[] cntOfT = new int[0];
+    public CompletableFuture run(){
         mQueue = new ArrayBlockingQueue<CompletableFuture<R>>(mMaxThread);
 
         //TODO: may add some checks before the onStarted is called
         mCallback.onStart();
 
-        CompletableFuture.supplyAsync(()->{
+        return CompletableFuture.supplyAsync(()->{
 
             while(true){
                 T requestedSlice = mCallback.onRequested();
                 if(requestedSlice == null){break;}
-                CompletableFuture<R> future =
+                final CompletableFuture<R> future =
                         mOperation.apply(requestedSlice);
                 if(!put(future)){
                     Log.e(TAG, "failed to add element to the queue!");
@@ -86,32 +85,19 @@ public class SliceConsumer<T, R> {
                     mConsumedSlices.add(r);
                     mCallback.onConsumed(r);
                     if(mQueue.isEmpty()){return;}
-                    boolean successRemoval = mQueue.remove(this);
+                    boolean successRemoval = mQueue.remove(future);
                     if(!successRemoval){
-                        Log.d(TAG, "fail to remove element in queue!");}
+                        Log.w(TAG, "fail to remove element in queue!");}
                 });
-/*
-                if(cntOfT[0] < mNoOfThread) {
-                    requestedSlice = mCallback.onRequested();
-                    if(requestedSlice != null) {
-                        CompletableFuture<R> opFuture;
-                        opFuture = mOperation.apply(requestedSlice);
-                        opFuture.thenAccept((r) -> {
-                            mCallback.onConsumed(r);
-                            cntOfT[0]--;
-                        });
-                        cntOfT[0]++;
-                    }else{
-                        mStop = true;
-                    }
-                }
- */
             }
 
             //take care the rest of ongoing futures
             Collection<CompletableFuture<R>> futures = new ArrayList<CompletableFuture<R>>();
-            mQueue.drainTo(futures);
+            //mQueue.drainTo(futures);
+            mQueue.stream().forEach((f)->{futures.add(f);});
             futures.forEach((f->{f.join();}));
+
+            while(!mQueue.isEmpty());
 
             mCallback.onCompleted(mConsumedSlices);
             return null;

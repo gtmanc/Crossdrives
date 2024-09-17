@@ -12,6 +12,7 @@ import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.remote.Fetcher;
 import com.crossdrives.cdfs.util.Mapper;
+import com.crossdrives.cdfs.util.strings.Strings;
 import com.crossdrives.driveclient.IDriveClient;
 import com.crossdrives.driveclient.download.IDownloadCallBack;
 import com.crossdrives.driveclient.list.IFileListCallBack;
@@ -352,62 +353,53 @@ public class MapFetcher {
         });
         return resultFuture;
     }
-
     /*
-        Find the file (item) which the ID is matched to parent ID for each drive.
-        i.e. the ID is CDFS ID
-        Input:
-            fileList: the given item list
-            pid     : the parent id we are looking for
-        Output:
-            Found item in each drive.
-     */
-    HashMap<String, File> findItemMatched(HashMap<String, FileList> fileLists, String pid){
+        Get metadata of map files according to speified drive names.
+        If the names contain all of the drive names of map of the cdfs item, it is identical to listAll()
+        Iuput:
+            parent:
+            names:  the drive names that metadata of the map files will be read
+    */
+    public CompletableFuture<HashMap<String, File>> list(@Nullable CdfsItem parent, @NonNull Collection<String> names) {
+        return CompletableFuture.supplyAsync(()->{
+            Map<String, List<String>> reduced = parent.getMap().entrySet().stream().filter((set) ->
+                    names.contains(set.getKey())).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
 
-        //Get map item from the input list
-        HashMap<String, File> mapItems = Mapper.reValue(fileLists, (key, list)->{
+            if(reduced.isEmpty()){Log.w(TAG, "The specified names don't contain any of the key in the map!");}
 
-            File file = getFromFiles(list, null);
-            //throwExIfNull(file, "Map file may be missing! " + "Drive:" + key, "");
-            return file;
-         });
+            HashMap<String, File> metaData= Mapper.reValue(new HashMap<>(reduced), list->{
+                File f = new File();
+                f.setId(list.get(0));
+                return f;
+            });
 
-        //download map
-        CompletableFuture<HashMap<String, OutputStream>> downloadFuture = pullAllByID(
-                Mapper.reValue(mapItems, (file)->{
-                    return file.getId();
-                }));
+            //something wrong if no mapped ID for the parent
+            if(metaData.entrySet().stream().anyMatch(((set)-> set.getValue()== null))){
+                Log.w(TAG, "CDFS folder is missing!");
+                return null;
+            }
 
-        //Find the item which the CDFS ID matches to pid
-        HashMap<String, AllocationItem> allocationItems = Mapper.reValue(downloadFuture.join(), (key, stream)->{
-            AllocationItem result = null;
-            Optional<AllocationItem> optional =
-            AllocManager.toContainer(stream).getAllocItem().stream().filter((item)->{
-                return item.getCdfsId().compareToIgnoreCase(pid) == 0;
-            }).findAny();
-            //throwExIfNotPresent(optional, "Parent not found! " + "Drive:" + key, "");
-            return optional.get();
+            Fetcher fetcher = new Fetcher(mDrives);
+            final CompletableFuture<HashMap<String, FileList>> listFuture = fetcher.listAll(metaData);
+            final HashMap<String, FileList> fileList = listFuture.join();
+            //final HashMap<String, FileList> fileListAtDest = getListAtDestination(parent, fileList, fetcher);
+            HashMap<String, File> maps = Mapper.reValue(fileList, (key, list)->{
+                File f = null;
+                String id = parent.getName().equals(IConstant.CDFS_NAME_ROOT) ? null : parent.getId();
+                if(list != null) {
+                    f = getFromFiles(list, Names.allocFile(id));
+                }
+
+                if(f == null) {
+                    //f = new File();
+                    Log.w(TAG, "No map file found in the specified folder! Drive: " + key);
+                }
+                //throwExIfNull(f, "Map item is not found. Drive: " + key, "");
+                return f;
+            });
+
+            return maps;
         });
-
-        //Transform the found item to the output type
-        return Mapper.reValue(allocationItems, (ai)->{
-            File file = new File();
-            file.setId(ai.getItemId());
-            return file;
-        });
-    }
-
-
-    <T> void throwExIfNotPresent(Optional<T> optional, String message, String cause) throws ItemNotFoundException {
-        if(!optional.isPresent()) {
-            throw new ItemNotFoundException(message, new Throwable(cause));
-        }
-    }
-
-    <T> void throwExIfNull(T t, String message, String cause) throws ItemNotFoundException {
-        if(t == null) {
-            throw new ItemNotFoundException(message, new Throwable(cause));
-        }
     }
 
     /*

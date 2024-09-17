@@ -4,33 +4,48 @@ import android.util.Log;
 
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.driveclient.IDriveClient;
-import com.crossdrives.driveclient.model.MediaData;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
 public class Upload {
-    final String TAG = "CD.drivehelp.download";
+    final String TAG = "CD.drivehelp.upload";
     private IDriveClient mClient;
 
-    public class Uploaded{
-        AllocationItem ai;
-        File localSlice;
+    static public class AdditionalData{
+        public String string;
+        public File localSlice;
+        public Object object;
     }
 
+    public class Uploaded{
+        public com.crossdrives.driveclient.model.File file;
+        public AdditionalData data;
+    }
+    private AdditionalData mData;
+
     public Upload(IDriveClient client) {
+
         mClient = client;
     }
 
-    public CompletableFuture<com.crossdrives.driveclient.model.File> runAsync(
+    public Upload setAddtionalData(AdditionalData data){
+        mData = data;
+        return this;
+    }
+
+    public CompletableFuture<Uploaded> runAsync(
             com.crossdrives.driveclient.model.File file){
-        CompletableFuture<com.crossdrives.driveclient.model.File> future = new CompletableFuture<>();
+        CompletableFuture<Uploaded> future = new CompletableFuture<>();
 
         mClient.upload().buildRequest(file.getFile(), file.getOriginalLocalFile()).run(new IUploadCallBack() {
             @Override
             public void success(com.crossdrives.driveclient.model.File file) {
-                future.complete(file);
+                Uploaded uploaded = new Uploaded();
+                uploaded.file = file;
+                uploaded.data = mData;
+                future.complete(uploaded);
             }
 
             @Override

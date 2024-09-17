@@ -17,13 +17,13 @@ public class File {
     Integer integer;
     String string;
 
-    public String getDriveName() {
-        return driveName;
-    }
-
-    public void setDriveName(String driveName) {
-        this.driveName = driveName;
-    }
+//    public String getDriveName() {
+//        return driveName;
+//    }
+//
+//    public void setDriveName(String driveName) {
+//        this.driveName = driveName;
+//    }
 
     public com.google.api.services.drive.model.File getFile() {
         return file;

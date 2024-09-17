@@ -6,6 +6,7 @@ import com.crossdrives.cdfs.data.Drive;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -57,20 +58,19 @@ public class SliceSupplier<T, R> {
         return this;
     }
 
-    public void run(){
+    public CompletableFuture run(){
         mQueue = new ArrayBlockingQueue<CompletableFuture<R>>(mMaxThread);
 
         //TODO: may add some checks before the onStarted is called
         mCallback.onStart();
 
-        CompletableFuture.supplyAsync(()->{
+        return CompletableFuture.supplyAsync(()->{
 
             mItems.entrySet().stream().forEach((set)->{
                 //Log.d(TAG, "SliceSupply: drive: " + set.getKey());
                 set.getValue().stream().forEach((ai)->{
                     //Log.d(TAG, "SliceSupply: Item: " + ai);
-                    CompletableFuture<R> opFuture = new CompletableFuture<>();
-                    opFuture = mOperation.apply(ai);
+                    final CompletableFuture<R> opFuture = mOperation.apply(ai);
                     //If queue is full, the add is blocked until element in queue is free
                     if(!put(opFuture)){
                         Log.e(TAG, "failed to add element to the queue!");
@@ -86,9 +86,9 @@ public class SliceSupplier<T, R> {
                         //futures, skip the removal
                         if(mQueue.isEmpty()){return;}
                         //Here we use a non-blocking method because we don't want to create extra problem
-                        boolean successRemoval = mQueue.remove(this);
+                        boolean successRemoval = mQueue.remove(opFuture);
                         if(!successRemoval){
-                            Log.e(TAG, "fail to remove element from the queue!");
+                            Log.w(TAG, "fail to remove element from the queue!");
                             mCallback.onFailure("error occurred whiling removing item from the queue!");}
                     });
                 });
@@ -96,30 +96,13 @@ public class SliceSupplier<T, R> {
 
             //take care the rest of ongoing futures
             Collection<CompletableFuture<R>> futures = new ArrayList<CompletableFuture<R>>();
-            mQueue.drainTo(futures);
+            //mQueue.drainTo(futures);
+            mQueue.stream().forEach((c)->{futures.add(c);});
+            //Log.d(TAG, "size of q: " + mQueue.size());
             futures.forEach((f->{f.join();}));
 
+            while(!mQueue.isEmpty());
 
-            int[] cntOfT = new int[]{0};
-            int[] cntOfRemainingSlice = new int[0];
-            /*
-            Iterator iterator = mItems.keySet().iterator();
-            while(iterator.hasNext()){
-                cntOfRemainingSlice[0] = mItems.get(iterator.next()).size();
-                while(cntOfRemainingSlice[0] > 0) {
-                    if (cntOfT[0] < mMaxThread) {
-                        CompletableFuture<R> opFuture = new CompletableFuture<>();
-                        opFuture = mOperation.apply(mItems.get("").get(0));
-                        opFuture.thenAccept((r) -> {
-                            mCallback.onSupplied(r);
-                            cntOfT[0]--;
-                            cntOfRemainingSlice[0]--;
-                        });
-                        cntOfT[0]++;
-                    }
-                }
-            }
-*/
             mCallback.onCompleted(mItems.size());
             return null;
         });

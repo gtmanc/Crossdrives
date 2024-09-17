@@ -12,6 +12,7 @@ import com.crossdrives.cdfs.allocation.MapUpdater;
 import com.crossdrives.cdfs.allocation.MetaDataUpdater;
 import com.crossdrives.cdfs.allocation.QuotaEnquirer;
 import com.crossdrives.cdfs.data.Drive;
+import com.crossdrives.cdfs.drivehelper.Delete;
 import com.crossdrives.cdfs.drivehelper.Download;
 import com.crossdrives.cdfs.drivehelper.Upload;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
@@ -23,6 +24,7 @@ import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.collection.Diff;
+import com.crossdrives.cdfs.util.print.Printer;
 import com.crossdrives.cdfs.util.strings.Strings;
 import com.crossdrives.driveclient.model.File;
 import com.crossdrives.msgraph.SnippetApp;
@@ -57,6 +59,7 @@ public class Move {
     final CdfsItem mItems;
     final CdfsItem mSource, mDest;
     private final ExecutorService mExecutor = Executors.newCachedThreadPool();
+    Printer dp = new Printer(TAG);
 
     public enum State{
         GET_MAP_STARTED,
@@ -79,7 +82,15 @@ public class Move {
 //        public java.io.File localFile;
 //    }
 
-    File poison_pill;
+    //Model carries out all of necessary info for move
+    public class TransferItemModel{
+        public String destDriveName;
+        public String newId;
+        public java.io.File localFile;
+        AllocationItem ai;
+    }
+
+    TransferItemModel poison_pill;
     final String POISON_PILL = "PoisonPill";
 
 
@@ -89,9 +100,9 @@ public class Move {
         this.mSource = source;
         this.mDest = dest;
 
-        poison_pill = new File();
-        poison_pill.setFile(new com.google.api.services.drive.model.File());
-        poison_pill.getFile().setName(POISON_PILL);
+        poison_pill = new TransferItemModel();
+        poison_pill.ai = new AllocationItem();
+        poison_pill.ai.setName(POISON_PILL);
     }
 
     /*
@@ -129,7 +140,7 @@ public class Move {
                 //build up the new containers only for source right here. Simply remove all of the items.
                 //The containers of destination will be processed later because they are more complicated.
                 ContainerUtil containerUtil = new ContainerUtil();
-                //containerSrc will be alterred after call of containerUtil.removeItems
+                //containerSrc will be altered after call of containerUtil.removeItems
                 containerSrc = containerUtil.removeItems(containerSrc, itemsParentPathUpdated);
                 //po.out("new container to source:", newContainerSrc);
                 //po.out("original source container:", containerSrc);
@@ -163,12 +174,9 @@ public class Move {
                 MapUpdater mapUpdater2 = null;
                 MapUpdater mapUpdater3 = null;
 
-                Log.d(TAG, "Update new container to source. We are in debugging. skip");
+                Log.d(TAG, "Update new container to source...");
                 MapUpdater mapUpdater1 = new MapUpdater(NameMatchedDrives(mSource.getMap().keySet()));
-                //mapUpdater1.updateAll(newContainerSrc, mSource).join();
-                //mapUpdater1.updateAll(containerSrc, mSource).join();
-
-
+                mapUpdater1.updateAll(containerSrc, mSource).join();
 
                 if(!srcDrivesDestContained.isEmpty()){
                     Log.d(TAG, "Proceed with drives identical");
@@ -188,7 +196,7 @@ public class Move {
                     HashMap<String, AllocContainer> container = toKeyMatched(srcDrivesDestContained, containerDest);
                     //Add the parent path items
                     HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, itemsParentPathUpdated);
-                    po.out("New container to dest:", newContainerDest);
+                    dp.getContainer().out("New container to dest:", newContainerDest,"");
 
                     mapUpdater2 = new MapUpdater(NameMatchedDrives(srcDrivesDestContained));
                     Log.d(TAG, "Update new container to dest");
@@ -221,6 +229,7 @@ public class Move {
                     HashMap<String, List<AllocationItem>> itemsToAllocated=
                             Mapper.reValue(new HashMap<>(items), (item)->{
                                 return new ArrayList(item);});
+
                     HashMap<String, List<AllocationItem>> allocResult =
                             allocate(NameMatchedDrives(drivesUsedAllocate), itemsToAllocated);
 
@@ -231,21 +240,30 @@ public class Move {
 //                    });
 
                     // Now, we can do the transfer according to the allocation result
-                    Log.d(TAG, "Transfer items... We are in debugging. skip!");
-                    Collection<File> transferResult = new ArrayList<>();
-                    transfer(itemsToAllocated, allocResult).join();
-
-                    //Take out the containers we don't need to proceed
-                    HashMap<String, AllocContainer> container = toKeyMatched(srcDrivesDestNotContained, containerDest);
+                    Log.d(TAG, "Transfering items...");
+                    Collection<TransferItemModel> transferResult = transfer(itemsToAllocated, allocResult).join();
 
                     //update the properties according to the result the transfer.
                     // The result should be identical to allocation result pass to the transfer at beginning
-                    HashMap<String, Collection<AllocationItem>> updateItems = updateProperty(itemsParentPathUpdated, transferResult);
-                    HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, updateItems);
+                    HashMap<String, Collection<AllocationItem>> updateItems = updateProperty(transferResult);
 
-                    mapUpdater3 = new MapUpdater(NameMatchedDrives(srcDrivesDestNotContained));
-                    Log.d(TAG, "Update new container to dest. We are in debugging... skip");
-                    //mapUpdater3.updateAll(newContainerDest, mDest).join();
+                    dp.getAllocationItem().out("Items to dest container: ", updateItems,null);
+                    //PRINT OUT
+//                    Log.d(TAG, "Items to dest container:");
+//                    updateItems.entrySet().stream().forEach((set)->{
+//                        Log.d(TAG, "drive: " + set.getKey() + "  list:" + set.getValue().toString());
+//                        set.getValue().stream().forEach((item)->{
+//                            Log.d(TAG,"drive: " + item.getDrive() + " name:" + item.getName() + " seq: " + item.getSequence());
+//                        });
+//                    });
+
+
+                    //HashMap<String, AllocContainer> container = toKeyMatched(updateItems.keySet(), containerDest);
+                    containerDest = containerUtil.addItems(containerDest, updateItems);
+
+                    mapUpdater3 = new MapUpdater(NameMatchedDrives(updateItems.keySet()));
+                    Log.d(TAG, "Update new container to dest. involved drves: " + NameMatchedDrives(updateItems.keySet()));
+                    mapUpdater3.updateAll(containerDest, mDest).join();
                 }
 
                 //MapFetcher is not thread safe. #54
@@ -331,15 +349,13 @@ public class Move {
     // Input:
     //      items: source items to be transferred
     //      allocation: allocation
-    private CompletableFuture<Collection<File>> transfer(
+    private CompletableFuture<Collection<TransferItemModel>> transfer(
             HashMap<String, List<AllocationItem>> items, HashMap<String, List<AllocationItem>> allocation){
-        LinkedBlockingQueue<File> queue = new LinkedBlockingQueue<>();
-        Boolean[] finished = new Boolean[1];
-        finished[0] = false;
+        LinkedBlockingQueue<TransferItemModel> queue = new LinkedBlockingQueue<>();
         HashMap<String, Drive> clients = NameMatchedDrives(items.keySet().stream().collect(Collectors.toCollection(ArrayList::new)));
         SliceSupplier<AllocationItem, Download.Downloaded> supplier = new SliceSupplier<AllocationItem, Download.Downloaded>(clients, items,
                         (ai)->{
-            Log.d(TAG, "Transfer downloading item: " + ai.getName());
+            Log.d(TAG, "downloading item: " + ai.getName());
             Download downloader = new Download(mCDFS.getDrives().get(ai.getDrive()).getClient());
             return downloader.runAsync(ai);
                         }).setCallback(new SliceSupplier.ISliceConsumerCallback<Download.Downloaded>() {
@@ -351,41 +367,30 @@ public class Move {
             @Override
             public void onSupplied(Download.Downloaded downloaded) {
                 Log.d(TAG, "onSupplied: " + downloaded.item.getName());
-                String driveName = downloaded.item.getDrive();
+                String driveName = getDriveName(allocation, downloaded.item.getItemId());
+                Log.d(TAG, "target drive to transfer: " + driveName);
                 String sliceName = downloaded.item.getName();
-                OutputStream os = downloaded.os;
-                File file = new File();
-                file.setDriveName(driveName);
-                com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                Log.d(TAG, "onSupplied: set Parent. drivename: " + driveName);
-                Log.d(TAG, "Parent: " + mDest.getMap());
-                fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(driveName).get(0)));
-                Log.d(TAG, "onSupplied: set slie name!");
-                fileMetadata.setName(sliceName);
-                file.setFile(fileMetadata);
-                //This is necessary. The number will provide the information so that we can update correct items
-                // in propertu update.
-                file.setInteger(downloaded.item.getSequence());
-                Log.d(TAG, "onSupplied: set file!");
+                TransferItemModel tim = new TransferItemModel();
+                tim.destDriveName = driveName;
+                tim.ai = downloaded.item;
                 try {
-                    file.setOriginalLocalFile(toFile(os, sliceName, downloaded.item.getSequence()));
+                    tim.localFile = toFile(downloaded.os, sliceName, downloaded.item.getSequence());
                 } catch (IOException e) {
                     Log.w(TAG, e.getMessage());
                     throw new RuntimeException(e);
                 }
-                Log.d(TAG, "onSupplied: put item!");
+                Log.d(TAG, "put item");
                 try {
-                    queue.put(file);
+                    queue.put(tim);
                 } catch (InterruptedException e) {
                     Log.w(TAG, e.getMessage());
                     throw new RuntimeException(e);
                 }
-                Log.d(TAG, "size of queue: " + queue.size());
             }
 
             @Override
             public void onCompleted(int totalSliceSupplied) {
-                Log.d(TAG, "add poison. size of queue: " + queue.size());
+                Log.d(TAG, "put poison. size of q: " + queue.size());
                 try {
                     queue.put(poison_pill);
                 } catch (InterruptedException e) {
@@ -399,41 +404,64 @@ public class Move {
             }
         });
 
-        SliceConsumer<File, File> consumer = new SliceConsumer<File, File>(clients,
-                (file)->{
-                    String driveName = file.getDriveName();
-                    Upload uploader = new Upload(mCDFS.getDrives().get(driveName).getClient());
-                    return uploader.runAsync(file);
-                }).setCallback(new SliceConsumer.ISliceConsumerCallback<File, File>() {
+        SliceConsumer<TransferItemModel, TransferItemModel> consumer = new SliceConsumer<TransferItemModel, TransferItemModel>(clients,
+                (ti)->{
+                    File file = new File();
+                    com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                    Log.d(TAG, "dest drive: " + ti.destDriveName);
+                    fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(ti.destDriveName).get(0)));
+                    Log.d(TAG, "name: " + ti.ai.getName());
+                    fileMetadata.setName(ti.ai.getName());
+                    file.setFile(fileMetadata);
+                    Log.d(TAG, "local file: " + ti.localFile);
+                    file.setOriginalLocalFile(ti.localFile);
+                    //This is necessary. The number will provide the information so that we can update correct items
+                    // in propertu update.
+                    //file.setInteger(downloaded.item.getSequence());
+                    Upload uploader = new Upload(mCDFS.getDrives().get(ti.destDriveName).getClient());
+                    Upload.AdditionalData data = new Upload.AdditionalData();
+                    data.object = ti.ai;
+                    uploader.setAddtionalData(data);
+                    return CompletableFuture.supplyAsync(()->{
+                        //Log.d(TAG, "upload run!");
+                        Upload.Uploaded uploaded = uploader.runAsync(file).join();
+                        TransferItemModel r = new TransferItemModel();
+                        r.destDriveName = ti.destDriveName;
+                        r.newId = uploaded.file.getFile().getId();
+                        Log.d(TAG, "uploaded done. dest drive: " + r.destDriveName + " Id: " + r.newId);
+                        r.ai = (AllocationItem) uploaded.data.object;
+                        return r;
+                    });
+                }).setCallback(new SliceConsumer.ISliceConsumerCallback<TransferItemModel, TransferItemModel>() {
             @Override
             public void onStart() {
 
             }
 
             @Override
-            public File onRequested(){
+            public TransferItemModel onRequested(){
                 Log.d(TAG, "onRequested");
-                File file = null;
+                TransferItemModel ti;
 
                 try {
-                    file = queue.take();
+                    ti = queue.take();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
 
-                Log.d(TAG, "uploading item: " + file.getFile().getName());
-                if(file.getFile().getName().equals(POISON_PILL)){return null;}
-                return file;
+                Log.d(TAG, "slice to consumed: " + ti.ai.getName());
+                if(ti.ai.getName().equals(POISON_PILL)){return null;}
+                return ti;
             }
 
             @Override
-            public void onConsumed(com.crossdrives.driveclient.model.File file) {
-
+            public void onConsumed(TransferItemModel ti) {
+                Log.d(TAG, "onConsumed: " + ti.ai.getName());
             }
 
             @Override
-            public void onCompleted(Collection<File> consumed) {
-                finished[0] = true;
+            public void onCompleted(Collection<TransferItemModel> consumed) {
+                Log.d(TAG, "onConsumed. Number of consumed: " + consumed.size());
             }
 
             @Override
@@ -444,12 +472,29 @@ public class Move {
 
         //fire!
         Log.d(TAG, "FIRE!!!");
-        supplier.run();
-        consumer.run();
 
+        Collection<CompletableFuture> futures = new ArrayList<>();
+        futures.add(supplier.run());
+        futures.add(consumer.run());
         return CompletableFuture.supplyAsync(()->{
-            while(!finished[0]);
-            return consumer.getConsumed();
+            //Collection<CompletableFuture<Delete.Deleted>> futureDeletion = new ArrayList<>();
+            futures.stream().forEach((f)->f.join());
+            deleteItems(consumer.getConsumed()).stream().forEach((f)->f.join());
+
+//            consumer.getConsumed().stream().forEach((ti)->{
+//                String driveName = ti.ai.getDrive();
+//                Log.d(TAG, "delete item. drive: " + driveName +" name: " + ti.ai.getName());
+//                Delete deleter = new Delete(mCDFS.getDrives().get(driveName).getClient());
+//                File file = new File();
+//                com.google.api.services.drive.model.File metaData = new com.google.api.services.drive.model.File();
+//                metaData.setId(ti.ai.getItemId());
+//                file.setFile(metaData);
+//                futureDeletion.add(deleter.runSync(file));
+//            });
+//
+//            futureDeletion.stream().forEach((f)->f.join());
+
+            return consumer.getConsumed();//.stream().map((ti)-> ti.file).collect(Collectors.toCollection(ArrayList::new));
         });
     }
 
@@ -474,6 +519,31 @@ public class Move {
         return new java.io.File(context.getFilesDir().getPath() + "/" + sliceName);
     }
 
+    private String getDriveName(HashMap<String, List<AllocationItem>> r, String id){
+        return r.entrySet().stream().filter((entry)->{
+            return entry.getValue().stream().filter((allocated)->{
+                return allocated.getItemId().equals(id);
+            }).findAny().get() != null;
+        }).findAny().get().getKey();
+    }
+
+    private Collection<CompletableFuture<Delete.Deleted>> deleteItems(Collection<TransferItemModel> items){
+        Collection<CompletableFuture<Delete.Deleted>> futureDeletion = new ArrayList<>();
+
+        items.stream().forEach((ti)->{
+            String driveName = ti.ai.getDrive();
+            Log.d(TAG, "delete item. drive: " + driveName +" name: " + ti.ai.getName());
+            Delete deleter = new Delete(mCDFS.getDrives().get(driveName).getClient());
+            File file = new File();
+            com.google.api.services.drive.model.File metaData = new com.google.api.services.drive.model.File();
+            metaData.setId(ti.ai.getItemId());
+            file.setFile(metaData);
+            futureDeletion.add(deleter.runSync(file));
+        });
+
+        return futureDeletion;
+    }
+
     /*
         The properties in the input items will be updated according to the transferred items:
         1. drive (drive name)
@@ -484,22 +554,20 @@ public class Move {
         transferred:    items transferred
 
      */
-    HashMap<String, Collection<AllocationItem>> updateProperty(HashMap<String, Collection<AllocationItem>> items, Collection<File> transferred){
+    HashMap<String, Collection<AllocationItem>> updateProperty(Collection<TransferItemModel> transferred){
         //remap the result to a Map so that we can easily proceed in next step
-        Map<String, AllocationItem> remaped = transferred.stream().map((f)->{
+        Map<String, AllocationItem> remaped = transferred.stream().map((ti)->{
             Map.Entry<String, AllocationItem> e = new Map.Entry<String, AllocationItem>() {
                 @Override
                 public String getKey() {
-                    return f.getDriveName();
+                    return ti.destDriveName;
                 }
 
                 @Override
                 public AllocationItem getValue() {
-                    AllocationItem ai = new AllocationItem();
-                    ai.setName(f.getDriveName());
-                    ai.setItemId(f.getFile().getId());
-                    ai.setSequence(f.getInteger());
-                    return null;
+                    ti.ai.setDrive(ti.destDriveName);
+                    ti.ai.setItemId(ti.newId);
+                    return ti.ai;
                 }
 
                 @Override
