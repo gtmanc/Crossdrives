@@ -34,7 +34,7 @@ public class Download {
                         Downloaded downloaded = new Downloaded();
                         downloaded.item = ai;
                         downloaded.os = mediaData.getOs();
-                        Log.d(TAG, "download finished. Seq: " + mediaData.getAdditionInt());
+                        Log.d(TAG, "download finished. Seq: " + downloaded.item.getSequence());
                         future.complete(downloaded);
                     }
 

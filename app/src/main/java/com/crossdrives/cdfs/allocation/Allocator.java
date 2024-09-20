@@ -183,15 +183,15 @@ public class Allocator {
             //merge the lists
             List<AllocationItem> mergedList = items.values().stream().reduce((even,odd)->{
                 //Log.d(TAG, "even:");
-                even.stream().forEach((item)->{Log.d(TAG, item.getName());});
+                //even.stream().forEach((item)->{Log.d(TAG, item.getName());});
                 //Log.d(TAG, "odd:");
-                odd.stream().forEach((item)->{Log.d(TAG, item.getName());});
+                //odd.stream().forEach((item)->{Log.d(TAG, item.getName());});
                 List<AllocationItem> merged = new ArrayList<>();
                 merged.addAll(even);
                 merged.addAll(odd);
                 return merged;}).get();
 
-            Log.d(TAG, "Merged item list:");
+            Log.d(TAG, "Merged items:");
             mergedList.stream().forEach((item -> {Log.d(TAG, item.getName());}));
 
             HashMap<String, Long> remainingFree = Mapper.reValue(quota, (q)->{return q.getLimit() - q.getUsage();});
@@ -201,12 +201,14 @@ public class Allocator {
             ListIterator<String> driveListIterator = listDrive.listIterator();
 
             Log.d(TAG, "starting allocate...");
-            Map<String, AllocationItem> map = mergedList.stream().map((item)->{
+            HashMap<String, List<AllocationItem>> result = new HashMap<>();
+            //Map<String, AllocationItem> map = mergedList.stream().map((item)->{
+            mergedList.stream().forEach((item)->{
                 final String[] sectedDrive = new String[1];
 
                 //Log.d(TAG, "Item: " + item.getDrive() + ", " + item.getName());
                 //get a drive that the remaining size is enough
-                //A loop is employed. The loop is breaked in the two cases:
+                //A loop is employed. The loop is break in the two cases:
                 //1. A drive which has enough space to store the item
                 //2. The drive list is traversed, but no drive with enough big space is found
                 boolean rollovered = false;
@@ -224,7 +226,7 @@ public class Allocator {
                     }
                     sectedDrive[0] = driveListIterator.next();
                     if (remainingFree.get(sectedDrive[0]) > item.getSize()) {
-                        Log.d(TAG, "target drive: " + sectedDrive[0] + "; allocated item: " + item.getName());
+                        Log.d(TAG, "target drive: " + sectedDrive[0] + "; allocated item: " + item.getName() + " seq: " + item.getSequence());
                         break;
                     } else if (rollovered == true) {
                         //The drive list has been traversed once, stop the allocation process
@@ -232,29 +234,36 @@ public class Allocator {
                     }
                 }
 
-                Map.Entry<String, AllocationItem> e = new Map.Entry<>() {
-                    @Override
-                    public String getKey() {
-                        return sectedDrive[0];
-                    }
+                if (result.get(sectedDrive[0]) == null) { result.put(sectedDrive[0], new ArrayList<>());}
+                result.get(sectedDrive[0]).add(item);
 
-                    @Override
-                    public AllocationItem getValue() {
-                        return item;
-                    }
-
-                    @Override
-                    public AllocationItem setValue(AllocationItem o) {
-                        return null;
-                    }
-                };
-                return e;
-            }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+//                Map.Entry<String, AllocationItem> e = new Map.Entry<>() {
+//                    @Override
+//                    public String getKey() {
+//                        return sectedDrive[0];
+//                    }
+//
+//                    @Override
+//                    public AllocationItem getValue() {
+//                        return item;
+//                    }
+//
+//                    @Override
+//                    public AllocationItem setValue(AllocationItem o) {
+//                        return null;
+//                    }
+//                };
+//                return e;
+            });//.collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
 
             //remap to the format we like to provide
-            //HashMap<String, List<AllocationItem>> map2 =
+            //Log.d(TAG, "remap to the format we like to provide.");
+//            HashMap<String, List<AllocationItem>> map2 =
+//            com.crossdrives.cdfs.util.map.Mapper.toList(map);
+//            Log.d(TAG, "map2: " + map2.toString());
 
-            return com.crossdrives.cdfs.util.map.Mapper.toList(map);
+            return result;
+
 //
 //
 //            Mapper.reValue(new HashMap<>(map), (k, v)->{

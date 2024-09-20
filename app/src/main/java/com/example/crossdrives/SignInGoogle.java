@@ -444,6 +444,7 @@ public class SignInGoogle extends SignInManager{
     void getPhoto(Object object, OnPhotoDownloaded callback) {
         mPhotoDownloadCallback = callback;
         mObject = object;
+        //#45 The line of code leads to crash
         Log.d(TAG, "Download photo with url: " + mProfile.PhotoUri.toString());
         new DownloadPhoto()
                 .execute(mProfile.PhotoUri.toString());

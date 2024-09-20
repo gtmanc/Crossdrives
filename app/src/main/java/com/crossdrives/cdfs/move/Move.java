@@ -1,5 +1,7 @@
 package com.crossdrives.cdfs.move;
 
+import static com.crossdrives.cdfs.allocation.util.Mapper.toHashMap;
+
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
@@ -131,11 +133,12 @@ public class Move {
                 //Note that an empty list could present in the returned hashmap
                 HashMap<String, Collection<AllocationItem>> itemsParentPathUpdated = updateParentPathAll(getAllocItemsAllById(containerSrc, mItems.getId()), destParent);
                 //print out for debug
-                Log.d(TAG, "Items that parentPath updated:");
-                itemsParentPathUpdated.entrySet().stream().forEach((set)->{
-                    Log.d(TAG, "drive: " + set.getKey() + " list size: " + set.getValue().size());
-                    set.getValue().forEach((item)-> Log.d(TAG, "name: " + item.getName() + " parent: " + item.getPath()));
-                });
+                dp.getAllocationItem().out("Items that parentPath updated:", itemsParentPathUpdated, "");
+//                Log.d(TAG, "Items that parentPath updated:");
+//                itemsParentPathUpdated.entrySet().stream().forEach((set)->{
+//                    Log.d(TAG, "drive: " + set.getKey() + " list size: " + set.getValue().size() + " cdfs name: " + item.getName());
+//                    set.getValue().forEach((item)-> Log.d(TAG, "name: " +  + " parent: " + item.getPath()));
+//                });
 
                 //build up the new containers only for source right here. Simply remove all of the items.
                 //The containers of destination will be processed later because they are more complicated.
@@ -410,6 +413,7 @@ public class Move {
                     com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                     Log.d(TAG, "dest drive: " + ti.destDriveName);
                     fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(ti.destDriveName).get(0)));
+                    String name = ti.ai.getName().concat("_" + Integer.toString(ti.ai.getSequence()));
                     Log.d(TAG, "name: " + ti.ai.getName());
                     fileMetadata.setName(ti.ai.getName());
                     file.setFile(fileMetadata);
@@ -555,30 +559,36 @@ public class Move {
 
      */
     HashMap<String, Collection<AllocationItem>> updateProperty(Collection<TransferItemModel> transferred){
-        //remap the result to a Map so that we can easily proceed in next step
-        Map<String, AllocationItem> remaped = transferred.stream().map((ti)->{
-            Map.Entry<String, AllocationItem> e = new Map.Entry<String, AllocationItem>() {
-                @Override
-                public String getKey() {
-                    return ti.destDriveName;
-                }
 
-                @Override
-                public AllocationItem getValue() {
-                    ti.ai.setDrive(ti.destDriveName);
-                    ti.ai.setItemId(ti.newId);
-                    return ti.ai;
-                }
+//        Map<String, AllocationItem> remaped = transferred.stream().map((ti)->{
+//            Map.Entry<String, AllocationItem> e = new Map.Entry<String, AllocationItem>() {
+//                @Override
+//                public String getKey() {
+//                    return ti.destDriveName;
+//                }
+//
+//                @Override
+//                public AllocationItem getValue() {
+//                    ti.ai.setDrive(ti.destDriveName);
+//                    ti.ai.setItemId(ti.newId);
+//                    return ti.ai;
+//                }
+//
+//                @Override
+//                public AllocationItem setValue(AllocationItem allocationItem) {
+//                    return null;
+//                }
+//            };
+//            return e;
+//        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+//
+//        return com.crossdrives.cdfs.util.map.Mapper.toColletion(remaped);
 
-                @Override
-                public AllocationItem setValue(AllocationItem allocationItem) {
-                    return null;
-                }
-            };
-            return e;
-        }).collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
-
-        return com.crossdrives.cdfs.util.map.Mapper.toColletion(remaped);
+        return toHashMap(transferred.stream().map((ti)->{
+            ti.ai.setDrive(ti.destDriveName);
+            ti.ai.setItemId(ti.newId);
+            return ti.ai;
+        }).collect(Collectors.toCollection(ArrayList::new)));
     }
 
     /*
