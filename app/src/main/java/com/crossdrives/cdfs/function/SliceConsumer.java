@@ -84,8 +84,12 @@ public class SliceConsumer<T, R> {
                 future.thenAccept((r) -> {
                     mConsumedSlices.add(r);
                     mCallback.onConsumed(r);
-                    if(mQueue.isEmpty()){return;}
+                    Log.d(TAG, "returned from mCallback.onConsumed. size of q: " + mQueue.size());
+                    if(mQueue.isEmpty()){
+                        Log.w(TAG, "queue is empty before deleting!");
+                        return;}
                     boolean successRemoval = mQueue.remove(future);
+                    Log.d(TAG, "size of q: " + mQueue.size());
                     if(!successRemoval){
                         Log.w(TAG, "fail to remove element in queue!");}
                 });
@@ -95,8 +99,11 @@ public class SliceConsumer<T, R> {
             Collection<CompletableFuture<R>> futures = new ArrayList<CompletableFuture<R>>();
             //mQueue.drainTo(futures);
             mQueue.stream().forEach((f)->{futures.add(f);});
-            futures.forEach((f->{f.join();}));
+            futures.forEach((f->{
+                Log.d(TAG, "size of q: " + mQueue.size());
+                f.join();}));
 
+            Log.d(TAG, "block until q is empty. size of q: " + mQueue.size());
             while(!mQueue.isEmpty());
 
             mCallback.onCompleted(mConsumedSlices);

@@ -223,11 +223,12 @@ public class Move {
                     }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
                     //Debug
-                    Log.d(TAG, "Items to transfer:");
-                    items.entrySet().stream().forEach((set)->{
-                        Log.d(TAG, "drive: " + set.getKey() + "  list:" + set.getValue().toString());
-                        set.getValue().stream().forEach((item)->{Log.d(TAG, item.getName());});
-                    });
+                    dp.getAllocationItem().out("Items to transfer:", new HashMap<>(items), "");
+//                    Log.d(TAG, "Items to transfer:");
+//                    items.entrySet().stream().forEach((set)->{
+//                        Log.d(TAG, "drive: " + set.getKey() + "  list:" + set.getValue().toString());
+//                        set.getValue().stream().forEach((item)->{Log.d(TAG, item.getName());});
+//                    });
 
                     HashMap<String, List<AllocationItem>> itemsToAllocated=
                             Mapper.reValue(new HashMap<>(items), (item)->{
@@ -358,7 +359,7 @@ public class Move {
         HashMap<String, Drive> clients = NameMatchedDrives(items.keySet().stream().collect(Collectors.toCollection(ArrayList::new)));
         SliceSupplier<AllocationItem, Download.Downloaded> supplier = new SliceSupplier<AllocationItem, Download.Downloaded>(clients, items,
                         (ai)->{
-            Log.d(TAG, "downloading item: " + ai.getName());
+            Log.d(TAG, "downloading item: " + ai.getName() + " seq: " + ai.getSequence());
             Download downloader = new Download(mCDFS.getDrives().get(ai.getDrive()).getClient());
             return downloader.runAsync(ai);
                         }).setCallback(new SliceSupplier.ISliceConsumerCallback<Download.Downloaded>() {
@@ -369,7 +370,7 @@ public class Move {
 
             @Override
             public void onSupplied(Download.Downloaded downloaded) {
-                Log.d(TAG, "onSupplied: " + downloaded.item.getName());
+                Log.d(TAG, "onSupplied: " + downloaded.item.getName() + " seq: " + downloaded.item.getSequence());
                 String driveName = getDriveName(allocation, downloaded.item.getItemId());
                 Log.d(TAG, "target drive to transfer: " + driveName);
                 String sliceName = downloaded.item.getName();
@@ -378,6 +379,7 @@ public class Move {
                 tim.ai = downloaded.item;
                 try {
                     tim.localFile = toFile(downloaded.os, sliceName, downloaded.item.getSequence());
+                    Log.d(TAG, "local file from os: " + tim.localFile);
                 } catch (IOException e) {
                     Log.w(TAG, e.getMessage());
                     throw new RuntimeException(e);
@@ -409,13 +411,14 @@ public class Move {
 
         SliceConsumer<TransferItemModel, TransferItemModel> consumer = new SliceConsumer<TransferItemModel, TransferItemModel>(clients,
                 (ti)->{
+                    Log.d(TAG, "Uploading...");
                     File file = new File();
                     com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                     Log.d(TAG, "dest drive: " + ti.destDriveName);
                     fileMetadata.setParents(Collections.singletonList(mDest.getMap().get(ti.destDriveName).get(0)));
-                    String name = ti.ai.getName().concat("_" + Integer.toString(ti.ai.getSequence()));
+                    String name = ti.localFile.getName();
                     Log.d(TAG, "name: " + ti.ai.getName());
-                    fileMetadata.setName(ti.ai.getName());
+                    fileMetadata.setName(name);
                     file.setFile(fileMetadata);
                     Log.d(TAG, "local file: " + ti.localFile);
                     file.setOriginalLocalFile(ti.localFile);
@@ -460,17 +463,21 @@ public class Move {
 
             @Override
             public void onConsumed(TransferItemModel ti) {
-                Log.d(TAG, "onConsumed: " + ti.ai.getName());
+                Log.d(TAG, "onConsumed: " + ti.ai.getName() + "seq: " + ti.ai.getSequence());
+                Context context = SnippetApp.getAppContext();
+                Log.d(TAG, "deleting file: " + ti.localFile.getName());
+                //if(!context.deleteFile(ti.localFile.getName())){Log.w(TAG, "failed to delete local file: " + ti.ai.getName());}
+                Log.d(TAG, "deleted.");
             }
 
             @Override
             public void onCompleted(Collection<TransferItemModel> consumed) {
-                Log.d(TAG, "onConsumed. Number of consumed: " + consumed.size());
+                Log.d(TAG, "onCompleted. Number of consumed: " + consumed.size());
             }
 
             @Override
             public void onFailure(String reason) {
-
+                Log.w(TAG, "onFailure: " + reason);
             }
         });
 
@@ -504,7 +511,8 @@ public class Move {
 
     private java.io.File toFile(OutputStream os, String sliceName, int sliceNo) throws IOException {
         Context context = SnippetApp.getAppContext();
-        FileOutputStream fOut = context.openFileOutput(sliceName, Activity.MODE_PRIVATE);
+        String name = sliceName + "_" + Integer.toString(sliceNo);
+        FileOutputStream fOut = context.openFileOutput(name, Activity.MODE_PRIVATE);
         ByteArrayOutputStream bos = (ByteArrayOutputStream)os;
         ByteArrayInputStream bis = new ByteArrayInputStream( bos.toByteArray());
 
@@ -520,7 +528,7 @@ public class Move {
         os.close();
         fOut.close();
 
-        return new java.io.File(context.getFilesDir().getPath() + "/" + sliceName);
+        return new java.io.File(context.getFilesDir().getPath() + "/" + name);
     }
 
     private String getDriveName(HashMap<String, List<AllocationItem>> r, String id){

@@ -56,7 +56,7 @@ public class Printer {
         public void out(String head, com.crossdrives.cdfs.model.AllocationItem ai, String tail){
             printIfAvailable(head);
             Log.d(TAG, "cdfs name: " + ai.getName());
-            Log.d(TAG, "seq: " + ai.getItemId());
+            Log.d(TAG, "id: " + ai.getItemId());
             Log.d(TAG, "seq: " + ai.getSequence());
             Log.d(TAG, "TotSeg: " + ai.getTotalSeg());
             Log.d(TAG, "Path: " + ai.getPath());
