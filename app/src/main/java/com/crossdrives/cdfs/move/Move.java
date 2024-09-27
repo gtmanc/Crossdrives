@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.allocation.AllocManager;
 import com.crossdrives.cdfs.allocation.Allocator;
@@ -77,13 +79,6 @@ public class Move {
     int progressTotalSegment = 0;
     int progressTotalDeleted = 0;
 
-    DebugPrintOut po = new DebugPrintOut();
-//    private class ConsumeModel{
-//        public Drive drive;
-//        public com.google.api.services.drive.model.File fileMetadata;
-//        public java.io.File localFile;
-//    }
-
     //Model carries out all of necessary info for move
     public class TransferItemModel{
         public String destDriveName;
@@ -96,11 +91,12 @@ public class Move {
     final String POISON_PILL = "PoisonPill";
 
 
-    public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest) {
+    public Move(CDFS cdfs, CdfsItem item, CdfsItem source, CdfsItem dest, @NonNull IMoveItemProgressListener listener) {
         this.mCDFS = cdfs;
         this.mItems = item;
         this.mSource = source;
         this.mDest = dest;
+        this.mListener = listener;
 
         poison_pill = new TransferItemModel();
         poison_pill.ai = new AllocationItem();
@@ -209,7 +205,10 @@ public class Move {
                 if(!srcDrivesDestNotContained.isEmpty()){
                     Log.d(TAG, "Proceed with the items drives NOT identical");
                     Strings destDriveNames = new Strings(mDest.getMap().keySet());
-                    Collection<String> drivesUsedAllocate = destDriveNames.notContains(mItems.getMap().keySet());
+                    Collection<String> drivesUsedAllocate =// destDriveNames.notContains(mItems.getMap().keySet());
+                    mDest.getMap().keySet().stream().collect(Collectors.toCollection(ArrayList::new));
+                    Log.d(TAG, "Drives used for allocate:");
+                    drivesUsedAllocate.stream().forEach(n -> Log.d(TAG, n));
                     //Filter out the items that has been processed in previous operation
 //                    Map<String, List<AllocationItem>> items =
 //                    Mapper.reValue(containerSrc, (key, container)->{
@@ -435,6 +434,7 @@ public class Move {
                         TransferItemModel r = new TransferItemModel();
                         r.destDriveName = ti.destDriveName;
                         r.newId = uploaded.file.getFile().getId();
+                        r.localFile = uploaded.file.getOriginalLocalFile();
                         Log.d(TAG, "uploaded done. dest drive: " + r.destDriveName + " Id: " + r.newId);
                         r.ai = (AllocationItem) uploaded.data.object;
                         return r;
@@ -463,11 +463,11 @@ public class Move {
 
             @Override
             public void onConsumed(TransferItemModel ti) {
-                Log.d(TAG, "onConsumed: " + ti.ai.getName() + "seq: " + ti.ai.getSequence());
+                Log.d(TAG, "onConsumed: " + ti.ai.getName() + " seq: " + ti.ai.getSequence());
                 Context context = SnippetApp.getAppContext();
-                Log.d(TAG, "deleting file: " + ti.localFile.getName());
-                //if(!context.deleteFile(ti.localFile.getName())){Log.w(TAG, "failed to delete local file: " + ti.ai.getName());}
-                Log.d(TAG, "deleted.");
+                //Log.d(TAG, "deleting file: " + ti.localFile.getName());
+                if(!context.deleteFile(ti.localFile.getName())){Log.w(TAG, "failed to delete local file: " + ti.ai.getName());}
+                //Log.d(TAG, "deleted.");
             }
 
             @Override
@@ -631,32 +631,9 @@ public class Move {
 
     public int getProgressCurrent(){return progressTotalDeleted;}
 
-    private boolean isIdentical(ConcurrentHashMap<String, List<String>> m1, ConcurrentHashMap<String, List<String>> m2){
-        return m1.keySet().equals(m2.keySet());
-    }
-
-    private Collection<String> stringsNotContained(Collection<String> src,
-                                                   Collection<String> dest){
-
-        return dest.stream().filter((key)->{
-            return !src.contains(key);
-        }).collect(Collectors.toList());
-    }
-
-    private Collection<String> stringsContained(Collection<String> src,
-                                                Collection<String> dest){
-
-        return dest.stream().filter((key)->{
-            return src.contains(key);
-        }).collect(Collectors.toList());
-    }
-
-    private Collection<String> diffDrive(ConcurrentHashMap<String, List<String>> m1, ConcurrentHashMap<String, List<String>> m2){
-        //Collection<String> diff =
-          return Diff.between(m1.keySet().stream().collect(Collectors.toList()),
-                m2.keySet().stream().collect(Collectors.toList()),  (e1, e2)->{
-            return e1.equals(e2);
-        });
+    void callback(com.crossdrives.cdfs.move.Move.State state){
+        mState = state;
+        mListener.progressChanged(this);
     }
 
     private HashMap<String, Drive> NameMatchedDrives(Collection<String> names){
@@ -669,25 +646,5 @@ public class Move {
             drivesInvolved.put(key, dest.get(key));
         });
         return drivesInvolved;
-    }
-
-    class DebugPrintOut{
-        void out(String head, HashMap<String, AllocContainer> container){
-            Log.d(TAG, head);
-            container.entrySet().stream().forEach((set)->{
-                Log.d(TAG, "drive: " + set.getKey());
-                set.getValue().getAllocItem().stream().forEach((item)->{
-                    Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
-                });
-            });
-            Log.d(TAG, "");
-        }
-
-        void out(String head, AllocContainer container){
-            Log.d(TAG, head);
-            container.getAllocItem().stream().forEach((item)->{
-                Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
-            });
-        }
     }
 }

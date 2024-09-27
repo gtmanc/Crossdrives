@@ -71,6 +71,8 @@ public class SliceConsumer<T, R> {
         mCallback.onStart();
 
         return CompletableFuture.supplyAsync(()->{
+            boolean[] stop = new boolean[1];
+            stop[0] = false;
 
             while(true){
                 T requestedSlice = mCallback.onRequested();
@@ -84,14 +86,19 @@ public class SliceConsumer<T, R> {
                 future.thenAccept((r) -> {
                     mConsumedSlices.add(r);
                     mCallback.onConsumed(r);
-                    Log.d(TAG, "returned from mCallback.onConsumed. size of q: " + mQueue.size());
+                    //Log.d(TAG, "returned from mCallback.onConsumed. size of q: " + mQueue.size());
                     if(mQueue.isEmpty()){
                         Log.w(TAG, "queue is empty before deleting!");
                         return;}
                     boolean successRemoval = mQueue.remove(future);
-                    Log.d(TAG, "size of q: " + mQueue.size());
+                    //Log.d(TAG, "size of q: " + mQueue.size());
                     if(!successRemoval){
                         Log.w(TAG, "fail to remove element in queue!");}
+                }).exceptionally(ex->{
+                    Log.w(TAG, "future task gets error! " + ex.toString());
+                    stop[0] = true;
+                    mCallback.onFailure("future task gets error. future task: " + future.toString());
+                    return null;
                 });
             }
 
@@ -99,8 +106,12 @@ public class SliceConsumer<T, R> {
             Collection<CompletableFuture<R>> futures = new ArrayList<CompletableFuture<R>>();
             //mQueue.drainTo(futures);
             mQueue.stream().forEach((f)->{futures.add(f);});
+
+            //if we have failure, cancel the ongoing futures
+            if(stop[0]){futures.stream().forEach(f->f.cancel(true));}
+
             futures.forEach((f->{
-                Log.d(TAG, "size of q: " + mQueue.size());
+                //Log.d(TAG, "size of q: " + mQueue.size());
                 f.join();}));
 
             Log.d(TAG, "block until q is empty. size of q: " + mQueue.size());

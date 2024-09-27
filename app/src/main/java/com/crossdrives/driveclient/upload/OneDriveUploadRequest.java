@@ -175,11 +175,12 @@ public class OneDriveUploadRequest extends BaseRequest implements IUploadRequest
                 Log.d(TAG, "Uploaded %" + current + "bytes of % " + max + " total bytes");
             }
         };
-        //https://github.com/microsoftgraph/msgraph-sdk-java/blob/dev/src/test/java/com/microsoft/graph/functional/OneDriveTests.java#L92
+
         // https://github.com/microsoftgraph/msgraph-sdk-java/issues/393
+        //https://learn.microsoft.com/en-us/graph/sdks/large-file-upload?tabs=java#upload-large-file-to-onedrive
         DriveItemUploadableProperties property = new DriveItemUploadableProperties();
-        property.name = mMetaData.getName();
-        //property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
+        //property.name = mMetaData.getName();
+        property.additionalDataManager().put("@microsoft.graph.conflictBehavior", new JsonPrimitive("rename"));
         DriveItemCreateUploadSessionParameterSet uploadParams =
                 DriveItemCreateUploadSessionParameterSet.newBuilder()
                         .withItem(property).build();

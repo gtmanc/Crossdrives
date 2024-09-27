@@ -23,6 +23,7 @@ import com.crossdrives.cdfs.list.ICallbackList;
 import com.crossdrives.cdfs.list.List;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
+import com.crossdrives.cdfs.move.IMoveItemProgressListener;
 import com.crossdrives.cdfs.move.Move;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
@@ -57,6 +58,7 @@ public class Service{
     IUploadProgressListener uploadProgressListener;
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
+    IMoveItemProgressListener moveItemProgressListener;
 
     public Task<ListResult> list(@Nullable java.util.List<CdfsItem> parents) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS, parents);
@@ -257,11 +259,11 @@ public class Service{
 
     public Task<com.crossdrives.driveclient.model.File> move(CdfsItem fileID, CdfsItem src, CdfsItem dest) throws MissingDriveClientException, PermissionException {
 
-//        IDeleteProgressListener listener = defaultDeleteProgressListener;
-//        if (deleteProgressListener != null)
-//            listener = deleteProgressListener;
+        IMoveItemProgressListener listener = defaultMoveItemProgressListener;
+        if (moveItemProgressListener != null)
+            listener = moveItemProgressListener;
 
-        Move mover = new Move(mCDFS, fileID, src, dest);
+        Move mover = new Move(mCDFS, fileID, src, dest, listener);
         final Throwable[] throwables = {null};
 
         Log.d(TAG, "CDFS Service: move");
@@ -270,6 +272,18 @@ public class Service{
 
         return mover.execute();
     }
+
+    public void setMoveItemProgressListener(IMoveItemProgressListener listener) {
+        moveItemProgressListener = listener;
+    }
+
+    IMoveItemProgressListener defaultMoveItemProgressListener = new IMoveItemProgressListener() {
+        @Override
+        public void progressChanged(Move mover) {
+            Log.d(TAG, "Move in progress " + mover.getState());
+        }
+    };
+
 
     public Task<com.crossdrives.driveclient.model.File>  create(String name, java.util.List<CdfsItem> parents) throws MissingDriveClientException, PermissionException {
 

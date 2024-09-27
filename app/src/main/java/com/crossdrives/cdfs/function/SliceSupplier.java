@@ -65,10 +65,14 @@ public class SliceSupplier<T, R> {
         mCallback.onStart();
 
         return CompletableFuture.supplyAsync(()->{
+            boolean[] stop = new boolean[1];
+            stop[0] = false;
 
             mItems.entrySet().stream().forEach((set)->{
                 //Log.d(TAG, "SliceSupply: drive: " + set.getKey());
                 set.getValue().stream().forEach((ai)->{
+                    if(stop[0]) {return;}
+
                     //Log.d(TAG, "SliceSupply: Item: " + ai);
                     final CompletableFuture<R> opFuture = mOperation.apply(ai);
                     //If queue is full, the add is blocked until element in queue is free
@@ -89,8 +93,14 @@ public class SliceSupplier<T, R> {
                         boolean successRemoval = mQueue.remove(opFuture);
                         if(!successRemoval){
                             Log.w(TAG, "fail to remove element from the queue!");
-                            mCallback.onFailure("error occurred whiling removing item from the queue!");}
-                    });
+                            //mCallback.onFailure("error occurred whiling removing item from the queue!");
+                        }
+                    }).exceptionally(ex->{
+                        Log.w(TAG, "future task gets error! " + ex.toString());
+                        stop[0] = true;
+                        mCallback.onFailure("future task gets error. future task: " + opFuture.toString());
+                        return null;
+                    });;
                 });
             });
 
@@ -99,8 +109,13 @@ public class SliceSupplier<T, R> {
             //mQueue.drainTo(futures);
             mQueue.stream().forEach((c)->{futures.add(c);});
             //Log.d(TAG, "size of q: " + mQueue.size());
+
+            //if we have failure, cancel the ongoing futures
+            if(stop[0]){futures.stream().forEach(f->f.cancel(true));}
+
             futures.forEach((f->{f.join();}));
 
+            Log.d(TAG, "block until q is empty. size of q: " + mQueue.size());
             while(!mQueue.isEmpty());
 
             mCallback.onCompleted(mItems.size());

@@ -55,16 +55,21 @@ public class Printer {
     public class AllocationItem{
         public void out(String head, com.crossdrives.cdfs.model.AllocationItem ai, String tail){
             printIfAvailable(head);
-            Log.d(TAG, "cdfs name: " + ai.getName());
-            Log.d(TAG, "id: " + ai.getItemId());
-            Log.d(TAG, "seq: " + ai.getSequence());
-            Log.d(TAG, "TotSeg: " + ai.getTotalSeg());
-            Log.d(TAG, "Path: " + ai.getPath());
+            String concatenated = "";
+
+            concatenated = concatenated.join(","
+                    ,"cdfs name: " + ai.getName(),
+                    "id: " + ai.getItemId(),
+                    "seq: " + ai.getSequence(),
+                    "TotSeg: " + ai.getTotalSeg(),
+                    "Path: " + ai.getPath());
+            Log.d(TAG, concatenated);
             printIfAvailable(tail);
         }
 
         public void out(String head, HashMap<String, Collection<com.crossdrives.cdfs.model.AllocationItem>> ai, String tail){
             printIfAvailable(head);
+            Log.d(TAG, "size to print: " + ai.size());
             ai.entrySet().stream().forEach((set)->{
                 Log.d(TAG, "drive: " + set.getKey());
 //                set.getValue().getAllocItem().stream().forEach((item)->{

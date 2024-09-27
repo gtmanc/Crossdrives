@@ -5,7 +5,6 @@ import android.util.Log;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.remote.updater;
 import com.crossdrives.driveclient.update.MetaData;
-import com.google.api.services.drive.model.File;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,6 +105,10 @@ public class MetaDataUpdater
             CompletableFuture<List<com.google.api.services.drive.model.File>> future;
             String driveName = set.getKey();
             List<String> list = set.getValue();
+            if(mDrives.get(driveName) == null){
+                Log.w(TAG, "drive client is missing for the passed id list. update is skipped! Drive: " + driveName);
+                return;
+            }
             updater updater = new updater(mDrives);
 
             //Log.d(TAG, "new parent: " + metaData.newData.get(driveName).getParents().get(0));
