@@ -68,16 +68,18 @@ public class Move {
     public enum State{
         GET_MAP_STARTED,
         GET_MAP_COMPLETE,
-        MAP_UPDATE_STARTED,
-        MAP_UPDATE_COMPLETE,
-        MOVE_IN_PROGRESS,
+        SRC_MAP_UPDATE_STARTED,
+        SRC_MAP_UPDATE_COMPLETE,
+        MOVE_IN_PROGRESS,   //this is only applicable if transfer between drives is performed
         MOVE_COMPLETE,
+        DEST_MAP_UPDATE_STARTED,
+        DEST_MAP_UPDATE_COMPLETED
     }
 
     Move.State mState;
     IMoveItemProgressListener mListener;
-    int progressTotalSegment = 0;
-    int progressTotalDeleted = 0;
+    int progressTotal = 0;
+    int progressActual = 0;
 
     //Model carries out all of necessary info for move
     public class TransferItemModel{
@@ -118,10 +120,12 @@ public class Move {
             public com.crossdrives.driveclient.model.File call() throws Exception {
                 //get the maps for both source and destination because we will need to update the maps according to
                 //the change we will made
+                callback(State.GET_MAP_STARTED);
                 HashMap<String, AllocContainer> containerSrc = getMapContainers(mSource);
                 HashMap<String, AllocContainer> containerDest = getMapContainers(mDest);
                 //po.out("Container source:", containerSrc);
                 //po.out("Container destination:", containerDest);
+                callback(State.GET_MAP_COMPLETE);
 
                 String destParent = mDest.getPath().concat(mDest.getName());
                 Log.d(TAG, "Dest path:" + destParent);
@@ -174,8 +178,10 @@ public class Move {
                 MapUpdater mapUpdater3 = null;
 
                 Log.d(TAG, "Update new container to source...");
+                callback(State.SRC_MAP_UPDATE_STARTED);
                 MapUpdater mapUpdater1 = new MapUpdater(NameMatchedDrives(mSource.getMap().keySet()));
                 mapUpdater1.updateAll(containerSrc, mSource).join();
+                callback(State.SRC_MAP_UPDATE_COMPLETE);
 
                 if(!srcDrivesDestContained.isEmpty()){
                     Log.d(TAG, "Proceed with drives identical");
@@ -197,9 +203,11 @@ public class Move {
                     HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, itemsParentPathUpdated);
                     dp.getContainer().out("New container to dest:", newContainerDest,"");
 
+                    callback(State.DEST_MAP_UPDATE_STARTED);
                     mapUpdater2 = new MapUpdater(NameMatchedDrives(srcDrivesDestContained));
                     Log.d(TAG, "Update new container to dest");
                     mapUpdater2.updateAll(newContainerDest, mDest).join();
+                    callback(State.DEST_MAP_UPDATE_COMPLETED);
                 }
                 
                 if(!srcDrivesDestNotContained.isEmpty()){
@@ -246,6 +254,7 @@ public class Move {
                     Log.d(TAG, "Transfering items...");
                     Collection<TransferItemModel> transferResult = transfer(itemsToAllocated, allocResult).join();
 
+
                     //update the properties according to the result the transfer.
                     // The result should be identical to allocation result pass to the transfer at beginning
                     HashMap<String, Collection<AllocationItem>> updateItems = updateProperty(transferResult);
@@ -267,6 +276,7 @@ public class Move {
                     mapUpdater3 = new MapUpdater(NameMatchedDrives(updateItems.keySet()));
                     Log.d(TAG, "Update new container to dest. involved drves: " + NameMatchedDrives(updateItems.keySet()));
                     mapUpdater3.updateAll(containerDest, mDest).join();
+                    callback(State.MOVE_COMPLETE);
                 }
 
                 //MapFetcher is not thread safe. #54
@@ -464,6 +474,8 @@ public class Move {
             @Override
             public void onConsumed(TransferItemModel ti) {
                 Log.d(TAG, "onConsumed: " + ti.ai.getName() + " seq: " + ti.ai.getSequence());
+                progressActual++;
+                callback(State.MOVE_IN_PROGRESS);
                 Context context = SnippetApp.getAppContext();
                 //Log.d(TAG, "deleting file: " + ti.localFile.getName());
                 if(!context.deleteFile(ti.localFile.getName())){Log.w(TAG, "failed to delete local file: " + ti.ai.getName());}
@@ -483,6 +495,8 @@ public class Move {
 
         //fire!
         Log.d(TAG, "FIRE!!!");
+        progressTotal = items.size();
+        callback(State.MOVE_IN_PROGRESS);
 
         Collection<CompletableFuture> futures = new ArrayList<>();
         futures.add(supplier.run());
@@ -627,9 +641,9 @@ public class Move {
 
     public Move.State getState(){return mState;}
 
-    public int getProgressMax(){return progressTotalSegment;}
+    public int getProgressMax(){return progressTotal;}
 
-    public int getProgressCurrent(){return progressTotalDeleted;}
+    public int getProgressCurrent(){return progressActual;}
 
     void callback(com.crossdrives.cdfs.move.Move.State state){
         mState = state;

@@ -160,7 +160,7 @@ public class Fetcher {
             drive.getClient().download().buildRequest(fileID).run(new IDownloadCallBack<MediaData>() {
                 @Override
                 public void success(MediaData mediaData) {
-                    Log.d(TAG, "OK!. Content is downloaded.");
+                    Log.d(TAG, "OK!. Content is downloaded. content:" + mediaData.getOs().toString());
                     resultFuture.complete(mediaData.getOs());
                 }
 

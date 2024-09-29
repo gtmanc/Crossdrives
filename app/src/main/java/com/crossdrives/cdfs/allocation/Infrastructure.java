@@ -417,9 +417,10 @@ public class Infrastructure{
 //          fileList.getFiles().get(i).getName().compareToIgnoreCase("cdfs");
 //      }
         if(fileList.getFiles().size() > 0) {
-            id = fileList.getFiles().stream().filter((f)->{
+            Optional<File> optional = fileList.getFiles().stream().filter((f)->{
                 return f.getName().compareToIgnoreCase(IConstant.NAME_CDFS_FOLDER) == 0;
-            }).findAny().get().getId();
+            }).findAny();
+            if(optional.isPresent()){id = optional.get().getId();}
             if(id == null){
                 Log.w(TAG, "No CDFS folder!");
             }

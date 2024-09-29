@@ -58,7 +58,6 @@ public class Service{
     IUploadProgressListener uploadProgressListener;
     IDownloadProgressListener downloadProgressListener;
     IDeleteProgressListener deleteProgressListener;
-    IMoveItemProgressListener moveItemProgressListener;
 
     public Task<ListResult> list(@Nullable java.util.List<CdfsItem> parents) throws MissingDriveClientException, GeneralServiceException {
         List list = new List(mCDFS, parents);
@@ -257,11 +256,11 @@ public class Service{
         deleteProgressListener = listener;
     }
 
-    public Task<com.crossdrives.driveclient.model.File> move(CdfsItem fileID, CdfsItem src, CdfsItem dest) throws MissingDriveClientException, PermissionException {
+    public Task<com.crossdrives.driveclient.model.File> move(CdfsItem fileID, CdfsItem src, CdfsItem dest, IMoveItemProgressListener usrListener) throws MissingDriveClientException, PermissionException {
 
         IMoveItemProgressListener listener = defaultMoveItemProgressListener;
-        if (moveItemProgressListener != null)
-            listener = moveItemProgressListener;
+        if (usrListener != null)
+            listener = usrListener;
 
         Move mover = new Move(mCDFS, fileID, src, dest, listener);
         final Throwable[] throwables = {null};
@@ -271,10 +270,6 @@ public class Service{
         mCDFS.requiresDriveClientNonNull();
 
         return mover.execute();
-    }
-
-    public void setMoveItemProgressListener(IMoveItemProgressListener listener) {
-        moveItemProgressListener = listener;
     }
 
     IMoveItemProgressListener defaultMoveItemProgressListener = new IMoveItemProgressListener() {

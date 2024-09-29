@@ -1,5 +1,7 @@
 package com.crossdrives.driveclient.download;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.crossdrives.driveclient.BaseRequest;
@@ -41,10 +43,11 @@ public class GoogleDriveDownloadRequest extends BaseRequest implements IDownload
                 OutputStream outputStream = bos;
                 MediaData mediaData = new MediaData();
 
-                //Log.d(TAG, "download: " + mID);
+                Log.d(TAG, "ID to download: " + mID);
                 String ex = null;
                 mClient.getGoogleDriveService().files().get(mID)
                         .executeMediaAndDownloadTo(bos);
+                Log.d(TAG, bos.toString());
                 mediaData.setOs(bos);
                 mediaData.setAdditionInteger(additionInt);
                 return mediaData;

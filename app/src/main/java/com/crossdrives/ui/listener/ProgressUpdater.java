@@ -118,7 +118,7 @@ public class ProgressUpdater {
         IMoveItemProgressListener lisener = new IMoveItemProgressListener() {
             @Override
             public void progressChanged(Move mover) {
-                //Log.d(TAG, "delete progressChanged!");
+                //Log.d(TAG, "move progressChanged!");
                 //Notification notification;
                 Move.State state = mover.getState();
                 //notification = mNotificationsByDownloadListener.get(this);
@@ -126,12 +126,19 @@ public class ProgressUpdater {
                     Log.d(TAG, "[Notification]:fetching remote maps...");
                     notification.updateContentText(context.getString(R.string.notification_content_move_item_start_fetch_maps));
                 }
+                else if(state == Move.State.SRC_MAP_UPDATE_STARTED){
+                    Log.d(TAG, "Move: update source map");
+                    notification.updateContentText(context.getString(R.string.notification_content_move_item_start_update_src_map));
+                }
                 else if(state == Move.State.MOVE_IN_PROGRESS){
                     int current = mover.getProgressCurrent();
                     int max = mover.getProgressMax();
                     Log.d(TAG, "[Notification]:move in progress. Current " + current + " Max: " + max);
                     notification.updateContentText(context.getString(R.string.notification_content_moving_file));
                     notification.updateProgress(current, max);
+                }else if(state == Move.State.DEST_MAP_UPDATE_STARTED){
+                    Log.d(TAG, "Move: update dest map");
+                    notification.updateContentText(context.getString(R.string.notification_content_move_item_start_update_dest_map));
                 }
             }
         };

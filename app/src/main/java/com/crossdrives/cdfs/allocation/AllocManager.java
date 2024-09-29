@@ -15,6 +15,7 @@ import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
+import com.crossdrives.cdfs.util.print.Printer;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.gson.Gson;
@@ -134,7 +135,7 @@ public class AllocManager implements IAllocManager {
                 reducedOs.put(set.getKey(), set.getValue());
             }
             else{
-                Log.d(TAG, "Output stream is null. Drive: " + set.getKey());
+                Log.w(TAG, "Output stream is null. Drive: " + set.getKey());
             }
         });
 
@@ -151,6 +152,8 @@ public class AllocManager implements IAllocManager {
 //
             ac.set(toContainer(value));
 //            Log.d(TAG, "size of items: " + ac.get().getAllocItem().size());
+            Printer printer = new Printer(TAG);
+            printer.getContainer().out("content of downloaded allocation file:", toContainer(value), "");
 
             /*
                 Check allocation item traversely and save to database if the item is valid

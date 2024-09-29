@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -391,8 +392,15 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			IMoveItemProgressListener progressListener;
 			Log.d(TAG, "length of selected dest: " + parentArray.length);
 			Log.d(TAG, "1st ID of selected dest: " + parentArray[0].getId());
+			Notification notification
+					= new Notification(Notification.Category.NOTIFY_MOVE, R.drawable.ic_baseline_cloud_circle_24);
+			notification.setContentTitle(getString(R.string.notification_title_item_moving));
+			notification.setContentText(getString(R.string.notification_content_default));
+			notification.build();
+			progressListener = new ProgressUpdater().createMoveItemListener(notification);
+			Service service = CDFS.getCDFSService().getService();
 			try {
-				task = CDFS.getCDFSService().getService().move(itemOverflowMenuExpaned, treeOpener.getParent(), parentArray[parentArray.length-1]);
+				task =service.move(itemOverflowMenuExpaned, treeOpener.getParent(), parentArray[parentArray.length-1], progressListener);
 			} catch (PermissionException | MissingDriveClientException e) {
 				Log.w(TAG, e.getMessage());
 				Log.w(TAG, e.getCause());
@@ -400,18 +408,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
 			}
 			if(task != null){
-				Notification notification
-						= new Notification(Notification.Category.NOTIFY_MOVE, R.drawable.ic_baseline_cloud_circle_24);
-				notification.setContentTitle(getString(R.string.notification_title_item_moving));
-				notification.setContentText(getString(R.string.notification_content_default));
-				notification.build();
-				ResultUpdater updater = new ResultUpdater();
-				notification.setContentTitle(getString(R.string.notification_title_item_moving));
-				notification.setContentText(getString(R.string.notification_content_default));
-				notification.build();
-				progressListener = new ProgressUpdater().createMoveItemListener(notification);
-				task.addOnSuccessListener(updater.createMoveItemSuccessListener(notification)).
-						addOnFailureListener(updater.createMoveItemFailureListener(notification));
+				ResultUpdater resultUpdater = new ResultUpdater();
+				task.addOnSuccessListener(resultUpdater.createMoveItemSuccessListener(notification)).
+						addOnFailureListener(resultUpdater.createMoveItemFailureListener(notification));
+			}else{
+				Context context = SnippetApp.getAppContext();
+				notification.removeProgressBar();
+				notification.updateContentTitle(context.getString(R.string.notification_title_move_item_completed));
+				notification.updateContentText(context.getString(R.string.notification_content_move_item_complete_exceptionally));
 			}
 		}
 	};
