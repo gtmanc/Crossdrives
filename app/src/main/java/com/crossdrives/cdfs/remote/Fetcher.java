@@ -89,17 +89,21 @@ public class Fetcher {
         Pull the content of the map files in Outputstream. Note the outputStream could be NULL if no
         map file is found in the specified folder.
     */
-    public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, String> fileID){
+    public CompletableFuture<HashMap<String, OutputStream>> pullAll(HashMap<String, String> fileIDs){
         CompletableFuture<HashMap<String, OutputStream>> resultFuture =
                 CompletableFuture.supplyAsync(()->{
-                    mDrives.forEach((name, drive) -> {
-                        Log.d(TAG, "fetch Content. Drive: " + name);
-
-                        //sExecutor.submit(()->{
-                        CompletableFuture<OutputStream> future = helpertFetchContent(drive, fileID.get(name));
-                        ContentFutures.put(name, future);
+//                    mDrives.forEach((name, drive) -> {
+//                        Log.d(TAG, "fetch Content. Drive: " + name);
+//
+//                        //sExecutor.submit(()->{
+//                        CompletableFuture<OutputStream> future = helpertFetchContent(drive, fileID.get(name));
+//                        ContentFutures.put(name, future);
+//                    });
+                    fileIDs.forEach((dname, f)->{
+                        Log.d(TAG, "fetch Content. Drive: " + dname);
+                        CompletableFuture<OutputStream> future = helpertFetchContent(mDrives.get(dname), f);
+                        ContentFutures.put(dname, future);
                     });
-
                     return Mapper.reValue(ContentFutures, (future)->{
                         return future.join();
                     });

@@ -8,7 +8,7 @@ public class MetaData {
     private Parents parents = new Parents();
     private List<ContentRestriction> restrictions;
 
-    //Google doens't allow to add multiple parrent to an item staring API v3.
+    //Google doesn't allow to add multiple parents to an item staring API v3.
     //Nevertheless, we still keep the list in case that there is change in the future.
     public class Parents{
         public List<String> toRemove;   //parents will be removed

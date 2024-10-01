@@ -96,7 +96,7 @@
 
     <string name="notification_title_item_moving">Move in progress</string>
     <string name="notification_title_move_item_completed">Move Completed</string>
-    <string name="notification_content_moving_file">Moving file. Could take longer time than usual...</string>
+    <string name="notification_content_moving_file">Could take longer time than usual...</string>
     <string name="notification_content_move_item_start_fetch_maps">Check...</string>
     <string name="notification_content_move_item_fetch_maps_done">Check OK!</string>
     <string name="notification_content_move_item_complete">Moved successfully</string>

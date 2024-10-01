@@ -20,14 +20,12 @@ import com.crossdrives.cdfs.drivehelper.Delete;
 import com.crossdrives.cdfs.drivehelper.Download;
 import com.crossdrives.cdfs.drivehelper.Upload;
 import com.crossdrives.cdfs.exception.InvalidArgumentException;
-import com.crossdrives.cdfs.exception.ItemNotFoundException;
 import com.crossdrives.cdfs.function.SliceConsumer;
 import com.crossdrives.cdfs.function.SliceSupplier;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Mapper;
-import com.crossdrives.cdfs.util.collection.Diff;
 import com.crossdrives.cdfs.util.print.Printer;
 import com.crossdrives.cdfs.util.strings.Strings;
 import com.crossdrives.driveclient.model.File;
@@ -50,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -400,6 +397,8 @@ public class Move {
                     Log.w(TAG, e.getMessage());
                     throw new RuntimeException(e);
                 }
+                progressActual++;
+                callback(State.MOVE_IN_PROGRESS);
             }
 
             @Override
@@ -493,10 +492,13 @@ public class Move {
             }
         });
 
-        //fire!
-        Log.d(TAG, "FIRE!!!");
-        progressTotal = items.size();
+        //UI stuff
+        //Calculate total number of items to transfer. Multiply with 2 because we like to show the progress for supply and consume
+        progressTotal = Mapper.reValue(items, l -> l.size()).values().stream().mapToInt(Integer::intValue).sum() << 1;
         callback(State.MOVE_IN_PROGRESS);
+
+        //fire!
+        Log.d(TAG, "FIRE!!! Max progress: " + progressTotal);
 
         Collection<CompletableFuture> futures = new ArrayList<>();
         futures.add(supplier.run());

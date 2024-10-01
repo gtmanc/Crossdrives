@@ -86,8 +86,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener, CreateFolderAlertDialog.CreateFolderDialogListener{
@@ -1149,16 +1149,21 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			service.setDeleteProgressListener(progressListener);
 
 			//get the item checked
-			SerachResultItemModel selectedItem = currList.stream().filter((i)->{
+			Optional<SerachResultItemModel> optionalItemChecked = currList.stream().filter((i)->{
 				return i.isSelected();
-			}).findFirst().get();
-			selectedItem.setSelected(false);
-			if(!currList.remove(selectedItem)){
-				Log.d(TAG, "Failed to remove item from list!");
-			}
-			mAdapter.notifyDataSetChanged();
+			}).findFirst();
+			//If we can't find the check item. stop here!
+			if(!optionalItemChecked.isPresent()){return true;}
 
-			Log.d(TAG, "Delete item: " + selectedItem.getCdfsItem().getName());
+			SerachResultItemModel selectedItem = optionalItemChecked.get();
+			selectedItem.setSelected(false);
+
+			//Remove the checked item from list and re-submit to the adapter so that UI can get updated
+			List<SerachResultItemModel> newList = new ArrayList<>(currList);
+			if(!newList.remove(selectedItem)){Log.w(TAG, "Failed to remove item from list!");}
+			mAdapter.submitList(newList);
+
+			Log.d(TAG, "Deleting item: " + selectedItem.getCdfsItem().getName());
 			try {
 				task = service.delete(selectedItem.getCdfsItem().getId(), treeOpener.getParent());
 			} catch (MissingDriveClientException | PermissionException e) {
