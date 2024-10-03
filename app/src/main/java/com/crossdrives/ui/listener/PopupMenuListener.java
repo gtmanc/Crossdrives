@@ -5,6 +5,7 @@ import android.widget.PopupMenu;
 
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.ui.GlobalUiStateVm;
+import com.crossdrives.ui.helper.RenameDialogBuilder;
 import com.example.crossdrives.R;
 
 public class PopupMenuListener implements PopupMenu.OnMenuItemClickListener {
@@ -24,8 +25,8 @@ public class PopupMenuListener implements PopupMenu.OnMenuItemClickListener {
             vm.getMoveItemStateLd().launch(startDest, srcDestId);
         }else if (id == R.id.omiInfo){
 
+        }else if (id == R.id.omiRename) {
         }
-
         return false;
     }
 }

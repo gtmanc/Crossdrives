@@ -230,6 +230,7 @@ public class AllocManager implements IAllocManager {
         item.setSize(0);
         item.setSequence(seq);
         item.setTotalSeg(total);
+        item.setNameRawContent(name);
         return item;
     }
 
@@ -310,22 +311,23 @@ public class AllocManager implements IAllocManager {
         Cursor cursor = null;
 
         /*
-            Set filter(clause) parent
+            Set filter(clause) parent. This actually is not needed anymore because the CDFS is changed to
+            multiply parents structure. The local database only contains items which have the same parent(path).
          */
-        filter = DBConstants.ALLOCITEMS_LIST_COL_PATH;
-        if(parent == null) {
-            filter = filter.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
-        }else{
-            filter = filter.concat(" ="  + "'" + parent + "'");
-        }
-
-        Log.d(TAG, "Get CDFS ID list. Filter clause: " + filter);
+//        filter = DBConstants.ALLOCITEMS_LIST_COL_PATH;
+//        if(parent == null) {
+//            filter = filter.concat(" = " + "'" + IConstant.CDFS_PATH_BASE + "' ");
+//        }else{
+//            filter = filter.concat(" ="  + "'" + parent + "'");
+//        }
+//
+//        Log.d(TAG, "Get CDFS ID list. Filter clause: " + filter);
+//      cursor = dh.query(filter);
 
         selects.add(DBConstants.ALLOCITEMS_LIST_COL_CDFSID);
         dh.Select(selects);
         dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
-
-        cursor = dh.query(filter);
+        cursor = dh.query(); //pass none to read all records
 
         if(cursor == null){
             Log.w(TAG, "Cursor is null!");

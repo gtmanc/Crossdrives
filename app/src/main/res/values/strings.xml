@@ -18,6 +18,7 @@
     <string name="actionModeCopy">Copy Link</string>
     <!-- overflow icon popup menu -->
     <string name="overflow_popup_menu_item_move">Move</string>
+    <string name="overflow_popup_menu_item_rename">Rename</string>
     <string name="overflow_popup_menu_item_info">Infomation</string>
 
     <!--Query Result Fragment-->
@@ -55,8 +56,14 @@
     <string name="hint1_base_action_dialog">Input text</string>
     <string name="hint2_base_action_dialog">Input text</string>
 
+    <!--        =================Dialogs=================         -->
     <!-- Create folder dialog -->
     <string name="title_create_folder_dialog">Create Folder</string>
+    <string name="content_create_folder_dialog">Enter folder name</string>
+
+    <!-- Rename dialog -->
+    <string name="title_rename_dialog">Rename</string>
+    <string name="content_rename_dialog">Enter New Name</string>
 
     <!-- Dialog permission request education -->
     <string name="message_permission_education">Grant the permission so that download can work as expectedly</string>

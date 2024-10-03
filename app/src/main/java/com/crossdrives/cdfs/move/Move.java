@@ -26,6 +26,7 @@ import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.Mapper;
+import com.crossdrives.cdfs.util.map.Reducer;
 import com.crossdrives.cdfs.util.print.Printer;
 import com.crossdrives.cdfs.util.strings.Strings;
 import com.crossdrives.driveclient.model.File;
@@ -176,7 +177,7 @@ public class Move {
 
                 Log.d(TAG, "Update new container to source...");
                 callback(State.SRC_MAP_UPDATE_STARTED);
-                MapUpdater mapUpdater1 = new MapUpdater(NameMatchedDrives(mSource.getMap().keySet()));
+                MapUpdater mapUpdater1 = new MapUpdater(new Reducer(mCDFS.getDrives()).toKeyMatched(mSource.getMap().keySet()));
                 mapUpdater1.updateAll(containerSrc, mSource).join();
                 callback(State.SRC_MAP_UPDATE_COMPLETE);
 

@@ -45,7 +45,10 @@ public class Printer {
         public void out(String head, AllocContainer container, String tail){
             printIfAvailable(head);
             container.getAllocItem().stream().forEach((item)->{
-                Log.d(TAG, "name: " + item.getName() + " seq: " + item.getSequence() + " TotSeq: " + item.getTotalSeg() + " parent: " + item.getPath());
+                Log.d(TAG, "name: " + item.getName() +
+                        " seq: " + item.getSequence() +
+                        " TotSeq: " + item.getTotalSeg() +
+                        " parent: " + item.getPath());
             });
             printIfAvailable(tail);
         }

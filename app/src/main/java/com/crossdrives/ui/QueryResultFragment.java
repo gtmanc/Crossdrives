@@ -58,7 +58,8 @@ import com.crossdrives.ui.document.OpenTree;
 import com.crossdrives.ui.document.OpenTreeFactory;
 import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
 import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
-import com.crossdrives.ui.listener.PopupMenuListener;
+import com.crossdrives.ui.helper.RenameDialogBuilder;
+import com.crossdrives.ui.helper.RenameDialogResultResolver;
 import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
@@ -212,6 +213,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		if(!globalVm.getMoveItemStateLd().getMoveItemState().InProgress) {
 			globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
 		}
+		//globalVm.getRenameStateLd().observe(this, renameStateObserver);
 	}
 
 
@@ -420,6 +422,21 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
+	final Observer<GlobalUiStateVm.RenameState> renameStateObserver = new Observer<GlobalUiStateVm.RenameState>() {
+		@Override
+		public void onChanged(GlobalUiStateVm.RenameState state) {
+			Log.d(TAG, "rename state observed onChanged called.");
+			globalVm.getRenameStateLd().removeObserver(this);
+
+			RenameDialogBuilder builder = new RenameDialogBuilder();
+			mStartRenameDialogForResult.launch(builder.
+					title(getString(R.string.title_rename_dialog)).
+					content(getString(R.string.content_rename_dialog)).
+					numTextInputBox(1).build(mActivity));
+
+
+		}
+	};
 	private void queryFileContinue(){
 		ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
 
@@ -798,9 +815,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//popup.setOnMenuItemClickListener(PopupMenuListener.create(globalVm, treeOpener.getParent()));
 			NavController navController = Navigation.findNavController(view);
 
-			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm,
-					treeOpener.getParentArray(false), navController.getCurrentDestination().getId()));
-
+//			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm,
+//					treeOpener.getParentArray(false), navController.getCurrentDestination().getId()));
+			popup.setOnMenuItemClickListener(PopupMenuListener);
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			//We only show the option item Move if the item is not a folder
@@ -990,7 +1007,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				// We are safe to use mActivity here because onViewCreated() is invoked. i.e. mActivity is
 				// initialized in onViewCreated()
 				CreateFolderDialogBuilder builder = new CreateFolderDialogBuilder();
-				builder.setTitle("Create Folder").setContent("Enter folder name").setNumTextInputBox(1);
+				builder.setTitle(getString(R.string.title_create_folder_dialog)).setContent(getString(R.string.content_create_folder_dialog)).setNumTextInputBox(1);
 				mStartForResult.launch(builder.build(mActivity));
 			}else{
 				Log.w(TAG, "Unknown item detected!");
@@ -1149,13 +1166,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			service.setDeleteProgressListener(progressListener);
 
 			//get the item checked
-			Optional<SerachResultItemModel> optionalItemChecked = currList.stream().filter((i)->{
-				return i.isSelected();
-			}).findFirst();
-			//If we can't find the check item. stop here!
-			if(!optionalItemChecked.isPresent()){return true;}
-
-			SerachResultItemModel selectedItem = optionalItemChecked.get();
+//			Optional<SerachResultItemModel> optionalItemChecked = currList.stream().filter((i)->{
+//				return i.isSelected();
+//			}).findFirst();
+//			//If we can't find the check item. stop here!
+//			if(!optionalItemChecked.isPresent()){return true;}
+			SerachResultItemModel selectedItem;// = optionalItemChecked.get();
+			selectedItem = getItemOverflowMenuExpanded(currList);
+			if(selectedItem == null) {Log.w(TAG, "None of slwcted found!");return true;}
 			selectedItem.setSelected(false);
 
 			//Remove the checked item from list and re-submit to the adapter so that UI can get updated
@@ -1325,6 +1343,34 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 					}
 				}
 			});
+
+	ActivityResultLauncher<Intent> mStartRenameDialogForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+			new ActivityResultCallback<ActivityResult>() {
+				@Override
+				public void onActivityResult(ActivityResult result) {
+					//Result code could be altered: https://medium.com/mobile-app-development-publication/undocumented-startactivityforresult-behavior-for-fragment-b7b04d24a346
+					if (result.getResultCode() == Activity.RESULT_OK) {
+						String newName;
+						Task<com.crossdrives.driveclient.model.File> task;
+						OnSuccessListener<com.crossdrives.driveclient.model.File> successListener;
+						OnFailureListener failureListener;
+						Intent intent = result.getData();
+						RenameDialogResultResolver resolver = new RenameDialogResultResolver(intent);
+						newName = resolver.getNewName();
+						Log.d(TAG, "new name entered: " + newName);
+						try {
+							task = CDFS.getCDFSService().getService().rename(newName, itemOverflowMenuExpaned, treeOpener.getParents());
+//							ResultUpdater resultUpdater = new ResultUpdater();
+//							successListener = resultUpdater.createCreateSuccessListener(null);
+//							failureListener = resultUpdater.createCreateFailureListener(null);
+//							task.addOnSuccessListener(successListener).addOnFailureListener(failureListener);
+						} catch (Exception e) {
+							Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+						}
+
+					}
+				}
+			});
 	//https://www.jb51.net/article/112581.htm
 	private java.io.File UriToFile(final Uri uri){
 		if ( null == uri ) return null;
@@ -1389,4 +1435,38 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			mProgressBar.setVisibility(View.GONE);
 		}
 	};
+
+	PopupMenu.OnMenuItemClickListener PopupMenuListener = new PopupMenu.OnMenuItemClickListener(){
+
+		@Override
+		public boolean onMenuItemClick(MenuItem menuItem) {
+			NavController navController = Navigation.findNavController(mView);
+
+			int id = menuItem.getItemId();
+			if( id == R.id.omiMove){
+				globalVm.getMoveItemStateLd().launch(treeOpener.getParentArray(false), navController.getCurrentDestination().getId());
+			}else if (id == R.id.omiInfo){
+
+			}else if (id == R.id.omiRename){
+//            vm.getRenameStateLd().launch(null);
+				RenameDialogBuilder builder = new RenameDialogBuilder();
+				mStartRenameDialogForResult.launch(builder.
+						title(mActivity.getString(R.string.title_rename_dialog)).
+						content(mActivity.getString(R.string.content_rename_dialog)).
+						numTextInputBox(1).build(mActivity));        }
+
+			return false;
+		}
+	};
+
+
+	private SerachResultItemModel getItemOverflowMenuExpanded(List<SerachResultItemModel> list){
+		Optional<SerachResultItemModel> optionalItemChecked = list.stream().filter((i)->{
+			return i.isSelected();
+		}).findFirst();
+		//If we can't find the check item. stop here!
+		if(!optionalItemChecked.isPresent()){return null;}
+
+		return optionalItemChecked.get();
+	}
 }

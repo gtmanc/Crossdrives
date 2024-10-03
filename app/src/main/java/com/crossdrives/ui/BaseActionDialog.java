@@ -49,7 +49,6 @@ public class BaseActionDialog extends ComponentActivity
 
         TextView viewTitle = findViewById(R.id.title_base_action_dialog);
         TextView viewContent = findViewById(R.id.content_base_action_dialog);
-        Log.d(TAG, "Content: " + viewContent.getText().toString());
         Button negativeButton = findViewById(R.id.button_negative_base_action_dialog);
         Button positiveButton = findViewById(R.id.button_positive_base_action_dialog);
         viewTextInputLayout = new ArrayList<>();
@@ -77,7 +76,7 @@ public class BaseActionDialog extends ComponentActivity
         if(content != null){
             viewContent.setText(content);
             viewContent.setVisibility(View.VISIBLE);
-            Log.d(TAG, "Content: " + viewContent.getText().toString());
+            //Log.d(TAG, "content: " + viewContent.getText().toString());
         }
         if(textNegativeButton != null){
             negativeButton.setText(textNegativeButton);

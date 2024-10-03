@@ -25,6 +25,7 @@ import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.move.IMoveItemProgressListener;
 import com.crossdrives.cdfs.move.Move;
+import com.crossdrives.cdfs.rename.Rename;
 import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.cdfs.upload.Upload;
 import com.crossdrives.msgraph.SnippetApp;
@@ -294,6 +295,22 @@ public class Service{
         mCDFS.requiresDriveClientNonNull();
 
         return creator.execute();
+    }
+
+    public Task<com.crossdrives.driveclient.model.File>  rename(String name, CdfsItem item, java.util.List<CdfsItem> parents) throws MissingDriveClientException, PermissionException {
+
+//        IDeleteProgressListener listener = defaultDeleteProgressListener;
+//        if (deleteProgressListener != null)
+//            listener = deleteProgressListener;
+
+        Rename renaming = new Rename(mCDFS, name, item, parents);
+        final Throwable[] throwables = {null};
+
+        Log.d(TAG, "CDFS Service: Rename");
+
+        mCDFS.requiresDriveClientNonNull();
+
+        return renaming.execute();
     }
 
 }

@@ -243,10 +243,10 @@ public class DBHelper{
             Log.w(TAG, "db open failed" + e.getMessage());
         }
 
-        if(expression.length == 0) {
-            Log.d(TAG, "Query all");
-            statement = "SELECT * FROM " + TABLE_ALLOCITEM_LIST + ";";
-        }else{
+//        if(expression.length == 0) {
+//            Log.d(TAG, "Query all");
+//            statement = "SELECT * FROM " + TABLE_ALLOCITEM_LIST + ";";
+//        }else{
 //            statement = "SELECT * "
 //                    + " FROM " + TABLE_ALLOCITEM_LIST
 //                    + " WHERE " + expression[0] + " = " + expression[1] + " AND "
@@ -271,21 +271,24 @@ public class DBHelper{
             /*
                 filter
              */
-            statement = statement.concat(" WHERE ");
-            for(i = 0; i < expression.length-1 ; i++){
-                statement = statement.concat(expression[i] + "AND ");
+            if(expression.length > 0) {
+                statement = statement.concat(" WHERE ");
+                for (i = 0; i < expression.length - 1; i++) {
+                    statement = statement.concat(expression[i] + "AND ");
+                }
+                statement = statement.concat(expression[i]);
             }
-            statement = statement.concat(expression[i]);
             /*
                 Grouping
-             */
+            */
             if(mClauseGroup != null){
                 statement = statement.concat(" GROUP BY " + mClauseGroup);
             }
-
             statement = statement.concat(";");
+
             Log.d(TAG, "clause: " + statement);
-        }
+//        }
+
 
         if(db != null)    {
             cursor = db.rawQuery(statement, null);

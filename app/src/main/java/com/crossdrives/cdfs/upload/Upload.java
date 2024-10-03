@@ -27,6 +27,8 @@ import com.crossdrives.cdfs.util.Delay;
 import com.crossdrives.cdfs.util.Mapper;
 import com.crossdrives.cdfs.util.Wait;
 import com.crossdrives.cdfs.util.collection.Allocation;
+import com.crossdrives.cdfs.util.map.Reducer;
+import com.crossdrives.cdfs.util.strings.Strings;
 import com.crossdrives.driveclient.upload.IUploadCallBack;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.tasks.Tasks;
@@ -127,7 +129,8 @@ public class Upload {
             HashMap<String, About.StorageQuota> quotaMap = null;
             HashMap<String, CompletableFuture<Integer>> splitCompleteFutures = new HashMap<>();
 
-            QuotaEnquirer enquirer = new QuotaEnquirer(drives);
+            Reducer reducer = new Reducer(mCDFS.getDrives());
+            QuotaEnquirer enquirer = new QuotaEnquirer(reducer.toKeyMatched(whereWeAre.getMap().keySet()));
             //Both queues need to be global as splitter will use
             HashMap<String, ArrayBlockingQueue<File>> toUploadQueueMap = new HashMap<>();
             HashMap<String, LinkedBlockingQueue<File>> remainingQueueMap = new HashMap<>();
@@ -201,6 +204,7 @@ public class Upload {
                     totalSlicePerDrive.replace(driveName, slicePerDrive);
                     item.setSize(len);
                     item.setName(CdfsName);
+                    item.setNameRawContent(CdfsName);
                     item.setDrive(driveName);
                     /*
                         We have to assign the sequence number right here because the sequence

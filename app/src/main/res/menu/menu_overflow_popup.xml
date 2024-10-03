@@ -11,6 +11,12 @@
     </item>
 
     <item
+        android:id="@+id/omiRename"
+        android:icon="@drawable/baseline_drive_file_rename_outline_24"
+        android:title="@string/overflow_popup_menu_item_rename">
+    </item>
+
+    <item
         android:id="@+id/omiInfo"
         android:icon="@drawable/ic_baseline_select_all_24"
         android:title="@string/overflow_popup_menu_item_info">

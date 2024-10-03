@@ -1,7 +1,33 @@
 package com.crossdrives.cdfs.model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+
 public class AllocationItem {
     static public final int SEQ_INITIAL = 1;// sequence number starts with 1
+
+    private enum PropertyName{
+        DRIVE("drive"),
+        SEQ("seq"),
+        TOT_SEQ("tot_seq"),
+        CDFS_ID("cdfs_id"),
+        ITEM_ID("id"),
+        NAME("name"),
+        PATH("path"),
+        SIZE("size"),
+        CDFS_SIZE("cdfs_size"),
+        folder("folder"),
+        NAME_RAW_CONTENT("name_raw_content");
+
+        private final String prop;
+
+        PropertyName(String prop) {
+            this.prop = prop;
+        }
+    }
+
     /*
         Item name shown in CDFS
      */
@@ -50,6 +76,8 @@ public class AllocationItem {
         Attribute folder. Indicates whether this item is a folder or not.
      */
     private boolean folder;
+
+    private String nameRawContent;
 
     public String create(){
         String s = null;
@@ -109,7 +137,24 @@ public class AllocationItem {
         this.itemId = itemId;
     }
 
-    public static AllocationItem clone(AllocationItem item){
+    public String getNameRawContent() {
+        return nameRawContent;
+    }
+
+    public void setNameRawContent(String nameRawContent) {
+        this.nameRawContent = nameRawContent;
+    }
+
+    public Collection<String> toPropertyNames(){
+        Iterator<PropertyName> iterator = Arrays.stream(PropertyName.values()).iterator();
+        Collection<String> out = new ArrayList<>();
+        while(iterator.hasNext()){
+            out.add(iterator.next().name());
+        }
+        return out;
+    }
+
+    public AllocationItem clone(AllocationItem item){
         AllocationItem ai = new AllocationItem();
         ai.name = item.getName();
         ai.path = item.getPath();

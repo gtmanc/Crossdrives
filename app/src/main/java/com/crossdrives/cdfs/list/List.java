@@ -190,7 +190,8 @@ public class List {
             Set filter(clause) parent. This actually is not needed anymore because the CDFS is changed to
             multiply parents structure. The local database only contains items which have the same parent(path).
          */
-        clause1 = buildClausePath(pathParent);
+        //clause1 = buildClausePath(pathParent);
+        //cursor = dh.query(clause1);
 
         /*
             Set filter(clause) attribute folder
@@ -203,7 +204,7 @@ public class List {
             have the same CDFS ID.
         */
         dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
-        cursor = dh.query(clause1);
+        cursor = dh.query();    //pass none to read all records
         if(!queryResultCheck(cursor)){return items;}
 
         final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
@@ -217,6 +218,7 @@ public class List {
         final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
         final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
         cursor.moveToFirst();
+        Log.d(TAG, "start to create cdfs list. cursor count: " + cursor.getCount());
         for(int i = 0 ; i < cursor.getCount(); i++){
             CdfsItem item = new CdfsItem();
             ConcurrentHashMap<String, java.util.List<String>> map = new ConcurrentHashMap<>();
@@ -247,7 +249,7 @@ public class List {
             String clause2 = ALLOCITEMS_LIST_COL_CDFSID;
             clause2 = clause2.concat(" = " + "'" + item.getId() + "'");
             Cursor cursor2 = null;
-            cursor2 = dh.query(clause1, clause2);
+            cursor2 = dh.query(clause2);
             if(!queryResultCheck(cursor2)){return;}
             ConcurrentHashMap<String, java.util.List<String>> map = item.getMap();
             cursor2.moveToFirst();
