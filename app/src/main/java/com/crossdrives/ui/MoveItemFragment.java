@@ -154,7 +154,8 @@ public class MoveItemFragment extends QueryResultFragment {
             if(item.getItemId() == R.id.bottomAppBarItemMove){
                 Log.d(TAG, "Bottom app bar: ok button is pressed.");
                 exitWorkflow(navController, globalVm, state.srcDestId);
-                NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.main_list_fragment);
+                NavBackStackEntry backStackEntry = navController.getBackStackEntry(state.srcDestId);//R.id.main_list_fragment, child_list_fragment
+
                 backStackEntry.getSavedStateHandle().set(KEY_SELECTED_DEST, treeOpener.getParentArray(false));
             }else if(item.getItemId() == R.id.bottomAppBarItemCancel){
                 Log.d(TAG, "Bottom app bar: cancel button is pressed.");

@@ -52,7 +52,7 @@ public class MainListFragment extends QueryResultFragment{
         requireActivity().getOnBackPressedDispatcher().addCallback(callback);
 
     }
-    @Override
+
     void navigateToOpenFolder(View view, CdfsItem[] itemArray){
         Log.d(TAG, "navigateToItemShortPress");
         NavController navController = Navigation.findNavController(view);

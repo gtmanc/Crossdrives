@@ -30,13 +30,17 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewTreeLifecycleOwner;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
@@ -214,6 +218,18 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			globalVm.getMoveItemStateLd().observe(this, moveItemStateObserver);
 		}
 		//globalVm.getRenameStateLd().observe(this, renameStateObserver);
+		//Retrieve the destination the item will be moved to that the move item workflow returned
+//		MutableLiveData<CdfsItem[]> liveData = navController.getCurrentBackStackEntry()
+//				.getSavedStateHandle()
+//				.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
+//		liveData.observe(getViewLifecycleOwner(), BackEntryStateObserver);
+		NavBackStackEntry entry = navController.getCurrentBackStackEntry();
+		Log.d(TAG, "entry: " + entry);
+		SavedStateHandle handle = entry.getSavedStateHandle();
+		MutableLiveData<CdfsItem[]> liveData = handle.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
+		//LifecycleOwner owner = getViewLifecycleOwner();
+		//Log.d(TAG, "owner: " + owner);
+		liveData.observe(this, BackEntryStateObserver);
 	}
 
 
@@ -322,12 +338,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//TODO: we may have to update the parent list stored in OpenTree viewmode because screen may transits from
 		//add account screen. also need to take care the situation that infrastructure buid has not yet finished.
 
-
-		//Retrieve the destination the item will be moved to that the move item workflow returned
-		MutableLiveData<CdfsItem[]> liveData = navController.getCurrentBackStackEntry()
-				.getSavedStateHandle()
-				.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
-		liveData.observe(getViewLifecycleOwner(), BackEntryStateObserver);
 	}
 
 	/*
@@ -376,10 +386,20 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			Log.d(TAG, "moveItemStateObserver onChanged called.");
 
 			if(globalVm.getMoveItemStateLd().getMoveItemState().InProgress) {
-				CdfsItem[] itemArray = treeOpener.getParentArray(false);
-				//Concatenate the dir we will go to produce a complete dir for the need of the destination
-
+				//Retrieve the destination the item will be moved to that the move item workflow returned
 				NavController navController = Navigation.findNavController(mView);
+//
+//				NavBackStackEntry entry = navController.getCurrentBackStackEntry();
+//				Log.d(TAG, "entry: " + entry);
+//				SavedStateHandle handle = entry.getSavedStateHandle();
+//				MutableLiveData<CdfsItem[]> liveData = handle.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
+//				LifecycleOwner owner = getViewLifecycleOwner();
+//				Log.d(TAG, "owner: " + owner);
+//				liveData.observe(owner, BackEntryStateObserver);
+
+				CdfsItem[] itemArray = treeOpener.getParentArray(false);
+
+				//Concatenate the dir we will go to produce a complete dir for the need of the destination
 				//navController.navigate(QueryResultFragmentDirections.navigateToMyself(treeOpener.getParentArray(false)));
 				navController.navigate(MainListFragmentDirections.navigateToMoveItemWorkflowGraph(itemArray));
 			}
@@ -390,6 +410,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onChanged(CdfsItem[] parentArray) {
+			// remove the live data observe because we want to handle event only once
+			// mView is set in onViewCreated. so we are safe to use
+//			NavController navController = Navigation.findNavController(mView);
+//			MutableLiveData<CdfsItem[]> liveData = navController.getCurrentBackStackEntry()
+//					.getSavedStateHandle()
+//					.getLiveData(MoveItemFragment.KEY_SELECTED_DEST);
+//			liveData.removeObserver(BackEntryStateObserver);
+
 			Task<com.crossdrives.driveclient.model.File> task = null;
 			IMoveItemProgressListener progressListener;
 			Log.d(TAG, "length of selected dest: " + parentArray.length);
@@ -664,6 +692,36 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
 	}
 
+	void onFolderItemClickNormalState(View view, SerachResultItemModel item){
+		CdfsItem[] itemArray = treeOpener.getParentArray(true);
+		//Concatenate the dir we will go to produce a complete dir for the need of the destination
+		CdfsItem cdfsItem = item.getCdfsItem();
+		itemArray[itemArray.length-1] = cdfsItem;
+		navigateToOpenFolder(view, itemArray);
+	}
+	void onItemClickNormalState(View view, SerachResultItemModel item){
+		requestPermissionFuture = new CompletableFuture<>();
+		requestPermissionFuture.thenAccept((isGranted)->{
+			if(!isGranted){
+				Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
+				return;
+			}
+			Open.download(getActivity(), item, treeOpener.getParent());
+		});
+
+		permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
+				Manifest.permission.WRITE_EXTERNAL_STORAGE).
+				setEducationMessage(getString(R.string.message_permission_education)).
+				setImplicationMessage(getString(R.string.implication_deny_grant_permission_external_storage));
+		boolean permissionGranted = permission.request();
+		//if result is false, requested permission has not yet or user response with "never ask again"
+		//
+		if(permissionGranted == true){
+			requestPermissionFuture.complete(true);
+			return;
+		}
+	}
+
 	private RootItemsAdapter.Notifier AdapterNotifier = new RootItemsAdapter.Notifier() {
 	//private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
@@ -680,32 +738,9 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 			if (mState == STATE_NORMAL) {
 				if(item.getCdfsItem().isFolder()){
-					CdfsItem[] itemArray = treeOpener.getParentArray(true);
-					//Concatenate the dir we will go to produce a complete dir for the need of the destination
-					CdfsItem cdfsItem = item.getCdfsItem();
-					itemArray[itemArray.length-1] = cdfsItem;
-					navigateToOpenFolder(view, itemArray);
+					onFolderItemClickNormalState(view, item);
 				}else{
-					requestPermissionFuture = new CompletableFuture<>();
-					requestPermissionFuture.thenAccept((isGranted)->{
-						if(!isGranted){
-							Log.w(TAG, "User denied to grant the permission. Skip the requested download.");
-							return;
-						}
-						Open.download(getActivity(), item, treeOpener.getParent());
-					});
-
-					permission = new Permission(FragmentManager.findFragment(view), requestPermissionLauncher,
-							Manifest.permission.WRITE_EXTERNAL_STORAGE).
-							setEducationMessage(getString(R.string.message_permission_education)).
-							setImplicationMessage(getString(R.string.implication_deny_grant_permission_external_storage));
-					boolean permissionGranted = permission.request();
-					//if result is false, requested permission has not yet or user response with "never ask again"
-					//
-					if(permissionGranted == true){
-						requestPermissionFuture.complete(true);
-						return;
-					}
+					onItemClickNormalState(view, item);
 				}
 			} else {
 				/*
@@ -734,32 +769,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			//mAdapter.notifyDataSetChanged();
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
-
-		/*
-			Once user selected "never ask again" checkbox, nothing is shown even the requestPermissionLauncher.launch
-            is called. Besides, the callback is called with negative isGranted (false).
-        */
-		private ActivityResultLauncher<String> requestPermissionLauncher =
-				registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                    if (isGranted) {
-                        // Permission is granted. Continue the action or workflow in your
-                        // app.
-                        Log.d(TAG, "User granted permission.");
-                    } else {
-                        // Explain to the user that the feature is unavailable because the
-                        // features requires a permission that the user has denied. At the
-                        // same time, respect the user's decision. Don't link to system
-                        // settings in an effort to convince the user to change their
-                        // decision.
-                        Log.d(TAG, "Show the implication.");
-						String message = getString(R.string.implication_deny_grant_permission_external_storage);
-						if(permission.neverAskAgainSelected()){
-							message = getString(R.string.implication_permission_external_storage_denied_never_ask);
-						}
-						Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-                    }
-					requestPermissionFuture.complete(isGranted);
-                });
 
 		@Override
 		public void onItemLongClick(RootItemsAdapter adapter, View view, int position) {
@@ -818,6 +827,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //			popup.setOnMenuItemClickListener(new PopupMenuListener(globalVm,
 //					treeOpener.getParentArray(false), navController.getCurrentDestination().getId()));
 			popup.setOnMenuItemClickListener(PopupMenuListener);
+			MenuCompat.setGroupDividerEnabled(popup.getMenu(), true);
 			MenuInflater inflater = popup.getMenuInflater();
 			inflater.inflate(R.menu.menu_overflow_popup, popup.getMenu());
 			//We only show the option item Move if the item is not a folder
@@ -833,6 +843,32 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		}
 	};
+
+	/*
+			Once user selected "never ask again" checkbox, nothing is shown even the requestPermissionLauncher.launch
+            is called. Besides, the callback is called with negative isGranted (false).
+        */
+	private ActivityResultLauncher<String> requestPermissionLauncher =
+			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+				if (isGranted) {
+					// Permission is granted. Continue the action or workflow in your
+					// app.
+					Log.d(TAG, "User granted permission.");
+				} else {
+					// Explain to the user that the feature is unavailable because the
+					// features requires a permission that the user has denied. At the
+					// same time, respect the user's decision. Don't link to system
+					// settings in an effort to convince the user to change their
+					// decision.
+					Log.d(TAG, "Show the implication.");
+					String message = getString(R.string.implication_deny_grant_permission_external_storage);
+					if(permission.neverAskAgainSelected()){
+						message = getString(R.string.implication_permission_external_storage_denied_never_ask);
+					}
+					Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+				}
+				requestPermissionFuture.complete(isGranted);
+			});
 
 	private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
 

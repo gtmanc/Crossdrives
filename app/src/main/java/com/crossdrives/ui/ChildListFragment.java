@@ -33,7 +33,7 @@ public class ChildListFragment extends QueryResultFragment{
 
     void navigateToOpenFolder(View view, CdfsItem[] itemArray){
         NavController navController = Navigation.findNavController(view);
-        navController.navigate(ChildListFragmentDirections.navigateToMoveItemWorkflowGraph(itemArray));
+        navController.navigate(ChildListFragmentDirections.navigateToMyself(itemArray));
     }
 
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
