@@ -35,12 +35,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewTreeLifecycleOwner;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
@@ -687,7 +685,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	CompletableFuture<Boolean> requestPermissionFuture;
 	Permission permission;
 
-	void navigateToOpenFolder(View view, CdfsItem[] itemArray){
+	private void navigateToOpenFolder(View view, CdfsItem[] itemArray){
 		NavController navController = Navigation.findNavController(view);
 		navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
 	}
@@ -1472,6 +1470,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
+	/**
+	 *
+	 */
+	void onMenuItemDetailsSelected(NavController navController){
+
+	}
+
 	PopupMenu.OnMenuItemClickListener PopupMenuListener = new PopupMenu.OnMenuItemClickListener(){
 
 		@Override
@@ -1482,7 +1487,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			if( id == R.id.omiMove){
 				globalVm.getMoveItemStateLd().launch(treeOpener.getParentArray(false), navController.getCurrentDestination().getId());
 			}else if (id == R.id.omiInfo){
-
+				onMenuItemDetailsSelected(navController);
 			}else if (id == R.id.omiRename){
 //            vm.getRenameStateLd().launch(null);
 				RenameDialogBuilder builder = new RenameDialogBuilder();

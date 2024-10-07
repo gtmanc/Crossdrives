@@ -7,19 +7,11 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
 import com.crossdrives.cdfs.model.CdfsItem;
-import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
-
-import java.util.List;
 
 public class ChildListFragment extends QueryResultFragment{
     final String TAG = "CD.ChildListFragment";
@@ -29,6 +21,15 @@ public class ChildListFragment extends QueryResultFragment{
         super.onViewCreated(view, savedInstanceState);
         Log.d(TAG, "onViewCreated");
         mView = view;
+    }
+
+    @Override
+    void onFolderItemClickNormalState(View view, SerachResultItemModel item){
+        CdfsItem[] itemArray = treeOpener.getParentArray(true);
+        //Concatenate the dir we will go to produce a complete dir for the need of the destination
+        CdfsItem cdfsItem = item.getCdfsItem();
+        itemArray[itemArray.length-1] = cdfsItem;
+        navigateToOpenFolder(view, itemArray);
     }
 
     void navigateToOpenFolder(View view, CdfsItem[] itemArray){
@@ -46,5 +47,9 @@ public class ChildListFragment extends QueryResultFragment{
             Log.w(TAG, "no stack can be popup!");
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    void onMenuItemDetailsSelected(NavController navController){
+        navController.navigate(ChildListFragmentDirections.navigateToItemDetailsFragment());
     }
 }

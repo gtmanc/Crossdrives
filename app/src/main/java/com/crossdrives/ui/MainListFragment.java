@@ -4,12 +4,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -20,8 +18,6 @@ import androidx.navigation.ui.NavigationUI;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.R;
 import com.example.crossdrives.SerachResultItemModel;
-
-import java.util.List;
 
 public class MainListFragment extends QueryResultFragment{
     private String TAG = "CD.MainListFragment";
@@ -53,9 +49,25 @@ public class MainListFragment extends QueryResultFragment{
 
     }
 
+    @Override
+    void onFolderItemClickNormalState(View view, SerachResultItemModel item){
+        CdfsItem[] itemArray = treeOpener.getParentArray(true);
+        //Concatenate the dir we will go to produce a complete dir for the need of the destination
+        CdfsItem cdfsItem = item.getCdfsItem();
+        itemArray[itemArray.length-1] = cdfsItem;
+        navigateToOpenFolder(view, itemArray);
+    }
+
     void navigateToOpenFolder(View view, CdfsItem[] itemArray){
         Log.d(TAG, "navigateToItemShortPress");
         NavController navController = Navigation.findNavController(view);
         navController.navigate(MainListFragmentDirections.navigateToChildListFragment(itemArray));
     }
+
+    void onMenuItemDetailsSelected(NavController navController){
+        navController.navigate(MainListFragmentDirections.navigateToItemDetailsFragment());
+    }
 }
+
+
+

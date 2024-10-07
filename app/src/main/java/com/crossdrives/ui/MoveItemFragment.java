@@ -9,10 +9,8 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
-import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -211,5 +209,31 @@ public class MoveItemFragment extends QueryResultFragment {
         //Log.d(TAG, "onSaveInstanceState:" + this + "LF state: " + this.getLifecycle().getCurrentState());
     }
 
+    @Override
+    void onFolderItemClickNormalState(View view, SerachResultItemModel item){
+        CdfsItem[] itemArray = treeOpener.getParentArray(true);
+        //Concatenate the dir we will go to produce a complete dir for the need of the destination
+        CdfsItem cdfsItem = item.getCdfsItem();
+        itemArray[itemArray.length-1] = cdfsItem;
+        navigateToOpenFolder(view, itemArray);
+    }
 
+    void navigateToOpenFolder(View view, CdfsItem[] itemArray){
+        Log.d(TAG, "navigateToItemShortPress");
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(MoveItemFragmentDirections.navigateToMyself(itemArray));
+    }
+
+    /**
+     * Override the method of parent because there is no action for a non-folder item whiling in move
+     * item workflow.
+     * @param view
+     * @param item
+     *
+     * @return none
+     */
+    @Override
+    void onItemClickNormalState(View view, SerachResultItemModel item){
+
+    }
 }

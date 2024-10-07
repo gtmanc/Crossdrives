@@ -9,6 +9,7 @@
     <string name="titleDefault">My Drive</string>
     <string name="titleChildListFragment">Folder</string>
     <string name="titleMoveItem">Move Item</string>
+    <string name="titleItemDetails">Details</string>
 
     <!--            menu items          -->
     <!-- Action bar -->
@@ -19,7 +20,7 @@
     <!-- overflow icon popup menu -->
     <string name="overflow_popup_menu_item_move">Move</string>
     <string name="overflow_popup_menu_item_rename">Rename</string>
-    <string name="overflow_popup_menu_item_info">Infomation</string>
+    <string name="overflow_popup_menu_item_info">Details</string>
 
     <!--Query Result Fragment-->
     <string name="file_default_name">Name</string>
@@ -37,6 +38,11 @@
     <string name="button_signin_google" >Add Google Account</string>
     <string name="button_signin_ms">Add One Drive Account</string>
 
+    <!--Item details fragment-->
+    <string name="lable_item_details_name">Name</string>
+    <string name="lable_item_details_size">Size</string>
+    <string name="lable_item_details_created_dt">Created</string>
+    <string name="lable_item_details_modified_dt">Modified</string>
     <!-- Microsoft Graph-->
     <string name="beta">BETA</string>
     <!--<string name="userPhoto" >photo </string>-->

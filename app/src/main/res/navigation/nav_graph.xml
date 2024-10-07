@@ -41,6 +41,10 @@
             android:id="@+id/navigate_to_child_list_fragment"
             app:destination="@id/child_list_fragment">
         </action>
+        <action
+            android:id="@+id/navigate_to_item_details_fragment"
+            app:destination="@id/item_details_fragment">
+        </action>
 
         <action
             android:id="@+id/navigate_to_move_item_workflow_graph"
@@ -64,6 +68,10 @@
         <action
             android:id="@+id/navigate_to_move_item_workflow_graph"
             app:destination="@id/moveItemWorkflowGraph">
+        </action>
+        <action
+            android:id="@+id/navigate_to_item_details_fragment"
+            app:destination="@id/item_details_fragment">
         </action>
     </fragment>
 
@@ -118,6 +126,14 @@
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             />
+    </fragment>
+
+    <fragment
+        android:id="@+id/item_details_fragment"
+        android:name="com.crossdrives.ui.fragments.ItemDetailsFragment"
+        android:label = "@string/titleItemDetails"
+        tools:layout="@layout/add_account_fragment">
+
     </fragment>
 
     <fragment

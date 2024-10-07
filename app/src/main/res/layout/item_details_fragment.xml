@@ -12,54 +12,149 @@
         android:theme="@style/AppTheme.AppBarOverlayMaterial"
         >
         <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/add_account_toolbar"
+            android:id="@+id/item_details_toolbar"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:theme="@style/ToolBarOverlayMaterial"
             app:layout_scrollFlags="scroll|enterAlways"
             app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:title="Add Account">
+            app:title="">
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <TextView
-        android:id="@+id/title_add_account"
+
+    <com.crossdrives.ui.chart.Pie
+        android:id="@+id/item_details_piechart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/item_details_appbar"
         android:layout_marginTop="16dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginLeft="16dp"
-        android:text="Add an account"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        />
+
+    <TextView
+        android:id="@+id/lable_item_details_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/item_details_piechart"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="@string/lable_item_details_name"
+        android:textColor="?attr/colorPrimary"
+        />
+
+    <TextView
+        android:id="@+id/text_item_details_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_name"
+        android:layout_marginTop="6dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="name of item"
         android:textColor="?attr/colorPrimary"
         android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
         />
-    <Button
-        android:id="@+id/add_account_btn_google"
-        style="@style/Widget.App.Button1"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/lable_item_details_size"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/button_signin_google"
-        app:layout_constraintTop_toBottomOf="@+id/title_add_account"
-        android:layout_marginTop = "16dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:drawableLeft="@drawable/ic_gdrive_logo"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_name"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="@string/lable_item_details_size"
+        android:textColor="?attr/colorPrimary"
         />
-    <Button
-        android:id="@+id/add_account_btn_ms"
-        style="@style/Widget.App.Button1"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/text_item_details_size"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/button_signin_ms"
-        app:layout_constraintTop_toBottomOf="@+id/add_account_btn_google"
-        android:layout_marginTop = "16dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:drawableLeft="@drawable/ic_onedrive_logo"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_size"
+        android:layout_marginTop="6dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="size of item"
+        android:textColor="?attr/colorPrimary"
+        android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
         />
+    <TextView
+        android:id="@+id/lable_item_details_created_dt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_size"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="@string/lable_item_details_created_dt"
+        android:textColor="?attr/colorPrimary"
+        />
+    <TextView
+        android:id="@+id/text_item_details_created_dt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_created_dt"
+        android:layout_marginTop="6dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="time created"
+        android:textColor="?attr/colorPrimary"
+        android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
+        />
+    <TextView
+        android:id="@+id/lable_item_details_modifed_dt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_created_dt"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="@string/lable_item_details_modified_dt"
+        android:textColor="?attr/colorPrimary"
+        />
+    <TextView
+        android:id="@+id/text_item_details_modifed_dt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_modifed_dt"
+        android:layout_marginTop="6dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="0dp"
+        android:text="time modified"
+        android:textColor="?attr/colorPrimary"
+        android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Subtitle"
+        />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/action_dialog_guideline_horizontal_Central"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_horizontal_Top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.1" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_horizontal_Bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.9" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.05" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_vertical_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.95" />
 </androidx.constraintlayout.widget.ConstraintLayout>

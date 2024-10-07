@@ -35,7 +35,7 @@ public class ItemDetailsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Toolbar toolbar = view.findViewById(R.id.item_details_appbar);
+        Toolbar toolbar = view.findViewById(R.id.item_details_toolbar);
 
         NavController navController = Navigation.findNavController(view);
         DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
