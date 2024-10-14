@@ -23,13 +23,14 @@
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.crossdrives.ui.chart.Pie
+    <com.crossdrives.ui.chart.piechart.PieTextOutside
         android:id="@+id/item_details_piechart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/item_details_appbar"
         android:layout_marginTop="16dp"
         app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        app:layout_constraintRight_toRightOf="@+id/item_details_fragment_guideline_vertical_right"
         />
 
     <TextView

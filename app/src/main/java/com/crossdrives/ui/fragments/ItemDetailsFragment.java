@@ -18,6 +18,7 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.crossdrives.R;
 
 public class ItemDetailsFragment extends Fragment {
+    private final String TAG = "CD.ItemDetailsFragment";
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +47,11 @@ public class ItemDetailsFragment extends Fragment {
                 new AppBarConfiguration.Builder(R.id.main_list_fragment).setOpenableLayout(drawerLayout).build();
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
+
+       //
+//        View pie = view.findViewById(R.id.item_details_piechart);
+//        //Log.d(TAG, "Piechart metrics" + pie.getDrawingRect())
+//        Log.d(TAG,"Piechart view size: " + pie.getMeasuredHeight() + "," + pie.getMeasuredWidth());
 
     }
 }
