@@ -23,7 +23,7 @@
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.crossdrives.ui.chart.piechart.PieTextOutside
+    <com.crossdrives.ui.chart.piechart.Pie
         android:id="@+id/item_details_piechart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

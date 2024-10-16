@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 
 public abstract class IPie {
     Context mContext;
+    DisplayMetrics displayMetrics;
 
     abstract void onDraw(@NonNull Canvas canvas);
 
@@ -15,10 +16,11 @@ public abstract class IPie {
 
     public IPie(Context context) {
         mContext = context;
+        displayMetrics = mContext.getResources().getDisplayMetrics();
     }
 
-    float getDesity(){
-        DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
-        return displayMetrics.density;
-    }
+    float getDensity(){return displayMetrics.density;}
+
+    int getDisplayHeight() {return displayMetrics.heightPixels;    }
+    int getDisplayWidth() {return displayMetrics.widthPixels;    }
 }

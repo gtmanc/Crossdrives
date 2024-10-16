@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PieTextOutside extends View {
-    private final String TAG = "CD.Pie";
+    private final String TAG = "CD.PieTextOutside";
     private Paint mPaint;
     private List<Integer> mColorList = new ArrayList<>();
     private List<Float> mRateList = new ArrayList<>();
