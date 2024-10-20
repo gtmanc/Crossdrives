@@ -50,7 +50,8 @@
     <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
     <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
 
-
+    <item name="colorPieTextTitle">@android:color/white</item>
+    <item name="colorPieTextSubtitle">@android:color/darker_gray</item>
 
   </style>
 
@@ -181,9 +182,13 @@
     <!--<item name="boxBackgroundMode">filled</item>-->
     <!--<item name="boxBackgroundColor">@color/colorAccent</item>-->
     <!--<item name="android:textColorHint">@color/colorAccent</item>-->
-
-
   </style>
+
+    <style name="PieTextStyle" parent="TextAppearance.MaterialComponents.Headline1">
+
+      <item name="android:textSize">16dp</item>
+
+    </style>
 
   <!--states for Stroke color -->
   <!--<item android:color="?attr/colorPrimary" android:state_focused="true"/>

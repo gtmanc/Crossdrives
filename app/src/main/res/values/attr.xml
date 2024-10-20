@@ -35,4 +35,7 @@
     <attr name="colorActionButton1PositiveBorder" format="color"></attr>
     <attr name="colorActionButton1Text" format="color"> </attr>
     <attr name="colorActionButton1NegativeBorder" format="color"></attr>
+
+    <attr name="colorPieTextTitle" format="color"></attr>
+    <attr name="colorPieTextSubtitle" format="color"></attr>
 </resources>
