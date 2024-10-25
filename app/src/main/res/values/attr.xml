@@ -36,6 +36,10 @@
     <attr name="colorActionButton1Text" format="color"> </attr>
     <attr name="colorActionButton1NegativeBorder" format="color"></attr>
 
+    <!-- pie chart in item details screen -->
     <attr name="colorPieTextTitle" format="color"></attr>
     <attr name="colorPieTextSubtitle" format="color"></attr>
+    <attr name="colorPieArc1" format="color"></attr>
+    <attr name="colorPieArc2" format="color"></attr>
+    <attr name="colorPieArc3" format="color"></attr>
 </resources>

@@ -50,9 +50,12 @@
     <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
     <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
 
+    <!-- pie chart in item details screen -->
     <item name="colorPieTextTitle">@android:color/white</item>
     <item name="colorPieTextSubtitle">@android:color/darker_gray</item>
-
+    <item name="colorPieArc1">#D500F9</item>
+    <item name="colorPieArc2">#C51162</item>
+    <item name="colorPieArc3">#00C853</item>
   </style>
 
   <style name="AppTheme.AppBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">

@@ -2,8 +2,16 @@
     <dimen name="fab_margin">16dp</dimen>
     <!--<dimen name="mtrl_textinput_box_stroke_width_default">10dp</dimen>
     <dimen name="mtrl_textinput_box_stroke_width_focused">10dp</dimen>-->
+
+
+    <!-- Pie chart -->
+    <dimen name="radiusArc">120dp</dimen>
+    <dimen name="ratioInnerCircle">1.2</dimen>
+    <dimen name="startAngle">270</dimen>
     <dimen name="pieTextTitleSize">16dp</dimen>
     <dimen name="pieTextSubtitleSize">12dp</dimen>
     <dimen name="paddingTitleTop">20dp</dimen>
     <dimen name="paddingSubTitleTop">8dp</dimen>
+    <dimen name="textOffsetX">44dp</dimen>
+    <dimen name="indicatorRadius">8dp</dimen>
 </resources>
