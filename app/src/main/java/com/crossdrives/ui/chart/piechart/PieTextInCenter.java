@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,20 +18,23 @@ import com.example.crossdrives.R;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.stream.IntStream;
 
 public class PieTextInCenter extends IPie{
     private final String TAG = "CD.PieTextInCenter";
-    private float radiusArc;
-    private float radiusInnerCircle;
-    private float radiusIndicator;
-    private  int startAngle;
-    private int CoorCenterX, CoorCenterY;
+    final private float radiusArc;
+    final private float diameterArc;
+    final private float radiusInnerCircle;
+    final private float diameterInnerCircle;
+    final private float ratioInnerCircle = 1.2f;
+    final private float radiusIndicator;
+    final private float diameterIndicator;
+    final private int startAngleArc = 270;
+    private int CoorCenterPieX, CoorCenterPieY; //coordinate X and Y center of pie
     private final int MAX_NO_ARC = 3;
+    private final int[] colorsPie = new int[MAX_NO_ARC];
 
     public class Item{
         int percentage; //e.g. 40 = 40/100
@@ -44,20 +48,25 @@ public class PieTextInCenter extends IPie{
     public PieTextInCenter(Context context, @Nullable AttributeSet attrs) {
         super(context);
 
-        float density = getDensity();
+        //Initialize style and size parameters
+        radiusArc = mContext.getResources().getDimension(R.dimen.radiusArc);
+        diameterArc = radiusArc*2;
+        radiusInnerCircle = radiusArc/ratioInnerCircle;
+        diameterInnerCircle = radiusInnerCircle*2;
+        radiusIndicator = mContext.getResources().getDimension(R.dimen.indicatorRadius);
+        diameterIndicator = radiusIndicator*2;
+        CoorCenterPieX = getDisplayWidth()/2;
+        CoorCenterPieY = Math.round(radiusArc);
 
-        //Radius outer and inner
-        radiusArc = getDimensionInt(R.dimen.radiusArc) ;
-        radiusInnerCircle = radiusArc/getDimensionInt(R.dimen.ratioInnerCircle);
-        radiusIndicator = getDimensionInt(R.dimen.indicatorRadius);
-
-        startAngle = getDimensionInt(R.dimen.startAngle);
-
-        CoorCenterX = getDisplayWidth()/2;
-        CoorCenterY = Math.round(radiusArc);
+        int[] attributes = {R.attr.colorPieArc1, R.attr.colorPieArc2, R.attr.colorPieArc3};
+        TypedArray array = mContext.obtainStyledAttributes(R.style.AppTheme_NoActionBar, attributes);
+        for (int i = 0; i< colorsPie.length; i++){
+            colorsPie[i] = array.getColor(i, Color.BLACK);
+        }
+        array.recycle();
 
         Item item1 = new Item();
-        item1.title = "Google"; item1.percentage = 50; item1.subtitle = "15.8MB";
+        item1.title = "TeraboxDrive"; item1.percentage = 50; item1.subtitle = "15.8MB";
         items.add(item1);
         Item item2 = new Item();
         item2.title = "Onedrive"; item2.percentage = 50; item2.subtitle = "15.8MB";
@@ -69,42 +78,40 @@ public class PieTextInCenter extends IPie{
 
         drawArc(canvas);
         drawInnerCircle(canvas);
-        writeText(canvas);
+        writeAllocInfo(canvas);
 
     }
 
     public void addItems(Collection<Item> items){
+        //do some checks
+        //The percentages are reasonable?
         if(items.stream().mapToInt((item)-> item.percentage).sum() != 100 ){
             throw new IllegalArgumentException();
         }
+
+        //Number of items overs the maximum?
+        if(items.stream().count() > MAX_NO_ARC){throw new IllegalArgumentException();}
+
         items.addAll(items);
     }
 
     private void drawArc(Canvas canvas){
         Paint paint = getPaint();
 
-        int[] attrs = {R.attr.colorPieArc1, R.attr.colorPieArc2, R.attr.colorPieArc3};
-        TypedArray array = mContext.obtainStyledAttributes(R.style.AppTheme_NoActionBar, attrs);
-        final int[] colorsPie = new int[MAX_NO_ARC];
-
-        for (int i = 0; i< colorsPie.length; i++){
-            colorsPie[i] = array.getColor(i, Color.BLACK);
-        }
-        array.recycle();
-
-        RectF rectF = new RectF(CoorCenterX - radiusArc,0,
-                CoorCenterX + radiusArc, CoorCenterY + radiusArc);
+        RectF rectF = new RectF(CoorCenterPieX - radiusArc,0,
+                CoorCenterPieX + radiusArc, CoorCenterPieY + radiusArc);
 
         List<Item> list = new ArrayList<>(items);
         Iterator<Item> iterator = list.iterator();
-        int startAngle = this.startAngle;
+        int startAngle = this.startAngleArc;
         int swipeAngle;
         while(iterator.hasNext()){
             Item item = iterator.next();
             paint.setColor(colorsPie[list.indexOf(item)]);
-            swipeAngle = item.percentage/100*360;
+            swipeAngle = (item.percentage*360)/100;
             canvas.drawArc(rectF, startAngle, swipeAngle, true, paint);
             startAngle+=swipeAngle;
+            Log.d(TAG, "startAngle:" + startAngle);
         }
     }
 
@@ -112,10 +119,10 @@ public class PieTextInCenter extends IPie{
         Paint paint = getPaint();
         //mPaint.setColor(ContextCompat.getColor(mContext, R.color.color_081638));
         Log.d(TAG, "Inner circle. Use default color. code: " + Integer.toHexString(paint.getColor()));
-        canvas.drawCircle(CoorCenterX, CoorCenterY, radiusInnerCircle, paint);
+        canvas.drawCircle(CoorCenterPieX, CoorCenterPieY, radiusInnerCircle, paint);
 
     }
-    private void writeText(Canvas canvas){
+    private void writeAllocInfo(Canvas canvas){
         Paint paint = getPaint();
         paint.setTextAlign(Paint.Align.LEFT);
 
@@ -129,21 +136,25 @@ public class PieTextInCenter extends IPie{
         final int textSizeSubtitle = Math.round(mContext.getResources().getDimension(R.dimen.pieTextSubtitleSize));
         final int paddingSubtitleTop = Math.round(mContext.getResources().getDimension(R.dimen.paddingSubTitleTop));
         final int paddingTitleTop = Math.round(mContext.getResources().getDimension(R.dimen.paddingTitleTop));
-        final int offsetX = Math.round(mContext.getResources().getDimension(R.dimen.textOffsetX));
+        final int paddingIndicatorRight = Math.round(mContext.getResources().getDimension(R.dimen.indicatorPaddingRight));
 
         Log.d(TAG, "Pie title color: " + Integer.toHexString(colorTitle));
         Log.d(TAG, "Pie subtitle color: " + Integer.toHexString(colorSubtitle));
         //Log.d(TAG, "Pie title size: " + Integer.toString(size));
 
-        final int startY = calcTextBlockStartY();
-        Log.d(TAG, "StartY text block: " + startY);
-        int nextTextStartY = startY;
+        Pair<Integer, Integer> centerAllocInfo = calcAllocInfoBlockStarts();
+        Log.d(TAG, "StartY alloc detail block: " + centerAllocInfo.second);
+        int nextTextStartY = centerAllocInfo.second;
         int nextTextBaseline;
-        final int StartX = CoorCenterX - offsetX;
+        final int startXIndicator = centerAllocInfo.first;
+        Log.d(TAG, "StartX indicator: " + startXIndicator);
+        final int startXTitles = centerAllocInfo.first + Math.round(diameterIndicator) + paddingIndicatorRight;
+        Log.d(TAG, "StartX titles: " + startXTitles);
         Rect rect = new Rect();
         Iterator<Item> iterator = items.iterator();
         Item item;
         String textSubtitle;
+        int i = 0;
         while(iterator.hasNext()){
             item = iterator.next();
 
@@ -154,11 +165,11 @@ public class PieTextInCenter extends IPie{
 
             nextTextBaseline = nextTextStartY + (-paint.getFontMetricsInt().top);  //top is a negative value
             Log.d(TAG, "Next baseline title: " + nextTextBaseline);
-            canvas.drawText(item.title, StartX, nextTextBaseline, paint);
+            canvas.drawText(item.title, startXTitles, nextTextBaseline, paint);
 
             //indicator
-            paint.setColor(Color.BLUE);
-            canvas.drawCircle(StartX - radiusIndicator*2 - 12*getDensity(), nextTextBaseline, radiusIndicator, paint);
+            paint.setColor(colorsPie[i]); i++;
+            canvas.drawCircle(startXIndicator, nextTextBaseline, radiusIndicator, paint);
 
             //next Y for subtitle
             paint.getTextBounds(item.title, 0, item.title.length(), rect);
@@ -170,7 +181,7 @@ public class PieTextInCenter extends IPie{
             textSubtitle = item.subtitle;
             nextTextBaseline = nextTextStartY + (-paint.getFontMetricsInt().top); //top is a negative value
             Log.d(TAG, "Next baseline Subtitle: " + nextTextBaseline);
-            canvas.drawText(textSubtitle, StartX, nextTextBaseline, paint);
+            canvas.drawText(textSubtitle, startXTitles, nextTextBaseline, paint);
 
             //calculate Y for next title
             paint.getTextBounds(textSubtitle, 0, textSubtitle.length(), rect);
@@ -178,20 +189,22 @@ public class PieTextInCenter extends IPie{
         }
     }
 
-    private int calcTextBlockStartY(){
-        Paint paint = getPaint();
+    private Pair calcAllocInfoBlockStarts(){
+        Paint paintTitle = getPaint();
+        Paint paintSubtitle = getPaint();
         int textSizeTitle = Math.round(mContext.getResources().getDimension(R.dimen.pieTextTitleSize));
         int textSizeSubtitle = Math.round(mContext.getResources().getDimension(R.dimen.pieTextSubtitleSize));
         int paddingSubtitleTop = Math.round(mContext.getResources().getDimension(R.dimen.paddingSubTitleTop));
         int paddingtitleTop = Math.round(mContext.getResources().getDimension(R.dimen.paddingTitleTop));
+        int paddingIndicatorRight = Math.round(mContext.getResources().getDimension(R.dimen.paddingTitleTop));
 
+        paintTitle.setTextSize(textSizeTitle);
+        paintSubtitle.setTextSize(textSizeSubtitle);
         int titlesHeightTotal = items.stream().mapToInt((item)->{
             Rect rect1 = new Rect();
-            paint.setTextSize(textSizeTitle);
-            paint.getTextBounds(item.title, 0, item.title.length(), rect1);
+            paintTitle.getTextBounds(item.title, 0, item.title.length(), rect1);
             Rect rect2 = new Rect();
-            paint.setTextSize(textSizeSubtitle);
-            paint.getTextBounds(item.subtitle, 0, item.subtitle.length(), rect2);
+            paintSubtitle.getTextBounds(item.subtitle, 0, item.subtitle.length(), rect2);
             return rect1.height() + rect2.height();
         }).sum();
 
@@ -200,21 +213,36 @@ public class PieTextInCenter extends IPie{
         int textBlockHeight = titlesHeightTotal +
                 (numOfItem-1)*paddingtitleTop + numOfItem*paddingSubtitleTop;
 
-        Log.d(TAG, "CoorCenterY: " + CoorCenterY + " ;textBlockHeight: " + textBlockHeight);
-        int startY = CoorCenterY - textBlockHeight/2;
+        //Log.d(TAG, "CoorCenterY: " + CoorCenterY + " ;textBlockHeight: " + textBlockHeight);
+        int startY = CoorCenterPieY - textBlockHeight/2;
         if(startY < 0){
-            Log.d(TAG, "The text block height exceeds arc");
+            Log.w(TAG, "The text block height exceeds bound of inner circle");
             startY = 0;
         }
-        return startY;
+
+        int titlesWidthMax = IntStream.concat(
+                items.stream().mapToInt((item)->{
+                    Rect rect = new Rect();
+                    paintTitle.getTextBounds(item.title, 0, item.title.length(), rect);
+                    return rect.width();}),
+                items.stream().mapToInt((item)->{
+                    Rect rect = new Rect();
+                    paintSubtitle.getTextBounds(item.subtitle, 0, item.subtitle.length(), rect);
+                    return rect.width();})
+        ).max().getAsInt();
+
+        int ContentWidthMax = titlesWidthMax + paddingIndicatorRight + Math.round(diameterIndicator);
+        int startX = CoorCenterPieX - ContentWidthMax/2;
+        if(startX < 0){
+            Log.w(TAG, "The text block width exceeds bound of inner circle");
+            startX = 0;
+        }
+
+        return new Pair(startX ,startY);
     }
 
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
-    }
-
-    private int getDimensionInt(int id){
-        return Math.round(mContext.getResources().getDimension(id));
     }
 }
