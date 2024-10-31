@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.DisplayMetrics;
+import android.util.Pair;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -13,7 +15,9 @@ public abstract class IPie {
 
     abstract void onDraw(@NonNull Canvas canvas);
 
-    abstract void onMeasure(int widthMeasureSpec, int heightMeasureSpec);
+    abstract void onMeasure(int widthMeasureSpec, int heightMeasureSpec, View v);
+
+    abstract Pair<Integer,Integer> getMeasuredDimention(int widthMode, int heightMode, int widthSize, int heightSize);
 
     public IPie(Context context) {
         mContext = context;

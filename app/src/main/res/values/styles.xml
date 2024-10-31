@@ -81,11 +81,9 @@
   </style>
   <style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.AppCompat.ActionMode">
     <item name="background">@color/colorActionModeBackground</item>
-    <item name="titleTextStyle">@style/ActionModeTitleTextStyle</item>
+    <item name="titleTextStyle">@style/TextStyleTitleBase1</item>
   </style>
-  <style name="ActionModeTitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
-    <item name="android:textColor">@color/colorActionModeText</item>
-  </style>
+
   <style name="MyOverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
     <item name="android:tint">@color/colorActionModeOverflow</item>
   </style>
@@ -187,11 +185,16 @@
     <!--<item name="android:textColorHint">@color/colorAccent</item>-->
   </style>
 
-    <style name="PieTextStyle" parent="TextAppearance.MaterialComponents.Headline1">
-
-      <item name="android:textSize">16dp</item>
-
-    </style>
+  <!--                              Text styles                        -->
+  <!-- base text styles -->
+  <style name="TextStyleTitleBase1" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
+    <item name="android:textColor">@color/colorActionModeText</item>
+  </style>
+  <style name="TextStyleBodyBase1" parent="TextAppearance.MaterialComponents.Body1">
+  </style>
+  <style name="TextStyleBodyBase2" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:textColor">@color/colorTextSecondary</item>
+  </style>
 
   <!--states for Stroke color -->
   <!--<item android:color="?attr/colorPrimary" android:state_focused="true"/>

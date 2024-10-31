@@ -3,6 +3,7 @@ package com.crossdrives.ui.chart.piechart;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Pair;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -31,7 +32,14 @@ public class Pie extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        chart.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        chart.onMeasure(widthMeasureSpec, heightMeasureSpec, this);
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        Pair<Integer,Integer> pair = chart.getMeasuredDimention(widthMode, heightMode, widthSize, heightSize);
+
+        setMeasuredDimension(pair.first, pair.second);
     }
 
 

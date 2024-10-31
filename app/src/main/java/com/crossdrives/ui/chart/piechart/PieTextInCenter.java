@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Pair;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -241,8 +242,42 @@ public class PieTextInCenter extends IPie{
         return new Pair(startX ,startY);
     }
 
+    //A good article for the method: https://stackoverflow.com/questions/12266899/onmeasure-custom-view-explanation
     @Override
-    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec, View v) {
 
+    }
+
+
+    @Override
+    public Pair<Integer,Integer> getMeasuredDimention(int widthMode, int heightMode, int widthSize, int heightSize) {
+        Log.d(TAG, "spec size: " + widthSize + "," + heightSize);
+
+
+        if (heightMode == View.MeasureSpec.AT_MOST) {
+            Log.d(TAG, "spec heightMode: AT_MOST");
+            heightSize = Math.round(diameterArc) ;
+        }else if(heightMode == View.MeasureSpec.EXACTLY){
+            Log.d(TAG, "spec heightMode: EXACTLY");
+            heightSize = Math.round(diameterArc) ;
+        }else{
+            Log.d(TAG, "spec heightMode: UNSPECIFIED");
+            heightSize = Math.round(diameterArc) ;
+        }
+
+        if (widthMode == View.MeasureSpec.AT_MOST) {
+            Log.d(TAG, "spec widthMode: AT_MOST");
+            widthSize = getDisplayWidth();
+        }else if(widthMode == View.MeasureSpec.EXACTLY){
+            Log.d(TAG, "spec widthMode: EXACTLY");
+            widthSize = getDisplayWidth();
+        }else{
+            Log.d(TAG, "spec widthMode: UNSPECIFIED");
+            widthSize = getDisplayWidth();
+        }
+
+        Log.d(TAG, "Calculated w and h: " + widthSize + "," + heightSize);
+
+        return new Pair(widthSize, heightSize);
     }
 }

@@ -4,6 +4,11 @@
     <dimen name="mtrl_textinput_box_stroke_width_focused">10dp</dimen>-->
 
 
+    <!-- Item details fragment -->
+    <dimen name="paddingItemDetailsLabelTop">20dp</dimen>
+    <dimen name="paddingItemDetailsTextBodyTop">8dp</dimen>
+    <dimen name="paddingItemDetailsTextLeft">16dp</dimen>
+
     <!-- Pie chart -->
     <dimen name="radiusArc">120dp</dimen>
     <dimen name="pieTextTitleSize">16dp</dimen>

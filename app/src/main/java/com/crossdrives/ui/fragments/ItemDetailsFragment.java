@@ -16,6 +16,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.crossdrives.R;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ItemDetailsFragment extends Fragment {
     private final String TAG = "CD.ItemDetailsFragment";
@@ -48,10 +49,9 @@ public class ItemDetailsFragment extends Fragment {
         NavigationUI.setupWithNavController(
                 toolbar, navController, appBarConfiguration);
 
-       //
-//        View pie = view.findViewById(R.id.item_details_piechart);
-//        //Log.d(TAG, "Piechart metrics" + pie.getDrawingRect())
-//        Log.d(TAG,"Piechart view size: " + pie.getMeasuredHeight() + "," + pie.getMeasuredWidth());
+        //fab object is null if called in onCreate
+        FloatingActionButton fab = getActivity().findViewById(R.id.fab);
+        fab.setVisibility(View.GONE);
 
     }
 }
