@@ -58,14 +58,17 @@ public class MainListFragment extends QueryResultFragment{
         navigateToOpenFolder(view, itemArray);
     }
 
-    void navigateToOpenFolder(View view, CdfsItem[] itemArray){
+    private void navigateToOpenFolder(View view, CdfsItem[] itemArray){
         Log.d(TAG, "navigateToItemShortPress");
         NavController navController = Navigation.findNavController(view);
         navController.navigate(MainListFragmentDirections.navigateToChildListFragment(itemArray));
     }
 
-    void onMenuItemDetailsSelected(NavController navController){
-        navController.navigate(MainListFragmentDirections.navigateToItemDetailsFragment());
+    void onMenuItemDetailsSelected(View view, CdfsItem item){
+        CdfsItem[] itemArray = treeOpener.getParentArray(false);
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(MainListFragmentDirections.navigateToChildListFragment(itemArray));
+        navController.navigate(MainListFragmentDirections.navigateToItemDetailsFragment(itemArray, item));
     }
 }
 

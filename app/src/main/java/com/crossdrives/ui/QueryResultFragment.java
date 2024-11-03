@@ -1473,7 +1473,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	/**
 	 *
 	 */
-	void onMenuItemDetailsSelected(NavController navController){
+	void onMenuItemDetailsSelected(View view, CdfsItem item){
 
 	}
 
@@ -1487,7 +1487,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			if( id == R.id.omiMove){
 				globalVm.getMoveItemStateLd().launch(treeOpener.getParentArray(false), navController.getCurrentDestination().getId());
 			}else if (id == R.id.omiInfo){
-				onMenuItemDetailsSelected(navController);
+				onMenuItemDetailsSelected(mView, itemOverflowMenuExpaned);
 			}else if (id == R.id.omiRename){
 //            vm.getRenameStateLd().launch(null);
 				RenameDialogBuilder builder = new RenameDialogBuilder();

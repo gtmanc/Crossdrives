@@ -41,9 +41,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -206,6 +211,10 @@ public class Upload {
                     item.setName(CdfsName);
                     item.setNameRawContent(CdfsName);
                     item.setDrive(driveName);
+                    Calendar calendar = Calendar.getInstance();
+                    Date date = calendar.getTime();
+                    item.setCreatedDateTime(date.toString());
+                    item.setLastModifiedDateTime(date.toString());
                     /*
                         We have to assign the sequence number right here because the sequence
                         carries the order of the slices. It is used in compose of downloaded

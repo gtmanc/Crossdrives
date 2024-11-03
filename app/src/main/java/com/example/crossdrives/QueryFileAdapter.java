@@ -120,10 +120,10 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
             //holder.ivCheckBox.setImageResource(item.getImageId());
             //holder.ivCheckBox = (ImageView) convertView.findViewById(R.id.iv_check_box);
             holder.tvName.setText(item.getCdfsItem().getName());
-            if(item.getCdfsItem().getDateTime() == null) {
+            if(item.getCdfsItem().getTimeCreated() == null) {
                 Log.w(TAG, "DateTime is null");
             }else {
-                holder.tvDate.setText(item.getCdfsItem().getDateTime().toString());
+                holder.tvDate.setText(item.getCdfsItem().getTimeCreated().toString());
             }
             /*
                  Show the check box?

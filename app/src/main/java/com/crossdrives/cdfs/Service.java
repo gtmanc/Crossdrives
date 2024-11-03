@@ -7,6 +7,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
+import com.crossdrives.cdfs.details.ItemDetails;
 import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.common.ResultCodes;
 import com.crossdrives.cdfs.create.Create;
@@ -313,4 +314,19 @@ public class Service{
         return renaming.execute();
     }
 
+    public Task<com.crossdrives.cdfs.details.Result>  details(java.util.List<CdfsItem> parents, CdfsItem item) throws MissingDriveClientException, PermissionException {
+
+//        IDeleteProgressListener listener = defaultDeleteProgressListener;
+//        if (deleteProgressListener != null)
+//            listener = deleteProgressListener;
+
+        ItemDetails detail = new ItemDetails(mCDFS, parents, item);
+        final Throwable[] throwables = {null};
+
+        Log.d(TAG, "CDFS Service: Create");
+
+        mCDFS.requiresDriveClientNonNull();
+
+        return detail.execute();
+    }
 }

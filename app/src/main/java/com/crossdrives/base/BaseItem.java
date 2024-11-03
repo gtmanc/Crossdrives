@@ -1,7 +1,6 @@
 package com.crossdrives.base;
 
-import com.google.api.client.util.DateTime;
-
+import java.util.Date;
 import java.util.List;
 
 public class BaseItem {
@@ -19,8 +18,12 @@ public class BaseItem {
     //Indicator whether the item is a folder(parent) or not
     boolean folder;
 
-    //modified time
-    DateTime dateTime;
+    Long size;
+
+    Date timeCreated;
+
+    //last modified time
+    Date timeModified;
 
     public String getName() {
         return name;
@@ -42,8 +45,8 @@ public class BaseItem {
         return folder;
     }
 
-    public DateTime getDateTime() {
-        return dateTime;
+    public Date getTimeCreated() {
+        return timeCreated;
     }
 
     public void setName(String name) {
@@ -66,7 +69,23 @@ public class BaseItem {
         this.folder = folder;
     }
 
-    public void setDateTime(DateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setTimeCreated(Date t) {
+        timeCreated = t;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
+    }
+
+    public Date getTimeModified() {
+        return timeModified;
+    }
+
+    public void setTimeModified(Date timeModified) {
+        this.timeModified = timeModified;
     }
 }

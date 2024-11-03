@@ -41,8 +41,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -129,9 +131,9 @@ public class Move {
                 Log.d(TAG, "Dest path:" + destParent);
                 //Build up the list for the items that are moved.
                 //Note that an empty list could present in the returned hashmap
-                HashMap<String, Collection<AllocationItem>> itemsParentPathUpdated = updateParentPathAll(getAllocItemsAllById(containerSrc, mItems.getId()), destParent);
+                HashMap<String, Collection<AllocationItem>> itemsPropertyUpdated = updatePropertiesAll(getAllocItemsAllById(containerSrc, mItems.getId()), destParent);
                 //print out for debug
-                dp.getAllocationItem().out("Items that parentPath updated:", itemsParentPathUpdated, "");
+                dp.getAllocationItem().out("Items that property updated:", itemsPropertyUpdated, "");
 //                Log.d(TAG, "Items that parentPath updated:");
 //                itemsParentPathUpdated.entrySet().stream().forEach((set)->{
 //                    Log.d(TAG, "drive: " + set.getKey() + " list size: " + set.getValue().size() + " cdfs name: " + item.getName());
@@ -142,7 +144,7 @@ public class Move {
                 //The containers of destination will be processed later because they are more complicated.
                 ContainerUtil containerUtil = new ContainerUtil();
                 //containerSrc will be altered after call of containerUtil.removeItems
-                containerSrc = containerUtil.removeItems(containerSrc, itemsParentPathUpdated);
+                containerSrc = containerUtil.removeItems(containerSrc, itemsPropertyUpdated);
                 //po.out("new container to source:", newContainerSrc);
                 //po.out("original source container:", containerSrc);
 //                Log.d(TAG, "drives of dest:");
@@ -198,7 +200,7 @@ public class Move {
                     //Take out the containers we don't need to proceed
                     HashMap<String, AllocContainer> container = toKeyMatched(srcDrivesDestContained, containerDest);
                     //Add the parent path items
-                    HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, itemsParentPathUpdated);
+                    HashMap<String, AllocContainer> newContainerDest = containerUtil.addItems(container, itemsPropertyUpdated);
                     dp.getContainer().out("New container to dest:", newContainerDest,"");
 
                     callback(State.DEST_MAP_UPDATE_STARTED);
@@ -223,7 +225,7 @@ public class Move {
 //                        return srcDrivesDestNotContained.contains(set.getKey());
 //                    }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
                     Map<String, Collection<AllocationItem>> items =
-                            itemsParentPathUpdated.entrySet().stream().filter((entry)->{
+                            itemsPropertyUpdated.entrySet().stream().filter((entry)->{
                         return srcDrivesDestNotContained.contains(entry.getKey());
                     }).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
@@ -253,7 +255,11 @@ public class Move {
                     Collection<TransferItemModel> transferResult = transfer(itemsToAllocated, allocResult).join();
 
 
-                    //update the properties according to the result the transfer.
+                    //Update the properties of the items have been transferred because we will upload the new map files to
+                    //the dest. THe properties includes:
+                    // 1. drive name
+                    // 2. new ID of item that created in the dest
+                    // 3. time lastest modified
                     // The result should be identical to allocation result pass to the transfer at beginning
                     HashMap<String, Collection<AllocationItem>> updateItems = updateProperty(transferResult);
 
@@ -329,12 +335,20 @@ public class Move {
                             }).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private HashMap<String, Collection<AllocationItem>> updateParentPathAll(HashMap<String, Collection<AllocationItem>> items, final String parentPath){
+    /*
+        Update property parent path and date/time of the allocation items
+     */
+    private HashMap<String, Collection<AllocationItem>> updatePropertiesAll(HashMap<String, Collection<AllocationItem>> items, final String parentPath){
 
         return Mapper.reValue(items, collection->{
+            Calendar calendar = Calendar.getInstance();
+            Date date = calendar.getTime();
             Iterator<AllocationItem> iterator = collection.iterator();
             while(iterator.hasNext()){
-                iterator.next().setPath(parentPath);
+                AllocationItem ai = iterator.next();
+                ai.setPath(parentPath);
+                ai.setCreatedDateTime(date.toString());
+                ai.setLastModifiedDateTime(date.toString());
             }
             return collection;
         });
@@ -577,6 +591,7 @@ public class Move {
         The properties in the input items will be updated according to the transferred items:
         1. drive (drive name)
         2. Item ID (item id in user drive)
+        3. time latest modified
 
         Input:
         items:          items will get updated
@@ -609,9 +624,12 @@ public class Move {
 //
 //        return com.crossdrives.cdfs.util.map.Mapper.toColletion(remaped);
 
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
         return toHashMap(transferred.stream().map((ti)->{
             ti.ai.setDrive(ti.destDriveName);
             ti.ai.setItemId(ti.newId);
+            ti.ai.setLastModifiedDateTime(date.toString());
             return ti.ai;
         }).collect(Collectors.toCollection(ArrayList::new)));
     }

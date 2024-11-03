@@ -38,7 +38,7 @@ public class PieTextInCenter extends IPie{
     private final int[] colorsPie = new int[MAX_NO_ARC];
 
     public class Item{
-        int percentage; //e.g. 40 = 40/100
+        float percentage; //e.g. 0.4 = 40/100
         String title;
         String subtitle;
         String content[];
@@ -67,10 +67,10 @@ public class PieTextInCenter extends IPie{
         array.recycle();
 
         Item item1 = new Item();
-        item1.title = "TeraboxDrive"; item1.percentage = 50; item1.subtitle = "15.8MB";
+        item1.title = "TeraboxDrive"; item1.percentage = 0.5f; item1.subtitle = "15.8MB";
         items.add(item1);
         Item item2 = new Item();
-        item2.title = "Onedrive"; item2.percentage = 50; item2.subtitle = "15.8MB";
+        item2.title = "Onedrive"; item2.percentage = 0.5f; item2.subtitle = "15.8MB";
         items.add(item2);
     }
 
@@ -84,11 +84,6 @@ public class PieTextInCenter extends IPie{
     }
 
     public void addItems(Collection<Item> items){
-        //do some checks
-        //The percentages are reasonable?
-        if(items.stream().mapToInt((item)-> item.percentage).sum() != 100 ){
-            throw new IllegalArgumentException();
-        }
 
         //Number of items overs the maximum?
         if(items.stream().count() > MAX_NO_ARC){throw new IllegalArgumentException();}
@@ -109,7 +104,7 @@ public class PieTextInCenter extends IPie{
         while(iterator.hasNext()){
             Item item = iterator.next();
             paint.setColor(colorsPie[list.indexOf(item)]);
-            swipeAngle = (item.percentage*360)/100;
+            swipeAngle = Math.round(item.percentage*360);
             canvas.drawArc(rectF, startAngle, swipeAngle, true, paint);
             startAngle+=swipeAngle;
             Log.d(TAG, "startAngle:" + startAngle);

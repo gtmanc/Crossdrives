@@ -71,7 +71,9 @@
         </action>
         <action
             android:id="@+id/navigate_to_item_details_fragment"
-            app:destination="@id/item_details_fragment">
+            app:destination="@id/item_details_fragment"
+
+            >
         </action>
     </fragment>
 
@@ -133,7 +135,14 @@
         android:name="com.crossdrives.ui.fragments.ItemDetailsFragment"
         android:label = "@string/titleItemDetails"
         tools:layout="@layout/add_account_fragment">
-
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+            app:nullable="true" />
+        <argument
+            android:name="cdfsItem"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem"
+            app:nullable="false" />
     </fragment>
 
     <fragment

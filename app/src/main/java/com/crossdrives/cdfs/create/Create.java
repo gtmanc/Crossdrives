@@ -26,7 +26,9 @@ import com.google.android.gms.tasks.Tasks;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -128,8 +130,11 @@ public class Create {
                 HashMap<String, AllocContainer> modified = Mapper.reValue(mapContainer, (k, v)->{
                     String driveName = k;
                     AllocContainer container = v;
+                    Calendar calendar = Calendar.getInstance();
+                    Date date = calendar.getTime();
                     AllocationItem item = AllocManager.createItemFolder(
-                                    driveName, mName, pathParent, cdfsId, idNewCreatedItems.get(k), seq[0], mapContainer.size());
+                                    driveName, mName, pathParent, cdfsId, idNewCreatedItems.get(k), seq[0], mapContainer.size(),
+                            date.toString(), date.toString());
                     seq[0]++;
                     container.addItem(item);
                     return container;

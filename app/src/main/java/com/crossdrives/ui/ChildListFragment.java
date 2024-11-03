@@ -50,6 +50,6 @@ public class ChildListFragment extends QueryResultFragment{
     }
 
     void onMenuItemDetailsSelected(NavController navController){
-        navController.navigate(ChildListFragmentDirections.navigateToItemDetailsFragment());
+        //navController.navigate(ChildListFragmentDirections.navigateToItemDetailsFragment());
     }
 }

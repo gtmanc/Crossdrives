@@ -217,10 +217,11 @@ public class AllocManager implements IAllocManager {
         Input:
 
      */
-    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent,
-                                                  String cdfsId, String id, int seq, int total){
+    static private AllocationItem createItemBase(String drive, String name, @Nullable String parent,
+                                                  String cdfsId, String id, int seq, int total, boolean folder,
+                                                    String dtCreated, String dtLastModified) {
         AllocationItem item = new AllocationItem();
-        item.setAttrFolder(true);
+        item.setAttrFolder(folder);
         item.setDrive(drive);
         item.setName(name);
         item.setPath(parent);
@@ -231,7 +232,21 @@ public class AllocManager implements IAllocManager {
         item.setSequence(seq);
         item.setTotalSeg(total);
         item.setNameRawContent(name);
+        item.setCreatedDateTime(dtCreated);
+        item.setLastModifiedDateTime(dtLastModified);
         return item;
+    }
+
+    static public AllocationItem createItem(String drive, String name, @Nullable String parent,
+                                                  String cdfsId, String id, int seq, int total,
+                                                    String dtCreated, String dtLastModified){
+        return createItemBase(drive, name, parent, cdfsId, id, seq, total, false, dtCreated, dtLastModified);
+    }
+
+    static public AllocationItem createItemFolder(String drive, String name, @Nullable String parent,
+                                                  String cdfsId, String id, int seq, int total,
+                                                    String dtCreated, String dtLastModified){
+        return createItemBase(drive, name, parent, cdfsId, id, seq, total, true, dtCreated, dtLastModified);
     }
 
     private boolean getConclusion(java.util.List<AllocResultCodes> results){

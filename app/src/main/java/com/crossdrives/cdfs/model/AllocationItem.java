@@ -79,6 +79,12 @@ public class AllocationItem {
 
     private String nameRawContent;
 
+
+    private String createdDateTime;
+
+
+    private String lastModifiedDateTime;
+
     public String create(){
         String s = null;
 
@@ -143,6 +149,22 @@ public class AllocationItem {
 
     public void setNameRawContent(String nameRawContent) {
         this.nameRawContent = nameRawContent;
+    }
+
+    public String getCreatedDateTime() {
+        return createdDateTime;
+    }
+
+    public String getLastModifiedDateTime() {
+        return lastModifiedDateTime;
+    }
+
+    public void setCreatedDateTime(String createdDateTime) {
+        this.createdDateTime = createdDateTime;
+    }
+
+    public void setLastModifiedDateTime(String lastModifiedDateTime) {
+        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public Collection<String> toPropertyNames(){

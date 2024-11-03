@@ -29,6 +29,18 @@
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <ProgressBar
+        android:id="@+id/item_details_progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:progressDrawable="@drawable/query_list_progressbar"
+        android:visibility="visible"
+        />
+
     <com.crossdrives.ui.chart.piechart.Pie
         android:id="@+id/item_details_piechart"
         android:layout_width="wrap_content"
