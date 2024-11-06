@@ -1,25 +1,20 @@
 package com.crossdrives.ui.chart.piechart;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.View;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-public abstract class IPie {
+public abstract class PieBase extends View {
     Context mContext;
     DisplayMetrics displayMetrics;
 
-    abstract void onDraw(@NonNull Canvas canvas);
-
-    abstract void onMeasure(int widthMeasureSpec, int heightMeasureSpec, View v);
-
-    abstract Pair<Integer,Integer> getMeasuredDimention(int widthMode, int heightMode, int widthSize, int heightSize);
-
-    public IPie(Context context) {
+    public PieBase(Context context,  @Nullable AttributeSet attrs) {
+        super(context, attrs);
         mContext = context;
         displayMetrics = mContext.getResources().getDisplayMetrics();
     }

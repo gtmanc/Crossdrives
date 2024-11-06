@@ -33,6 +33,8 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
     private static final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
     private static final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
+    private static final String ALLOCITEMS_LIST_COL_DT_CREATED = DBConstants.ALLOCITEMS_LIST_COL_TIME_CREATED;
+    private static final String ALLOCITEMS_LIST_COL_DT_MODIFIED = DBConstants.ALLOCITEMS_LIST_COL_TIME_MODIFIED;
 
     SQLiteDatabase mdb = null;
 
@@ -65,7 +67,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 + ALLOCITEMS_LIST_COL_TOTALSEG + " integer, "
                 + ALLOCITEMS_LIST_COL_SIZE + " integer, "
                 + ALLOCITEMS_LIST_COL_CDFSITEMSIZE + " integer, "
-                + ALLOCITEMS_LIST_COL_FOLDER + " BIT"
+                + ALLOCITEMS_LIST_COL_FOLDER + " BIT,"
+                + ALLOCITEMS_LIST_COL_DT_CREATED + " integer,"
+                + ALLOCITEMS_LIST_COL_DT_MODIFIED + " integer"
                 + ");";
         Log.d(TAG, sql_statement1);
         Log.d(TAG, sql_statement2);

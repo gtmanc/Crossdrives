@@ -23,8 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public class PieTextInCenter extends IPie{
+public class PieTextInCenter extends PieBase {
     private final String TAG = "CD.PieTextInCenter";
+    private static PieTextInCenter instance;
     final private float radiusArc;
     final private float diameterArc;
     final private float radiusInnerCircle;
@@ -37,17 +38,11 @@ public class PieTextInCenter extends IPie{
     private final int MAX_NO_ARC = 3;
     private final int[] colorsPie = new int[MAX_NO_ARC];
 
-    public class Item{
-        float percentage; //e.g. 0.4 = 40/100
-        String title;
-        String subtitle;
-        String content[];
-    }
+    private Collection<Item> mItems = new ArrayList<>();
 
-    private Collection<Item> items = new ArrayList<>();
 
     public PieTextInCenter(Context context, @Nullable AttributeSet attrs) {
-        super(context);
+        super(context, attrs);
 
         //Initialize style and size parameters
         radiusArc = mContext.getResources().getDimension(R.dimen.radiusArc);
@@ -66,12 +61,12 @@ public class PieTextInCenter extends IPie{
         }
         array.recycle();
 
-        Item item1 = new Item();
-        item1.title = "TeraboxDrive"; item1.percentage = 0.5f; item1.subtitle = "15.8MB";
-        items.add(item1);
-        Item item2 = new Item();
-        item2.title = "Onedrive"; item2.percentage = 0.5f; item2.subtitle = "15.8MB";
-        items.add(item2);
+//        Item item1 = new Item();
+//        item1.title = "TeraboxDrive"; item1.percentage = 0.5f; item1.subtitle = "15.8MB";
+//        items.add(item1);
+//        Item item2 = new Item();
+//        item2.title = "Onedrive"; item2.percentage = 0.5f; item2.subtitle = "15.8MB";
+//        items.add(item2);
     }
 
     @Override
@@ -83,10 +78,23 @@ public class PieTextInCenter extends IPie{
 
     }
 
+    public void clearBeforeAddItems(Collection<Item> items){
+        mItems.clear();
+
+        //Number of items overs the maximum?
+        if(items.size() > MAX_NO_ARC){
+            throw new IllegalArgumentException();
+        }
+
+        items.addAll(items);
+
+    }
     public void addItems(Collection<Item> items){
 
         //Number of items overs the maximum?
-        if(items.stream().count() > MAX_NO_ARC){throw new IllegalArgumentException();}
+        if((mItems.size() + items.size()) > MAX_NO_ARC){
+            throw new IllegalArgumentException();
+        }
 
         items.addAll(items);
     }
@@ -97,7 +105,7 @@ public class PieTextInCenter extends IPie{
         RectF rectF = new RectF(CoorCenterPieX - radiusArc,0,
                 CoorCenterPieX + radiusArc, CoorCenterPieY + radiusArc);
 
-        List<Item> list = new ArrayList<>(items);
+        List<Item> list = new ArrayList<>(mItems);
         Iterator<Item> iterator = list.iterator();
         int startAngle = this.startAngleArc;
         int swipeAngle;
@@ -147,7 +155,7 @@ public class PieTextInCenter extends IPie{
         final int startXTitles = centerAllocInfo.first + Math.round(diameterIndicator) + paddingIndicatorRight;
         Log.d(TAG, "StartX titles: " + startXTitles);
         Rect rect = new Rect();
-        Iterator<Item> iterator = items.iterator();
+        Iterator<Item> iterator = mItems.iterator();
         Item item;
         String textSubtitle;
         int i = 0;
@@ -196,7 +204,7 @@ public class PieTextInCenter extends IPie{
 
         paintTitle.setTextSize(textSizeTitle);
         paintSubtitle.setTextSize(textSizeSubtitle);
-        int titlesHeightTotal = items.stream().mapToInt((item)->{
+        int titlesHeightTotal = mItems.stream().mapToInt((item)->{
             Rect rect1 = new Rect();
             paintTitle.getTextBounds(item.title, 0, item.title.length(), rect1);
             Rect rect2 = new Rect();
@@ -205,7 +213,7 @@ public class PieTextInCenter extends IPie{
         }).sum();
 
         //height of whole text block. This will used to calculate the baseline of whole text block
-        int numOfItem = (int)items.stream().count();
+        int numOfItem = (int) mItems.stream().count();
         int textBlockHeight = titlesHeightTotal +
                 (numOfItem-1)*paddingtitleTop + numOfItem*paddingSubtitleTop;
 
@@ -217,11 +225,11 @@ public class PieTextInCenter extends IPie{
         }
 
         int titlesWidthMax = IntStream.concat(
-                items.stream().mapToInt((item)->{
+                mItems.stream().mapToInt((item)->{
                     Rect rect = new Rect();
                     paintTitle.getTextBounds(item.title, 0, item.title.length(), rect);
                     return rect.width();}),
-                items.stream().mapToInt((item)->{
+                mItems.stream().mapToInt((item)->{
                     Rect rect = new Rect();
                     paintSubtitle.getTextBounds(item.subtitle, 0, item.subtitle.length(), rect);
                     return rect.width();})
@@ -239,13 +247,19 @@ public class PieTextInCenter extends IPie{
 
     //A good article for the method: https://stackoverflow.com/questions/12266899/onmeasure-custom-view-explanation
     @Override
-    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec, View v) {
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int widthMode = View.MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = View.MeasureSpec.getMode(heightMeasureSpec);
+        int widthSize = View.MeasureSpec.getSize(widthMeasureSpec);
+        int heightSize = View.MeasureSpec.getSize(heightMeasureSpec);
+        Pair<Integer,Integer> pair = getMeasuredDimention(widthMode, heightMode, widthSize, heightSize);
 
+        setMeasuredDimension(pair.first, pair.second);
     }
 
 
-    @Override
-    public Pair<Integer,Integer> getMeasuredDimention(int widthMode, int heightMode, int widthSize, int heightSize) {
+    private Pair<Integer,Integer> getMeasuredDimention(int widthMode, int heightMode, int widthSize, int heightSize) {
         Log.d(TAG, "spec size: " + widthSize + "," + heightSize);
 
 

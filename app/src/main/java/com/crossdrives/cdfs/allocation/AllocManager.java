@@ -3,28 +3,22 @@ package com.crossdrives.cdfs.allocation;
 import android.database.Cursor;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.crossdrives.cdfs.CDFS;
-import com.crossdrives.cdfs.common.IConstant;
 import com.crossdrives.cdfs.data.Drive;
 import com.crossdrives.cdfs.IAllocManager;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.AllocContainer;
 import com.crossdrives.cdfs.model.AllocationItem;
-import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.cdfs.util.print.Printer;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
 import com.google.gson.Gson;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -553,6 +547,8 @@ public class AllocManager implements IAllocManager {
         dh.setSize(item.getSize());
         dh.setCDFSItemSize(item.getCDFSItemSize());
         dh.setAttrFolder(item.getAttrFolder());
+        dh.setCreatedTime(item.getCreatedTime());
+        dh.setModifiedTime(item.getLastModifiedTime());
         dh.insert();
     }
 

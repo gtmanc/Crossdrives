@@ -31,6 +31,8 @@ public interface DBConstants {
     final String ALLOCITEMS_LIST_COL_SIZE = "item_size";
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = "cdfsitem_size";
     final String ALLOCITEMS_LIST_COL_FOLDER = "folder";
+    final String ALLOCITEMS_LIST_COL_TIME_CREATED = "dt_created";
+    final String ALLOCITEMS_LIST_COL_TIME_MODIFIED = "dt_modified";
 
     /*
         Index

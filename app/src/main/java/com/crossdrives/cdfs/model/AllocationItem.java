@@ -151,11 +151,11 @@ public class AllocationItem {
         this.nameRawContent = nameRawContent;
     }
 
-    public String getCreatedDateTime() {
+    public String getCreatedTime() {
         return createdDateTime;
     }
 
-    public String getLastModifiedDateTime() {
+    public String getLastModifiedTime() {
         return lastModifiedDateTime;
     }
 

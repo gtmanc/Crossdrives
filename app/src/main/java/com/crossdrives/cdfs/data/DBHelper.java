@@ -9,8 +9,6 @@ import android.util.Log;
 
 import com.crossdrives.data.DBConstants;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DBHelper{
@@ -32,6 +30,8 @@ public class DBHelper{
     final String ALLOCITEMS_LIST_COL_SIZE = DBConstants.ALLOCITEMS_LIST_COL_SIZE;
     final String ALLOCITEMS_LIST_COL_CDFSITEMSIZE = DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE;
     final String ALLOCITEMS_LIST_COL_FOLDER = DBConstants.ALLOCITEMS_LIST_COL_FOLDER;
+    final String ALLOCITEMS_LIST_COL_TIME_CREATED = DBConstants.ALLOCITEMS_LIST_COL_TIME_CREATED;
+    final String ALLOCITEMS_LIST_COL_TIME_MODIFIED = DBConstants.ALLOCITEMS_LIST_COL_TIME_MODIFIED;
 
     public DBHelper(Context context) {
         dbh = new com.crossdrives.data.DBHelper(context, null, null, 0);
@@ -94,6 +94,18 @@ public class DBHelper{
     public DBHelper setAttrFolder(boolean folder){
         ContentValues cv;
         mCV.put(ALLOCITEMS_LIST_COL_FOLDER, folder);
+        return this;
+    }
+
+    public DBHelper setCreatedTime(String time){
+        ContentValues cv;
+        mCV.put(ALLOCITEMS_LIST_COL_TIME_CREATED, time);
+        return this;
+    }
+
+    public DBHelper setModifiedTime(String time){
+        ContentValues cv;
+        mCV.put(ALLOCITEMS_LIST_COL_TIME_MODIFIED, time);
         return this;
     }
 

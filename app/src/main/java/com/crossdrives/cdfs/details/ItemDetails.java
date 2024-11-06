@@ -13,6 +13,7 @@ import com.crossdrives.cdfs.allocation.MapFetcher;
 import com.crossdrives.cdfs.allocation.Names;
 import com.crossdrives.cdfs.data.DBHelper;
 import com.crossdrives.cdfs.exception.ItemNotFoundException;
+import com.crossdrives.cdfs.model.AllocationItem;
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.crossdrives.data.DBConstants;
 import com.crossdrives.msgraph.SnippetApp;
@@ -22,11 +23,11 @@ import com.google.android.gms.tasks.Tasks;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,7 +72,7 @@ public class ItemDetails {
                 CompletableFuture<HashMap<String, OutputStream>> fetchMapFuture =
                         mapFetcher.pullAll(Parent.getCurrent(mParents));
                 final String pathParent;
-                java.util.List<CdfsItem> items;
+                java.util.List<AllocationItem> items;
 
                 pathParent = Names.CompletePath(Parent.getCurrent(mParents));
                 Log.d(TAG, "pathParent: " + pathParent);
@@ -80,57 +81,63 @@ public class ItemDetails {
 
                 AllocManager am = new AllocManager();
                 am.CheckThenUpdateLocalCopy(pathParent, allocations);
-                items = buildCdfsItemList(pathParent);
+                items = RebuildItemList(pathParent, mItem.getId());
 
-                //build result
-                Optional<CdfsItem> fileredItem = items.stream().filter((item)-> item.getId().equals(mItem.getId())).findAny();
-                if(!fileredItem.isPresent()){
-                    throw new ItemNotFoundException("The specified item is not found in current parent!",new Throwable());
-                }
-
-                return buildResult(fileredItem.get());
+                return buildResult(items);
             }
         });
 
         return task;
     }
 
-    Result buildResult(CdfsItem item){
+    Result buildResult(List<AllocationItem> items){
         Result r = new Result();
 
+        //build result
+        Optional<AllocationItem> optional = items.stream().findAny();
+        if(!optional.isPresent()){
+            throw new ItemNotFoundException("The specified item is not found in current parent!",new Throwable());
+        }
+
+        AllocationItem item = optional.get();
         r.name = item.getName();
         r.size = item.getSize();
-        r.created = item.getTimeCreated();
-        r.modified = item.getTimeModified();
-
+        r.created = item.getCreatedTime();
+        r.modified = item.getLastModifiedTime();
+        HashMap<String, Long> sizeMap = new HashMap<>();
+        Iterator iterator = items.iterator();
+        while(iterator.hasNext()){
+            if(sizeMap.get(item.getDrive()) == null) {
+                sizeMap.put(item.getDrive(), item.getSize());
+                break;
+            }
+            sizeMap.compute(item.getDrive(), (k, v) -> v + item.getSize());
+        }
+        r.allocatedSize = sizeMap;
         return r;
     }
-    private @NonNull java.util.List<CdfsItem> buildCdfsItemList(@Nullable String pathParent) {
+    private @NonNull java.util.List<AllocationItem> RebuildItemList(@Nullable String pathParent, String id) {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
-        java.util.List<CdfsItem> items = new ArrayList<>();
-        final String clause1;
+        java.util.List<AllocationItem> items = new ArrayList<>();
+        String clause;
         Cursor cursor = null;
 
-        /*
-            Set filter(clause) parent. This actually is not needed anymore because the CDFS is changed to
-            multiply parents structure. The local database only contains items which have the same parent(path).
-         */
-        //clause1 = buildClausePath(pathParent);
-        //cursor = dh.query(clause1);
+        clause = ALLOCITEMS_LIST_COL_CDFSID;
+        clause = clause.concat(" = " + "'" + id + "'");
+
+        Log.d(TAG, "clausePath: " + clause);
+        cursor = dh.query(clause);
+        if(!queryResultCheck(cursor)){return items;}
 
         /*
             Set filter(clause) attribute folder
          */
         //clause2 = buildClauseFolder(folder);
 
-        /*
-            First build up a CDFS list with an empty drive item map. The map will be filled in next step.
-            Use database group statement to make sure only one entry is got from all entries which
-            have the same CDFS ID.
-        */
-        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
-        cursor = dh.query();    //pass none to read all records
-        if(!queryResultCheck(cursor)){return items;}
+
+//        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
+//        cursor = dh.query();    //pass none to read all records
+//        if(!queryResultCheck(cursor)){return items;}
 
         final int indexName = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_NAME);
         final int indexPath = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_PATH);
@@ -143,66 +150,26 @@ public class ItemDetails {
         final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
         final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
         cursor.moveToFirst();
-        Log.d(TAG, "start to create cdfs list. cursor count: " + cursor.getCount());
+
         for(int i = 0 ; i < cursor.getCount(); i++){
-            CdfsItem item = new CdfsItem();
-            ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
-            item.setMap(map);   //Just set a placeholder. We will fill the content in later step.
+            AllocationItem item = new AllocationItem();
             item.setName(cursor.getString(indexName));
-            item.setId(cursor.getString(indexCDFSId));
+            item.setItemId(cursor.getString(indexItemId));
             item.setPath(cursor.getString(indexPath));
-            //if we are in root, the list is null or empty. In this case, we have to create a list.
-            java.util.List<String> list = Parent.toIdList(mParents);
-            if(list == null){list= new ArrayList<>();}
-            list.add(Parent.getCurrent(mParents).getId());
-            item.setParents(list);
+            item.setSequence(cursor.getInt(indexSeq));
+            item.setCDFSItemSize(cursor.getLong(indexCDFSSize));
+            item.setDrive(cursor.getString(indexDrive));
+            item.setCdfsId(cursor.getString(indexCDFSId));
+            item.setTotalSeg(cursor.getInt(indexTotalSeg));
+            item.setSize(cursor.getLong(indexSize));
             //Solution for get a boolean from db:
             //https://stackoverflow.com/questions/4088080/get-boolean-from-database-using-android-and-sqlite
-            item.setFolder(cursor.getInt(indexAttrFolder) > 0 );
+            item.setAttrFolder(cursor.getInt(indexAttrFolder) > 0 );
             items.add(item);
             cursor.moveToNext();
         }
         cursor.close();
 
-        /*
-            Fill the map we created in previous step. Read out the entries which has the same CDFS ID and then put the
-            drive item ID to the map according to the drive name.
-         */
-        Log.d(TAG, "Start to fill map. Number of cdfs items: " + items.size());
-        dh.GroupBy(null);   //remove the group clause we setup in previous step
-        items.stream().forEach((item)->{    //each cdfs item
-            String clause2 = ALLOCITEMS_LIST_COL_CDFSID;
-            clause2 = clause2.concat(" = " + "'" + item.getId() + "'");
-            Cursor cursor2 = null;
-            cursor2 = dh.query(clause2);
-            if(!queryResultCheck(cursor2)){return;}
-            ConcurrentHashMap<String, java.util.List<String>> map = item.getMap();
-            cursor2.moveToFirst();
-            for(int i = 0 ; i < cursor2.getCount(); i++){
-                String driveName = cursor2.getString(indexDrive);
-                // Add ID first time?
-                if(map.get(driveName) == null){
-                    Log.d(TAG, "Create list. item: " + item.getName() + "drive name: " + driveName);
-                    java.util.List<String> list = new ArrayList<>();
-                    map.put(driveName, list);
-                }
-                map.get(driveName).add(cursor2.getString(indexItemId));
-                cursor2.moveToNext();
-            }
-        });
-
-        //dump for debugging
-//        {
-//            Log.d(TAG, "Dump built cdfs items:");
-//            items.stream().forEach((item) -> {
-//                Log.d(TAG, "item@" + item.toString());
-//                Log.d(TAG, "name: " + item.getName());
-//                Log.d(TAG, "map@" + item.getMap().toString());
-//                item.getMap().entrySet().stream().forEach((set) -> {
-//                    Log.d(TAG, "drive: " + set.getKey() + " id: " + set.getValue());
-//                });
-//            });
-//        }
         return items;
     }
     /*

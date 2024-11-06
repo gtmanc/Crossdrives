@@ -20,10 +20,10 @@ public class BaseItem {
 
     Long size;
 
-    Date timeCreated;
+    String timeCreated;
 
     //last modified time
-    Date timeModified;
+    String timeModified;
 
     public String getName() {
         return name;
@@ -45,7 +45,7 @@ public class BaseItem {
         return folder;
     }
 
-    public Date getTimeCreated() {
+    public String getTimeCreated() {
         return timeCreated;
     }
 
@@ -69,7 +69,7 @@ public class BaseItem {
         this.folder = folder;
     }
 
-    public void setTimeCreated(Date t) {
+    public void setTimeCreated(String t) {
         timeCreated = t;
     }
 
@@ -81,11 +81,11 @@ public class BaseItem {
         this.size = size;
     }
 
-    public Date getTimeModified() {
+    public String getTimeModified() {
         return timeModified;
     }
 
-    public void setTimeModified(Date timeModified) {
+    public void setTimeModified(String timeModified) {
         this.timeModified = timeModified;
     }
 }

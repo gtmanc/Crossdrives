@@ -1,6 +1,5 @@
 package com.crossdrives.ui.fragments;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,10 +23,8 @@ import com.crossdrives.cdfs.details.Result;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.model.CdfsItem;
-import com.crossdrives.driveclient.model.File;
-import com.crossdrives.msgraph.SnippetApp;
-import com.crossdrives.ui.MainListFragmentArgs;
-import com.crossdrives.ui.listener.ResultUpdater;
+import com.crossdrives.ui.chart.piechart.Item;
+import com.crossdrives.ui.chart.piechart.PieTextInCenter;
 import com.example.crossdrives.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -35,8 +32,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class ItemDetailsFragment extends Fragment {
     private final String TAG = "CD.ItemDetailsFragment";
@@ -81,10 +81,11 @@ public class ItemDetailsFragment extends Fragment {
                 toolbar, navController, appBarConfiguration);
 
         //fab object is null if called in onCreate
-        FloatingActionButton fab = view.findViewById(R.id.fab);
+        FloatingActionButton fab = getActivity().findViewById(R.id.fab);
         fab.setVisibility(View.GONE);
 
         mProgressBar = view.findViewById(R.id.item_details_progressBar);
+        PieTextInCenter pie = view.findViewById(R.id.item_details_piechart);
 
         Task<Result> task = null;
         Service service = CDFS.getCDFSService().getService();
@@ -103,7 +104,8 @@ public class ItemDetailsFragment extends Fragment {
             task.addOnSuccessListener(new OnSuccessListener<Result>() {
                 @Override
                 public void onSuccess(Result result) {
-                    
+                    pie.clearBeforeAddItems(buildPieItems(result));
+                    pie.invalidate();
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -122,5 +124,16 @@ public class ItemDetailsFragment extends Fragment {
 //            notification.updateContentTitle(context.getString(R.string.notification_title_move_item_completed));
 //            notification.updateContentText(context.getString(R.string.notification_content_move_item_complete_exceptionally));
         }
+    }
+
+    Collection<Item> buildPieItems(Result details){
+        long totalSize = details.allocatedSize.values().stream().mapToLong((v) -> v).sum();
+        return details.allocatedSize.entrySet().stream().map((set)->{
+            Item item = new Item();
+            item.title = set.getKey();
+            item.percentage = (float) set.getValue()/totalSize;
+            item.subtitle = new Float(set.getValue()/1024).toString() + "MB";
+            return item;
+        }).collect(Collectors.toCollection(ArrayDeque::new));
     }
 }
