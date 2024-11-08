@@ -1473,7 +1473,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	/**
 	 *
 	 */
-	void onMenuItemDetailsSelected(View view, CdfsItem item){
+	public void onMenuItemDetailsSelected(View view, CdfsItem item){
 
 	}
 

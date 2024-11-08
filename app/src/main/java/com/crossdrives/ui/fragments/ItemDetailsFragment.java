@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,7 +34,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -43,8 +43,13 @@ public class ItemDetailsFragment extends Fragment {
     private CdfsItem[] mParentPath;
     private CdfsItem mItem;
 
-    private View mProgressBar
-            ;
+    private View mProgressBar;
+
+    private PieTextInCenter pie;
+    private TextView tvName;
+    private TextView tvSize;
+    private TextView tvTimeCreated;
+    private TextView tvTimeModified;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +75,7 @@ public class ItemDetailsFragment extends Fragment {
 
         Toolbar toolbar = view.findViewById(R.id.item_details_toolbar);
 
+
         NavController navController = Navigation.findNavController(view);
         DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
         //mDrawer = drawerLayout;
@@ -85,7 +91,11 @@ public class ItemDetailsFragment extends Fragment {
         fab.setVisibility(View.GONE);
 
         mProgressBar = view.findViewById(R.id.item_details_progressBar);
-        PieTextInCenter pie = view.findViewById(R.id.item_details_piechart);
+        pie = view.findViewById(R.id.item_details_piechart);
+        tvName = view.findViewById(R.id.text_item_details_name);
+        tvSize = view.findViewById(R.id.text_item_details_size);
+        tvTimeCreated = view.findViewById(R.id.text_item_details_created_time);
+        tvTimeModified = view.findViewById(R.id.text_item_details_modifed_time);
 
         Task<Result> task = null;
         Service service = CDFS.getCDFSService().getService();
@@ -104,8 +114,20 @@ public class ItemDetailsFragment extends Fragment {
             task.addOnSuccessListener(new OnSuccessListener<Result>() {
                 @Override
                 public void onSuccess(Result result) {
-                    pie.clearBeforeAddItems(buildPieItems(result));
+                    Collection<Item> items = buildPieItems(result);
+//                    items.forEach((item)->{
+//                        Log.d(TAG, "Title:" + item.title);
+//                        Log.d(TAG, "Subtitle:" + item.subtitle);
+//                        Log.d(TAG, "Percentage:" + item.percentage);
+//
+//                    });
+                    pie.clearBeforeAddItems(items);
                     pie.invalidate();
+                    pie.setVisibility(View.VISIBLE);
+                    tvName.setText(result.name); tvName.setVisibility(View.VISIBLE);
+                    tvSize.setText(result.size/1024 + getString(R.string.unit_item_details_size)); tvSize.setVisibility(View.VISIBLE);
+                    tvTimeCreated.setText(result.timeCreated); tvTimeCreated.setVisibility(View.VISIBLE);
+                    tvTimeModified.setText(result.timeModified); tvTimeModified.setVisibility(View.VISIBLE);
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -131,8 +153,10 @@ public class ItemDetailsFragment extends Fragment {
         return details.allocatedSize.entrySet().stream().map((set)->{
             Item item = new Item();
             item.title = set.getKey();
-            item.percentage = (float) set.getValue()/totalSize;
-            item.subtitle = new Float(set.getValue()/1024).toString() + "MB";
+            //Special handle for folder
+            if(mItem.isFolder()){ item.percentage = 1.0f;}
+            else{item.percentage = (float) set.getValue()/totalSize;}
+            item.subtitle = new Float(set.getValue()/1024).toString() + getString(R.string.unit_item_details_size);
             return item;
         }).collect(Collectors.toCollection(ArrayDeque::new));
     }

@@ -49,7 +49,10 @@ public class ChildListFragment extends QueryResultFragment{
         return super.onOptionsItemSelected(item);
     }
 
-    void onMenuItemDetailsSelected(NavController navController){
-        //navController.navigate(ChildListFragmentDirections.navigateToItemDetailsFragment());
+    @Override
+    public void onMenuItemDetailsSelected(View view, CdfsItem item){
+        CdfsItem[] itemArray = treeOpener.getParentArray(false);
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(ChildListFragmentDirections.navigateToItemDetailsFragment(itemArray, item));
     }
 }

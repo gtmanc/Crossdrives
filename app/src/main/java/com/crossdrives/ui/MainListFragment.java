@@ -64,10 +64,10 @@ public class MainListFragment extends QueryResultFragment{
         navController.navigate(MainListFragmentDirections.navigateToChildListFragment(itemArray));
     }
 
-    void onMenuItemDetailsSelected(View view, CdfsItem item){
+   @Override
+    public void onMenuItemDetailsSelected(View view, CdfsItem item){
         CdfsItem[] itemArray = treeOpener.getParentArray(false);
         NavController navController = Navigation.findNavController(view);
-        navController.navigate(MainListFragmentDirections.navigateToChildListFragment(itemArray));
         navController.navigate(MainListFragmentDirections.navigateToItemDetailsFragment(itemArray, item));
     }
 }

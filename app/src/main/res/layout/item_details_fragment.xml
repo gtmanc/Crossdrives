@@ -49,6 +49,7 @@
         android:layout_marginTop="16dp"
         app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
         app:layout_constraintRight_toRightOf="@+id/item_details_fragment_guideline_vertical_right"
+        android:visibility="invisible"
         />
 
     <com.google.android.material.divider.MaterialDivider
@@ -83,6 +84,7 @@
         android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
         android:text="name of item"
         android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
         />
     <TextView
         android:id="@+id/lable_item_details_size"
@@ -105,6 +107,7 @@
         android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
         android:text="size of item"
         android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
         />
     <TextView
         android:id="@+id/lable_item_details_created_dt"
@@ -118,7 +121,7 @@
         android:textAppearance="@style/TextStyleBodyBase1"
         />
     <TextView
-        android:id="@+id/text_item_details_created_dt"
+        android:id="@+id/text_item_details_created_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/lable_item_details_created_dt"
@@ -127,12 +130,13 @@
         android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
         android:text="time created"
         android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
         />
     <TextView
         android:id="@+id/lable_item_details_modifed_dt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/text_item_details_created_dt"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_created_time"
         android:layout_marginTop="@dimen/paddingItemDetailsLabelTop"
         app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
         android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
@@ -140,7 +144,7 @@
         android:textAppearance="@style/TextStyleBodyBase1"
         />
     <TextView
-        android:id="@+id/text_item_details_modifed_dt"
+        android:id="@+id/text_item_details_modifed_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/lable_item_details_modifed_dt"
@@ -149,6 +153,7 @@
         android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
         android:text="time modified"
         android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
         />
 
     <androidx.constraintlayout.widget.Guideline

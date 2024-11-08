@@ -61,9 +61,10 @@ public class PieTextInCenter extends PieBase {
         }
         array.recycle();
 
-//        Item item1 = new Item();
-//        item1.title = "TeraboxDrive"; item1.percentage = 0.5f; item1.subtitle = "15.8MB";
-//        items.add(item1);
+        //add at least an item so that the default pie chart can be drawn
+        Item item1 = new Item();
+        item1.title = "Unknown drive"; item1.percentage = 1.0f; item1.subtitle = "0.0MB";
+        mItems.add(item1);
 //        Item item2 = new Item();
 //        item2.title = "Onedrive"; item2.percentage = 0.5f; item2.subtitle = "15.8MB";
 //        items.add(item2);
@@ -71,7 +72,6 @@ public class PieTextInCenter extends PieBase {
 
     @Override
     public void onDraw(@NonNull Canvas canvas) {
-
         drawArc(canvas);
         drawInnerCircle(canvas);
         writeAllocInfo(canvas);
@@ -79,24 +79,27 @@ public class PieTextInCenter extends PieBase {
     }
 
     public void clearBeforeAddItems(Collection<Item> items){
-        mItems.clear();
+        if(items.stream().count() == 0 || items == null){ return;}
 
         //Number of items overs the maximum?
         if(items.size() > MAX_NO_ARC){
             throw new IllegalArgumentException();
         }
 
-        items.addAll(items);
+        mItems.clear();
+        mItems.addAll(items);
 
     }
+
     public void addItems(Collection<Item> items){
+        if(items.stream().count() == 0 || items == null){ return;}
 
         //Number of items overs the maximum?
         if((mItems.size() + items.size()) > MAX_NO_ARC){
             throw new IllegalArgumentException();
         }
 
-        items.addAll(items);
+        mItems.addAll(items);
     }
 
     private void drawArc(Canvas canvas){
@@ -214,6 +217,7 @@ public class PieTextInCenter extends PieBase {
 
         //height of whole text block. This will used to calculate the baseline of whole text block
         int numOfItem = (int) mItems.stream().count();
+        Log.w(TAG, "Number of items: " + numOfItem);
         int textBlockHeight = titlesHeightTotal +
                 (numOfItem-1)*paddingtitleTop + numOfItem*paddingSubtitleTop;
 

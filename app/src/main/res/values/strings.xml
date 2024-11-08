@@ -43,6 +43,8 @@
     <string name="lable_item_details_size">Size</string>
     <string name="lable_item_details_created_dt">Created</string>
     <string name="lable_item_details_modified_dt">Modified</string>
+    <string name="unit_item_details_size">MB</string>
+
     <!-- Microsoft Graph-->
     <string name="beta">BETA</string>
     <!--<string name="userPhoto" >photo </string>-->

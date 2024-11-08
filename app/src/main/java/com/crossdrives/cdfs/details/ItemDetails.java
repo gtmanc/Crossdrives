@@ -102,8 +102,8 @@ public class ItemDetails {
         AllocationItem item = optional.get();
         r.name = item.getName();
         r.size = item.getSize();
-        r.created = item.getCreatedTime();
-        r.modified = item.getLastModifiedTime();
+        r.timeCreated = item.getCreatedTime();
+        r.timeModified = item.getLastModifiedTime();
         HashMap<String, Long> sizeMap = new HashMap<>();
         Iterator iterator = items.iterator();
         while(iterator.hasNext()){
@@ -149,6 +149,8 @@ public class ItemDetails {
         final int indexSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_SIZE);
         final int indexCDFSSize = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_CDFSITEMSIZE);
         final int indexAttrFolder = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_FOLDER);
+        final int indexTimeCreated = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TIME_CREATED);
+        final int indexTimeModified = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TIME_MODIFIED);
         cursor.moveToFirst();
 
         for(int i = 0 ; i < cursor.getCount(); i++){
@@ -165,6 +167,8 @@ public class ItemDetails {
             //Solution for get a boolean from db:
             //https://stackoverflow.com/questions/4088080/get-boolean-from-database-using-android-and-sqlite
             item.setAttrFolder(cursor.getInt(indexAttrFolder) > 0 );
+            item.setCreatedDateTime(cursor.getString(indexTimeCreated));
+            item.setLastModifiedDateTime(cursor.getString(indexTimeModified));
             items.add(item);
             cursor.moveToNext();
         }
