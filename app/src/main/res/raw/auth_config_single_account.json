@@ -1,15 +1,16 @@
 {
-"client_id" : "afd432e7-01a1-47ab-8c37-5b487970f05c",
-"authorization_user_agent" : "DEFAULT",
-"redirect_uri" : "msauth://com.example.crossdrives/yuA%2BnLjqHb%2Blo8n78AI7ZAgEens%3D",
-"account_mode" : "SINGLE",
-"authorities" : [
-{
-"type": "AAD",
-"audience": {
-"type": "PersonalMicrosoftAccount",
-"tenant_id": "consumers"
-}
-}
-]
+  "client_id" : "52c3522e-6124-49a8-a529-5a6215e4480b",
+  "authorization_user_agent" : "DEFAULT",
+  "redirect_uri" : "msauth://com.example.crossdrives/yuA%2BnLjqHb%2Blo8n78AI7ZAgEens%3D",
+  "//" : "msauth://com.example.crossdrives/%2FBmHxih5wIsyO7pdgz0voBWbMzE%3D",
+  "account_mode" : "SINGLE",
+  "authorities" : [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "PersonalMicrosoftAccount",
+        "tenant_id": "consumers"
+      }
+    }
+  ]
 }

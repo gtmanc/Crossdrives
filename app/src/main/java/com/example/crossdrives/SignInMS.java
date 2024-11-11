@@ -10,8 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.crossdrives.msgraph.SharedPrefsUtil;
-import com.microsoft.graph.authentication.IAuthenticationProvider;
+import com.crossdrives.msgraph.SnippetApp;
 
+import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
@@ -25,6 +26,7 @@ import com.microsoft.identity.client.exception.MsalException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,8 +37,8 @@ public class SignInMS extends SignInManager{
     private Activity mActivity;
     ISingleAccountPublicClientApplication mSingleAccountApp;
     //https://docs.microsoft.com/en-us/graph/permissions-reference?context=graph%2Fapi%2F1.0&view=graph-rest-1.0
-    private final static String[] SCOPES = {"Files.ReadWrite.All"};
-    private final static List<String> scopes = new ArrayList<>();
+    private final static String[] SCOPES = {"Files.ReadWrite.All", "Files.ReadWrite.AppFolder"};
+    //private final static List<String> scopes = new ArrayList<>();
     /* Azure AD v2 Configs */
     final static String AUTHORITY = "https://login.microsoftonline.com/common";
     OnSignInfinished mOnSignInfinished;
@@ -45,18 +47,20 @@ public class SignInMS extends SignInManager{
     private String mToken;
     private Object mObject;
 
-    public SignInMS(Activity activity){mActivity = activity; mContext = mActivity.getApplicationContext(); scopes.add("Files.Read");}
+    public SignInMS(){; mContext = SnippetApp.getAppContext(); //scopes.add("Files.Read");
+    }
 
-    public static SignInMS getInstance(Activity activity){
+    public static SignInMS getInstance(){
         if(mSignInMS == null){
-            mSignInMS = new SignInMS(activity);
+            mSignInMS = new SignInMS();
         }
         return mSignInMS;
     }
 
     @Override
-    boolean Start(View view, OnSignInfinished callback) {
+    boolean Start(Activity activity, OnSignInfinished callback) {
         mOnSignInfinished = callback;
+        mActivity = activity;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -68,6 +72,7 @@ public class SignInMS extends SignInManager{
                     @Override
                     public void onError(MsalException exception) {
                         Log.w(TAG, "signInResult:failed! " + exception.toString());
+                        callback.onFailure(SignInManager.BRAND_MS, exception.toString());
                     }
                 });
 
@@ -77,6 +82,7 @@ public class SignInMS extends SignInManager{
     @Override
     void silenceSignIn(Activity activity, OnSignInfinished callback) {
         mOnSignInfinished = callback;
+        mActivity = activity;
         PublicClientApplication.createSingleAccountPublicClientApplication(mContext,
                 R.raw.auth_config_single_account, new IPublicClientApplication.ISingleAccountApplicationCreatedListener() {
                     @Override
@@ -88,6 +94,7 @@ public class SignInMS extends SignInManager{
                     @Override
                     public void onError(MsalException exception) {
                         Log.w(TAG, "signInResult:failed! " + exception.toString());
+                        mOnSignInfinished.onFailure(SignInManager.BRAND_MS, exception.toString());
                     }
                 });
 
@@ -155,7 +162,7 @@ public class SignInMS extends SignInManager{
                     try {
                         inputStream.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.w(TAG, "IO exception: " + e.getMessage());
                     }
                 })
                 .exceptionally(ex -> {Log.d(TAG, "get photo failed: " + ex.toString()); return null;});
@@ -174,6 +181,7 @@ public class SignInMS extends SignInManager{
     private void loadAccount(){
         if (mSingleAccountApp == null) {
             Log.w(TAG, "mSingleAccountApp is null!");
+            mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "Unknown failure!");
             return;
         }
 
@@ -193,6 +201,7 @@ public class SignInMS extends SignInManager{
                     // Perform a cleanup task as the signed-in account changed.
                     //performOperationOnSignOut();
                     Log.d(TAG, "onAccountChanged");
+                    mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "Account has changed. Not yet implemented.");
                 }
             }
 
@@ -201,6 +210,7 @@ public class SignInMS extends SignInManager{
                 //displayError(exception);
                 Log.w(TAG, "signInResult:failed! Code=" + exception.toString());
                 Log.w(TAG, " + exception.getMessage())");
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, exception.getMessage());
             }
         });
     }
@@ -220,6 +230,10 @@ public class SignInMS extends SignInManager{
                 Log.d(TAG, "User name : " + authenticationResult.getAccount().getUsername());
                 Log.d(TAG, "Account : " + authenticationResult.getAccount().toString());
                 Log.d(TAG, "Authority : " + authenticationResult.getAccount().getAuthority());
+                Log.d(TAG, "Tenant ID : " + authenticationResult.getTenantId());
+                Arrays.stream(authenticationResult.getScope()).forEach((s)->{
+                    Log.d(TAG, "Scope : " + s);
+                        });
                 //Log.d(TAG, "AccessToken : " + authenticationResult.getAccessToken());
                 // save our auth token for REST API use later
                 SharedPrefsUtil.persistAuthToken(authenticationResult);
@@ -245,13 +259,13 @@ public class SignInMS extends SignInManager{
                 /* Failed to acquireToken */
                 Log.w(TAG, "Authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSignInfinished.onFailure(exception.toString());
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, exception.toString());
             }
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
                 Log.w(TAG, "User cancelled login.");
-                mOnSignInfinished.onFailure("User cancelled the sign in");
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "User cancelled the sign in");
             }
         };
     }
@@ -261,16 +275,21 @@ public class SignInMS extends SignInManager{
             @Override
             public void onSuccess(IAuthenticationResult authenticationResult) {
                 Log.d(TAG, "Successfully silence authenticated");
+                SignInManager.Profile profile = new Profile();
+                profile.Name = authenticationResult.getAccount().getUsername();
+                profile.Mail = "";
+                profile.PhotoUri = null;
+                profile.Brand = SignInManager.BRAND_MS;
 
                 //callGraphAPI(authenticationResult);
                 mToken = authenticationResult.getAccessToken();
-                mOnSignInfinished.onFinished(null, mToken);
+                mOnSignInfinished.onFinished(profile, mToken);
             }
             @Override
             public void onError(MsalException exception) {
                 Log.w(TAG, "Silence authentication failed: " + exception.toString());
                 //displayError(exception);
-                mOnSignInfinished.onFailure("Silence authentication failed: " + exception.toString());
+                mOnSignInfinished.onFailure(SignInManager.BRAND_MS, "Silence authentication failed: " + exception.toString());
             }
         };
     }

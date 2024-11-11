@@ -121,7 +121,7 @@ public class BaseTranscoder {
 
 
     /*
-        Separate the whole query string to query strings.
+        Separate the whole query string to query substrings.
         Good reference:
         example 6 in https://www.geeksforgeeks.org/split-string-java-examples/
         https://stackoverflow.com/questions/3481828/how-to-split-a-string-in-java
@@ -139,6 +139,9 @@ public class BaseTranscoder {
         return qs.split(regex);
     }
 
+    /*
+        Get the conditional operator present in the given query string
+     */
     private List<String> getConditionOperators(String qs){
         String s, op;
         List<String> conditions = new ArrayList<>();
@@ -163,7 +166,7 @@ public class BaseTranscoder {
         List<String> transcoded = new ArrayList<>();
         List<String> conditions = new ArrayList<>();
         String[] separated;
-        String s;
+        String s = null;
         ListIterator<IConvert> conversions;
 
         Log.d(TAG, "Given gooogle query string:" + qs);
@@ -174,7 +177,7 @@ public class BaseTranscoder {
         Log.d(TAG, "Length of split strings:" + separated.length);
         /**
             convert the split substring by calling all of the added converters. If the conversion is
-            not applied, the conversion return null instead a converted string.
+            not applied, the conversion return null instead of a converted string.
         */
         for(int i = 0 ; i < separated.length; i++){
             conversions = mConvertions.listIterator();
@@ -186,23 +189,19 @@ public class BaseTranscoder {
             }
         }
 
-       /*
-        Merge two arrays interleaved.
-        Assume:
-        1. length of function operations is shorter than the other.
-        2. Length of function is the one of the other - 1
+        /*
+            Number of reanscoded substring could be zero. e.g. A google query string without any
+            conditional operator: '12345' in parents
         */
-        s = null;
-        if(transcoded.size() != (conditions.size()+1)){
-            Log.w(TAG, "transcode failed! Length of condition op: "
-                    + conditions.size() + "length of query string: " + transcoded.size());
-            return s;
-        }
-        s = transcoded.get(0);
-        for (int i = 0; i < conditions.size(); i++) {
-            s = s.concat(conditions.get(i));
-            s = s.concat(" ");
-            s = s.concat(transcoded.get(i+1));
+        Log.d(TAG, "Concantenate transcoded substrings. Number of substring: " + transcoded.size());
+        if(transcoded.size() > 0) {
+            s = transcoded.get(0);
+            for (int i = 0; i < conditions.size(); i++) {
+                Log.d(TAG, "Substring: " + transcoded.get(i));
+                s = s.concat(conditions.get(i));
+                s = s.concat(" ");
+                s = s.concat(transcoded.get(i + 1));
+            }
         }
 
         Log.d(TAG, "Converted string: " + s);

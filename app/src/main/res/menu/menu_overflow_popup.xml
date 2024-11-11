@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.crossdrives.MainActivity">
+
+    <group android:id="@+id/group_action" >
+    <item
+        android:id="@+id/omiMove"
+        android:icon="@drawable/ic_baseline_delete_24"
+        android:title="@string/overflow_popup_menu_item_move">
+    </item>
+
+    <item
+        android:id="@+id/omiRename"
+        android:icon="@drawable/baseline_drive_file_rename_outline_24"
+        android:title="@string/overflow_popup_menu_item_rename">
+    </item>
+    </group>
+    <group android:id="@+id/group_misc">
+    <item
+        android:id="@+id/omiInfo"
+        android:icon="@drawable/ic_baseline_select_all_24"
+        android:title="@string/overflow_popup_menu_item_info">
+    </item>
+    </group>
+</menu>

@@ -3,28 +3,37 @@ package com.crossdrives.driveclient;
 import android.content.Context;
 import android.util.Log;
 
+import com.crossdrives.driveclient.about.GoogleDriveAboutRequestBuilder;
+import com.crossdrives.driveclient.about.IAboutRequestBuilder;
+import com.crossdrives.driveclient.create.GoogleDriveCreateRequestBuilder;
+import com.crossdrives.driveclient.create.ICreateRequestBuilder;
+import com.crossdrives.driveclient.delete.GoogleDriveDeleteRequestBuilder;
+import com.crossdrives.driveclient.delete.IDeleteRequestBuilder;
+import com.crossdrives.driveclient.download.GoogleDriveDownloadRequestBuilder;
+import com.crossdrives.driveclient.download.IDownloadRequestBuilder;
+import com.crossdrives.driveclient.get.GoogleDriveGetRequestBuilder;
+import com.crossdrives.driveclient.get.IGetRequestBuilder;
+import com.crossdrives.driveclient.list.GoogleDriveFileListRequestBuilder;
+import com.crossdrives.driveclient.list.IQueryRequestBuilder;
+import com.crossdrives.driveclient.update.GoogleDriveUpdateRequestBuilder;
+import com.crossdrives.driveclient.update.IUpdateRequestBuilder;
+import com.crossdrives.driveclient.upload.GoogleDriveUploadRequestBuilder;
+import com.crossdrives.driveclient.upload.IUploadRequestBuilder;
 import com.example.crossdrives.DriveServiceHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.media.MediaHttpUploader;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.About;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class GoogleDriveClient implements IDriveClient {
     private static String TAG = "CD.GoogleDriveClient";
-    private static Context mContext;
+    //private static Context mContext;
     private static GoogleSignInAccount mGoogleSignInAccount;
     private static String mAccessToken;
     private Drive mGgoogleDriveService;
@@ -72,14 +81,14 @@ public class GoogleDriveClient implements IDriveClient {
     /*
         Deprecated
      */
-    static public Builder builder(Context context, GoogleSignInAccount SignInAccount){
-        mContext = context;
-        mGoogleSignInAccount = SignInAccount;
-        return new Builder();
-    }
+//    static public Builder builder(GoogleSignInAccount SignInAccount){
+//        //mContext = context;
+//        mGoogleSignInAccount = SignInAccount;
+//        return new Builder();
+//    }
 
-    static public Builder builder(Context context, String accessToken){
-            mContext = context;
+    static public Builder builder(String accessToken){
+            //mContext = context;
             mAccessToken = accessToken;
             return new Builder();
     }
@@ -91,6 +100,7 @@ public class GoogleDriveClient implements IDriveClient {
     }
     public static IDriveClient fromConfig(){
         GoogleDriveClient gClient = new GoogleDriveClient();
+
         if(mAccessToken != null) {
 //            GoogleAccountCredential credential =
 //                    GoogleAccountCredential.usingOAuth2(
@@ -104,6 +114,7 @@ public class GoogleDriveClient implements IDriveClient {
 //                            .setApplicationName("Cross Drive")
 //                            .build();
 
+
             GoogleCredential credential = new GoogleCredential().setAccessToken((String)mAccessToken);
             setCredential(credential);
             Drive googleDriveService =
@@ -114,7 +125,6 @@ public class GoogleDriveClient implements IDriveClient {
                 Log.w(TAG, "googleDriveService is null!");
 
             gClient.setGoogleDriveService(googleDriveService);
-            //gClient.setGDriveHelper(new DriveServiceHelper(googleDriveService));
 
             if (googleDriveService == null)
                 Log.w(TAG, "googleDriveService is null!");
@@ -122,6 +132,12 @@ public class GoogleDriveClient implements IDriveClient {
         }
 
         return gClient;
+    }
+
+    @Override
+    public IDriveClient build(String token) {
+        mAccessToken = token;
+        return GoogleDriveClient.fromConfig();
     }
 
     @Override
@@ -149,6 +165,21 @@ public class GoogleDriveClient implements IDriveClient {
     @Override
     public IDeleteRequestBuilder delete() {
         return new GoogleDriveDeleteRequestBuilder(this);
+    }
+
+    @Override
+    public IAboutRequestBuilder about() {
+        return new GoogleDriveAboutRequestBuilder(this);
+    }
+
+    @Override
+    public IUpdateRequestBuilder update() {
+        return new GoogleDriveUpdateRequestBuilder(this);
+    }
+
+    @Override
+    public IGetRequestBuilder get() {
+        return new GoogleDriveGetRequestBuilder(this);
     }
 
 

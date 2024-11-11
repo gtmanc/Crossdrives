@@ -95,7 +95,7 @@
 
     <Button
         android:id="@+id/add_account_btn"
-        style="@style/Widget.Custom.Button2"
+        style="@style/Widget.App.Button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/button_add_a_master_account"

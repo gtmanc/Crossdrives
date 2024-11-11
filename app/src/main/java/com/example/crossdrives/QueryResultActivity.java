@@ -2,19 +2,42 @@ package com.example.crossdrives;
 
 import android.app.Activity;
 import android.app.SearchManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.SearchView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.navigation.NavController;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
+
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.crossdrives.ui.MainListFragment;
+import com.crossdrives.ui.MainListFragmentDirections;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 
@@ -22,13 +45,13 @@ import java.util.ArrayList;
 // From an expert: https://developer.android.com/guide/topics/ui/layout/recyclerview
 // Google: https://www.journaldev.com/24041/android-recyclerview-load-more-endless-scrolling
 
-public class QueryResultActivity extends AppCompatActivity {
+public class QueryResultActivity extends AppCompatActivity implements DrawerLayout.DrawerListener{
     final String STATE_NORMAL = "state_normal";
     final String STATE_ITEM_SELECTION = "state_selection";
 
     private String TAG = "CD.QueryResultActivity";
     private ArrayList<SerachResultItemModel> mItems;
-    private QueryFileAdapter mAdapter;
+    //private QueryFileAdapter mAdapter;
     private Intent mIntent;
     private int mPreLast = 0;
     //private ProgressBar mProgressBar;
@@ -37,8 +60,17 @@ public class QueryResultActivity extends AppCompatActivity {
     private String mState = STATE_NORMAL;
     private int mSelectedItemCount = 0;
     private RecyclerView.LayoutManager layoutManager;
+    NavController navController;
     Toolbar mToolbar_normal;
     Toolbar mToolbar_contextual;
+
+    DrawerLayout drawerLayout;
+
+    private BottomSheetBehavior bottomSheetBehavior;
+
+    NavigationView mNavigationView, mBottomNavigationView;
+
+    static final public String KEY_PARENT_PATH = "parentPath";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,72 +78,84 @@ public class QueryResultActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_query_result);
 
-        /*
-        mToolbar_normal = findViewById(R.id.toolbar);
-        mToolbar_contextual = findViewById(R.id.contextual_toolbar);
-        setSupportActionBar(mToolbar_normal);
+        // Crashes if Navigation.findNavController is used because androidx.fragment.app.FragmentContainerView
+        // is used as the layout to contain contents of main body of screen.
+        //https://developer.android.com/guide/navigation/get-started#navigate
+//        navController =
+//                //Navigation.findNavController(this, R.id.main_content);
+//                NavHostFragment.findNavController(getSupportFragmentManager().findFragmentById(R.id.main_content));
+//        Bundle bundle = new Bundle();
+//        bundle.putString(KEY_PARENT_PATH, "Root");
+//        navController.setGraph(R.navigation.nav_graph, bundle);
 
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-//        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        mToolbar_normal.setNavigationOnClickListener(onNavigationClick_NormalBar);
-        mToolbar_contextual.setNavigationOnClickListener(onNavigationClick_ContextuallBar);
-        //toolbar.getBackground().setAlpha(0);
-        Bundle bundle = this.getIntent().getExtras();
-        //ListView listview = (ListView) findViewById(R.id.listview_query);
-        RecyclerView recyclerview = (RecyclerView) findViewById(R.id.recycler_view);
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(onFabClick);
 
-        Log.d(TAG, "onCreated");
+        drawerLayout = findViewById(R.id.layout_query_result_activity);
+        drawerLayout.addDrawerListener(this);
+        /*Toolbar tooBar = findViewById(R.id.qr_toolbar);
+        AppBarConfiguration appBarConfiguration =
+                new AppBarConfiguration.Builder(navController.getGraph()).setDrawerLayout(drawerLayout).build();
+        NavigationUI.setupWithNavController(
+                tooBar, navController, appBarConfiguration);*/
 
-        //mProgressBar = (ProgressBar) findViewById(R.id.pb);
+        mNavigationView = findViewById(R.id.nav_view);
+        mNavigationView.setNavigationItemSelectedListener(OnNavigationItemSelectedListener);
+        mNavigationView.getMenu().findItem(R.id.nav_item_hidden).setVisible(false);
+        View hv = mNavigationView.getHeaderView(0);
+        hv.setOnClickListener(onHeaderClick);
 
-        //Object DriveServiceHelper should be created in MainActivity
-        mDriveServiceHelper = DriveServiceHelper.getInstance(null);
+//        mBottomNavigationView = findViewById(R.id.bottomNavigationView);
+//        mBottomNavigationView.setNavigationItemSelectedListener(OnBottomNavItemSelectedListener);
 
-        //queryFile is an asynchronous process so that the listview is created right in the addOnSuccessListener
-        mActivity = this;
+        View bottomSheet = findViewById(R.id.bottomNavigationView);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setHideable(true);//this one has been set to true in layout
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        // will be assigned later in queryFile()
-        layoutManager = new LinearLayoutManager(this);
-
-        queryFile();
-
-//        listview.setOnScrollListener(onScrollListener);
-//        listview.setOnItemClickListener(onClickListView);
-//        listview.setOnItemLongClickListener(onOnItemLongListener);
-        recyclerview.addOnScrollListener(onScrollListener);
-
-         */
-//        NavController navController = Navigation.findNavController(this, R.id.main_content);
-//
-//        AppBarConfiguration appBarConfiguration =
-//                new AppBarConfiguration.Builder(navController.getGraph()).build();
-//        Toolbar toolbar = findViewById(R.id.toolbar);;
-//
-//        NavigationUI.setupWithNavController(
-//                toolbar, navController, appBarConfiguration);
     }
 
-    private void switchContextualActionBar(){
+    NavigationView.OnNavigationItemSelectedListener OnNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            // Handle navigation view item clicks here.
+            int id = item.getItemId();
 
-        //Switch to contextual tool bar
-        mToolbar_normal.setVisibility(View.GONE);
-        mToolbar_contextual.setVisibility(View.VISIBLE);
-        setSupportActionBar(mToolbar_contextual);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-    }
+//			if(item.isChecked())
+//				Log.d(TAG, "checked!");
 
-    private void switchNormalActionBar(){
+            //close drawer right here. Otherwise, the drawer is still there if screen is switched back from next one
+            drawerLayout.closeDrawers();
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        mToolbar_contextual.setVisibility(View.GONE);
-        mToolbar_normal.setVisibility(View.VISIBLE);
-        setSupportActionBar(mToolbar_normal);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-    }
+            //The screen transition will take place in callback onDrawerClosed. This is because we have to ensure that the
+            //drawer is closed exactly before screen proceed to next one
+            if (id == R.id.drawer_menu_item_master_account) {
+                Log.d(TAG, "Master account selected!");
+            }else if(id == R.id.drawer_menu_item_two){
+                Log.d(TAG, "nav_item_two selected!");
+            }else if(id == R.id.nav_item_hidden){
+                Log.d(TAG, "nav_item_three selected!");
+            }else{
+                Log.d(TAG, "Unknown selected!");
+            }
+            return true;
+        }
+    };
 
+    View.OnClickListener onHeaderClick = new View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            Log.d(TAG, "header is clicked. View: " + v);
+            //mCountPressDrawerHeader++;
 
-    /*public boolean onCreateOptionsMenu(Menu menu) {
-        Log.d(TAG, "onCreateOptionsMenu");*/
+            NavDirections a = com.crossdrives.ui.MainListFragmentDirections.navigateToSystemTest();
+            navController.navigate(a);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }};
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(TAG, "onCreateOptionsMenu");
     // Inflate the menu; this adds items to the action bar if it is present.
     /* getMenuInflater().inflate(R.menu.menu_option, menu); */
 
@@ -127,8 +171,8 @@ public class QueryResultActivity extends AppCompatActivity {
                 searchManager.getSearchableInfo(getComponentName()));*/
 
     //searchView.setSubmitButtonEnabled(true);
-        /*return true;
-    }*/
+        return true;
+    }
 
     private MenuItem.OnMenuItemClickListener OnMenuItemClickListener = new MenuItem.OnMenuItemClickListener(){
         @Override
@@ -174,4 +218,62 @@ public class QueryResultActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
+
+    }
+
+    @Override
+    public void onDrawerOpened(@NonNull View drawerView) {
+    }
+
+    @Override
+    public void onDrawerClosed(@NonNull View drawerView) {
+        MenuItem item = mNavigationView.getCheckedItem();
+        Log.d(TAG, "navigate to: ");
+        if(item != null){
+            if(item.getItemId() == R.id.drawer_menu_item_master_account) {
+                Log.d(TAG, "Master account fragment");
+//                QueryResultFragmentDirections.NavigateToMasterAccount action =
+//                        QueryResultFragmentDirections.navigateToMasterAccount();
+//                action.setMyArg(100);
+                NavDirections a = MainListFragmentDirections.navigateToMasterAccount(null);
+                Navigation.findNavController(this, R.id.main_content).navigate(a);
+            }
+            else if(item.getItemId() == R.id.drawer_menu_item_two){
+                Log.d(TAG, "delete file fragment");
+                NavDirections a = MainListFragmentDirections.navigateToDeleteFile();
+                Navigation.findNavController(this, R.id.main_content).navigate(a);
+            }
+            else{
+                Log.d(TAG, "Oops, unknown ID");
+            }
+        }
+        else{
+            Log.w(TAG, "drawer checked item is null");
+        }
+        //It's unclear how to clear(reset) a checked item once it is checked.
+        //A workaround is used: set to the hidden item so that we can avoid the unexpected transition
+        mNavigationView.setCheckedItem(R.id.nav_item_hidden);
+    }
+
+    @Override
+    public void onDrawerStateChanged(int newState) {
+
+    }
+
+    View.OnClickListener onFabClick = new View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            Log.d(TAG, "fab is clicked");
+
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+//			Intent intent = new Intent(FragmentManager.findFragment(v).getActivity(), FABOptionDialog.class);
+//			//intent.putExtra("Brand", SignInManager.BRAND_MS);
+//			//mStartForResult.launch(intent);
+//			FABOptionAlertDialog dialog = new FABOptionAlertDialog();
+//			dialog.show(getParentFragmentManager(), "FABOptionAlertDialog");
+        }
+    };
 }

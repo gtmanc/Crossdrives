@@ -59,7 +59,7 @@ public class DeleteFileAdapter extends BaseAdapter {
 
         SerachResultItemModel model = mItems.get(position);
 
-        holder.tvItemName.setText(model.getName());
+        holder.tvItemName.setText(model.getCdfsItem().getName());
 
         if (model.isSelected())
             holder.ivCheckBox.setBackgroundResource(R.drawable.ic_baseline_check_box_24);

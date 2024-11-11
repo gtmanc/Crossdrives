@@ -13,9 +13,10 @@
     -->
   </style>
 
-  <style name="AppTheme.NoActionBar">
+  <style name="AppTheme.NoActionBar" parent="Theme.MaterialComponents.NoActionBar">
     <item name="windowActionBar">false</item>
     <item name="windowNoTitle">true</item>
+    <!--<item name="windowActionModeOverlay">true</item>-->
     <item name="android:textColorPrimary">@android:color/white</item>
     <item name="android:textColorSecondary">@android:color/darker_gray</item>
     <item name="actionMenuTextColor">@android:color/white</item>
@@ -24,8 +25,8 @@
     <item name="colorSecondary">@android:color/darker_gray</item>
 
     <!-- Query result list -->
-    <item name="colorQueryListItemBGIdle">@color/colorQueryListItemBGIdle</item>
-    <item name="colorQueryListBackgroundSelected">@color/colorQueryListItemBGSelected</item>
+    <item name="colorQueryListItemBGIdle">@color/color_query_list_item_background_normal</item>
+    <item name="colorQueryListBackgroundSelected">@color/color_query_list_item_background_selected</item>
     <item name="colorQueryListItemPicBGChecked">@color/colorQueryListItemPicBGChecked</item>
 
 
@@ -43,10 +44,18 @@
     <item name="button2Background">@drawable/button2_background_state</item>
     <item name="colorButton2BackgroundPress">@color/colorButton1BackgroundPress</item>
     <item name="colorButton2BackgroundRelease">@color/colorBackground</item>
+    <!-- stroke color doesnt show as expected after AppTheme is changed to Material. It seems transparent always-->
     <item name="colorButton2Stroke">@color/colorButton1BackgroundRelease</item>
     <item name="colorButton2Content">@color/button1_content_color_state</item>
     <item name="colorButton2ContentPress">@color/colorButton1BackgroundRelease</item>
     <item name="colorButton2ContentRelease">@color/colorTextButton1</item>
+
+    <!-- pie chart in item details screen -->
+    <item name="colorPieTextTitle">@android:color/white</item>
+    <item name="colorPieTextSubtitle">@android:color/darker_gray</item>
+    <item name="colorPieArc1">#D500F9</item>
+    <item name="colorPieArc2">#C51162</item>
+    <item name="colorPieArc3">#00C853</item>
   </style>
 
   <style name="AppTheme.AppBarOverlayMaterial" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
@@ -72,11 +81,9 @@
   </style>
   <style name="Widget.Custom.AppCompat.ActionMode" parent="Widget.AppCompat.ActionMode">
     <item name="background">@color/colorActionModeBackground</item>
-    <item name="titleTextStyle">@style/ActionModeTitleTextStyle</item>
+    <item name="titleTextStyle">@style/TextStyleTitleBase1</item>
   </style>
-  <style name="ActionModeTitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
-    <item name="android:textColor">@color/colorActionModeText</item>
-  </style>
+
   <style name="MyOverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
     <item name="android:tint">@color/colorActionModeOverflow</item>
   </style>
@@ -113,6 +120,7 @@
   <style name = "Widget.Custom.ProgressBar" parent="android:Widget.Material.Light.ProgressBar.Small.Title">
   </style>
 
+  <!-- Alert dialogs -->
   <style name="Theme.Custom.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog.MinWidth">
     <!--Background: Transparent-->
     <item name="android:windowBackground">@color/colorTransparant</item>
@@ -126,11 +134,47 @@
     <item name="colorPrimary">@android:color/holo_blue_light</item>
 
     <!--Action buttons -->
-    <item name="colorActionButton1Background">@drawable/action_button1_background_state</item>
-    <item name="colorActionButton1BackgroundPress">@color/colorActionButton1BackgroundPress</item>
-    <item name="colorActionButton1BackgroundRelease">@android:color/transparent</item>
+    <item name="colorActionButton1NegativeBackground">@drawable/action_button1_negative_background_state</item>
+    <item name="colorActionButton1NegativeBackgroundPress">@color/colorActionButton1NegativeBackgroundPress</item>
+    <item name="colorActionButton1NegativeBackgroundRelease">@color/colorActionButton1NegativeBackgroundRelease</item>
+    <item name="colorActionButton1PositiveBackground">@drawable/action_button1_positive_background_state</item>
+    <item name="colorActionButton1PositiveBackgroundPress">@color/colorActionButton1PositiveBackgroundPress</item>
+    <item name="colorActionButton1PositiveBackgroundRelease">@color/colorActionButton1PositiveBackgroundRelease</item>
+    <item name="colorActionButton1PositiveBorder">@color/colorActionButton1PositiveBorder</item>
+    <item name="colorActionButton1NegativeBorder">@color/colorActionButton1NegativeBorder</item>
     <!--Here we dont use selector to override the default state because it seems that Android provided looks good-->
-    <item name="colorActionButton1Content">@color/colorTextActionButton1</item>
+    <item name="colorActionButton1Text">@android:color/white</item>
+
+  </style>
+
+  <!-- Option Dialogs -->
+  <style name="Theme.Custom.Option.MaterialComponents.Dialog.MinWidth" parent="Theme.MaterialComponents.Dialog">
+    <!--Background. This is the background of the dialog. Dont confused with the parent-->
+    <item name="android:windowBackground">@color/colorTransparant</item>
+
+    <!--Border-->
+    <item name="android:windowFrame">@null</item>
+
+    <!--<item name="android:windowIsTranslucent">true</item>-->
+
+    <item name="android:background">@drawable/option_dialog_background</item>
+    <!-- No effect observed:
+    <item name="android:backgroundDimEnabled">true</item>
+    <item name="android:backgroundDimAmount">0.5</item>
+    <item name="android:windowIsFloating">false</item>
+    <item name="android:windowIsTranslucent">true</item>-->
+
+
+    <!-- Material input text -->
+    <item name="colorOnSurface">@android:color/holo_blue_light</item>
+    <!-- colorPrimary will affect stroke and floating text color -->
+    <item name="colorPrimary">@android:color/holo_blue_light</item>
+
+    <!-- activity transition animation. No effect observed:
+    <item name="android:windowActivityTransitions">true</item>
+    <item name="android:windowEnterTransition">@android:transition/slide_bottom</item>
+    <item name="android:windowExitTransition">@android:transition/slide_bottom</item> -->
+
   </style>
 
   <style name="Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -139,8 +183,17 @@
     <!--<item name="boxBackgroundMode">filled</item>-->
     <!--<item name="boxBackgroundColor">@color/colorAccent</item>-->
     <!--<item name="android:textColorHint">@color/colorAccent</item>-->
+  </style>
 
-
+  <!--                              Text styles                        -->
+  <!-- base text styles -->
+  <style name="TextStyleTitleBase1" parent="TextAppearance.AppCompat.Widget.ActionMode.Title">
+    <item name="android:textColor">@color/colorActionModeText</item>
+  </style>
+  <style name="TextStyleBodyBase1" parent="TextAppearance.MaterialComponents.Body1">
+  </style>
+  <style name="TextStyleBodyBase2" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:textColor">@color/colorTextSecondary</item>
   </style>
 
   <!--states for Stroke color -->

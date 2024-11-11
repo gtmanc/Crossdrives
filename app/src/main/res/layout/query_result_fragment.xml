@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/layout_query_result">
-
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
-
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appbar"
             android:layout_width="match_parent"
@@ -26,7 +19,7 @@
                 android:layout_gravity="center"
                 app:layout_scrollFlags="scroll|enterAlways"
                 app:title="CDS"
-                app:navigationIcon="@drawable/ic_navigation_toolbar"
+                app:navigationIcon="@drawable/baseline_arrow_back_24"
                 app:popupTheme="@style/AppTheme.PopupOverlay">
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
@@ -66,25 +59,60 @@
             android:layout_height="match_parent"
             app:layout_behavior = "@string/appbar_scrolling_view_behavior"
             />
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!--<androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            > -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:progressDrawable="@drawable/query_list_progressbar"
+            android:visibility="visible"
+            />
 
-            >
-            <ProgressBar
-                android:id="@+id/progressBar"
+            <!--<com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab"
+                style = "@style/Widget.App.FloatingActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                android:progressDrawable="@drawable/query_list_progressbar"
-                />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:layout_gravity="bottom|end"
+                android:layout_margin="@dimen/fab_margin"
+                app:srcCompat="@android:drawable/ic_input_add"
+                />-->
+                <!-- app:layout_anchor="@id/bottomAppBar" -->
+        <!--</androidx.constraintlayout.widget.ConstraintLayout> -->
+        <!--<FrameLayout
+            android:id="@+id/scrim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <com.google.android.material.navigation.NavigationView
+            android:id = "@+id/bottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_behavior="@string/bottom_sheet_behavior"
+            app:behavior_hideable="true"
+            app:menu="@menu/menu_bottom_sheet" />-->
+        <com.google.android.material.bottomappbar.BottomAppBar
+            android:id = "@+id/bottomAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            app:menu="@menu/menu_bottom_appbar"
+            android:visibility="invisible"
+            />
+        <!--
+        style="@style/Widget.MaterialComponents.BottomAppBar"
+        app:navigationIcon="@drawable/ic_menu_24dp"-->
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    <com.google.android.material.navigation.NavigationView
+    <!--<com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         style="@style/Widget.Custom.NavigationView"
         android:layout_width="wrap_content"
@@ -92,7 +120,6 @@
         android:layout_gravity="start"
         app:headerLayout="@layout/drawer_header"
         app:menu="@menu/menu_main_drawer"
-        android:fitsSystemWindows="true" />
-
-
-</androidx.drawerlayout.widget.DrawerLayout>
+        android:fitsSystemWindows="true" /> -->
+    <!--app:layout_behavior="@string/bottom_sheet_behavior"
+        app:behavior_hideable="true" -->

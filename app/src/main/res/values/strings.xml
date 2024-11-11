@@ -4,10 +4,23 @@
     <string name="app_name">Crossdrives</string>
 
     <string name="search_hint">search drives</string>
+
+    <!--            Tool bar            -->
+    <string name="titleDefault">My Drive</string>
+    <string name="titleChildListFragment">Folder</string>
+    <string name="titleMoveItem">Move Item</string>
+    <string name="titleItemDetails">Details</string>
+
+    <!--            menu items          -->
+    <!-- Action bar -->
     <string name="actionModeDelete">Delete</string>
     <string name="actionModeSelectAll">Select All</string>
     <string name="actionModeDetail">Copy</string>
     <string name="actionModeCopy">Copy Link</string>
+    <!-- overflow icon popup menu -->
+    <string name="overflow_popup_menu_item_move">Move</string>
+    <string name="overflow_popup_menu_item_rename">Rename</string>
+    <string name="overflow_popup_menu_item_info">Details</string>
 
     <!--Query Result Fragment-->
     <string name="file_default_name">Name</string>
@@ -25,6 +38,13 @@
     <string name="button_signin_google" >Add Google Account</string>
     <string name="button_signin_ms">Add One Drive Account</string>
 
+    <!--Item details fragment-->
+    <string name="lable_item_details_name">Name</string>
+    <string name="lable_item_details_size">Size</string>
+    <string name="lable_item_details_created_dt">Created</string>
+    <string name="lable_item_details_modified_dt">Modified</string>
+    <string name="unit_item_details_size">MB</string>
+
     <!-- Microsoft Graph-->
     <string name="beta">BETA</string>
     <!--<string name="userPhoto" >photo </string>-->
@@ -35,4 +55,75 @@
     <string name="signout_dialog_message">The App will be signed out</string>
     <string name="signout_dialog_action_signout">Sign out</string>
     <string name="signout_dialog_action_cancel">Cancel</string>
+
+    <!-- Base Action dialog-->
+    <string name="title_base_action_dialog">Take Action</string>
+    <string name="content_base_action_dialog">Take action to continue</string>
+    <string name="button_base_action_dialog_negative">Cancel</string>
+    <string name="button_base_action_dialog_positive">OK</string>
+    <string name="hint1_base_action_dialog">Input text</string>
+    <string name="hint2_base_action_dialog">Input text</string>
+
+    <!--        =================Dialogs=================         -->
+    <!-- Create folder dialog -->
+    <string name="title_create_folder_dialog">Create Folder</string>
+    <string name="content_create_folder_dialog">Enter folder name</string>
+
+    <!-- Rename dialog -->
+    <string name="title_rename_dialog">Rename</string>
+    <string name="content_rename_dialog">Enter New Name</string>
+
+    <!-- Dialog permission request education -->
+    <string name="message_permission_education">Grant the permission so that download can work as expectedly</string>
+    <string name="left_button_permission_education">Deny</string>
+    <string name="right_button_permission_education">Go ahead</string>
+    <string name="implication_deny_grant_permission_external_storage">Without this permission,
+        the app is unable to save the downloaded file to a proper folder.</string>
+    <string name="implication_permission_external_storage_denied_never_ask">
+        Download is unable to start. Go to Settings and grant the external storage permission</string>
+    <!-- Notifications -->
+    <string name="notification_title_default">Cross drives</string>
+    <string name="notification_content_default">In progress</string>
+    <string name="notification_title_uploading">Upload in progress</string>
+    <string name="notification_title_upload_completed">Upload Completed</string>
+    <string name="notification_content_upload_start_get_quota">Get quotas</string>
+    <string name="notification_content_upload_start_prepare_data">Preparing</string>
+    <string name="notification_content_upload_uploading_file">Uploading file</string>
+    <string name="notification_content_upload_start_update_maps">Almost done</string>
+    <string name="notification_content_upload_complete">Uploaded successfully</string>
+    <string name="notification_content_upload_complete_exceptionally">Oops... Something wrong during upload</string>
+
+    <string name="notification_title_downloading">Download in progress</string>
+    <string name="notification_title_download_completed">Download Completed</string>
+    <string name="notification_content_downloading_file">Downloading file</string>
+    <string name="notification_content_download_start_fetch_maps">Check...</string>
+    <string name="notification_content_download_fetch_maps_done">Check OK!</string>
+    <string name="notification_content_download_complete">Downloaded successfully</string>
+    <string name="notification_content_download_complete_exceptionally">Oops... Something wrong during Download</string>
+
+    <string name="notification_title_deleting">Delete in progress</string>
+    <string name="notification_title_delete_completed">Delete Completed</string>
+    <string name="notification_content_deleting_file">Deleting file</string>
+    <string name="notification_content_delete_start_fetch_maps">Check...</string>
+    <string name="notification_content_delete_fetch_maps_done">Check OK!</string>
+    <string name="notification_content_delete_complete">Delete successfully</string>
+    <string name="notification_content_delete_complete_exceptionally">Oops... Something wrong during Delete</string>
+
+    <string name="notification_title_item_moving">Move in progress</string>
+    <string name="notification_title_move_item_completed">Move Completed</string>
+    <string name="notification_content_moving_file">Could take longer time than usual...</string>
+    <string name="notification_content_move_item_start_fetch_maps">Check...</string>
+    <string name="notification_content_move_item_fetch_maps_done">Check OK!</string>
+    <string name="notification_content_move_item_complete">Moved successfully</string>
+    <string name="notification_content_move_item_start_update_src_map">Preparing...</string>
+    <string name="notification_content_move_item_start_update_dest_map">Almost done...</string>
+    <string name="notification_content_move_item_complete_exceptionally">Oops... Something wrong during moving a file</string>
+
+    <!-- Toast messages -->
+    <string name="toast_create_file_success">Create file OK!</string>
+    <string name="toast_create_file_failure">Failed to create file!</string>
+    <!-- Action taken -->
+    <string name="toast_action_taken_delete_start">The file is being deleting</string>
+    <string name="toast_action_taken_download_start">The file is being downloading</string>
+    <string name="toast_action_taken_upload_start">The file is being uploading</string>
 </resources>
