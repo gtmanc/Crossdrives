@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GoogleFunctionOperator extends BaseOperator{
-    public static final String CONTAINS = "contains";
+    static final String CONTAINS = "contains";
+    static final String EQUALS = "=";
 
     final List<String> mF_OPs = new ArrayList<>();
 

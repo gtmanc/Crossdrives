@@ -17,7 +17,7 @@ public interface MSGraphMeService {
 
     /**
      * @param version  The version of the API to use (beta, v1, etc...)
-     * @param select   A set of names specifying which properties to return in results
+     * @param select   A set of Names specifying which properties to return in results
      */
     @GET("/{version}/me")
     Call<ResponseBody> getMeResponsibilities(

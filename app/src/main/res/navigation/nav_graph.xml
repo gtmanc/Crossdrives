@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- app:popUpTo tells the Navigation library to pop some destinations off of the back stack as part of the call to navigate().
+        The attribute value is the ID of the most recent destination that should remain on the stack.
+        app:popUpToInclusive="true" to indicate that the destination specified in app:popUpTo should also be removed from the back stack.
+        Google article: https://developer.android.com/guide/navigation/navigation-navigate -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/query_result_fragment">
+    app:startDestination="@id/main_list_fragment">
     <fragment
-        android:id="@+id/query_result_fragment"
-        android:name="com.example.crossdrives.QueryResultFragment"
+        android:id="@+id/main_list_fragment"
+        android:name="com.crossdrives.ui.MainListFragment"
+        android:label = ""
         tools:layout="@layout/query_result_fragment" >
     <!-- android:label="DFF"-->
+        <!--<argument
+            android:name="parentsPath"
+            app:argType="string[]"
+            app:nullable="true" />-->
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+
+            app:nullable="true" />
         <action
             android:id="@+id/navigate_to_master_account"
-            app:destination="@id/drawer_menu_item_master_account">
+            app:destination="@id/master_account_fragment">
         </action>
         <action
             android:id="@+id/navigate_to_delete_file"
@@ -19,11 +33,54 @@
         <action
             android:id="@+id/navigate_to_system_test"
             app:destination="@id/system_test_fragment" />
+        <action
+            android:id="@+id/navigate_to_myself"
+            app:destination="@id/main_list_fragment">
+        </action>
+        <action
+            android:id="@+id/navigate_to_child_list_fragment"
+            app:destination="@id/child_list_fragment">
+        </action>
+        <action
+            android:id="@+id/navigate_to_item_details_fragment"
+            app:destination="@id/item_details_fragment">
+        </action>
+
+        <action
+            android:id="@+id/navigate_to_move_item_workflow_graph"
+            app:destination="@id/moveItemWorkflowGraph">
+        </action>
     </fragment>
 
     <fragment
-        android:id="@+id/drawer_menu_item_master_account"
+        android:id="@+id/child_list_fragment"
+        android:name="com.crossdrives.ui.ChildListFragment"
+        android:label = "@string/titleChildListFragment"
+        tools:layout="@layout/master_account_fragment">
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+            app:nullable="true" />
+        <action
+            android:id="@+id/navigate_to_myself"
+            app:destination="@id/child_list_fragment">
+        </action>
+        <action
+            android:id="@+id/navigate_to_move_item_workflow_graph"
+            app:destination="@id/moveItemWorkflowGraph">
+        </action>
+        <action
+            android:id="@+id/navigate_to_item_details_fragment"
+            app:destination="@id/item_details_fragment"
+
+            >
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/master_account_fragment"
         android:name="com.example.crossdrives.MasterAccountFragment"
+        android:label = "Master Account"
         tools:layout="@layout/master_account_fragment">
         <argument
             android:name="CreateAccountName"
@@ -38,19 +95,21 @@
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"/>
         <action
-            android:id="@+id/navigate_back_to_query_result"
-            app:destination="@id/query_result_fragment"
+            android:id="@+id/navigate_back_to_main_list_result"
+            app:destination="@id/main_list_fragment"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
-            app:popUpTo="@+id/query_result_fragment"
-            app:popUpToInclusive="true"/>
+            app:popUpTo="@+id/main_list_fragment"
+            app:popUpToInclusive="false">
+        </action>
     </fragment>
 
     <fragment
         android:id="@+id/add_account_fragment"
         android:name="com.example.crossdrives.AddAccountFragment"
+        android:label = "Add Account"
         tools:layout="@layout/add_account_fragment">
         <action
             android:id="@+id/navigate_back_to_master_account"
@@ -60,7 +119,7 @@
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             app:popUpTo="@+id/drawer_menu_item_master_account"
-            app:popUpToInclusive="true"/>
+            app:popUpToInclusive="false"/>
         <action
             android:id="@+id/navigte_to_google_signin_fragment"
             app:destination="@id/google_signin_fragment"
@@ -72,6 +131,21 @@
     </fragment>
 
     <fragment
+        android:id="@+id/item_details_fragment"
+        android:name="com.crossdrives.ui.fragments.ItemDetailsFragment"
+        android:label = "@string/titleItemDetails"
+        tools:layout="@layout/add_account_fragment">
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+            app:nullable="true" />
+        <argument
+            android:name="cdfsItem"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem"
+            app:nullable="false" />
+    </fragment>
+
+    <fragment
         android:id="@+id/delete_file_fragment"
         android:name="com.example.crossdrives.DeleteFileFragment"
         tools:layout="@layout/delete_file_fragment"/>
@@ -80,6 +154,7 @@
     <fragment
         android:id="@+id/system_test_fragment"
         android:name="com.example.crossdrives.SystemTestFragment"
+        android:label = "System Test"
         tools:layout="@layout/system_test_fragment"/>
 
     <fragment
@@ -92,8 +167,47 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
-            app:popUpTo="@+id/add_account_fragment"
-            app:popUpToInclusive="true"
             />
-    </fragment>
+        </fragment>
+
+    <navigation android:id="@+id/moveItemWorkflowGraph" app:startDestination="@id/move_item_fragment">
+        <argument
+            android:name="parentsPath"
+            app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+            app:nullable="true" />
+        <fragment
+            android:id="@+id/move_item_fragment"
+            android:name="com.crossdrives.ui.MoveItemFragment"
+            android:label = "@string/titleMoveItem"
+            tools:layout="@layout/query_result_fragment">
+            <argument
+                android:name="parentsPath"
+                app:argType="com.crossdrives.cdfs.model.CdfsItem[]"
+                app:nullable="true" />
+            <action
+                android:id="@+id/navigate_to_myself"
+                app:destination="@id/move_item_fragment">
+            </action>
+            <!-- Setting the inclusive parameter with a value of false to indicate that the destination
+            we have specified in popUpTo() should not pop off back stack. -->
+            <!--
+            The popUpTo do the following:
+            Pop up to a given destination before navigating. This pops all non-matching destinations from the back stack until this destination is found.
+            https://developer.android.com/reference/androidx/navigation/NavOptions.Builder#setPopUpTo(kotlin.Int,kotlin.Boolean,kotlin.Boolean)
+            Since at least a MoveItemFragment exists in the backstack. Performing the action will not
+            lead to an empty backstack. i.e. at least the navigated fragment presents at the top of back stack.
+            -->
+            <action
+                android:id="@+id/navigate_to_myself_popupTo"
+                app:destination="@id/move_item_fragment"
+                app:popUpTo="@+id/move_item_fragment"
+                app:popUpToInclusive="true">
+            </action>
+            <!--<action
+                android:id="@+id/exit_move_workflow"
+                app:popUpTo="@+id/move_item_fragment"
+                app:popUpToInclusive="true">
+            </action> -->
+        </fragment>
+    </navigation>
 </navigation>

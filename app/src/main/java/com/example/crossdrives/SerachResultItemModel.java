@@ -1,20 +1,24 @@
 package com.example.crossdrives;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DiffUtil;
+
+import com.crossdrives.base.BaseItem;
+import com.crossdrives.cdfs.model.CdfsItem;
 import com.google.api.client.util.DateTime;
 
 public class SerachResultItemModel {
-
     boolean isSelected;
-    String mName;
-    String mId;
-    DateTime mDateTime;
+    CdfsItem cdfsItem;
 
-    public SerachResultItemModel(boolean isSelected, String Name, String id, DateTime dt) {
-        this.isSelected = isSelected;
-        this.mName = Name;
-        mId = id;
-        mDateTime = dt;
-    }
+//    public SerachResultItemModel(boolean isSelected, String Name, String id, DateTime dt, boolean folder) {
+//        this.isSelected = isSelected;
+//        setName(Name);
+//        setId(id);
+//        setDateTime(dt);
+//        setFolder(folder);
+//    }
 
     public boolean isSelected() {
         return isSelected;
@@ -24,23 +28,16 @@ public class SerachResultItemModel {
         isSelected = selected;
     }
 
-    public String getName() {
-        return mName;
+    public CdfsItem getCdfsItem() {
+        return cdfsItem;
     }
 
-    public DateTime getDateTime() {
-        return mDateTime;
+    public void setCdfsItem(CdfsItem cdfsItem) {
+        this.cdfsItem = cdfsItem;
     }
 
-    public String getID() {
-        return mId;
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return super.equals(obj);
     }
-
-    public void setName(String Name) {
-        this.mName = Name;
-    }
-
-    public void setDateTime(DateTime dt) { this.mDateTime = dt; }
-
-
 }

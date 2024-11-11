@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
@@ -27,6 +28,8 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
     DrawerLayout mDrawer = null;
     int mMenuIDSelected = 0;
 
+    private View mView = null;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -46,6 +49,8 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
         Log.d(TAG, "onViewCreated");
         super.onViewCreated(view, savedInstanceState);
 
+        mView = view;
+
 //        NavController navController = Navigation.findNavController(view);
 //        DrawerLayout drawerLayout= view.findViewById(R.id.layout_fragment_test);
 //        mDrawer = drawerLayout;
@@ -62,6 +67,19 @@ public class DeleteFileFragment extends Fragment implements View.OnClickListener
 //        navigationView.setNavigationItemSelectedListener(this);
 
     }
+
+    OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
+        @Override
+        public void handleOnBackPressed() {
+           //Test for pop up back stack
+           NavController navController = Navigation.findNavController(mView);
+
+           if(!navController.popBackStack(R.id.delete_file_fragment, true)){
+               Log.w(TAG, "no stack can be popup!");
+           }
+
+        }
+    };
 
     @Override
     public void onClick(View v) {

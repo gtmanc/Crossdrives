@@ -8,7 +8,7 @@ public abstract class SignInManager{
     public static final int RESULT_SUCCESS = 0;
     public static final int RESULT_FAILED = 1;
     public static final String BRAND_GOOGLE = "Google";
-    public static final String BRAND_MS = "MicroSoft";
+    public static final String BRAND_MS = "Microsoft";
 
     //Basic user profile information could be got as soon as app is signed in and get the API token successfully
     static class Profile{
@@ -29,7 +29,7 @@ public abstract class SignInManager{
          */
         void onFinished(Profile profile, String token);
 
-        void onFailure(String err);
+        void onFailure(String brand, String err);
     }
 
     interface OnSignOutFinished {
@@ -42,7 +42,7 @@ public abstract class SignInManager{
 
     //Operations provided
     //start interactive sign in flow. Mainly start the sign in activity.
-    abstract boolean Start(View view, OnSignInfinished callback);
+    abstract boolean Start(Activity activity, OnSignInfinished callback);
 
     //Silence Sign in.
     abstract void silenceSignIn(Activity activity, OnSignInfinished callback);

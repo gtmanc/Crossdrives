@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
+import com.crossdrives.msgraph.SnippetApp;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -76,7 +77,7 @@ public class GoogleSignInFragment extends Fragment {
                 .build();
 
         // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(getContext(), gso);
+        mGoogleSignInClient = GoogleSignIn.getClient(SnippetApp.getAppContext(), gso);
 
         signInIntent = mGoogleSignInClient.getSignInIntent();
 
@@ -126,7 +127,7 @@ public class GoogleSignInFragment extends Fragment {
 //            mPhotoUri = null;
         }
 
-        SignInGoogle.ReceiveSigninResult.onSignedIn(mSigninResult, this, account);
+        SignInGoogle.ReceiveSigninResult.onSignedIn(mSigninResult, /*this,*/ account);
     }
 
 //    private void SendAuthCode(String code){

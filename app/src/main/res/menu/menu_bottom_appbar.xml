@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/bottomAppBarItemCancel"
+        android:title="Cancel"
+        android:icon="@drawable/baseline_close_24"
+        app:showAsAction="always|withText" />
+    <item android:id="@+id/bottomAppBarItemMove"
+        android:title="Move"
+        android:icon="@drawable/baseline_check_24"
+        app:showAsAction="always|withText" />
+
+</menu>

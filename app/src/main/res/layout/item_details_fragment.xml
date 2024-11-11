@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scrollbarStyle="insideOverlay" android:scrollbars="vertical">
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scrollbars="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/item_details_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        app:layout_constraintTop_toTopOf="parent"
+        android:fitsSystemWindows="true"
+        android:theme="@style/AppTheme.AppBarOverlayMaterial"
+        >
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/item_details_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:theme="@style/ToolBarOverlayMaterial"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:title="">
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ProgressBar
+        android:id="@+id/item_details_progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:progressDrawable="@drawable/query_list_progressbar"
+        android:visibility="visible"
+        />
+
+    <com.crossdrives.ui.chart.piechart.PieTextInCenter
+        android:id="@+id/item_details_piechart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/item_details_appbar"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        app:layout_constraintRight_toRightOf="@+id/item_details_fragment_guideline_vertical_right"
+        android:visibility="invisible"
+        />
+
+    <com.google.android.material.divider.MaterialDivider
+        android:id="@+id/item_details_divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/item_details_piechart"
+        android:layout_marginTop="16dp"
+        app:dividerInsetStart="16dp"
+        app:dividerInsetEnd="16dp"/>
+
+
+    <TextView
+        android:id="@+id/lable_item_details_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/item_details_divider"
+        android:layout_marginTop="@dimen/paddingItemDetailsLabelTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="@string/lable_item_details_name"
+        android:textAppearance="@style/TextStyleBodyBase1"
+        />
+
+    <TextView
+        android:id="@+id/text_item_details_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_name"
+        android:layout_marginTop="@dimen/paddingItemDetailsTextBodyTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="name of item"
+        android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
+        />
+    <TextView
+        android:id="@+id/lable_item_details_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_name"
+        android:layout_marginTop="@dimen/paddingItemDetailsLabelTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="@string/lable_item_details_size"
+        android:textAppearance="@style/TextStyleBodyBase1"
+        />
+    <TextView
+        android:id="@+id/text_item_details_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_size"
+        android:layout_marginTop="@dimen/paddingItemDetailsTextBodyTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="size of item"
+        android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
+        />
+    <TextView
+        android:id="@+id/lable_item_details_created_dt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_size"
+        android:layout_marginTop="@dimen/paddingItemDetailsLabelTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="@string/lable_item_details_created_dt"
+        android:textAppearance="@style/TextStyleBodyBase1"
+        />
+    <TextView
+        android:id="@+id/text_item_details_created_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_created_dt"
+        android:layout_marginTop="@dimen/paddingItemDetailsTextBodyTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="time created"
+        android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
+        />
+    <TextView
+        android:id="@+id/lable_item_details_modifed_dt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/text_item_details_created_time"
+        android:layout_marginTop="@dimen/paddingItemDetailsLabelTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="@string/lable_item_details_modified_dt"
+        android:textAppearance="@style/TextStyleBodyBase1"
+        />
+    <TextView
+        android:id="@+id/text_item_details_modifed_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/lable_item_details_modifed_dt"
+        android:layout_marginTop="@dimen/paddingItemDetailsTextBodyTop"
+        app:layout_constraintLeft_toLeftOf="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_marginLeft="@dimen/paddingItemDetailsTextLeft"
+        android:text="time modified"
+        android:textAppearance="@style/TextStyleBodyBase2"
+        android:visibility="invisible"
+        />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/action_dialog_guideline_horizontal_Central"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_horizontal_Top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.1" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_horizontal_Bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.9" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_vertical_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.05" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/item_details_fragment_guideline_vertical_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.95" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.crossdrives">
+<!-- move Just move package name from build.gradle app level to manifest to avoid issue R.id.xxx not found
+https://stackoverflow.com/questions/72596066/error-package-r-does-not-exist-in-navigation-after-adding-assets-folder-andr-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission
         android:name="android.permission.GET_ACCOUNTS"
         android:maxSdkVersion="22" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
         android:name="com.crossdrives.msgraph.SnippetApp"
@@ -22,6 +24,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:exported="true"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,6 +43,7 @@
         </activity>
         <activity
             android:name=".SearchResultsActivity"
+            android:exported="true"
             android:theme="@style/AppTheme.NoActionBar" >
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
@@ -53,9 +57,19 @@
         <activity android:name=".SignOutDialog"
             android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth" >
         </activity>
+        <activity android:name="com.crossdrives.ui.BaseActionDialog"
+            android:theme="@style/Theme.Custom.MaterialComponents.Dialog.MinWidth"
+            android:exported="false"
+            android:excludeFromRecents="true">
+        </activity>
+        <activity android:name=".GoogleSigninActivity"
+            android:theme="@style/Theme.Custom.Option.MaterialComponents.Dialog.MinWidth"
+            android:excludeFromRecents="true">
+        </activity>
         <!--Intent filter to capture System Browser or Authenticator calling back to our app after sign-in-->
         <activity
-            android:name="com.microsoft.identity.client.BrowserTabActivity">
+            android:name="com.microsoft.identity.client.BrowserTabActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -63,6 +77,7 @@
                 <data android:scheme="msauth"
                     android:host="com.example.crossdrives"
                     android:path="/yuA+nLjqHb+lo8n78AI7ZAgEens=" />
+                <!-- android:path="//BmHxih5wIsyO7pdgz0voBWbMzE= -->
             </intent-filter>
         </activity>
         <provider android:name=".SearchSuggestionProvider"
