@@ -4,7 +4,6 @@ import android.database.Cursor;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.crossdrives.base.Parent;
 import com.crossdrives.cdfs.CDFS;
@@ -81,7 +80,7 @@ public class ItemDetails {
 
                 AllocManager am = new AllocManager();
                 am.CheckThenUpdateLocalCopy(pathParent, allocations);
-                items = RebuildItemList(pathParent, mItem.getId());
+                items = RebuildItemList(mItem.getId());
 
                 return buildResult(items);
             }
@@ -105,35 +104,33 @@ public class ItemDetails {
         r.timeCreated = item.getCreatedTime();
         r.timeModified = item.getLastModifiedTime();
         HashMap<String, Long> sizeMap = new HashMap<>();
-        Iterator iterator = items.iterator();
+        Iterator<AllocationItem> iterator = items.iterator();
         while(iterator.hasNext()){
+            item = iterator.next();
             if(sizeMap.get(item.getDrive()) == null) {
+                Log.d(TAG, "add new map entry: " + item.getDrive());
                 sizeMap.put(item.getDrive(), item.getSize());
-                break;
+                continue;
             }
-            sizeMap.compute(item.getDrive(), (k, v) -> v + item.getSize());
+            final long sz = item.getSize();
+            Log.d(TAG, "item size to compute: " + item.getSize());
+            sizeMap.compute(item.getDrive(), (k, v) -> v + sz);
         }
         r.allocatedSize = sizeMap;
         return r;
     }
-    private @NonNull java.util.List<AllocationItem> RebuildItemList(@Nullable String pathParent, String id) {
+    private @NonNull java.util.List<AllocationItem> RebuildItemList(String id) {
         DBHelper dh = new DBHelper(SnippetApp.getAppContext());
         java.util.List<AllocationItem> items = new ArrayList<>();
         String clause;
-        Cursor cursor = null;
+        Cursor cursor;
 
         clause = ALLOCITEMS_LIST_COL_CDFSID;
         clause = clause.concat(" = " + "'" + id + "'");
 
-        Log.d(TAG, "clausePath: " + clause);
+        Log.d(TAG, "clause to build item list: " + clause);
         cursor = dh.query(clause);
         if(!queryResultCheck(cursor)){return items;}
-
-        /*
-            Set filter(clause) attribute folder
-         */
-        //clause2 = buildClauseFolder(folder);
-
 
 //        dh.GroupBy(ALLOCITEMS_LIST_COL_CDFSID);
 //        cursor = dh.query();    //pass none to read all records
@@ -153,6 +150,7 @@ public class ItemDetails {
         final int indexTimeModified = cursor.getColumnIndex(DBConstants.ALLOCITEMS_LIST_COL_TIME_MODIFIED);
         cursor.moveToFirst();
 
+        Log.d(TAG, "count of queried: " + cursor.getCount());
         for(int i = 0 ; i < cursor.getCount(); i++){
             AllocationItem item = new AllocationItem();
             item.setName(cursor.getString(indexName));

@@ -150,11 +150,12 @@ public class ItemDetailsFragment extends Fragment {
 
     Collection<Item> buildPieItems(Result details){
         long totalSize = details.allocatedSize.values().stream().mapToLong((v) -> v).sum();
+        int count = details.allocatedSize.size();
         return details.allocatedSize.entrySet().stream().map((set)->{
             Item item = new Item();
             item.title = set.getKey();
             //Special handle for folder
-            if(mItem.isFolder()){ item.percentage = 1.0f;}
+            if(mItem.isFolder()){ item.percentage = (float) 1.0/count;}
             else{item.percentage = (float) set.getValue()/totalSize;}
             item.subtitle = new Float(set.getValue()/1024).toString() + getString(R.string.unit_item_details_size);
             return item;
