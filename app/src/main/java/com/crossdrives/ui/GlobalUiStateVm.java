@@ -8,6 +8,7 @@ import com.crossdrives.cdfs.model.CdfsItem;
 public class GlobalUiStateVm extends ViewModel {
     private MoveItemStateLd moveItemStateLd = new MoveItemStateLd();
     private RenameStateLd renameStateLd = new RenameStateLd();
+    private ReloadStateLd reloadStateLd = new ReloadStateLd();
 
     public class MoveItemStateLd extends LiveData<MoveItemState> {
 
@@ -34,6 +35,15 @@ public class GlobalUiStateVm extends ViewModel {
         }
 
         public RenameState getRenameState(){return state;}
+    }
+
+    public class ReloadStateLd extends LiveData<ReloadState>{
+        private ReloadState state = new ReloadState();
+
+        public void setOutdated() {
+            state.isOutdated = true;
+            postValue(state);
+        }
     }
 
     class MoveItemState {
@@ -100,7 +110,13 @@ public class GlobalUiStateVm extends ViewModel {
         }
     }
 
+    class ReloadState{
+        boolean isOutdated;
+    }
+
     public MoveItemStateLd getMoveItemStateLd(){return moveItemStateLd;}
 
     public RenameStateLd getRenameStateLd(){return renameStateLd;}
+
+    public ReloadStateLd getReloadStateLd(){return reloadStateLd;}
 }

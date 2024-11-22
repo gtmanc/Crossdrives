@@ -1,40 +1,26 @@
 package com.example.crossdrives;
 
 import android.app.Activity;
-import android.app.SearchManager;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.SearchView;
-import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.crossdrives.ui.MainListFragment;
 import com.crossdrives.ui.MainListFragmentDirections;
+import com.crossdrives.ui.model.Item;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -50,7 +36,7 @@ public class QueryResultActivity extends AppCompatActivity implements DrawerLayo
     final String STATE_ITEM_SELECTION = "state_selection";
 
     private String TAG = "CD.QueryResultActivity";
-    private ArrayList<SerachResultItemModel> mItems;
+    private ArrayList<Item> mItems;
     //private QueryFileAdapter mAdapter;
     private Intent mIntent;
     private int mPreLast = 0;
@@ -238,7 +224,7 @@ public class QueryResultActivity extends AppCompatActivity implements DrawerLayo
 //                QueryResultFragmentDirections.NavigateToMasterAccount action =
 //                        QueryResultFragmentDirections.navigateToMasterAccount();
 //                action.setMyArg(100);
-                NavDirections a = MainListFragmentDirections.navigateToMasterAccount(null);
+                NavDirections a = MainListFragmentDirections.navigateToMasterAccount();
                 Navigation.findNavController(this, R.id.main_content).navigate(a);
             }
             else if(item.getItemId() == R.id.drawer_menu_item_two){

@@ -1,14 +1,10 @@
-package com.example.crossdrives;
+package com.crossdrives.ui.model;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.DiffUtil;
 
-import com.crossdrives.base.BaseItem;
 import com.crossdrives.cdfs.model.CdfsItem;
-import com.google.api.client.util.DateTime;
 
-public class SerachResultItemModel {
+public class Item {
     boolean isSelected;
     CdfsItem cdfsItem;
 

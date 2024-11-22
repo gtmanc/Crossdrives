@@ -17,7 +17,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.crossdrives.cdfs.model.CdfsItem;
 import com.example.crossdrives.R;
-import com.example.crossdrives.SerachResultItemModel;
+import com.crossdrives.ui.model.Item;
 
 public class MainListFragment extends QueryResultFragment{
     private String TAG = "CD.MainListFragment";
@@ -50,7 +50,7 @@ public class MainListFragment extends QueryResultFragment{
     }
 
     @Override
-    void onFolderItemClickNormalState(View view, SerachResultItemModel item){
+    void onFolderItemClickNormalState(View view, Item item){
         CdfsItem[] itemArray = treeOpener.getParentArray(true);
         //Concatenate the dir we will go to produce a complete dir for the need of the destination
         CdfsItem cdfsItem = item.getCdfsItem();

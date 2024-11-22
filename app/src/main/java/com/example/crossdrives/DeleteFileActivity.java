@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 
+import com.crossdrives.ui.model.Item;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
 public class DeleteFileActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     private String TAG = "CD.DeleteFileActivity";
     Intent mIntent = new Intent();
-        List<SerachResultItemModel> mItems;
+        List<Item> mItems;
     DeleteFileAdapter mAdapter;
 
     @Override
@@ -69,7 +70,7 @@ public class DeleteFileActivity extends AppCompatActivity implements NavigationV
             // Toast 快顯功能 第三個參數 Toast.LENGTH_SHORT 2秒  LENGTH_LONG 5秒
             //Toast.makeText(QueryResultActivity.this,"點選第 "+(position +1) +" 個 \n內容：" + mList.get(position), Toast.LENGTH_SHORT).show();
 
-            SerachResultItemModel model = mItems.get(position);
+            Item model = mItems.get(position);
 
             if (model.isSelected())
                 model.setSelected(false);

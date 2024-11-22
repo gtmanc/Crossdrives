@@ -73,7 +73,7 @@ import com.crossdrives.cdfs.upload.IUploadProgressListener;
 import com.crossdrives.msgraph.SnippetApp;
 import com.example.crossdrives.DriveServiceHelper;
 import com.example.crossdrives.R;
-import com.example.crossdrives.SerachResultItemModel;
+import com.crossdrives.ui.model.Item;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -228,6 +228,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//LifecycleOwner owner = getViewLifecycleOwner();
 		//Log.d(TAG, "owner: " + owner);
 		liveData.observe(this, BackEntryStateObserver);
+
+		globalVm.getReloadStateLd().observe(this, reloadStateObserver);
 	}
 
 
@@ -404,6 +406,18 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 
+	final Observer<GlobalUiStateVm.ReloadState> reloadStateObserver = new Observer<GlobalUiStateVm.ReloadState>() {
+
+		@Override
+		public void onChanged(GlobalUiStateVm.ReloadState reloadState) {
+			Log.d(TAG, "reloadStateObserver onChanged called. reloadstate:" + reloadState.isOutdated);
+			OpenTree.ItemLiveData liveData = treeOpener.getItems();
+			if(reloadState.isOutdated){
+				liveData.reset();
+			}
+		}
+	};
+
 	final Observer<CdfsItem[]> BackEntryStateObserver = new Observer<CdfsItem[]>() {
 
 		@Override
@@ -464,7 +478,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 	};
 	private void queryFileContinue(){
-		ArrayList<SerachResultItemModel> items = treeOpener.getItems().getValue();
+		ArrayList<Item> items = treeOpener.getItems().getValue();
 
 		//We are reaching the end of list. Stop query.
 		//We are okay because no filter is applied.
@@ -624,7 +638,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
 			super.onScrolled(recyclerView, dx, dy);
 
-			List<SerachResultItemModel> currList = mAdapter.getCurrentList();
+			List<Item> currList = mAdapter.getCurrentList();
 			OpenTree.ItemLiveData liveData = treeOpener.getItems();
 			LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
@@ -653,17 +667,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	};
 
 	/*
-		Query related methods
-	*/
-	/*
-        Initialization of query
-     */
-	private void initialQuery(){
-		Log.d(TAG, "initialQuery...");
-		treeOpener.open(null);
-	}
-
-	/*
     Two states :
     1. Normal
     2. Item selection
@@ -690,14 +693,14 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		navController.navigate(MainListFragmentDirections.navigateToMyself(itemArray));
 	}
 
-	void onFolderItemClickNormalState(View view, SerachResultItemModel item){
+	void onFolderItemClickNormalState(View view, Item item){
 		CdfsItem[] itemArray = treeOpener.getParentArray(true);
 		//Concatenate the dir we will go to produce a complete dir for the need of the destination
 		CdfsItem cdfsItem = item.getCdfsItem();
 		itemArray[itemArray.length-1] = cdfsItem;
 		navigateToOpenFolder(view, itemArray);
 	}
-	void onItemClickNormalState(View view, SerachResultItemModel item){
+	void onItemClickNormalState(View view, Item item){
 		requestPermissionFuture = new CompletableFuture<>();
 		requestPermissionFuture.thenAccept((isGranted)->{
 			if(!isGranted){
@@ -724,11 +727,11 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	//private QueryFileAdapter.OnItemClickListener itemClickListener = new QueryFileAdapter.OnItemClickListener() {
 		@Override
 		public void onItemClick(RootItemsAdapter adapter, View view, int position){
-			List<SerachResultItemModel> list = adapter.getCurrentList();
+			List<Item> list = adapter.getCurrentList();
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Pressed!", Toast.LENGTH_SHORT).show();
 			Log.d(TAG, "Short press item:" + position);
 			Log.d(TAG, "Count of selected:" + mSelectedItemCount);
-			SerachResultItemModel item = list.get(position);
+			Item item = list.get(position);
 
 			if (view == view.findViewById(R.id.iv_more_vert)) {
 				Log.d(TAG, "More_vert pressed!");
@@ -770,12 +773,12 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 		@Override
 		public void onItemLongClick(RootItemsAdapter adapter, View view, int position) {
-			List<SerachResultItemModel> list = adapter.getCurrentList();
+			List<Item> list = adapter.getCurrentList();
 			Toast.makeText(view.getContext(), "Position" + Integer.toString(position) + "Long Pressed!", Toast.LENGTH_SHORT).show();
 			Log.i(TAG, "Long press item:" + position);
 			Log.i(TAG, "Count of selected:" + mSelectedItemCount);
 
-			SerachResultItemModel item = list.get(position);
+			Item item = list.get(position);
 
 			if(mState == STATE_NORMAL) {
                 /*
@@ -815,7 +818,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public void onImageItemClick(RootItemsAdapter adapter, View view, int position) {
 			Log.d(TAG, "onImageItemClick:" + position);
-			List<SerachResultItemModel> list = adapter.getCurrentList();
+			List<Item> list = adapter.getCurrentList();
 			itemOverflowMenuExpaned = list.get(position).getCdfsItem();
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 			PopupMenu popup = new PopupMenu(getContext(), view);
@@ -837,7 +840,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		}
 
 		@Override
-		public void onCurrentListChanged(RootItemsAdapter adapter, List<SerachResultItemModel> list) {
+		public void onCurrentListChanged(RootItemsAdapter adapter, List<Item> list) {
 
 		}
 	};
@@ -868,7 +871,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 				requestPermissionFuture.complete(isGranted);
 			});
 
-	private void setItemChecked(SerachResultItemModel item, int position, boolean checked){
+	private void setItemChecked(Item item, int position, boolean checked){
 
 		if(checked == false && mSelectedItemCount <= 0) {
 			Log.i(TAG, "No item should be unchecked!!");
@@ -886,10 +889,10 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	//The method first check if a item has been selected. If yes, deselected it.
 	private void deselectAllItems(){
 		int i = 0;
-		List<SerachResultItemModel> currList = mAdapter.getCurrentList();
+		List<Item> currList = mAdapter.getCurrentList();
 
 		for(Iterator iter = currList.iterator();iter.hasNext();) {
-			SerachResultItemModel item = (SerachResultItemModel) iter.next();
+			Item item = (Item) iter.next();
 			if(item.isSelected()) {
 				item.setSelected(false);
 				mSelectedItemCount--;
@@ -960,7 +963,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //                QueryResultFragmentDirections.NavigateToMasterAccount action =
 //                        QueryResultFragmentDirections.navigateToMasterAccount();
 //                action.setMyArg(100);
-				NavDirections a = MainListFragmentDirections.navigateToMasterAccount(null);
+				NavDirections a = MainListFragmentDirections.navigateToMasterAccount();
 				NavHostFragment.findNavController(this).navigate(a);
 			}
 			else if(item.getItemId() == R.id.drawer_menu_item_two){
@@ -1182,7 +1185,7 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		@Override
 		public boolean onMenuItemClick(MenuItem item) {
 			Task task = null;
-			List<SerachResultItemModel> currList = mAdapter.getCurrentList();
+			List<Item> currList = mAdapter.getCurrentList();
 			OnSuccessListener<com.crossdrives.driveclient.model.File> deleteSuccessListener;
 			OnFailureListener deleteFailureListener;
 			IDeleteProgressListener progressListener;
@@ -1205,13 +1208,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 //			}).findFirst();
 //			//If we can't find the check item. stop here!
 //			if(!optionalItemChecked.isPresent()){return true;}
-			SerachResultItemModel selectedItem;// = optionalItemChecked.get();
+			Item selectedItem;// = optionalItemChecked.get();
 			selectedItem = getItemOverflowMenuExpanded(currList);
 			if(selectedItem == null) {Log.w(TAG, "None of slwcted found!");return true;}
 			selectedItem.setSelected(false);
 
 			//Remove the checked item from list and re-submit to the adapter so that UI can get updated
-			List<SerachResultItemModel> newList = new ArrayList<>(currList);
+			List<Item> newList = new ArrayList<>(currList);
 			if(!newList.remove(selectedItem)){Log.w(TAG, "Failed to remove item from list!");}
 			mAdapter.submitList(newList);
 
@@ -1501,8 +1504,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 	};
 
 
-	private SerachResultItemModel getItemOverflowMenuExpanded(List<SerachResultItemModel> list){
-		Optional<SerachResultItemModel> optionalItemChecked = list.stream().filter((i)->{
+	private Item getItemOverflowMenuExpanded(List<Item> list){
+		Optional<Item> optionalItemChecked = list.stream().filter((i)->{
 			return i.isSelected();
 		}).findFirst();
 		//If we can't find the check item. stop here!

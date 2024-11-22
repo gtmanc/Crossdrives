@@ -5,9 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.crossdrives.base.Parent;
 import com.crossdrives.cdfs.CDFS;
@@ -15,7 +13,7 @@ import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.list.ListResult;
 import com.crossdrives.cdfs.model.CdfsItem;
-import com.example.crossdrives.SerachResultItemModel;
+import com.crossdrives.ui.model.Item;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -73,17 +71,21 @@ public class OpenTree extends ViewModel {
 
     public void setListener(Listener listener){mListener = listener;}
 
-    public class ItemLiveData extends LiveData<ArrayList<SerachResultItemModel>> {
-        private Querier mQuerier;
+    public class ItemLiveData extends LiveData<ArrayList<Item>> {
+        private ItemLiveData.Querier mQuerier;
+
+        List<CdfsItem> parents;
 
         private boolean firstTimeCreated = true;
 
         public ItemLiveData(List<CdfsItem> parents) {
-            reset(parents);
+            this.parents = parents;
+            mQuerier = new Querier(parents);
+            mQuerier.resetState();
         }
 
-        public void reset(List<CdfsItem> parents) {
-            mQuerier = new Querier(parents);
+        public void reset() {
+            mQuerier.resetState();
         }
 
         public void fetch() throws GeneralServiceException, MissingDriveClientException {
@@ -97,8 +99,8 @@ public class OpenTree extends ViewModel {
             //add a dummy item with ID null to inform ListAdaptor to show progress bar.
             if(firstTimeCreated){
                 Log.d(TAG, "Add progress bar.");
-                ArrayList<SerachResultItemModel> list = new ArrayList<>();
-                SerachResultItemModel serachResultItemModel = new SerachResultItemModel();
+                ArrayList<Item> list = new ArrayList<>();
+                Item serachResultItemModel = new Item();
                 serachResultItemModel.setCdfsItem(new CdfsItem());
                 list.add(serachResultItemModel);
                 postValue(list);
@@ -124,7 +126,7 @@ public class OpenTree extends ViewModel {
             @Override
             public void onSuccess(ListResult result) {
                 List<CdfsItem> items = result.getItems();
-                ArrayList<SerachResultItemModel> fetched = new ArrayList<>();
+                ArrayList<Item> fetched = new ArrayList<>();
 
                 Log.d(TAG, "Number of files: " + items.size());
                 for (CdfsItem item : items) {
@@ -135,7 +137,7 @@ public class OpenTree extends ViewModel {
 //                        isFolder = true;
 //                    }
 
-                    SerachResultItemModel serachResultItemModel = new SerachResultItemModel();
+                    Item serachResultItemModel = new Item();
                     serachResultItemModel.setCdfsItem(item);
                     Log.d(TAG, "Map of CDFS item: ");
                     item.getMap().entrySet().stream().forEach(set->{

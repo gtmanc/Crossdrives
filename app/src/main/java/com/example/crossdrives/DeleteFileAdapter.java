@@ -9,14 +9,16 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.crossdrives.ui.model.Item;
+
 import java.util.List;
 
 public class DeleteFileAdapter extends BaseAdapter {
     private String TAG = "CD.DeleteFileAdapter";
-    List<SerachResultItemModel> mItems;
+    List<Item> mItems;
     LayoutInflater mInflater;
     ;
-    public DeleteFileAdapter(Activity activity, List<SerachResultItemModel> Items) {
+    public DeleteFileAdapter(Activity activity, List<Item> Items) {
         mItems = Items;
         mInflater = activity.getLayoutInflater();
     }
@@ -57,7 +59,7 @@ public class DeleteFileAdapter extends BaseAdapter {
             holder = (DeleteFileAdapter.ViewHolder)convertView.getTag();
         }
 
-        SerachResultItemModel model = mItems.get(position);
+        Item model = mItems.get(position);
 
         holder.tvItemName.setText(model.getCdfsItem().getName());
 
@@ -78,7 +80,7 @@ public class DeleteFileAdapter extends BaseAdapter {
 
     }
 
-    public void updateRecords(List<SerachResultItemModel> users){
+    public void updateRecords(List<Item> users){
         this.mItems = users;
 
         notifyDataSetChanged();

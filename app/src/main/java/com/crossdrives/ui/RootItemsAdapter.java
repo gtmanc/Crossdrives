@@ -16,11 +16,11 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.crossdrives.R;
-import com.example.crossdrives.SerachResultItemModel;
+import com.crossdrives.ui.model.Item;
 
 import java.util.List;
 
-public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootItemsAdapter.ViewHolder> implements View.OnLongClickListener{
+public class RootItemsAdapter extends ListAdapter<Item, RootItemsAdapter.ViewHolder> implements View.OnLongClickListener{
     private String TAG = "CD.RootItemsAdapter";
 
     private int ITEM_TYPE_PROGRESS = 0;
@@ -74,8 +74,8 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Log.d(TAG, "onBindViewHolder.");
         if (holder.progressBar == null) {
-            List<SerachResultItemModel> list = getCurrentList();
-            SerachResultItemModel item = list.get(position);
+            List<Item> list = getCurrentList();
+            Item item = list.get(position);
             //set position to tag in view so that we know the position when click listener is called
             holder.ItemView.setTag(position);
             holder.ivMore.setTag(position);
@@ -138,15 +138,15 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
 
     }
 
-    static final DiffUtil.ItemCallback<SerachResultItemModel> diffCallback = new DiffUtil.ItemCallback<SerachResultItemModel>() {
+    static final DiffUtil.ItemCallback<Item> diffCallback = new DiffUtil.ItemCallback<Item>() {
         @Override
-        public boolean areItemsTheSame(@NonNull SerachResultItemModel oldItem, @NonNull SerachResultItemModel newItem) {
+        public boolean areItemsTheSame(@NonNull Item oldItem, @NonNull Item newItem) {
             // User properties may have changed if reloaded from the DB, but ID is fixed
             return oldItem.getCdfsItem().getId() == newItem.getCdfsItem().getId();
         }
 
         @Override
-        public boolean areContentsTheSame(@NonNull SerachResultItemModel oldItem, @NonNull SerachResultItemModel newItem) {
+        public boolean areContentsTheSame(@NonNull Item oldItem, @NonNull Item newItem) {
             // NOTE: if you use equals, your object must properly override Object#equals()
             // Incorrectly returning false here will result in too many animations.
             return oldItem.equals(newItem);
@@ -161,7 +161,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
 
         void onImageItemClick(RootItemsAdapter adapter, View view , int position);
 
-        void onCurrentListChanged(RootItemsAdapter adapter, List<SerachResultItemModel> list);
+        void onCurrentListChanged(RootItemsAdapter adapter, List<Item> list);
     }
 
     private View.OnClickListener itemOnClickListener = new View.OnClickListener() {
@@ -198,7 +198,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
     public void setNotifier(Notifier notifier){mNotifier = notifier;}
 
     @Override
-    public void onCurrentListChanged(@NonNull List<SerachResultItemModel> previousList, @NonNull List<SerachResultItemModel> currentList) {
+    public void onCurrentListChanged(@NonNull List<Item> previousList, @NonNull List<Item> currentList) {
         super.onCurrentListChanged(previousList, currentList);
         Log.d("TAG", "onCurrentListChanged called.");
         mNotifier.onCurrentListChanged(this, currentList);
@@ -211,7 +211,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
             mOverFlowIconVisible = false;
     }
 
-    int toLargeIconId(SerachResultItemModel item){
+    int toLargeIconId(Item item){
         int id = R.drawable.baseline_insert_drive_file_24;
         if (item.isSelected()) {
             id = R.drawable.ic_baseline_check_24;
@@ -222,7 +222,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
         return id;
     }
 
-    Drawable toLargeIconBackground(SerachResultItemModel item){
+    Drawable toLargeIconBackground(Item item){
         Drawable drawable = null;
         if (item.isSelected()) {
             drawable = mContext.getDrawable(R.drawable.query_list_item_pic_background);
@@ -230,7 +230,7 @@ public class RootItemsAdapter extends ListAdapter<SerachResultItemModel, RootIte
         return drawable;
     }
 
-    Drawable toBackground(SerachResultItemModel item){
+    Drawable toBackground(Item item){
         Drawable drawable = mContext.getDrawable(R.drawable.query_list_item_bg_state);
         if (item.isSelected()) {
             drawable = mContext.getDrawable(R.drawable.query_result_list_bg_selected);

@@ -15,10 +15,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 //import com.sun.jna.platform.unix.X11;
 
+import com.crossdrives.ui.model.Item;
+
 import java.util.List;
 public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.ViewHolder> implements View.OnLongClickListener{
     private String TAG = "CD.QueryFileAdapter";
-    List<SerachResultItemModel> mItems;
+    List<Item> mItems;
     private final int VIEW_TYPE_ITEM = 0;
     private final int VIEW_TYPE_LOADING = 1;
     static private View mViewItem = null, mViewLoading = null;
@@ -26,7 +28,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
     Context mContext;
     boolean mOverFlowIconVisible = true;
 
-    public QueryFileAdapter(List<SerachResultItemModel> Items, Context context){mItems = Items; mContext = context;}
+    public QueryFileAdapter(List<Item> Items, Context context){mItems = Items; mContext = context;}
 
     //An interface for the caller activity
     public static interface OnItemClickListener {
@@ -113,7 +115,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
 
         if (holder.iv_item_pic != null) {
             Log.d(TAG, "view object:" + holder.ItemView);
-            SerachResultItemModel item = mItems.get(position);
+            Item item = mItems.get(position);
             //set position to tag in view so that we know the position when click listener is called
             holder.ItemView.setTag(position);
             holder.ivMore.setTag(position);
@@ -220,7 +222,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
     }
 
     //
-    int toLargeIconId(SerachResultItemModel item){
+    int toLargeIconId(Item item){
         int id = R.drawable.baseline_insert_drive_file_24;
         if (item.isSelected()) {
             id = R.drawable.ic_baseline_check_24;
@@ -231,7 +233,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         return id;
     }
 
-    Drawable toLargeIconBackground(SerachResultItemModel item){
+    Drawable toLargeIconBackground(Item item){
         Drawable drawable = null;
         if (item.isSelected()) {
             drawable = mContext.getDrawable(R.drawable.query_list_item_pic_background);
@@ -239,7 +241,7 @@ public class QueryFileAdapter extends RecyclerView.Adapter<QueryFileAdapter.View
         return drawable;
     }
 
-    Drawable toBackground(SerachResultItemModel item){
+    Drawable toBackground(Item item){
         Drawable drawable = mContext.getDrawable(R.drawable.query_list_item_bg_state);
         if (item.isSelected()) {
             drawable = mContext.getDrawable(R.drawable.query_result_list_bg_selected);

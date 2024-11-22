@@ -5,13 +5,9 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-
 import com.crossdrives.cdfs.CDFS;
 import com.crossdrives.cdfs.Service;
 import com.crossdrives.cdfs.download.IDownloadProgressListener;
-import com.crossdrives.cdfs.exception.GeneralServiceException;
 import com.crossdrives.cdfs.exception.MissingDriveClientException;
 import com.crossdrives.cdfs.exception.PermissionException;
 import com.crossdrives.cdfs.model.CdfsItem;
@@ -19,17 +15,14 @@ import com.crossdrives.ui.listener.ProgressUpdater;
 import com.crossdrives.ui.listener.ResultUpdater;
 import com.crossdrives.ui.notification.Notification;
 import com.example.crossdrives.R;
-import com.example.crossdrives.SerachResultItemModel;
+import com.crossdrives.ui.model.Item;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Open{
     static final String TAG = "CD.Open";
 
-    static public boolean download(Activity activity, SerachResultItemModel item, CdfsItem parent){
+    static public boolean download(Activity activity, Item item, CdfsItem parent){
         boolean result;
         Context context = activity.getApplicationContext();
         Log.d(TAG, "Start to download file: " + item.getCdfsItem().getName());

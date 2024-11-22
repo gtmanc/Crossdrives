@@ -1,6 +1,5 @@
-package com.crossdrives.base;
+package com.crossdrives.cdfs.model;
 
-import java.util.Date;
 import java.util.List;
 
 public class BaseItem {

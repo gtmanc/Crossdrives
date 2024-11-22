@@ -22,6 +22,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -29,6 +30,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.crossdrives.ui.GlobalUiStateVm;
 import com.crossdrives.ui.account.MasterAccountVM;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -54,11 +56,15 @@ public class MasterAccountFragment extends Fragment{
     List<String> mBrands = GlobalConstants.BrandList;
 
     MasterAccountVM vm;
+    private GlobalUiStateVm globalVm;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         vm = new ViewModelProvider(this).get(MasterAccountVM.class);
+        NavController navController = NavHostFragment.findNavController(this);
+        NavBackStackEntry backStackEntry = navController.getBackStackEntry(R.id.nav_graph);
+        globalVm = new ViewModelProvider(backStackEntry).get(GlobalUiStateVm.class);
     }
 
     @Nullable
@@ -73,11 +79,6 @@ public class MasterAccountFragment extends Fragment{
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        String MyArg = MasterAccountFragmentArgs.fromBundle(getArguments()).getCreateAccountName();
-        if(MyArg != null && MyArg != "NoName")
-            Toast.makeText(getContext(), "Master Account Added: " + MyArg, Toast.LENGTH_LONG).show();
-
-        //readAllAccounts();
         Toolbar toolbar = view.findViewById(R.id.master_accounts_toolbar);
         NavController navController = Navigation.findNavController(view);
         DrawerLayout drawerLayout = getActivity().findViewById(R.id.layout_query_result_activity);
@@ -133,6 +134,11 @@ public class MasterAccountFragment extends Fragment{
 
         //Show toast message
         MasterAccountVM.DiffResult diff = vm.diffThenUpdateCurr();
+
+        if(diff.getStatus() != MasterAccountVM.ACCOUNT_NO_CHANGE){
+            globalVm.getReloadStateLd().setOutdated();
+        }
+
         //https://stackoverflow.com/questions/5283444/convert-array-of-strings-into-a-string-in-java/5283753
         String diffInfo = diff.getDiff().stream().map((ai) -> {
             return ai.brand;

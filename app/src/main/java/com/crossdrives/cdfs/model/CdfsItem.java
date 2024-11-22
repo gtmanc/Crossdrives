@@ -3,9 +3,6 @@ package com.crossdrives.cdfs.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.crossdrives.base.BaseItem;
-import com.google.api.client.util.DateTime;
-
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
