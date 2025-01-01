@@ -307,14 +307,13 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		/*((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);*/
 
 		/*mBottomAppBar = view.findViewById(R.id.bottomAppBar);*/
-		// progress bar is shown if the fetch list is empty because we assume treeOpen view model fetches
-		// the remote data automatically.
+		// We like to avoid the annoying progress bar as posible as we can.
+        // The progress bar is shown if the fetched list is empty because we assume treeOpen view model fetches
+		// the remote data automatically. i.e. list is fetched in onActive() in LiveData.
 		// The progress bar will be removed in treeOpen livedata observer once data is fetched
 		mProgressBar = view.findViewById(R.id.progressBar);
 		if(treeOpener.getFetched().isEmpty()) {
 			mProgressBar.setVisibility(View.VISIBLE);
-		}else{
-			mProgressBar.setVisibility(View.INVISIBLE);
 		}
 
 		mNavigationView = getActivity().findViewById(R.id.nav_view);
