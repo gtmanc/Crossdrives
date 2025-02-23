@@ -32,9 +32,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.MenuCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.SavedStateHandle;
@@ -58,7 +58,6 @@ import com.crossdrives.cdfs.move.IMoveItemProgressListener;
 import com.crossdrives.ui.document.Open;
 import com.crossdrives.ui.document.OpenTree;
 import com.crossdrives.ui.document.OpenTreeFactory;
-import com.crossdrives.ui.helper.CreateFolderDialogBuilder;
 import com.crossdrives.ui.helper.CreateFolderDialogResultResolver;
 import com.crossdrives.ui.helper.RenameDialogBuilder;
 import com.crossdrives.ui.helper.RenameDialogResultResolver;
@@ -93,7 +92,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener, CreateFolderAlertDialog.CreateFolderDialogListener{
+public class QueryResultFragment extends Fragment implements DrawerLayout.DrawerListener{
 	private String TAG = "CD.QueryResultFragment";
 	DrawerLayout mDrawer = null;
 	NavigationView mNavigationView, mBottomNavigationView;
@@ -228,6 +227,8 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 		//LifecycleOwner owner = getViewLifecycleOwner();
 		//Log.d(TAG, "owner: " + owner);
 		liveData.observe(this, BackEntryStateObserver);
+
+		getParentFragmentManager().setFragmentResultListener("requestKey", this, fragmentResultListener);
 	}
 
 
@@ -1040,13 +1041,39 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 
 				// We are safe to use mActivity here because onViewCreated() is invoked. i.e. mActivity is
 				// initialized in onViewCreated()
-				CreateFolderDialogBuilder builder = new CreateFolderDialogBuilder();
-				builder.setTitle(getString(R.string.title_create_folder_dialog)).setContent(getString(R.string.content_create_folder_dialog)).setNumTextInputBox(1);
-				mStartForResult.launch(builder.build(mActivity));
+//				CreateFolderDialogBuilder builder = new CreateFolderDialogBuilder();
+//				builder.setTitle(getString(R.string.title_create_folder_dialog)).
+//						setContent(getString(R.string.content_create_folder_dialog)).
+//						setNumTextInputBox(1);
+//				mStartForResult.launch(builder.build(mActivity));
+
+				CreateFolderDialog createFolderDialog = new CreateFolderDialog();
+				createFolderDialog.show(getParentFragmentManager(), "");
 			}else{
 				Log.w(TAG, "Unknown item detected!");
 			}
 			return true;
+		}
+	};
+
+	// https://developer.android.com/guide/fragments/communicate#fragment-result
+	FragmentResultListener fragmentResultListener = new FragmentResultListener() {
+		@Override
+		public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+			Log.d(TAG, "onFragmentResult. Key: " + requestKey);
+			Task<com.crossdrives.driveclient.model.File> task;
+			OnSuccessListener<com.crossdrives.driveclient.model.File> successListener;
+			OnFailureListener failureListener;
+			Log.d(TAG, "folder name entered: " + result.getString(CreateFolderDialog.KEY_NAME_ENTERED));
+			try {
+				task = CDFS.getCDFSService().getService().create(result.getString(CreateFolderDialog.KEY_NAME_ENTERED), treeOpener.getParents());
+				ResultUpdater resultUpdater = new ResultUpdater();
+				successListener = resultUpdater.createCreateSuccessListener(null);
+				failureListener = resultUpdater.createCreateFailureListener(null);
+				task.addOnSuccessListener(successListener).addOnFailureListener(failureListener);
+			} catch (Exception e) {
+				Toast.makeText(getActivity().getApplicationContext(), e.getMessage() + e.getCause(), Toast.LENGTH_LONG).show();
+			}
 		}
 	};
 
@@ -1443,16 +1470,6 @@ public class QueryResultFragment extends Fragment implements DrawerLayout.Drawer
 			}
 		}
 		return new java.io.File(data);
-	}
-
-	@Override
-	public void onDialogPositiveClick(DialogFragment dialog) {
-		Log.d(TAG, "User input folder: ");
-	}
-
-	@Override
-	public void onDialogNegativeClick(DialogFragment dialog) {
-
 	}
 
 	OpenTree.Listener treeOpenListener = new OpenTree.Listener() {

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_create_folder_dialog"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+    <!--<TextView
+        android:id="@+id/title_create_folder_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/title_base_action_dialog"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+    <TextView
+        android:id="@+id/content_create_folder_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/content_base_action_dialog"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_create_folder_dialog"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"
+        /> -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout_create_folder_dialog"
+        style="@style/Widget.Custom_MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="4dp"
+        android:visibility="visible"
+        android:hint="@string/hint1_base_action_dialog"
+        >
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_box1_create_folder_dialog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+        <!-- android:minHeight="48dp" -->
+    </com.google.android.material.textfield.TextInputLayout>
+    <!-- app:layout_constraintTop_toBottomOf="@id/content_create_folder_dialog" -->
+</androidx.constraintlayout.widget.ConstraintLayout>
